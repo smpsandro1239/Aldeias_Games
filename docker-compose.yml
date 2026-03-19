@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aldeias-games
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - MBWAY_API_URL=${MBWAY_API_URL}
+      - MBWAY_API_KEY=${MBWAY_API_KEY}
+      - MBWAY_ENTITY_PHONE=${MBWAY_ENTITY_PHONE}
+      - MBWAY_ENTITY_CODE=${MBWAY_ENTITY_CODE}
+      - MBWAY_SANDBOX=${MBWAY_SANDBOX}
+    volumes:
+      - ./prisma/db:/app/prisma/db
+      - ./public/uploads:/app/public/uploads
+    networks:
+      - aldeias-network
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Caddy reverse proxy (opcional)
+  caddy:
+    image: caddy:2-alpine
+    container_name: aldeias-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - aldeias-network
+    depends_on:
+      - app
+
+networks:
+  aldeias-network:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

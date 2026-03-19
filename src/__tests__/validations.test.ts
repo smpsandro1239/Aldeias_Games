@@ -1,0 +1,131 @@
+import { describe, it, expect } from "@jest/globals";
+import {
+  loginSchema,
+  registerSchema,
+  createEventoSchema,
+  createJogoSchema,
+  mbwayPaymentSchema,
+} from "@/lib/validations";
+
+describe("Validations", () => {
+  describe("loginSchema", () => {
+    it("deve validar credenciais corretas", () => {
+      const result = loginSchema.safeParse({
+        email: "test@example.com",
+        password: "password123",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("deve rejeitar email inválido", () => {
+      const result = loginSchema.safeParse({
+        email: "invalid-email",
+        password: "password123",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar password curta", () => {
+      const result = loginSchema.safeParse({
+        email: "test@example.com",
+        password: "123",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("registerSchema", () => {
+    it("deve validar dados de registo corretos", () => {
+      const result = registerSchema.safeParse({
+        nome: "João Silva",
+        email: "joao@example.com",
+        password: "password123",
+        telefone: "+351912345678",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("deve rejeitar nome curto", () => {
+      const result = registerSchema.safeParse({
+        nome: "J",
+        email: "joao@example.com",
+        password: "password123",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("createEventoSchema", () => {
+    it("deve validar dados de evento corretos", () => {
+      const result = createEventoSchema.safeParse({
+        nome: "Festa de Verão",
+        dataInicio: "2024-06-01T10:00",
+        dataFim: "2024-06-30T22:00",
+        aldeiaId: "aldeia123",
+        publico: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("deve rejeitar evento sem nome", () => {
+      const result = createEventoSchema.safeParse({
+        dataInicio: "2024-06-01T10:00",
+        dataFim: "2024-06-30T22:00",
+        aldeiaId: "aldeia123",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("createJogoSchema", () => {
+    it("deve validar dados de jogo corretos", () => {
+      const result = createJogoSchema.safeParse({
+        nome: "Rifa da Festa",
+        tipo: "rifa",
+        preco: 2,
+        stockInicial: 1000,
+        eventoId: "evento123",
+        configuracao: { numeroInicial: 1, numeroFinal: 1000 },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("deve rejeitar preço negativo", () => {
+      const result = createJogoSchema.safeParse({
+        nome: "Rifa",
+        tipo: "rifa",
+        preco: -1,
+        stockInicial: 100,
+        eventoId: "evento123",
+        configuracao: {},
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("mbwayPaymentSchema", () => {
+    it("deve validar número de telefone MBWay", () => {
+      const result = mbwayPaymentSchema.safeParse({
+        telefone: "+351912345678",
+        valor: 10,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("deve rejeitar número inválido", () => {
+      const result = mbwayPaymentSchema.safeParse({
+        telefone: "12345",
+        valor: 10,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar valor negativo", () => {
+      const result = mbwayPaymentSchema.safeParse({
+        telefone: "+351912345678",
+        valor: -5,
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+});

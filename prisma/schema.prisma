@@ -1,0 +1,524 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MODELOS DE UTILIZADOR E AUTENTICAÇÃO
+// ============================================
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  nome              String
+  telefone          String?
+  role              UserRole  @default(user)
+  emailVerificado   Boolean   @default(false)
+  notificacoesEmail Boolean   @default(true)
+  ultimoLogin       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relações
+  aldeia   Aldeia? @relation("AldeiaUsers", fields: [aldeiaId], references: [id])
+  aldeiaId String?
+
+  aldeiasAdmin    Aldeia[] @relation("AldeiaAdmins")
+  aldeiasVendedor Aldeia[] @relation("AldeiaVendedores")
+
+  participacoes         Participacao[]
+  participacoesVendidas Participacao[]          @relation("vendedor")
+  notificacoes          Notificacao[]
+  pushSubscriptions     PushSubscription[]
+  logsAcesso            LogAcesso[]
+  alteracoes            AlteracaoParticipacao[]
+  vendas                Venda[]
+
+  @@index([email])
+  @@index([role])
+  @@index([aldeiaId])
+  @@map("users")
+}
+
+model LogAcesso {
+  id        String   @id @default(cuid())
+  userId    String? // Nullable para registar logins falhados
+  email     String // Email tentado
+  sucesso   Boolean
+  ip        String
+  userAgent String
+  motivo    String? // Motivo da falha, se aplicável
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("logs_acesso")
+}
+
+// ============================================
+// MODELOS DE PLANO E SUBSCRIÇÃO (SaaS)
+// ============================================
+
+model Plano {
+  id               String   @id @default(cuid())
+  nome             String
+  descricao        String?
+  precoMensal      Float
+  maxEventos       Int      @default(10)
+  maxJogos         Int      @default(50)
+  maxParticipacoes Int      @default(1000)
+  maxVendedores    Int      @default(5)
+  recursos         String? // JSON com recursos adicionais
+  stripePriceId    String?
+  ativo            Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  aldeias Aldeia[]
+
+  @@map("planos")
+}
+
+// ============================================
+// MODELOS DE ORGANIZAÇÃO (ALDEIA/ESCOLA/CLUBE)
+// ============================================
+
+model Aldeia {
+  id              String          @id @default(cuid())
+  nome            String
+  slug            String          @unique
+  tipoOrganizacao TipoOrganizacao @default(aldeia)
+
+  // Informações gerais
+  descricao  String?
+  logoUrl    String?
+  logoBase64 String? // Para preview temporário
+
+  // Campos específicos para escolas
+  nomeEscola   String?
+  codigoEscola String?
+  nivelEnsino  NivelEnsino?
+
+  // Contactos e localização
+  responsavel  String?
+  telefone     String?
+  email        String?
+  morada       String?
+  codigoPostal String?
+  localidade   String?
+
+  // Conformidade legal
+  autorizacaoCM         Boolean @default(false)
+  numeroAlvara          String?
+  documentosVerificados Boolean @default(false)
+
+  // Estado
+  ativo           Boolean   @default(true)
+  verificado      Boolean   @default(false)
+  dataVerificacao DateTime?
+
+  // Plano SaaS
+  plano           Plano?    @relation(fields: [planoId], references: [id])
+  planoId         String?
+  dataInicioPlano DateTime?
+  dataFimPlano    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  users      User[]   @relation("AldeiaUsers")
+  admins     User[]   @relation("AldeiaAdmins")
+  eventos    Evento[]
+  vendedores User[]   @relation("AldeiaVendedores")
+  premios    Premio[]
+
+  @@index([slug])
+  @@index([tipoOrganizacao])
+  @@index([verificado])
+  @@map("aldeias")
+}
+
+// ============================================
+// MODELOS DE EVENTO E CAMPANHA
+// ============================================
+
+model Evento {
+  id           String  @id @default(cuid())
+  nome         String
+  slug         String  @unique
+  descricao    String?
+  imagemUrl    String?
+  imagemBase64 String?
+
+  // Datas
+  dataInicio DateTime
+  dataFim    DateTime
+
+  // Meta de angariação
+  objectivoAngariacao Float?
+
+  // Estado
+  estado  EstadoEvento @default(rascunho)
+  publico Boolean      @default(false)
+
+  // Estatísticas
+  totalAngariado     Float @default(0)
+  totalParticipacoes Int   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  aldeia   Aldeia @relation(fields: [aldeiaId], references: [id])
+  aldeiaId String
+
+  jogos Jogo[]
+
+  @@index([aldeiaId])
+  @@index([estado])
+  @@index([publico])
+  @@index([dataInicio])
+  @@map("eventos")
+}
+
+// ============================================
+// MODELOS DE JOGO (POIO DA VACA, RIFA, RASPADINHA)
+// ============================================
+
+model Jogo {
+  id        String   @id @default(cuid())
+  nome      String
+  tipo      TipoJogo
+  descricao String?
+
+  // Configuração do jogo (JSON)
+  configuracao String // JSON com configurações específicas
+
+  // Preço e stock
+  preco            Float
+  stockInicial     Int
+  stockAtual       Int
+  limitePorUsuario Int   @default(10)
+
+  // Estado
+  estado       EstadoJogo @default(rascunho)
+  dataAbertura DateTime?
+  dataFecho    DateTime?
+
+  // Estatísticas
+  totalParticipacoes Int   @default(0)
+  totalAngariado     Float @default(0)
+
+  // Sorteio
+  sorteado    Boolean   @default(false)
+  dataSorteio DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  evento   Evento @relation(fields: [eventoId], references: [id])
+  eventoId String
+
+  premio   Premio? @relation(fields: [premioId], references: [id])
+  premioId String?
+
+  participacoes Participacao[]
+  sorteios      Sorteio[]
+
+  @@index([eventoId])
+  @@index([tipo])
+  @@index([estado])
+  @@index([premioId])
+  @@map("jogos")
+}
+
+// ============================================
+// MODELOS DE PRÉMIO
+// ============================================
+
+model Premio {
+  id            String     @id @default(cuid())
+  nome          String
+  descricao     String?
+  imagemUrl     String?
+  valorEstimado Float?
+  tipo          TipoPremio @default(fisico)
+
+  // Para raspadinhas
+  percentagem Float? // Percentagem de probabilidade (0-1)
+  quantidade  Int? // Quantidade disponível
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  aldeia   Aldeia @relation(fields: [aldeiaId], references: [id])
+  aldeiaId String
+
+  jogos Jogo[]
+
+  @@index([aldeiaId])
+  @@map("premios")
+}
+
+// ============================================
+// MODELOS DE PARTICIPAÇÃO
+// ============================================
+
+model Participacao {
+  id String @id @default(cuid())
+
+  // Dados da participação (JSON)
+  dadosParticipacao String // { numero: X } ou { letra: 'A', numero: 1 }
+
+  // Pagamento
+  valorPago       Float
+  metodoPagamento MetodoPagamento
+
+  // Estado do pagamento
+  estadoPagamento     EstadoPagamento @default(pendente)
+  referenciaPagamento String? // Referência MBWay ou Stripe
+  dataPagamento       DateTime?
+
+  // Raspadinha
+  seedRaspe      String? // Seed para verificação
+  hashRaspe      String? // Hash SHA-256
+  resultadoRaspe String? // Resultado (prémio ou "sem_premio")
+  revelado       Boolean   @default(false)
+  dataRevelacao  DateTime?
+
+  // Vendedor (se aplicável)
+  vendedorId String?
+
+  // Sorteio
+  ganhador       Boolean @default(false)
+  premioEntregue Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  jogo   Jogo   @relation(fields: [jogoId], references: [id])
+  jogoId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  vendedor   User?                   @relation(fields: [vendedorId], references: [id], name: "vendedor")
+  alteracoes AlteracaoParticipacao[]
+
+  @@index([jogoId])
+  @@index([userId])
+  @@index([estadoPagamento])
+  @@index([createdAt])
+  @@map("participacoes")
+}
+
+model AlteracaoParticipacao {
+  id              String   @id @default(cuid())
+  tipoAlteracao   String // "trocar" ou "anular"
+  dadosAnteriores String? // JSON com dados anteriores
+  motivo          String?
+  ip              String
+  createdAt       DateTime @default(now())
+
+  // Relações
+  participacao   Participacao? @relation(fields: [participacaoId], references: [id])
+  participacaoId String?
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@index([participacaoId])
+  @@index([userId])
+  @@map("alteracoes_participacao")
+}
+
+// ============================================
+// MODELOS DE SORTEIO
+// ============================================
+
+model Sorteio {
+  id          String   @id @default(cuid())
+  seed        String // Seed aleatória
+  hash        String // Hash SHA-256 para auditoria
+  resultado   String // JSON com resultado do sorteio
+  observacoes String?
+  createdAt   DateTime @default(now())
+
+  // Relações
+  jogo   Jogo   @relation(fields: [jogoId], references: [id])
+  jogoId String
+
+  vencedores VencedorSorteio[]
+
+  @@index([jogoId])
+  @@index([createdAt])
+  @@map("sorteios")
+}
+
+model VencedorSorteio {
+  id             String   @id @default(cuid())
+  posicao        Int // 1º, 2º, 3º lugar, etc.
+  dadosVencedor  String // JSON com dados da posição vencedora
+  premioEntregue Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  // Relações
+  sorteio   Sorteio @relation(fields: [sorteioId], references: [id])
+  sorteioId String
+
+  @@index([sorteioId])
+  @@map("vencedores_sorteio")
+}
+
+// ============================================
+// MODELOS DE NOTIFICAÇÃO
+// ============================================
+
+model Notificacao {
+  id        String          @id @default(cuid())
+  tipo      TipoNotificacao
+  titulo    String
+  mensagem  String
+  dados     String? // JSON com dados adicionais
+  lida      Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  // Relações
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@index([userId])
+  @@index([lida])
+  @@index([createdAt])
+  @@map("notificacoes")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  // Relações
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// ============================================
+// MODELOS DE VENDA (PARA VENDEDORES)
+// ============================================
+
+model Venda {
+  id              String          @id @default(cuid())
+  valor           Float
+  comissao        Float           @default(0)
+  metodoPagamento MetodoPagamento
+  dadosCliente    String? // JSON com nome, telefone, email do cliente
+  createdAt       DateTime        @default(now())
+
+  // Relações
+  vendedor   User   @relation(fields: [vendedorId], references: [id])
+  vendedorId String
+
+  @@index([vendedorId])
+  @@index([createdAt])
+  @@map("vendas")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  super_admin
+  aldeia_admin
+  vendedor
+  user
+}
+
+enum TipoOrganizacao {
+  aldeia
+  escola
+  associacao_pais
+  clube
+}
+
+enum NivelEnsino {
+  pre_escolar
+  primeiro_ciclo
+  segundo_ciclo
+  terceiro_ciclo
+  secundario
+  superior
+}
+
+enum EstadoEvento {
+  rascunho
+  ativo
+  pausado
+  finalizado
+  cancelado
+}
+
+enum TipoJogo {
+  poio_da_vaca
+  rifa
+  tombola
+  raspadinha
+}
+
+enum EstadoJogo {
+  rascunho
+  aberto
+  pausado
+  fechado
+  finalizado
+}
+
+enum TipoPremio {
+  dinheiro
+  fisico
+  experiencia
+}
+
+enum MetodoPagamento {
+  mbway
+  dinheiro
+  stripe
+  transferencia
+}
+
+enum EstadoPagamento {
+  pendente
+  processando
+  concluido
+  falhou
+  reembolsado
+}
+
+enum TipoNotificacao {
+  sistema
+  pagamento
+  sorteio
+  premio
+  campanha
+  alerta
+}

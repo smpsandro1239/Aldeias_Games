@@ -1,0 +1,140 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { getFullUserFromRequest, hashPassword } from '@/lib/auth';
+import { updateProfileSchema } from '@/lib/validations';
+
+// GET - Obter perfil do utilizador
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getFullUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+
+    const perfil = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        aldeia: {
+          select: {
+            id: true,
+            nome: true,
+            slug: true,
+            tipoOrganizacao: true,
+          },
+        },
+        _count: {
+          select: {
+            participacoes: true,
+          },
+        },
+      },
+    });
+
+    if (!perfil) {
+      return NextResponse.json(
+        { error: 'Utilizador não encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Calcular estatísticas
+    const participacoes = await prisma.participacao.findMany({
+      where: { userId: user.id },
+      select: {
+        valorPago: true,
+        ganhador: true,
+      },
+    });
+
+    const totalGasto = participacoes.reduce((sum, p) => sum + p.valorPago, 0);
+    const totalVitorias = participacoes.filter(p => p.ganhador).length;
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: perfil.id,
+        email: perfil.email,
+        nome: perfil.nome,
+        telefone: perfil.telefone,
+        role: perfil.role,
+        emailVerificado: perfil.emailVerificado,
+        notificacoesEmail: perfil.notificacoesEmail,
+        ultimoLogin: perfil.ultimoLogin,
+        aldeia: perfil.aldeia,
+        estatisticas: {
+          totalParticipacoes: perfil._count.participacoes,
+          totalGasto,
+          totalVitorias,
+        },
+        createdAt: perfil.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Erro ao obter perfil:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Atualizar perfil
+export async function PATCH(request: NextRequest) {
+  try {
+    const user = await getFullUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const validation = updateProfileSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Dados inválidos', details: validation.error.errors },
+        { status: 400 }
+      );
+    }
+
+    const data = validation.data;
+
+    // Atualizar utilizador
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        nome: data.nome,
+        telefone: data.telefone,
+        notificacoesEmail: data.notificacoesEmail,
+      },
+      select: {
+        id: true,
+        email: true,
+        nome: true,
+        telefone: true,
+        role: true,
+        notificacoesEmail: true,
+        ultimoLogin: true,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Perfil atualizado com sucesso',
+      data: updated,
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
+}

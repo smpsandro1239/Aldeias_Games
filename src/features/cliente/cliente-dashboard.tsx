@@ -1,0 +1,412 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Gamepad2,
+  Trophy,
+  Ticket,
+  CreditCard,
+  Sparkles,
+  Eye,
+  Play,
+} from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal } from "@/components/modals";
+import { toast } from "sonner";
+
+interface ClienteDashboardProps {
+  token: string;
+}
+
+interface Participacao {
+  id: string;
+  dadosParticipacao: Record<string, unknown>;
+  valorPago: number;
+  estadoPagamento: string;
+  revelado: boolean;
+  resultadoRaspe?: string;
+  hashRaspe?: string;
+  ganhador: boolean;
+  createdAt: string;
+  jogo?: {
+    id: string;
+    nome: string;
+    tipo: string;
+    preco: number;
+    evento?: {
+      nome: string;
+      aldeia?: { nome: string };
+    };
+  };
+}
+
+interface Jogo {
+  id: string;
+  nome: string;
+  tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+  descricao?: string;
+  preco: number;
+  stockAtual: number;
+  configuracao: Record<string, unknown>;
+  evento?: {
+    nome: string;
+    aldeia?: { nome: string };
+  };
+  premio?: { nome: string };
+}
+
+export function ClienteDashboard({ token }: ClienteDashboardProps) {
+  const [participacoes, setParticipacoes] = useState<Participacao[]>([]);
+  const [jogos, setJogos] = useState<Jogo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("jogos");
+
+  // Modais
+  const [scratchCardOpen, setScratchCardOpen] = useState(false);
+  const [numberSelectorOpen, setNumberSelectorOpen] = useState(false);
+  const [poioDaVacaOpen, setPoioDaVacaOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [selectedJogo, setSelectedJogo] = useState<Jogo | null>(null);
+  const [selectedParticipacao, setSelectedParticipacao] = useState<Participacao | null>(null);
+  const [numerosSelecionados, setNumerosSelecionados] = useState<number[]>([]);
+  const [selecaoPoioDaVaca, setSelecaoPoioDaVaca] = useState<{ letra: string; numero: number }[]>([]);
+
+  useEffect(() => {
+    fetchData();
+  }, [token]);
+
+  const fetchData = async () => {
+    if (!token) return;
+    setLoading(true);
+
+    try {
+      // Fetch participações
+      const partRes = await fetch("/api/participacoes", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (partRes.ok) {
+        const partData = await partRes.json();
+        setParticipacoes(partData.data);
+      }
+
+      // Fetch jogos disponíveis
+      const jogosRes = await fetch("/api/jogos?ativos=true", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (jogosRes.ok) {
+        const jogosData = await jogosRes.json();
+        setJogos(jogosData.data);
+      }
+    } catch (error) {
+      toast.error("Erro ao carregar dados");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJogar = (jogo: Jogo) => {
+    setSelectedJogo(jogo);
+
+    switch (jogo.tipo) {
+      case "raspadinha":
+        setPaymentOpen(true);
+        break;
+      case "rifa":
+      case "tombola":
+        setNumberSelectorOpen(true);
+        break;
+      case "poio_da_vaca":
+        setPoioDaVacaOpen(true);
+        break;
+    }
+  };
+
+  const handleRevelarRaspadinha = (participacao: Participacao) => {
+    setSelectedParticipacao(participacao);
+    setScratchCardOpen(true);
+  };
+
+  const handleConfirmarPagamento = async () => {
+    if (!selectedJogo) return;
+
+    let dadosParticipacao: Record<string, unknown> = {};
+
+    if (selectedJogo.tipo === "rifa" || selectedJogo.tipo === "tombola") {
+      dadosParticipacao = { numeros: numerosSelecionados };
+    } else if (selectedJogo.tipo === "poio_da_vaca") {
+      dadosParticipacao = { coordenadas: selecaoPoioDaVaca };
+    } else {
+      dadosParticipacao = {};
+    }
+
+    const response = await fetch("/api/participacoes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        jogoId: selectedJogo.id,
+        dadosParticipacao,
+        quantidade: numerosSelecionados.length || selecaoPoioDaVaca.length || 1,
+        metodoPagamento: "mbway",
+      }),
+    });
+
+    if (response.ok) {
+      toast.success("Participação registada!");
+      fetchData();
+      setPaymentOpen(false);
+      setNumberSelectorOpen(false);
+      setPoioDaVacaOpen(false);
+      setNumerosSelecionados([]);
+      setSelecaoPoioDaVaca([]);
+    } else {
+      const error = await response.json();
+      toast.error(error.error || "Erro ao registar participação");
+    }
+  };
+
+  const handleRevelar = async () => {
+    if (!selectedParticipacao) return;
+
+    const response = await fetch(`/api/participacoes/${selectedParticipacao.id}/revelar`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.ok) {
+      fetchData();
+      return { success: true };
+    }
+    return { success: false };
+  };
+
+  const getTipoIcon = (tipo: string) => {
+    switch (tipo) {
+      case "raspadinha":
+        return <Sparkles className="h-5 w-5" />;
+      case "poio_da_vaca":
+        return <Gamepad2 className="h-5 w-5" />;
+      default:
+        return <Ticket className="h-5 w-5" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Os Meus Jogos</h1>
+        <p className="text-muted-foreground">Participe em jogos e campanhas</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Participações</CardTitle>
+            <Ticket className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{participacoes.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vitórias</CardTitle>
+            <Trophy className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {participacoes.filter((p) => p.ganhador).length}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="jogos">
+            <Play className="h-4 w-4 mr-2" />
+            Jogar
+          </TabsTrigger>
+          <TabsTrigger value="participacoes">
+            <Ticket className="h-4 w-4 mr-2" />
+            As Minhas Participações
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="jogos" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {jogos.map((jogo) => (
+              <Card key={jogo.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-primary/10 rounded-lg">{getTipoIcon(jogo.tipo)}</div>
+                    <Badge variant="outline" className="capitalize">
+                      {jogo.tipo.replace("_", " ")}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">{jogo.nome}</CardTitle>
+                  <CardDescription>
+                    {jogo.evento?.aldeia?.nome} • {jogo.evento?.nome}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-2">{jogo.descricao}</p>
+                  {jogo.premio && (
+                    <p className="text-sm">
+                      <span className="font-medium">Prémio:</span> {jogo.premio.nome}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between mt-4">
+                    <div>
+                      <p className="text-2xl font-bold text-primary">{formatCurrency(jogo.preco)}</p>
+                      <p className="text-xs text-muted-foreground">{jogo.stockAtual} disponíveis</p>
+                    </div>
+                    <Button onClick={() => handleJogar(jogo)}>
+                      <Play className="h-4 w-4 mr-2" />
+                      Jogar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="participacoes" className="space-y-4">
+          <div className="grid gap-4">
+            {participacoes.map((participacao) => (
+              <Card key={participacao.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">{participacao.jogo?.nome}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {participacao.jogo?.evento?.aldeia?.nome} •{" "}
+                        {formatDate(participacao.createdAt)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatCurrency(participacao.valorPago)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {participacao.ganhador && (
+                        <Badge className="bg-yellow-500">
+                          <Trophy className="h-3 w-3 mr-1" />
+                          Vencedor
+                        </Badge>
+                      )}
+                      {participacao.jogo?.tipo === "raspadinha" && !participacao.revelado && (
+                        <Button size="sm" onClick={() => handleRevelarRaspadinha(participacao)}>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Revelar
+                        </Button>
+                      )}
+                      {participacao.jogo?.tipo === "raspadinha" && participacao.revelado && (
+                        <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"}>
+                          {participacao.resultadoRaspe || "Sem prémio"}
+                        </Badge>
+                      )}
+                      <Button variant="ghost" size="icon">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Modais */}
+      {selectedJogo && selectedJogo.tipo === "raspadinha" && (
+        <PaymentModal
+          open={paymentOpen}
+          onOpenChange={setPaymentOpen}
+          valor={selectedJogo.preco}
+          descricao={selectedJogo.nome}
+          onMBWayPayment={async () => {
+            await handleConfirmarPagamento();
+          }}
+          onStripePayment={async () => {
+            await handleConfirmarPagamento();
+          }}
+        />
+      )}
+
+      {selectedJogo && (selectedJogo.tipo === "rifa" || selectedJogo.tipo === "tombola") && (
+        <NumberSelectorModal
+          open={numberSelectorOpen}
+          onOpenChange={setNumberSelectorOpen}
+          numeroInicial={selectedJogo.configuracao.numeroInicial as number}
+          numeroFinal={selectedJogo.configuracao.numeroFinal as number}
+          numerosOcupados={[]}
+          numerosSelecionados={numerosSelecionados}
+          onSelect={setNumerosSelecionados}
+          onConfirm={() => {
+            setNumberSelectorOpen(false);
+            setPaymentOpen(true);
+          }}
+          preco={selectedJogo.preco}
+        />
+      )}
+
+      {selectedJogo && selectedJogo.tipo === "poio_da_vaca" && (
+        <PoioDaVacaModal
+          open={poioDaVacaOpen}
+          onOpenChange={setPoioDaVacaOpen}
+          letras={(selectedJogo.configuracao.letras as string[]) || ["A", "B", "C", "D", "E"]}
+          numerosPorLetra={(selectedJogo.configuracao.numerosPorLetra as number) || 20}
+          numerosOcupados={[]}
+          precoIndividual={selectedJogo.preco}
+          precoCartao={((selectedJogo.configuracao.precos as { cartao: number })?.cartao) || selectedJogo.preco * 4}
+          onSelect={setSelecaoPoioDaVaca}
+          onConfirm={() => {
+            setPoioDaVacaOpen(false);
+            setPaymentOpen(true);
+          }}
+        />
+      )}
+
+      {selectedParticipacao && (
+        <ScratchCardModal
+          open={scratchCardOpen}
+          onOpenChange={setScratchCardOpen}
+          premio={selectedParticipacao.resultadoRaspe || null}
+          onReveal={handleRevelar}
+          jaRevelado={selectedParticipacao.revelado}
+        />
+      )}
+    </div>
+  );
+}
