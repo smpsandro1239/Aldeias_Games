@@ -1,34 +1,42 @@
 import { z } from 'zod';
 
+// Regex para números de telefone portugueses (9 dígitos starting with 9 or mobile, or landline)
+const telefoneRegex = /^(?:(?:\+|00)351)?[2-9][0-9]{8}$/;
+
+export const telefoneSchema = z.string()
+  .regex(telefoneRegex, 'Número de telefone inválido (deve ser um número português válido)')
+  .optional()
+  .or(z.literal(''));
+
 // ============================================
 // VALIDAÇÕES DE UTILIZADOR
 // ============================================
 
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
+  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
 });
 
 export const registerSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
-  telefone: z.string().optional(),
+  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  telefone: telefoneSchema,
   role: z.enum(['user', 'vendedor', 'aldeia_admin']).default('user'),
   tipoOrganizacao: z.enum(['aldeia', 'escola', 'associacao_pais', 'clube']).optional(),
 });
 
 export const updateProfileSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
-  telefone: z.string().optional(),
+  telefone: telefoneSchema,
   notificacoesEmail: z.boolean().optional(),
 });
 
 export const createUserSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
-  telefone: z.string().optional(),
+  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  telefone: telefoneSchema,
   role: z.enum(['super_admin', 'aldeia_admin', 'vendedor', 'user']),
   aldeiaId: z.string().optional(),
 });
@@ -50,7 +58,7 @@ export const createAldeiaSchema = z.object({
   
   // Contactos
   responsavel: z.string().optional(),
-  telefone: z.string().optional(),
+  telefone: telefoneSchema,
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   morada: z.string().optional(),
   codigoPostal: z.string().optional(),
@@ -134,8 +142,8 @@ export const createParticipacaoSchema = z.object({
   metodoPagamento: z.enum(['mbway', 'dinheiro', 'stripe', 'transferencia', 'saldo']),
   dadosCliente: z.object({
     nome: z.string().min(2, 'Nome é obrigatório'),
-    telefone: z.string().optional(),
-    email: z.string().email().optional(),
+    telefone: telefoneSchema,
+    email: z.string().email('Email inválido').optional().or(z.literal('')),
   }).refine(data => data.telefone || data.email, {
     message: "Deve fornecer pelo menos um telefone ou email",
     path: ["telefone"],
@@ -172,7 +180,7 @@ export const createNotificacaoSchema = z.object({
 // ============================================
 
 export const mbwayPaymentSchema = z.object({
-  telefone: z.string().regex(/^\+3519\d{8}$/, 'Número de telefone inválido (formato: +3519XXXXXXXX)'),
+  telefone: telefoneSchema,
   valor: z.number().min(0.5),
   descricao: z.string().optional(),
 });

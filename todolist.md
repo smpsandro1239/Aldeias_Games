@@ -27,8 +27,8 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 1.7 | [FIX] Fortalecer validação de telefone (regex) | 🟡 PENDING | lib/validations.ts |
-| 1.8 | [FIX] Aumentar mínimo de password para 8+ chars | 🟡 PENDING | lib/validations.ts |
+| 1.7 | [FIX] Fortalecer validação de telefone (regex) | ✅ FEITO | lib/validations.ts |
+| 1.8 | [FIX] Aumentar mínimo de password para 8+ chars | ✅ FEITO | lib/validations.ts |
 | 1.9 | [IMPL] Sistema de verificação de email | 🟡 PENDING | Enviar email de verificação |
 
 ---
