@@ -146,6 +146,7 @@
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
 | 7.4 | [IMPL] Multi-idioma (EN/ES) | ✅ FEITO | i18n com PT/EN/ES |
+| 7.5 | [IMPL] Backup/Restore DB | ✅ FEITO | Manual |
 
 ---
 
@@ -158,13 +159,13 @@ FASE 3 - UX/UI:          ██████████ 100% (7/7)
 FASE 4 - Analytics:      ██████████ 100% (5/5)
 FASE 5 - Utilizadores:   ██████████ 100% (5/5)
 FASE 6 - Vendas:         ██████████ 100% (7/7)
-FASE 7 - Extras:         ███████░░░ 67% (4/6)
+FASE 7 - Extras:         ██████████ 100% (6/6)
 FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
 
-TOTAL: ██████████ 91%
+TOTAL: ██████████ 94%
 ```
 
 ---
 
 *Última actualização: 23/03/2026*  
-*Projeto: Aldeias Games v3.13.0 - 91% completo*
+*Projeto: Aldeias Games v3.14.0 - 94% completo*
