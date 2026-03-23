@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { formatDate } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -34,16 +35,25 @@ interface ProfileModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: User | null;
+  token: string;
   onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean }) => Promise<void>;
 }
 
-export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModalProps) {
+export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: ProfileModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     telefone: "",
     notificacoesEmail: true,
   });
   const [loading, setLoading] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    atual: "",
+    nova: "",
+    confirmacao: "",
+  });
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -66,11 +76,63 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
     }
   };
 
+  const handlePasswordChange = async () => {
+    const errors: Record<string, string> = {};
+    
+    if (!passwordData.atual) {
+      errors.atual = "Password atual é obrigatória";
+    }
+    if (!passwordData.nova) {
+      errors.nova = "Nova password é obrigatória";
+    }
+    if (passwordData.nova.length < 8) {
+      errors.nova = "Password deve ter pelo menos 8 caracteres";
+    }
+    if (passwordData.nova !== passwordData.confirmacao) {
+      errors.confirmacao = "As passwords não coincidem";
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
+      return;
+    }
+    
+    setPasswordLoading(true);
+    try {
+      const res = await fetch("/api/users/password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          passwordAtual: passwordData.atual,
+          novaPassword: passwordData.nova,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast.error(data.error || "Erro ao alterar password");
+        return;
+      }
+      
+      toast.success("Password alterada com sucesso");
+      setShowPasswordChange(false);
+      setPasswordData({ atual: "", nova: "", confirmacao: "" });
+    } catch (error) {
+      toast.error("Erro ao alterar password");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Perfil do Utilizador</DialogTitle>
           <DialogDescription>
@@ -122,6 +184,84 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
                 }
               />
             </div>
+
+            {/* Alterar Password */}
+            {!showPasswordChange ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPasswordChange(true)}
+              >
+                Alterar Password
+              </Button>
+            ) : (
+              <div className="rounded-lg border p-4 space-y-4">
+                <h4 className="font-medium">Alterar Password</h4>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="passwordAtual">Password Atual</Label>
+                  <Input
+                    id="passwordAtual"
+                    type="password"
+                    value={passwordData.atual}
+                    onChange={(e) => {
+                      setPasswordData({ ...passwordData, atual: e.target.value });
+                      if (passwordErrors.atual) setPasswordErrors({ ...passwordErrors, atual: "" });
+                    }}
+                  />
+                  {passwordErrors.atual && <p className="text-sm text-destructive">{passwordErrors.atual}</p>}
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="novaPassword">Nova Password</Label>
+                  <Input
+                    id="novaPassword"
+                    type="password"
+                    value={passwordData.nova}
+                    onChange={(e) => {
+                      setPasswordData({ ...passwordData, nova: e.target.value });
+                      if (passwordErrors.nova) setPasswordErrors({ ...passwordErrors, nova: "" });
+                    }}
+                  />
+                  {passwordErrors.nova && <p className="text-sm text-destructive">{passwordErrors.nova}</p>}
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmPassword">Confirmar Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmacao}
+                    onChange={(e) => {
+                      setPasswordData({ ...passwordData, confirmacao: e.target.value });
+                      if (passwordErrors.confirmacao) setPasswordErrors({ ...passwordErrors, confirmacao: "" });
+                    }}
+                  />
+                  {passwordErrors.confirmacao && <p className="text-sm text-destructive">{passwordErrors.confirmacao}</p>}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowPasswordChange(false);
+                      setPasswordData({ atual: "", nova: "", confirmacao: "" });
+                      setPasswordErrors({});
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handlePasswordChange}
+                    disabled={passwordLoading}
+                  >
+                    {passwordLoading ? "A guardar..." : "Guardar Password"}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Estatísticas */}
             {user.estatisticas && (

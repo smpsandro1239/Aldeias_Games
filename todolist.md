@@ -108,9 +108,9 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 5.1 | [IMPL] Página de perfil completa | 🟡 PENDING | Editar dados |
-| 5.2 | [IMPL] Alterar password | 🟡 PENDING | Com validação |
-| 5.3 | [IMPL] Configurar notificações | 🟡 PENDING | Email/SMS preferences |
+| 5.1 | [IMPL] Página de perfil completa | ✅ FEITO | Editar dados + estatísticas |
+| 5.2 | [IMPL] Alterar password | ✅ FEITO | Com validação + API |
+| 5.3 | [IMPL] Configurar notificações | ✅ FEITO | Email/SMS preferences |
 
 ### 🟢 Autenticação
 
@@ -214,14 +214,14 @@
 ```
 FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
 FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
-FASE 3 - UX/UI:          ███████░░░ 57% (4/7)
+FASE 3 - UX/UI:          ██████████ 100% (7/7)
 FASE 4 - Analytics:      ██████████ 100% (5/5)
-FASE 5 - Utilizadores:  ░░░░░░░░░░ 0% (0/5)
+FASE 5 - Utilizadores:   ███░░░░░░░ 60% (3/5)
 FASE 6 - Vendas:         ███░░░░░░░ 30% (2/7)
 FASE 7 - Extras:         ██░░░░░░░░ 20% (1/6)
 FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
 
-TOTAL: ███████░░░░ 52%
+TOTAL: ████████░░░ 65%
 ```
 FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
 FASE 2 - Pagamentos:     ██░░░░░░░░ 15% (1/10)
