@@ -39,18 +39,12 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 2.1 | [IMPL] Criar Stripe checkout session | 🟡 PENDING | Redirect para Stripe |
-| 2.2 | [IMPL] Processar webhook Stripe | 🟡 PENDING | Confirmar pagamento |
-| 2.3 | [IMPL] Implementar refunds | 🟡 PENDING | Via API admin |
-| 2.4 | [UI] Mostrar QR Code de pagamento | ✅ FEITO | PaymentModal existente |
-
-### 🟠 MBWay Integration
-
-| # | Tarefa | Estado | Notas |
-|---|--------|--------|-------|
-| 2.5 | [IMPL] Enviar pedido MBWay | 🟡 PENDING | lib/mbway.ts (mock existente) |
-| 2.6 | [IMPL] Verificar estado do pagamento | 🟡 PENDING | Polling endpoint |
-| 2.7 | [IMPL] Callback处理 | 🟡 PENDING | Webhook MBWay |
+| 2.1 | [IMPL] Criar Stripe checkout session | ✅ FEITO | Redirect para Stripe |
+| 2.2 | [IMPL] Processar webhook Stripe | ✅ FEITO | Confirmar pagamento |
+| 2.3 | [IMPL] Implementar refunds | ✅ FEITO | Via API admin |
+| 2.5 | [IMPL] Enviar pedido MBWay | ✅ FEITO | lib/mbway.ts (mock existente) |
+| 2.6 | [IMPL] Verificar estado do pagamento | ✅ FEITO | Polling endpoint |
+| 2.7 | [IMPL] Callback 处理 | ✅ FEITO | Webhook MBWay |
 
 ### 🟡 Sistema de Subscrições
 
