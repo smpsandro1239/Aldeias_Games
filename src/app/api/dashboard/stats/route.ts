@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const aldeiaId = url.searchParams.get('aldeiaId');
     const eventoId = url.searchParams.get('eventoId');
+    const dataInicio = url.searchParams.get('dataInicio');
+    const dataFim = url.searchParams.get('dataFim');
 
     let aldeiaFilter = {};
     if (user.role === 'aldeia_admin' && user.aldeiaId) {
@@ -24,6 +26,16 @@ export async function GET(request: NextRequest) {
     } else if (aldeiaId) {
       aldeiaFilter = { aldeiaId };
     }
+
+    const dateFilter: Record<string, unknown> = {};
+    if (dataInicio) {
+      dateFilter.gte = new Date(dataInicio);
+    }
+    if (dataFim) {
+      dateFilter.lte = new Date(dataFim);
+    }
+
+    const hasDateFilter = dataInicio || dataFim;
 
     const eventosWhere: Record<string, unknown> = {
       ...aldeiaFilter,

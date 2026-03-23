@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import {
   LineChart,
@@ -57,6 +60,8 @@ const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f97316", "#eab308"
 export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps) {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
 
   useEffect(() => {
     if (token) {
@@ -64,11 +69,15 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
     }
   }, [token, aldeiaId]);
 
-  const fetchStats = async () => {
+  const fetchStats = async (inicio?: string, fim?: string) => {
     setLoading(true);
     try {
-      const q = aldeiaId ? `?aldeiaId=${aldeiaId}` : "";
-      const res = await fetch(`/api/dashboard/stats${q}`, {
+      const params = new URLSearchParams();
+      if (aldeiaId) params.set('aldeiaId', aldeiaId);
+      if (inicio) params.set('dataInicio', inicio);
+      if (fim) params.set('dataFim', fim);
+      
+      const res = await fetch(`/api/dashboard/stats?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -80,6 +89,10 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAplicarFiltros = () => {
+    fetchStats(dataInicio, dataFim);
   };
 
   const formatCurrency = (value: number) =>
@@ -122,6 +135,35 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
 
   return (
     <div className="space-y-6">
+      {/* Filtros de Data */}
+      <Card className="p-4">
+        <CardContent className="flex flex-wrap items-end gap-4">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="dataInicio">Data Início</Label>
+            <Input
+              id="dataInicio"
+              type="date"
+              value={dataInicio}
+              onChange={(e) => setDataInicio(e.target.value)}
+              className="w-40"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="dataFim">Data Fim</Label>
+            <Input
+              id="dataFim"
+              type="date"
+              value={dataFim}
+              onChange={(e) => setDataFim(e.target.value)}
+              className="w-40"
+            />
+          </div>
+          <Button onClick={handleAplicarFiltros} disabled={loading}>
+            Aplicar Filtros
+          </Button>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
           <Card className="border-l-4 border-l-violet-500">
