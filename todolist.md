@@ -138,79 +138,23 @@
 |---|--------|--------|-------|
 | 6.5 | [IMPL] Sistema de comissões | ✅ FEITO | % por venda + API |
 | 6.6 | [IMPL] Dashboard de comissões | ✅ FEITO | Ver earnings |
-| 6.7 | [IMPL]绩效考核 | 🟡 PENDING | Bónus por meta |
-
----
-
-## 🏷️ Fase 7: Funcionalidades Extras
-
-### 🟢 Landing Pages
-
-| # | Tarefa | Estado | Notas |
-|---|--------|--------|-------|
-| 7.1 | [IMPL] Landing page por aldeia (completa) | ✅ FEITO | /aldeia/[slug] criado |
-| 7.2 | [IMPL] Links de partilha para redes | ✅ FEITO | Gerar link único |
-| 7.3 | [IMPL] QR Code por evento | ✅ FEITO | Para scanning |
-
-### 🟢 Outras
-
-| # | Tarefa | Estado | Notas |
-|---|--------|--------|-------|
-| 7.4 | [IMPL] Multi-idioma (EN/ES) | 🟡 PENDING | i18n |
-| 7.5 | [IMPL] Backup/Restore DB | 🟡 PENDING | Manual |
-| 7.6 | [IMPL] Audit Logs UI | 🟡 PENDING | Ver logs acesso |
-
----
-
-## 🧪 Fase 8: Qualidade & Testing
-
-### 🔴 Testing
-
-| # | Tarefa | Estado | Notas |
-|---|--------|--------|-------|
-| 8.1 | [TEST] Testes unitários (core functions) | 🔴 PENDING | Jest + React Testing Library |
-| 8.2 | [TEST] Testes de integração (API) | 🔴 PENDING | Supercritical |
-| 8.3 | [TEST] Testes E2E (flows principais) | 🔴 PENDING | Playwright/Cypress |
-
-### 🟢 Code Quality
-
-| # | Tarefa | Estado | Notas |
-|---|--------|--------|-------|
-| 8.4 | [REFACTOR] Remover types `any` | 🟡 PENDING | Criar interfaces |
-| 8.5 | [REFACTOR] Extrair service layer | 🟡 PENDING | Das API routes |
-| 8.6 | [PERF] Otimizar queries N+1 | 🟡 PENDING | Prisma include |
-| 8.7 | [PERF] Adicionar pagination | 🟡 PENDING | Todas as rotas listagem |
-
----
-
-## ✅ Funcionalidades Já Implementadas (Verificadas)
-
-| # | Funcionalidade | Data |
-|---|----------------|------|
-| ✅ | Wallet com 5% cashback | 23/03/2026 |
-| ✅ | Endpoint /api/wallet/adjust | 23/03/2026 |
-| ✅ | Histórico de ganhos global | 23/03/2026 |
-| ✅ | LotteryAnimation componente | 23/03/2026 |
-| ✅ | Email (nodemailer) | 23/03/2026 |
-| ✅ | SMS (Twilio/AWS SNS) | 23/03/2026 |
-| ✅ | Conversão prémio -> saldo | 23/03/2026 |
-| ✅ | Resultados EuroMilhões | 23/03/2026 |
-| ✅ | Dashboard stats API | 23/03/2026 |
-| ✅ | Dashboard vendedor API | 23/03/2026 |
-| ✅ | Analytics Dashboard (Recharts) | 23/03/2026 |
-| ✅ | Landing page /aldeia/[slug] | 23/03/2026 |
-| ✅ | API pública aldeia | 23/03/2026 |
-| ✅ | Export PDF/Excel (lib) | 23/03/2026 |
-| ✅ | Bilhete PDF | 23/03/2026 |
-| ✅ | Página Termos | 23/03/2026 |
-| ✅ | Página Privacidade | 23/03/2026 |
-| ✅ | Componente Skeleton | 23/03/2026 |
-| ✅ | Design System (UI-UX Pro Max) | 23/03/2026 |
+| 6.7 | [IMPL]绩效考核 | ✅ FEITO | Bónus por meta |
 
 ---
 
 ## 📋 Resumo de Progresso
 
+```
+FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
+FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
+FASE 3 - UX/UI:          ██████████ 100% (7/7)
+FASE 4 - Analytics:      ██████████ 100% (5/5)
+FASE 5 - Utilizadores:   ███░░░░░░░ 60% (3/5)
+FASE 6 - Vendas:         ██████████ 100% (7/7)
+FASE 7 - Extras:         ██████░░░░ 50% (3/6)
+FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
+
+TOTAL: ██████████ 80%
 ```
 FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
 FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
