@@ -282,7 +282,7 @@ model Jogo {
   limitePorUsuario Int   @default(10)
 
   // Estado
-  estado       EstadoJogo @default(rascunho)
+  estado       EstadoJogo @default(aberto)
   dataAbertura DateTime?
   dataFecho    DateTime?
 

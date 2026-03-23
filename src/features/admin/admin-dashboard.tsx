@@ -81,7 +81,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
       const q = aldeiaId ? `?aldeiaId=${aldeiaId}` : "";
 
       const getApi = async (url: string) => {
-        const res = await fetch(url, { headers });
+        const res = await fetch(url, { headers, cache: 'no-store' });
         if (res.ok) {
           const j = await res.json();
           return j.data;
@@ -167,6 +167,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ estado: novoEstado }),
+      cache: 'no-store',
     });
     if (res.ok) {
       toast.success(`Jogo ${novoEstado === 'aberto' ? 'ativado' : 'desativado'} com sucesso!`);
@@ -437,6 +438,12 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
                     <p className="text-sm text-muted-foreground">{jg.tipo} • {jg.evento?.nome} • {formatCurrency(jg.preco)}</p>
                   </div>
                   <div className="flex gap-2 items-center">
+                    {jg.estado === 'aberto' && (
+                      <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        Ativo
+                      </span>
+                    )}
                     {getEstadoBadge(jg.estado)}
                     <Button
                       variant="ghost"

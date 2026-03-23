@@ -204,7 +204,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{initialData ? "Editar Jogo" : "Novo Jogo"}</DialogTitle>
           <DialogDescription>
@@ -257,7 +257,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
             </div>
 
             {(formData.tipo === "rifa" || formData.tipo === "tombola") && (
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="numeroInicial">Número Inicial</Label>
                   <Input

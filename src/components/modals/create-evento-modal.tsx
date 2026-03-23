@@ -23,8 +23,9 @@ interface EventoData {
   dataInicio: string;
   dataFim: string;
   objectivoAngariacao?: number;
-  publico: boolean;
+  publiko: boolean;
   aldeiaId: string;
+  estado: "rascunho" | "ativo" | "fechado" | "finalizado";
 }
 
 interface CreateEventoModalProps {
@@ -43,8 +44,9 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
     dataInicio: "",
     dataFim: "",
     objectivoAngariacao: "",
-    publico: false,
+    publiko: false,
     aldeiaId: aldeiaId || "",
+    estado: "rascunho" as "rascunho" | "ativo" | "fechado" | "finalizado",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,8 +59,9 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         dataInicio: initialData.dataInicio ? new Date(initialData.dataInicio).toISOString().slice(0, 16) : "",
         dataFim: initialData.dataFim ? new Date(initialData.dataFim).toISOString().slice(0, 16) : "",
         objectivoAngariacao: initialData.objectivoAngariacao ? String(initialData.objectivoAngariacao) : "",
-        publico: initialData.publico || false,
+        publiko: initialData.publiko || false,
         aldeiaId: initialData.aldeiaId || aldeiaId || "",
+        estado: initialData.estado || "rascunho",
       });
     } else if (!open) {
       setFormData({
@@ -67,16 +70,16 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         dataInicio: "",
         dataFim: "",
         objectivoAngariacao: "",
-        publico: false,
+        publiko: false,
         aldeiaId: aldeiaId || "",
+        estado: "rascunho",
       });
     }
-  }, [initialData, open]);
+  }, [initialData, open, aldeiaId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validar campos
     const newErrors: Record<string, string> = {};
     if (!formData.nome || formData.nome.length < 2) {
       newErrors.nome = "Nome deve ter pelo menos 2 caracteres";
@@ -111,8 +114,9 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         objectivoAngariacao: formData.objectivoAngariacao
           ? parseFloat(formData.objectivoAngariacao)
           : undefined,
-        publico: formData.publico,
+        publiko: formData.publiko,
         aldeiaId: formData.aldeiaId,
+        estado: formData.estado,
       });
 
       if (!initialData) {
@@ -122,8 +126,9 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
           dataInicio: "",
           dataFim: "",
           objectivoAngariacao: "",
-          publico: false,
+          publiko: false,
           aldeiaId: aldeiaId || "",
+          estado: "rascunho",
         });
       }
       onOpenChange(false);
@@ -180,7 +185,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 }}
                 required
               />
-              <p className="text-xs text-muted-foreground">Nome que will appear nos cartões e materiais</p>
+              <p className="text-xs text-muted-foreground">Nome que aparecerá nos cartões e materiais</p>
               {errors.nome && <p className="text-sm text-destructive">{errors.nome}</p>}
             </div>
 
@@ -243,6 +248,27 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
               <p className="text-xs text-muted-foreground">Valor objetivo a angariar (opcional)</p>
             </div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="estado">Estado do Evento</Label>
+              <Select
+                value={formData.estado}
+                onValueChange={(value: "rascunho" | "ativo" | "fechado" | "finalizado") => 
+                  setFormData({ ...formData, estado: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rascunho">Rascunho</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="fechado">Fechado</SelectItem>
+                  <SelectItem value="finalizado">Finalizado</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Evento ativo fica visível para participantes</p>
+            </div>
+
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="publico">Evento Público</Label>
@@ -252,8 +278,8 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
               </div>
               <Switch
                 id="publico"
-                checked={formData.publico}
-                onCheckedChange={(checked) => setFormData({ ...formData, publico: checked })}
+                checked={formData.publiko}
+                onCheckedChange={(checked) => setFormData({ ...formData, publiko: checked })}
               />
             </div>
           </div>
