@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Aldeia {
+  id: string;
+  nome: string;
+  tipoOrganizacao: string;
+}
+
 interface RegisterModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +36,7 @@ interface RegisterModalProps {
     telefone?: string;
     role?: string;
     tipoOrganizacao?: string;
+    aldeiaId?: string;
   }) => Promise<void>;
   onLoginClick: () => void;
 }
@@ -42,9 +49,29 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
     telefone: "",
     role: "user",
     tipoOrganizacao: "",
+    aldeiaId: "",
   });
+  const [aldeias, setAldeias] = useState<Aldeia[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      fetchAldeias();
+    }
+  }, [open]);
+
+  const fetchAldeias = async () => {
+    try {
+      const response = await fetch("/api/aldeias");
+      const data = await response.json();
+      if (data.data) {
+        setAldeias(data.data);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar aldeias:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +82,7 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
       const data = {
         ...formData,
         tipoOrganizacao: formData.role === "aldeia_admin" ? formData.tipoOrganizacao : undefined,
+        aldeiaId: formData.role !== "aldeia_admin" && formData.aldeiaId ? formData.aldeiaId : undefined,
       };
       await onRegister(data);
       setFormData({
@@ -64,6 +92,7 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
         telefone: "",
         role: "user",
         tipoOrganizacao: "",
+        aldeiaId: "",
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao registar");
@@ -147,6 +176,27 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.role !== "aldeia_admin" && aldeias.length > 0 && (
+              <div className="grid gap-2">
+                <Label htmlFor="aldeia">Aldeia/Organização *</Label>
+                <Select
+                  value={formData.aldeiaId}
+                  onValueChange={(value) => setFormData({ ...formData, aldeiaId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a aldeia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aldeias.map((aldeia) => (
+                      <SelectItem key={aldeia.id} value={aldeia.id}>
+                        {aldeia.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {formData.role === "aldeia_admin" && (
               <div className="grid gap-2">

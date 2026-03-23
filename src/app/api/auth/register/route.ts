@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { nome, email, password, telefone, role, tipoOrganizacao } = validation.data;
+    const { nome, email, password, telefone, role, tipoOrganizacao, aldeiaId: aldeiaIdFromBody } = validation.data;
 
     // Verificar se email já existe
     const existingUser = await prisma.user.findUnique({
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Criar utilizador (e aldeia se for admin)
     let aldeiaId: string | undefined;
+    let aldeiaPrincipalId: string | undefined;
     let isNewOrganization = false;
 
     if (role === 'aldeia_admin' && tipoOrganizacao) {
@@ -78,7 +79,12 @@ export async function POST(request: NextRequest) {
       });
 
       aldeiaId = aldeia.id;
+      aldeiaPrincipalId = aldeia.id;
       isNewOrganization = true;
+    } else if (aldeiaIdFromBody) {
+      // Utilizador normal pode selecionar uma aldeia principal
+      aldeiaId = aldeiaIdFromBody;
+      aldeiaPrincipalId = aldeiaIdFromBody;
     }
 
     // Criar utilizador
@@ -90,6 +96,7 @@ export async function POST(request: NextRequest) {
         telefone,
         role: role || 'user',
         aldeiaId,
+        aldeiaPrincipalId,
         emailVerificado: false,
         notificacoesEmail: true,
       },

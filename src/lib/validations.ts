@@ -24,12 +24,18 @@ export const registerSchema = z.object({
   telefone: telefoneSchema,
   role: z.enum(['user', 'vendedor', 'aldeia_admin']).default('user'),
   tipoOrganizacao: z.enum(['aldeia', 'escola', 'associacao_pais', 'clube']).optional(),
+  aldeiaId: z.string().optional(),
 });
 
 export const updateProfileSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
   telefone: telefoneSchema,
   notificacoesEmail: z.boolean().optional(),
+  aldeiaPrincipalId: z.string().optional(),
+  aldeiasPermitidas: z.array(z.object({
+    id: z.string(),
+    nome: z.string(),
+  })).optional(),
 });
 
 export const createUserSchema = z.object({

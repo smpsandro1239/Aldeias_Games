@@ -15,6 +15,179 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Aldeia {
+  id: string;
+  nome: string;
+}
+
+function AldeiasPermitidasSection({ 
+  user, 
+  token, 
+  onUpdate 
+}: { 
+  user: User; 
+  token: string; 
+  onUpdate: (data: { aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
+}) {
+  const [aldeias, setAldeias] = useState<Aldeia[]>([]);
+  const [selectedAldeia, setSelectedAldeia] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const permittedAldeias = user.aldeiasPermitidas?.aldeias || [];
+
+  useEffect(() => {
+    fetchAldeias();
+  }, []);
+
+  const fetchAldeias = async () => {
+    try {
+      const res = await fetch("/api/aldeias");
+      const data = await res.json();
+      if (data.data) {
+        const aldeiaIds = permittedAldeias.map((a) => a.id);
+        if (user.aldeiaPrincipal) {
+          aldeiaIds.push(user.aldeiaPrincipal.id);
+        }
+        const filtered = (data.data as Aldeia[]).filter(
+          (a) => !aldeiaIds.includes(a.id)
+        );
+        setAldeias(filtered);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar aldeias:", error);
+    }
+  };
+
+  const handleAddAldeia = async () => {
+    if (!selectedAldeia) return;
+    const aldeia = aldeias.find((a) => a.id === selectedAldeia);
+    if (!aldeia) return;
+
+    setLoading(true);
+    try {
+      const newPermitted = [...permittedAldeias, aldeia];
+      await onUpdate({ aldeiasPermitidas: newPermitted });
+      setSelectedAldeia("");
+      setShowAddForm(false);
+      toast.success(`Aldeia "${aldeia.nome}" adicionada`);
+    } catch (error) {
+      toast.error("Erro ao adicionar aldeia");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveAldeia = async (aldeiaId: string, aldeiaNome: string) => {
+    setLoading(true);
+    try {
+      const newPermitted = permittedAldeias.filter((a) => a.id !== aldeiaId);
+      await onUpdate({ aldeiasPermitidas: newPermitted });
+      toast.success(`Aldeia "${aldeiaNome}" removida`);
+    } catch (error) {
+      toast.error("Erro ao remover aldeia");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {permittedAldeias.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Aldeias que pode visualizar:</p>
+          <div className="flex flex-wrap gap-2">
+            {permittedAldeias.map((aldeia) => (
+              <div
+                key={aldeia.id}
+                className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm"
+              >
+                <span>{aldeia.nome}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAldeia(aldeia.id, aldeia.nome)}
+                  className="text-muted-foreground hover:text-destructive"
+                  disabled={loading}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          {permittedAldeias.some((a) => a.dataAdicao) && (
+            <p className="text-xs text-muted-foreground">
+              Data de adição:{" "}
+              {new Date(
+                permittedAldeias.find((a) => a.dataAdicao)?.dataAdicao || ""
+              ).toLocaleDateString("pt-PT")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {aldeias.length > 0 && !showAddForm && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAddForm(true)}
+        >
+          + Adicionar Aldeia
+        </Button>
+      )}
+
+      {showAddForm && aldeias.length > 0 && (
+        <div className="flex gap-2">
+          <Select value={selectedAldeia} onValueChange={setSelectedAldeia}>
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Selecione uma aldeia" />
+            </SelectTrigger>
+            <SelectContent>
+              {aldeias.map((aldeia) => (
+                <SelectItem key={aldeia.id} value={aldeia.id}>
+                  {aldeia.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleAddAldeia}
+            disabled={!selectedAldeia || loading}
+          >
+            Adicionar
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setShowAddForm(false);
+              setSelectedAldeia("");
+            }}
+          >
+            Cancelar
+          </Button>
+        </div>
+      )}
+
+      {aldeias.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Não existem mais aldeias disponíveis para adicionar.
+        </p>
+      )}
+    </div>
+  );
+}
 
 interface User {
   id: string;
@@ -24,6 +197,17 @@ interface User {
   role: string;
   notificacoesEmail: boolean;
   ultimoLogin?: string;
+  aldeiaPrincipal?: {
+    id: string;
+    nome: string;
+  };
+  aldeiasPermitidas?: {
+    aldeias: Array<{
+      id: string;
+      nome: string;
+      dataAdicao: string;
+    }>;
+  };
   estatisticas?: {
     totalParticipacoes: number;
     totalGasto: number;
@@ -36,7 +220,7 @@ interface ProfileModalProps {
   onOpenChange: (open: boolean) => void;
   user: User | null;
   token: string;
-  onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean }) => Promise<void>;
+  onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean; aldeiaPrincipalId?: string; aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
 }
 
 export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: ProfileModalProps) {
@@ -182,6 +366,29 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
                 onCheckedChange={(checked) =>
                   setFormData({ ...formData, notificacoesEmail: checked })
                 }
+              />
+            </div>
+
+            {/* Aldeia Principal */}
+            {user.aldeiaPrincipal && (
+              <div className="rounded-lg border p-4 space-y-3">
+                <h4 className="font-medium">Aldeia de Registo</h4>
+                <p className="text-sm text-muted-foreground">
+                  A sua aldeia principal onde se registou: <strong>{user.aldeiaPrincipal.nome}</strong>
+                </p>
+              </div>
+            )}
+
+            {/* Aldeias Permitidas */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <h4 className="font-medium">Outras Aldeias Disponíveis</h4>
+              <p className="text-sm text-muted-foreground">
+                Selecione outras aldeias que deseja poder visualizar e participar nos jogos.
+              </p>
+              <AldeiasPermitidasSection
+                user={user}
+                token={token}
+                onUpdate={onUpdate}
               />
             </div>
 

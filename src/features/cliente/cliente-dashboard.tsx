@@ -66,6 +66,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("jogos");
   const [saldo, setSaldo] = useState(0);
+  const [aldeiaPrincipal, setAldeiaPrincipal] = useState<{ id: string; nome: string } | null>(null);
 
   // Modais
   const [scratchCardOpen, setScratchCardOpen] = useState(false);
@@ -114,6 +115,17 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         const walletData = await walletRes.json();
         setSaldo(walletData.saldo);
       }
+
+      // Fetch perfil do utilizador para obter aldeia principal
+      const perfilRes = await fetch("/api/users/perfil", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (perfilRes.ok) {
+        const perfilData = await perfilRes.json();
+        if (perfilData.data?.aldeiaPrincipal) {
+          setAldeiaPrincipal(perfilData.data.aldeiaPrincipal);
+        }
+      }
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -122,6 +134,15 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   };
 
   const handleJogar = async (jogo: Jogo) => {
+    // Verificar se está a jogar noutra aldeia
+    const aldeiaDoJogo = jogo.evento?.aldeia?.nome;
+    if (aldeiaPrincipal && aldeiaDoJogo && aldeiaDoJogo !== aldeiaPrincipal.nome) {
+      const confirmed = window.confirm(
+        `Atenção: Está a jogar na aldeia "${aldeiaDoJogo}", que não é a sua aldeia de registo "${aldeiaPrincipal.nome}".\n\nDeseja continuar?`
+      );
+      if (!confirmed) return;
+    }
+
     setSelectedJogo(jogo);
 
     // Buscar números ocupados para o jogo

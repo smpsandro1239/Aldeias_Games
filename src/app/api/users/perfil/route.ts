@@ -26,6 +26,14 @@ export async function GET(request: NextRequest) {
             tipoOrganizacao: true,
           },
         },
+        aldeiaPrincipal: {
+          select: {
+            id: true,
+            nome: true,
+            slug: true,
+            tipoOrganizacao: true,
+          },
+        },
         _count: {
           select: {
             participacoes: true,
@@ -65,6 +73,8 @@ export async function GET(request: NextRequest) {
         notificacoesEmail: perfil.notificacoesEmail,
         ultimoLogin: perfil.ultimoLogin,
         aldeia: perfil.aldeia,
+        aldeiaPrincipal: perfil.aldeiaPrincipal,
+        aldeiasPermitidas: perfil.aldeiasPermitidas ? JSON.parse(perfil.aldeiasPermitidas) : null,
         estatisticas: {
           totalParticipacoes: perfil._count.participacoes,
           totalGasto,
@@ -107,13 +117,29 @@ export async function PATCH(request: NextRequest) {
     const data = validation.data;
 
     // Atualizar utilizador
+    const updateData: Record<string, unknown> = {
+      nome: data.nome,
+      telefone: data.telefone,
+      notificacoesEmail: data.notificacoesEmail,
+    };
+
+    if (data.aldeiaPrincipalId) {
+      updateData.aldeiaPrincipalId = data.aldeiaPrincipalId;
+      updateData.aldeiaId = data.aldeiaPrincipalId;
+    }
+
+    if (data.aldeiasPermitidas) {
+      updateData.aldeiasPermitidas = JSON.stringify({
+        aldeias: data.aldeiasPermitidas.map(a => ({
+          ...a,
+          dataAdicao: new Date().toISOString(),
+        })),
+      });
+    }
+
     const updated = await prisma.user.update({
       where: { id: user.id },
-      data: {
-        nome: data.nome,
-        telefone: data.telefone,
-        notificacoesEmail: data.notificacoesEmail,
-      },
+      data: updateData,
       select: {
         id: true,
         email: true,

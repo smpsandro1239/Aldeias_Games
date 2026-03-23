@@ -31,6 +31,11 @@ model User {
   aldeia   Aldeia? @relation("AldeiaUsers", fields: [aldeiaId], references: [id])
   aldeiaId String?
 
+  aldeiaPrincipal   Aldeia? @relation("AldeiaPrincipalUsers", fields: [aldeiaPrincipalId], references: [id])
+  aldeiaPrincipalId String?
+
+  aldeiasPermitidas String?  // JSON: { aldeias: [{ id: string, nome: string, dataAdicao: Date }] }
+
   aldeiasAdmin    Aldeia[] @relation("AldeiaAdmins")
   aldeiasVendedor Aldeia[] @relation("AldeiaVendedores")
 
@@ -48,6 +53,7 @@ model User {
   @@index([email])
   @@index([role])
   @@index([aldeiaId])
+  @@index([aldeiaPrincipalId])
   @@map("users")
 }
 
@@ -207,7 +213,8 @@ model Aldeia {
   updatedAt DateTime @updatedAt
 
   // Relações
-  users      User[]   @relation("AldeiaUsers")
+  users           User[]   @relation("AldeiaUsers")
+  usersPrincipais User[]   @relation("AldeiaPrincipalUsers")
   admins     User[]   @relation("AldeiaAdmins")
   eventos    Evento[]
   vendedores User[]   @relation("AldeiaVendedores")
