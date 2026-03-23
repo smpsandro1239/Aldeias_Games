@@ -1,32 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  LayoutDashboard,
-  Calendar,
-  Gamepad2,
-  Users,
-  TrendingUp,
-  DollarSign,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Play,
-  Trophy,
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal } from "@/components/modals";
+import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
+import { DashboardAnalytics } from "./analytics-dashboard";
 import { toast } from "sonner";
 
 interface AdminDashboardProps {
   token: string;
   aldeiaId?: string;
+  userRole?: string;
 }
 
 interface Stats {
@@ -36,83 +27,80 @@ interface Stats {
   jogosAtivos: number;
   totalParticipacoes: number;
   totalAngariado: number;
-  evolucaoMensal: { mes: string; valor: number; participacoes: number }[];
 }
 
-interface Evento {
-  id: string;
-  nome: string;
-  dataInicio: string;
-  dataFim: string;
-  estado: string;
-  publico: boolean;
-  totalAngariado: number;
-  totalParticipacoes: number;
-  objectivoAngariacao?: number;
-}
-
-interface Jogo {
-  id: string;
-  nome: string;
-  tipo: string;
-  preco: number;
-  stockAtual: number;
-  stockInicial: number;
-  estado: string;
-  sorteado: boolean;
-  evento?: { nome: string };
-}
-
-export function AdminDashboard({ token, aldeiaId }: AdminDashboardProps) {
+export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: AdminDashboardProps) {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [eventos, setEventos] = useState<Evento[]>([]);
-  const [jogos, setJogos] = useState<Jogo[]>([]);
+  const [eventos, setEventos] = useState<any[]>([]);
+  const [jogos, setJogos] = useState<any[]>([]);
+  const [aldeias, setAldeias] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [participacoes, setParticipacoes] = useState<any[]>([]);
+  const [vencedores, setVencedores] = useState<any[]>([]);
 
-  // Modais
-  const [createEventoOpen, setCreateEventoOpen] = useState(false);
-  const [createJogoOpen, setCreateJogoOpen] = useState(false);
+  // Modals state
+  const [eventoModalOpen, setEventoModalOpen] = useState(false);
+  const [jogoModalOpen, setJogoModalOpen] = useState(false);
+  const [aldeiaModalOpen, setAldeiaModalOpen] = useState(false);
+  const [userModalOpen, setUserModalOpen] = useState(false);
   const [sorteioOpen, setSorteioOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [selectedJogo, setSelectedJogo] = useState<Jogo | null>(null);
-  const [selectedEventoId, setSelectedEventoId] = useState<string>("");
+  const [resultadosExternosOpen, setResultadosExternosOpen] = useState(false);
+
+  // Selections
+  const [selectedEvento, setSelectedEvento] = useState<any>(null);
+  const [selectedJogo, setSelectedJogo] = useState<any>(null);
+  const [selectedAldeia, setSelectedAldeia] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedEventoIdParaJogo, setSelectedEventoIdParaJogo] = useState<string>("");
+
+  // Delete State
+  const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
 
   useEffect(() => {
     fetchData();
-  }, [token, aldeiaId]);
+  }, [token, aldeiaId, userRole]);
 
   const fetchData = async () => {
     if (!token) return;
     setLoading(true);
 
     try {
-      // Fetch stats
-      const statsRes = await fetch(`/api/dashboard/stats?${aldeiaId ? `aldeiaId=${aldeiaId}` : ""}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData.data);
-      }
+      const headers = { Authorization: `Bearer ${token}` };
+      const q = aldeiaId ? `?aldeiaId=${aldeiaId}` : "";
 
-      // Fetch eventos
-      const eventosRes = await fetch(`/api/eventos?${aldeiaId ? `aldeiaId=${aldeiaId}` : ""}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (eventosRes.ok) {
-        const eventosData = await eventosRes.json();
-        setEventos(eventosData.data);
-      }
+      const getApi = async (url: string) => {
+        const res = await fetch(url, { headers });
+        if (res.ok) {
+          const j = await res.json();
+          return j.data;
+        }
+        return null;
+      };
 
-      // Fetch jogos
-      const jogosRes = await fetch(`/api/jogos?${aldeiaId ? `aldeiaId=${aldeiaId}` : ""}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (jogosRes.ok) {
-        const jogosData = await jogosRes.json();
-        setJogos(jogosData.data);
+      const [st, ev, jg] = await Promise.all([
+        getApi(`/api/dashboard/stats${q}`),
+        getApi(`/api/eventos${q}`),
+        getApi(`/api/jogos${q}`)
+      ]);
+
+      if (st) setStats(st);
+      if (ev) setEventos(ev);
+      if (jg) setJogos(jg);
+
+      if (userRole === "super_admin") {
+        const al = await getApi(`/api/aldeias`);
+        if (al) setAldeias(al);
       }
+      
+      const us = await getApi(`/api/users${q}`);
+      if (us) setUsers(us);
+
+      const part = await getApi(`/api/participacoes${q}${q ? '&' : '?'}ganhador=true`);
+      if (part) setVencedores(part);
+
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -120,91 +108,179 @@ export function AdminDashboard({ token, aldeiaId }: AdminDashboardProps) {
     }
   };
 
-  const handleCreateEvento = async (data: {
-    nome: string;
-    descricao?: string;
-    dataInicio: string;
-    dataFim: string;
-    objectivoAngariacao?: number;
-    publico: boolean;
-  }) => {
-    const response = await fetch("/api/eventos", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ ...data, aldeiaId: aldeiaId || "" }),
-    });
-
-    if (response.ok) {
-      toast.success("Evento criado com sucesso!");
-      fetchData();
-    } else {
-      const error = await response.json();
-      throw new Error(error.error);
-    }
-  };
-
-  const handleCreateJogo = async (data: {
-    nome: string;
-    tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
-    descricao?: string;
-    preco: number;
-    stockInicial: number;
-    limitePorUsuario: number;
-    eventoId: string;
-    configuracao: Record<string, unknown>;
-  }) => {
-    const response = await fetch("/api/jogos", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+  // --- EVENTOS ---
+  const handleSaveEvento = async (data: any) => {
+    const isEditing = !!data.id;
+    const url = isEditing ? `/api/eventos/${data.id}` : `/api/eventos`;
+    const method = isEditing ? "PUT" : "POST";
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(data),
     });
 
-    if (response.ok) {
-      toast.success("Jogo criado com sucesso!");
+    if (res.ok) {
+      toast.success(`Evento ${isEditing ? "atualizado" : "criado"} com sucesso!`);
+      fetchData();
+      setEventoModalOpen(false);
+    } else {
+      const err = await res.json();
+      throw new Error(err.error || "Erro ao salvar evento");
+    }
+  };
+
+  // --- JOGOS ---
+  const handleSaveJogo = async (data: any) => {
+    const isEditing = !!data.id;
+    const url = isEditing ? `/api/jogos/${data.id}` : `/api/jogos`;
+    const method = isEditing ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      toast.success(`Jogo ${isEditing ? "atualizado" : "criado"} com sucesso!`);
+      fetchData();
+      setJogoModalOpen(false);
+    } else {
+      const err = await res.json();
+      throw new Error(err.error || "Erro ao salvar jogo");
+    }
+  };
+
+  // --- TOGGLE JOGO ESTADO ---
+  const handleToggleJogoEstado = async (jogo: any) => {
+    const novoEstado = jogo.estado === 'aberto' ? 'fechado' : 'aberto';
+    const res = await fetch(`/api/jogos/${jogo.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ estado: novoEstado }),
+    });
+    if (res.ok) {
+      toast.success(`Jogo ${novoEstado === 'aberto' ? 'ativado' : 'desativado'} com sucesso!`);
       fetchData();
     } else {
-      const error = await response.json();
-      throw new Error(error.error);
+      const err = await res.json();
+      toast.error(err.error || "Erro ao alterar estado do jogo");
     }
+  };
+
+  // --- ALDEIAS ---
+  const handleSaveAldeia = async (data: any) => {
+    const isEditing = !!data.id;
+    const url = isEditing ? `/api/aldeias/${data.id}` : `/api/aldeias`;
+    const method = isEditing ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      toast.success(`Organização ${isEditing ? "atualizada" : "criada"} com sucesso!`);
+      fetchData();
+      setAldeiaModalOpen(false);
+    } else {
+      const err = await res.json();
+      throw new Error(err.error || "Erro ao salvar organização");
+    }
+  };
+
+  // --- USERS ---
+  const handleSaveUser = async (data: any) => {
+    const isEditing = !!data.id;
+    const url = isEditing ? `/api/users/${data.id}` : `/api/users`;
+    const method = isEditing ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      toast.success(`Utilizador ${isEditing ? "atualizado" : "criado"} com sucesso!`);
+      fetchData();
+      setUserModalOpen(false);
+    } else {
+      const err = await res.json();
+      throw new Error(err.error || "Erro ao salvar utilizador");
+    }
+  };
+
+  // --- CONVERT PRIZE ---
+  const handleConvertPrize = async (participacaoId: string, valor: number) => {
+    const res = await fetch("/api/admin/convert-prize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ participacaoId, valor }),
+    });
+
+    if (res.ok) {
+      toast.success("Prémio convertido em saldo com sucesso!");
+      fetchData();
+    } else {
+      const err = await res.json();
+      toast.error(err.error || "Erro ao converter prémio");
+    }
+  };
+
+  // --- DELETE ---
+  const requestDelete = (type: string, id: string) => {
+    setDeleteData({ type, id });
+    setConfirmDeleteOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteData) return;
+    const urls: Record<string, string> = {
+      evento: `/api/eventos/${deleteData.id}`,
+      jogo: `/api/jogos/${deleteData.id}`,
+      aldeia: `/api/aldeias/${deleteData.id}`,
+      user: `/api/users/${deleteData.id}`,
+    };
+
+    const res = await fetch(urls[deleteData.type], {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.ok) {
+      toast.success("Eliminado com sucesso!");
+      fetchData();
+    } else {
+      const err = await res.json();
+      toast.error(err.error || "Erro ao eliminar");
+    }
+    setConfirmDeleteOpen(false);
   };
 
   const handleExecutarSorteio = async (jogoId: string, observacoes?: string) => {
     const response = await fetch("/api/sorteios", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ jogoId, observacoes }),
     });
 
     const data = await response.json();
-
     if (response.ok) {
       toast.success("Sorteio executado com sucesso!");
       fetchData();
       return { success: true, data: data.data };
-    } else {
-      return { success: false, error: data.error };
     }
+    return { success: false, error: data.error };
   };
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, string> = {
-      rascunho: "secondary",
-      ativo: "default",
-      aberto: "default",
-      pausado: "warning",
-      fechado: "destructive",
-      finalizado: "outline",
+      rascunho: "secondary", ativo: "default", aberto: "default",
+      pausado: "warning", fechado: "destructive", finalizado: "outline",
     };
-    return <Badge variant={variants[estado] as never}>{estado}</Badge>;
+    return <Badge variant={variants[estado] as never || "default"}>{estado}</Badge>;
   };
 
   if (loading) {
@@ -217,102 +293,67 @@ export function AdminDashboard({ token, aldeiaId }: AdminDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Gestão da sua organização</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setCreateEventoOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Evento
+          {userRole === "super_admin" && (
+            <Button variant="outline" onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" /> Nova Aldeia
+            </Button>
+          )}
+          <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Novo Evento
+          </Button>
+          <Button variant="outline" onClick={() => setResultadosExternosOpen(true)}>
+            <Globe className="h-4 w-4 mr-2" /> Lotaria Externa
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Angariado</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats?.totalAngariado || 0)}</div>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Total Angariado</CardTitle><DollarSign className="h-4 w-4" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{formatCurrency(stats?.totalAngariado || 0)}</div></CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Participações</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalParticipacoes || 0}</div>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Participações</CardTitle><Users className="h-4 w-4" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{stats?.totalParticipacoes || 0}</div></CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Eventos Ativos</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.eventosAtivos || 0}</div>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Eventos Ativos</CardTitle><Calendar className="h-4 w-4" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{stats?.eventosAtivos || 0}</div></CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jogos Ativos</CardTitle>
-            <Gamepad2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.jogosAtivos || 0}</div>
-          </CardContent>
+          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Jogos Ativos</CardTitle><Gamepad2 className="h-4 w-4" /></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{stats?.jogosAtivos || 0}</div></CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="overview">
-            <LayoutDashboard className="h-4 w-4 mr-2" />
-            Visão Geral
-          </TabsTrigger>
-          <TabsTrigger value="eventos">
-            <Calendar className="h-4 w-4 mr-2" />
-            Eventos
-          </TabsTrigger>
-          <TabsTrigger value="jogos">
-            <Gamepad2 className="h-4 w-4 mr-2" />
-            Jogos
-          </TabsTrigger>
+          <TabsTrigger value="overview"><LayoutDashboard className="h-4 w-4 mr-2" /> Visão Geral</TabsTrigger>
+          <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 mr-2" /> Analytics</TabsTrigger>
+          <TabsTrigger value="eventos"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
+          <TabsTrigger value="jogos"><Gamepad2 className="h-4 w-4 mr-2" /> Jogos</TabsTrigger>
+          <TabsTrigger value="vencedores"><Trophy className="h-4 w-4 mr-2" /> Vencedores</TabsTrigger>
+          <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" /> Utilizadores</TabsTrigger>
+          {userRole === "super_admin" && (
+            <TabsTrigger value="aldeias"><Building2 className="h-4 w-4 mr-2" /> Aldeias</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Eventos Recentes */}
           <Card>
-            <CardHeader>
-              <CardTitle>Eventos Recentes</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Eventos Recentes</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {eventos.slice(0, 3).map((evento) => (
-                  <div key={evento.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{evento.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(evento.dataInicio)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {getEstadoBadge(evento.estado)}
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatCurrency(evento.totalAngariado)}
-                      </p>
-                    </div>
+                {eventos.slice(0, 3).map((ev) => (
+                  <div key={ev.id} className="flex justify-between items-center">
+                    <div><p className="font-medium">{ev.nome}</p><p className="text-sm text-muted-foreground">{formatDate(ev.dataInicio)}</p></div>
+                    <div className="text-right">{getEstadoBadge(ev.estado)}<p className="text-sm">{formatCurrency(ev.totalAngariado)}</p></div>
                   </div>
                 ))}
               </div>
@@ -320,47 +361,24 @@ export function AdminDashboard({ token, aldeiaId }: AdminDashboardProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="eventos" className="space-y-4">
-          <div className="flex justify-between">
-            <h2 className="text-xl font-semibold">Eventos</h2>
-            <Button onClick={() => setCreateEventoOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Evento
-            </Button>
-          </div>
+        <TabsContent value="analytics" className="space-y-4">
+          <DashboardAnalytics token={token} aldeiaId={aldeiaId} />
+        </TabsContent>
 
+        <TabsContent value="eventos" className="space-y-4">
+          <div className="flex justify-between"><h2 className="text-xl font-semibold">Gestão de Eventos</h2></div>
           <div className="grid gap-4">
-            {eventos.map((evento) => (
-              <Card key={evento.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">{evento.nome}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(evento.dataInicio)} - {formatDate(evento.dataFim)}
-                      </p>
-                      {evento.objectivoAngariacao && (
-                        <div className="mt-2">
-                          <Progress
-                            value={(evento.totalAngariado / evento.objectivoAngariacao) * 100}
-                            className="w-48"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatCurrency(evento.totalAngariado)} /{" "}
-                            {formatCurrency(evento.objectivoAngariacao)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getEstadoBadge(evento.estado)}
-                      <Button variant="ghost" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
+            {eventos.map((ev) => (
+              <Card key={ev.id}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">{ev.nome}</h3>
+                    <p className="text-sm text-muted-foreground">{formatDate(ev.dataInicio)} - {formatDate(ev.dataFim)}</p>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {getEstadoBadge(ev.estado)}
+                    <Button variant="ghost" size="icon" onClick={() => { setSelectedEvento(ev); setEventoModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("evento", ev.id)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </CardContent>
               </Card>
@@ -370,88 +388,177 @@ export function AdminDashboard({ token, aldeiaId }: AdminDashboardProps) {
 
         <TabsContent value="jogos" className="space-y-4">
           <div className="flex justify-between">
-            <h2 className="text-xl font-semibold">Jogos</h2>
-            <Button
-              onClick={() => {
-                if (eventos.length > 0) {
-                  setSelectedEventoId(eventos[0].id);
-                  setCreateJogoOpen(true);
-                } else {
-                  toast.error("Crie um evento primeiro");
-                }
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Jogo
+            <h2 className="text-xl font-semibold">Gestão de Jogos</h2>
+            <Button onClick={() => { if(eventos.length) { setSelectedJogo(null); setSelectedEventoIdParaJogo(eventos[0].id); setJogoModalOpen(true); } else { toast.error("Crie um evento primeiro"); } }}>
+              <Plus className="h-4 w-4 mr-2" /> Novo Jogo
             </Button>
           </div>
-
           <div className="grid gap-4">
-            {jogos.map((jogo) => (
-              <Card key={jogo.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">{jogo.nome}</h3>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {jogo.tipo.replace("_", " ")} • {jogo.evento?.nome}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatCurrency(jogo.preco)} • Stock: {jogo.stockAtual}/{jogo.stockInicial}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getEstadoBadge(jogo.estado)}
-                      {!jogo.sorteado && jogo.estado === "fechado" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedJogo(jogo);
-                            setSorteioOpen(true);
-                          }}
-                        >
-                          <Trophy className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {jogo.estado === "rascunho" && (
-                        <Button variant="ghost" size="icon">
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+            {jogos.map((jg) => (
+              <Card key={jg.id}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">{jg.nome}</h3>
+                    <p className="text-sm text-muted-foreground">{jg.tipo} • {jg.evento?.nome} • {formatCurrency(jg.preco)}</p>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {getEstadoBadge(jg.estado)}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title={jg.estado === 'aberto' ? 'Desativar jogo' : 'Ativar jogo'}
+                      className={jg.estado === 'aberto' ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}
+                      onClick={() => handleToggleJogoEstado(jg)}
+                    >
+                      {jg.estado === 'aberto' ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setSelectedJogo(jg); setSelectedEventoIdParaJogo(jg.eventoId); setJogoModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("jogo", jg.id)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         </TabsContent>
+
+        <TabsContent value="vencedores" className="space-y-4">
+          <div className="flex justify-between">
+            <h2 className="text-xl font-semibold">Participações Vencedoras</h2>
+          </div>
+          <div className="grid gap-4">
+            {vencedores.length === 0 && (
+              <p className="text-muted-foreground text-center py-8">Nenhum vencedor encontrado no momento.</p>
+            )}
+            {vencedores.map((v) => (
+              <Card key={v.id}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h3 className="font-semibold">{v.jogo?.nome}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Cliente: {v.nomeCliente || v.user?.nome || "Anónimo"} • {v.telefoneCliente || v.user?.telefone || "Sem contacto"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Data: {formatDate(v.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {v.premioEntregue ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Prémio Entregue/Convertido
+                      </Badge>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            const valor = prompt("Introduza o valor a creditar na carteira (€):", "25");
+                            if (valor && !isNaN(parseFloat(valor))) {
+                              handleConvertPrize(v.id, parseFloat(valor));
+                            }
+                          }}
+                        >
+                          <DollarSign className="h-4 w-4 mr-1" /> Converter em Saldo
+                        </Button>
+                        <Button 
+                           size="sm"
+                           onClick={async () => {
+                             if (confirm("Marcar prémio como entregue fisicamente?")) {
+                               const res = await fetch(`/api/participacoes/${v.id}`, {
+                                 method: 'PUT',
+                                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                                 body: JSON.stringify({ premioEntregue: true })
+                               });
+                               if(res.ok) { toast.success("Marcado como entregue"); fetchData(); }
+                             }
+                           }}
+                        >
+                          Entregar Prémio
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <div className="flex justify-between">
+            <h2 className="text-xl font-semibold">Gestão de Utilizadores</h2>
+            <Button onClick={() => { setSelectedUser(null); setUserModalOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" /> Novo Utilizador
+            </Button>
+          </div>
+          <div className="grid gap-4">
+            {users.map((u) => (
+              <Card key={u.id}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">{u.nome}</h3>
+                    <p className="text-sm text-muted-foreground">{u.email} • {u.role}</p>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setUserModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("user", u.id)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {userRole === "super_admin" && (
+          <TabsContent value="aldeias" className="space-y-4">
+             <div className="flex justify-between">
+              <h2 className="text-xl font-semibold">Gestão de Aldeias/Organizações</h2>
+            </div>
+            <div className="grid gap-4">
+              {aldeias.map((al) => (
+                <Card key={al.id}>
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">{al.nome}</h3>
+                      <p className="text-sm text-muted-foreground">{al.tipoOrganizacao} • {al.email}</p>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Button variant="ghost" size="icon" onClick={() => { setSelectedAldeia(al); setAldeiaModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("aldeia", al.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
-      {/* Modais */}
+      {/* Modals */}
       <CreateEventoModal
-        open={createEventoOpen}
-        onOpenChange={setCreateEventoOpen}
-        onSubmit={handleCreateEvento}
+        open={eventoModalOpen}
+        onOpenChange={setEventoModalOpen}
+        onSubmit={handleSaveEvento}
         aldeiaId={aldeiaId || ""}
+        initialData={selectedEvento}
+        aldeias={aldeias}
       />
+      <CreateJogoModal open={jogoModalOpen} onOpenChange={setJogoModalOpen} onSubmit={handleSaveJogo} eventoId={selectedEventoIdParaJogo} initialData={selectedJogo} />
+      <AldeiaModal open={aldeiaModalOpen} onOpenChange={setAldeiaModalOpen} onSubmit={handleSaveAldeia} initialData={selectedAldeia} />
+      <UserModal open={userModalOpen} onOpenChange={setUserModalOpen} onSubmit={handleSaveUser} initialData={selectedUser} aldeias={aldeias} currentUserRole={userRole} />
 
-      <CreateJogoModal
-        open={createJogoOpen}
-        onOpenChange={setCreateJogoOpen}
-        onSubmit={handleCreateJogo}
-        eventoId={selectedEventoId}
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title="Confirmar Eliminação"
+        description="Tem a certeza que deseja eliminar este registo? Esta ação não pode ser desfeita."
+        onConfirm={executeDelete}
       />
-
-      {selectedJogo && (
-        <SorteioModal
-          open={sorteioOpen}
-          onOpenChange={setSorteioOpen}
-          jogoNome={selectedJogo.nome}
-          totalParticipacoes={selectedJogo.stockInicial - selectedJogo.stockAtual}
-          onExecutarSorteio={(obs) => handleExecutarSorteio(selectedJogo.id, obs)}
-        />
-      )}
+      <ResultadosExternosModal
+        open={resultadosExternosOpen}
+        onOpenChange={setResultadosExternosOpen}
+        token={token}
+      />
     </div>
   );
 }

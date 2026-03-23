@@ -6,13 +6,13 @@ import { z } from 'zod';
 
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
 });
 
 export const registerSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
   telefone: z.string().optional(),
   role: z.enum(['user', 'vendedor', 'aldeia_admin']).default('user'),
   tipoOrganizacao: z.enum(['aldeia', 'escola', 'associacao_pais', 'clube']).optional(),
@@ -27,7 +27,7 @@ export const updateProfileSchema = z.object({
 export const createUserSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
   telefone: z.string().optional(),
   role: z.enum(['super_admin', 'aldeia_admin', 'vendedor', 'user']),
   aldeiaId: z.string().optional(),
@@ -94,7 +94,15 @@ export const createJogoSchema = z.object({
   stockInicial: z.number().int().min(1, 'Stock deve ser pelo menos 1'),
   limitePorUsuario: z.number().int().min(1).default(10),
   eventoId: z.string(),
-  premioId: z.string().optional(),
+  // Novos campos para rifas e sorteio
+  modoSorteio: z.enum(['app', 'externo']).default('app'),
+  detalhesSorteioExterno: z.string().optional(),
+  premios: z.array(z.object({
+    nome: z.string().min(2),
+    descricao: z.string().optional(),
+    valorDinheiroAlternative: z.number().optional(),
+    ordem: z.number().int().default(0),
+  })).optional(),
 });
 
 export const updateJogoSchema = createJogoSchema.partial().omit({ eventoId: true });
@@ -107,11 +115,10 @@ export const createPremioSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   descricao: z.string().optional(),
   imagemUrl: z.string().optional(),
-  valorEstimado: z.number().min(0).optional(),
-  tipo: z.enum(['dinheiro', 'fisico', 'experiencia']).default('fisico'),
-  percentagem: z.number().min(0).max(1).optional(),
-  quantidade: z.number().int().min(0).optional(),
+  valorDinheiroAlternative: z.number().min(0).optional(),
+  ordem: z.number().int().default(0),
   aldeiaId: z.string(),
+  jogoId: z.string().optional(),
 });
 
 export const updatePremioSchema = createPremioSchema.partial().omit({ aldeiaId: true });
@@ -124,11 +131,14 @@ export const createParticipacaoSchema = z.object({
   jogoId: z.string(),
   dadosParticipacao: z.record(z.any()),
   quantidade: z.number().int().min(1).default(1),
-  metodoPagamento: z.enum(['mbway', 'dinheiro', 'stripe', 'transferencia']),
+  metodoPagamento: z.enum(['mbway', 'dinheiro', 'stripe', 'transferencia', 'saldo']),
   dadosCliente: z.object({
-    nome: z.string(),
-    telefone: z.string(),
+    nome: z.string().min(2, 'Nome é obrigatório'),
+    telefone: z.string().optional(),
     email: z.string().email().optional(),
+  }).refine(data => data.telefone || data.email, {
+    message: "Deve fornecer pelo menos um telefone ou email",
+    path: ["telefone"],
   }).optional(),
 });
 

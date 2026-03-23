@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react";
+import { LotteryAnimation } from "@/components/games/lottery-animation";
+import { motion } from "framer-motion";
 
 interface SorteioModalProps {
   open: boolean;
@@ -109,47 +111,44 @@ export function SorteioModal({
         ) : (
           <>
             <div className="py-4 space-y-4">
-              <Alert className="border-green-500">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <AlertDescription className="text-green-700">
-                  Sorteio executado com sucesso!
-                </AlertDescription>
-              </Alert>
+              <LotteryAnimation 
+                finalResult={
+                  (resultado.resultado as any).letraVencedora 
+                    ? `${(resultado.resultado as any).letraVencedora}${(resultado.resultado as any).numeroVencedor}`
+                    : `${(resultado.resultado as any).numeroVencedor}`
+                }
+                isSpinning={loading}
+                type={(resultado.resultado as any).letraVencedora ? "coordinate" : "number"}
+              />
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Resultado:</h4>
-                <div className="bg-muted p-3 rounded-lg">
-                  {resultado.resultado.numeroVencedor && (
-                    <p className="text-2xl font-bold text-center">
-                      Número {resultado.resultado.numeroVencedor}
-                    </p>
-                  )}
-                  {resultado.resultado.letraVencedora && (
-                    <p className="text-2xl font-bold text-center">
-                      {resultado.resultado.letraVencedora}{resultado.resultado.numeroVencedor}
-                    </p>
-                  )}
-                </div>
-              </div>
+              {/* Detalhes aparecem só depois da animação (simulado pelo loading aqui) */}
+              {!loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-4"
+                >
+                  <Alert className="border-green-500">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <AlertDescription className="text-green-700">
+                      Sorteio executado com sucesso!
+                    </AlertDescription>
+                  </Alert>
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Vencedores:</h4>
-                <p>{resultado.vencedores} vencedor(es)</p>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Hash de Auditoria:</h4>
-                <code className="block bg-muted p-2 rounded text-xs break-all">
-                  {resultado.hash}
-                </code>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Seed:</h4>
-                <code className="block bg-muted p-2 rounded text-xs break-all">
-                  {resultado.seed}
-                </code>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-medium text-muted-foreground">Vencedores:</h4>
+                      <p className="font-bold">{resultado.vencedores} vencedor(es)</p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <h4 className="text-sm font-medium text-muted-foreground">Audit Hash:</h4>
+                      <code className="text-[10px] break-all opacity-70">
+                        {resultado.hash.substring(0, 16)}...
+                      </code>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             <DialogFooter>

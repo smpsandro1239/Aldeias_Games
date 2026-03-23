@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,22 +14,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface EventoData {
+  id?: string;
+  nome: string;
+  descricao?: string;
+  dataInicio: string;
+  dataFim: string;
+  objectivoAngariacao?: number;
+  publico: boolean;
+  aldeiaId: string;
+}
 
 interface CreateEventoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: {
-    nome: string;
-    descricao?: string;
-    dataInicio: string;
-    dataFim: string;
-    objectivoAngariacao?: number;
-    publico: boolean;
-  }) => Promise<void>;
-  aldeiaId: string;
+  onSubmit: (data: EventoData) => Promise<void>;
+  aldeiaId?: string;
+  initialData?: any;
+  aldeias?: any[];
 }
 
-export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId }: CreateEventoModalProps) {
+export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, initialData, aldeias }: CreateEventoModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
@@ -37,8 +44,33 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId }: Cr
     dataFim: "",
     objectivoAngariacao: "",
     publico: false,
+    aldeiaId: aldeiaId || "",
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialData && open) {
+      setFormData({
+        nome: initialData.nome || "",
+        descricao: initialData.descricao || "",
+        dataInicio: initialData.dataInicio ? new Date(initialData.dataInicio).toISOString().slice(0, 16) : "",
+        dataFim: initialData.dataFim ? new Date(initialData.dataFim).toISOString().slice(0, 16) : "",
+        objectivoAngariacao: initialData.objectivoAngariacao ? String(initialData.objectivoAngariacao) : "",
+        publico: initialData.publico || false,
+        aldeiaId: initialData.aldeiaId || aldeiaId || "",
+      });
+    } else if (!open) {
+      setFormData({
+        nome: "",
+        descricao: "",
+        dataInicio: "",
+        dataFim: "",
+        objectivoAngariacao: "",
+        publico: false,
+        aldeiaId: aldeiaId || "",
+      });
+    }
+  }, [initialData, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +78,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId }: Cr
 
     try {
       await onSubmit({
+        id: initialData?.id,
         nome: formData.nome,
         descricao: formData.descricao || undefined,
         dataInicio: formData.dataInicio,
@@ -54,16 +87,20 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId }: Cr
           ? parseFloat(formData.objectivoAngariacao)
           : undefined,
         publico: formData.publico,
+        aldeiaId: formData.aldeiaId,
       });
 
-      setFormData({
-        nome: "",
-        descricao: "",
-        dataInicio: "",
-        dataFim: "",
-        objectivoAngariacao: "",
-        publico: false,
-      });
+      if (!initialData) {
+        setFormData({
+          nome: "",
+          descricao: "",
+          dataInicio: "",
+          dataFim: "",
+          objectivoAngariacao: "",
+          publico: false,
+          aldeiaId: aldeiaId || "",
+        });
+      }
       onOpenChange(false);
     } finally {
       setLoading(false);
@@ -74,14 +111,36 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId }: Cr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Novo Evento</DialogTitle>
+          <DialogTitle>{initialData ? "Editar Evento" : "Novo Evento"}</DialogTitle>
           <DialogDescription>
-            Crie um novo evento de angariação de fundos.
+            {initialData ? "Edite as informações do evento." : "Crie um novo evento de angariação de fundos."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            {aldeias && aldeias.length > 0 && !initialData && (
+              <div className="grid gap-2">
+                <Label htmlFor="aldeia">Aldeia/Organização *</Label>
+                <Select
+                  value={formData.aldeiaId}
+                  onValueChange={(value) => setFormData({ ...formData, aldeiaId: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma aldeia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aldeias.map((al) => (
+                      <SelectItem key={al.id} value={al.id}>
+                        {al.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="nome">Nome do Evento *</Label>
               <Input
@@ -161,7 +220,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId }: Cr
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "A criar..." : "Criar Evento"}
+              {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Evento")}
             </Button>
           </DialogFooter>
         </form>

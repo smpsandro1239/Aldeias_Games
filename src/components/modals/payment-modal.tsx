@@ -13,15 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Smartphone } from "lucide-react";
+import { CreditCard, Smartphone, Wallet } from "lucide-react";
 
 interface PaymentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   valor: number;
   descricao: string;
+  saldoDisponivel?: number;
   onMBWayPayment: (telefone: string) => Promise<void>;
   onStripePayment: () => Promise<void>;
+  onSaldoPayment?: () => Promise<void>;
 }
 
 export function PaymentModal({
@@ -29,12 +31,14 @@ export function PaymentModal({
   onOpenChange,
   valor,
   descricao,
+  saldoDisponivel = 0,
   onMBWayPayment,
   onStripePayment,
+  onSaldoPayment,
 }: PaymentModalProps) {
   const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [metodo, setMetodo] = useState("mbway");
+  const [metodo, setMetodo] = useState(saldoDisponivel >= valor ? "saldo" : "mbway");
 
   const handleMBWaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +61,17 @@ export function PaymentModal({
     }
   };
 
+  const handleSaldoSubmit = async () => {
+    if (!onSaldoPayment) return;
+    setLoading(true);
+    try {
+      await onSaldoPayment();
+      onOpenChange(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -68,7 +83,13 @@ export function PaymentModal({
         </DialogHeader>
 
         <Tabs value={metodo} onValueChange={setMetodo} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${onSaldoPayment ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {onSaldoPayment && (
+              <TabsTrigger value="saldo">
+                <Wallet className="h-4 w-4 mr-2" />
+                Saldo
+              </TabsTrigger>
+            )}
             <TabsTrigger value="mbway">
               <Smartphone className="h-4 w-4 mr-2" />
               MBWay
@@ -78,6 +99,41 @@ export function PaymentModal({
               Cartão
             </TabsTrigger>
           </TabsList>
+
+          {onSaldoPayment && (
+            <TabsContent value="saldo">
+              <div className="py-6 text-center space-y-4">
+                <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-xl border border-primary/20">
+                  <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Saldo Disponível</span>
+                  <span className={`text-3xl font-black ${saldoDisponivel >= valor ? 'text-primary' : 'text-destructive'}`}>
+                    {saldoDisponivel.toFixed(2)}€
+                  </span>
+                </div>
+                
+                {saldoDisponivel < valor ? (
+                  <p className="text-sm text-destructive font-medium">
+                    Saldo insuficiente para esta compra.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Ao confirmar, o valor será deduzido da sua carteira Aldeias.
+                  </p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleSaldoSubmit} 
+                  disabled={loading || saldoDisponivel < valor}
+                >
+                  {loading ? "A processar..." : "Pagar com Saldo"}
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+          )}
 
           <TabsContent value="mbway">
             <form onSubmit={handleMBWaySubmit}>

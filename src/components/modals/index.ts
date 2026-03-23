@@ -11,3 +11,6 @@ export { PoioDaVacaModal } from "./poio-da-vaca-modal";
 export { SorteioModal } from "./sorteio-modal";
 export { NotificationsModal } from "./notifications-modal";
 export { ConfirmModal } from "./confirm-modal";
+export { AldeiaModal } from "./aldeia-modal";
+export { UserModal } from "./user-modal";
+export { ResultadosExternosModal } from "./resultados-externos-modal";

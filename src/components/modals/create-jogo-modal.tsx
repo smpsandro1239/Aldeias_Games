@@ -21,34 +21,109 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface JogoData {
+  id?: string;
+  nome: string;
+  tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+  descricao?: string;
+  preco: number;
+  stockInicial: number;
+  limitePorUsuario: number;
+  eventoId: string;
+  configuracao: Record<string, unknown>;
+  modoSorteio?: "app" | "externo";
+  detalhesSorteioExterno?: string;
+  premios?: Array<{
+    nome: string;
+    descricao?: string;
+    valorDinheiroAlternative?: number;
+    ordem: number;
+  }>;
+}
+
 interface CreateJogoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: {
-    nome: string;
-    tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
-    descricao?: string;
-    preco: number;
-    stockInicial: number;
-    limitePorUsuario: number;
-    eventoId: string;
-    configuracao: Record<string, unknown>;
-  }) => Promise<void>;
+  onSubmit: (data: JogoData) => Promise<void>;
   eventoId: string;
+  initialData?: JogoData;
 }
 
-export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId }: CreateJogoModalProps) {
-  const [formData, setFormData] = useState({
+import { useEffect } from "react";
+
+export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initialData }: CreateJogoModalProps) {
+  const [formData, setFormData] = useState<{
+    nome: string;
+    tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+    descricao: string;
+    preco: string;
+    stockInicial: string;
+    limitePorUsuario: string;
+    numeroInicial: string;
+    numeroFinal: string;
+    modoSorteio: "app" | "externo";
+    detalhesSorteioExterno: string;
+  }>({
     nome: "",
-    tipo: "rifa" as const,
+    tipo: "rifa",
     descricao: "",
     preco: "",
     stockInicial: "",
     limitePorUsuario: "10",
     numeroInicial: "1",
     numeroFinal: "1000",
+    modoSorteio: "app",
+    detalhesSorteioExterno: "",
   });
+
+  const [premios, setPremios] = useState<Array<{
+    nome: string;
+    descricao: string;
+    valorDinheiroAlternative: string;
+    ordem: number;
+  }>>([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialData && open) {
+      setFormData({
+        nome: initialData.nome || "",
+        tipo: initialData.tipo || "rifa",
+        descricao: initialData.descricao || "",
+        preco: initialData.preco ? String(initialData.preco) : "",
+        stockInicial: initialData.stockInicial ? String(initialData.stockInicial) : "",
+        limitePorUsuario: initialData.limitePorUsuario ? String(initialData.limitePorUsuario) : "10",
+        numeroInicial: initialData.configuracao?.numeroInicial ? String(initialData.configuracao.numeroInicial) : "1",
+        numeroFinal: initialData.configuracao?.numeroFinal ? String(initialData.configuracao.numeroFinal) : "1000",
+        modoSorteio: initialData.modoSorteio || "app",
+        detalhesSorteioExterno: initialData.detalhesSorteioExterno || "",
+      });
+      if (initialData.premios && initialData.premios.length > 0) {
+        setPremios(initialData.premios.map(p => ({
+          nome: p.nome,
+          descricao: p.descricao || "",
+          valorDinheiroAlternative: p.valorDinheiroAlternative ? String(p.valorDinheiroAlternative) : "",
+          ordem: p.ordem,
+        })));
+      } else {
+        setPremios([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
+      }
+    } else if (!open) {
+      setFormData({
+        nome: "",
+        tipo: "rifa",
+        descricao: "",
+        preco: "",
+        stockInicial: "",
+        limitePorUsuario: "10",
+        numeroInicial: "1",
+        numeroFinal: "1000",
+        modoSorteio: "app",
+        detalhesSorteioExterno: "",
+      });
+      setPremios([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
+    }
+  }, [initialData, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,26 +162,40 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId }: Crea
 
     try {
       await onSubmit({
+        id: initialData?.id,
         nome: formData.nome,
         tipo: formData.tipo,
         descricao: formData.descricao || undefined,
-        preco: parseFloat(formData.preco),
-        stockInicial: parseInt(formData.stockInicial),
-        limitePorUsuario: parseInt(formData.limitePorUsuario),
+        preco: parseFloat(formData.preco) || 0,
+        stockInicial: parseInt(formData.stockInicial) || 0,
+        limitePorUsuario: parseInt(formData.limitePorUsuario) || 0,
         eventoId,
         configuracao,
+        modoSorteio: formData.modoSorteio,
+        detalhesSorteioExterno: formData.detalhesSorteioExterno || undefined,
+        premios: premios.filter(p => p.nome).map(p => ({
+          nome: p.nome,
+          descricao: p.descricao || undefined,
+          valorDinheiroAlternative: p.valorDinheiroAlternative ? parseFloat(p.valorDinheiroAlternative) : undefined,
+          ordem: p.ordem,
+        })),
       });
 
-      setFormData({
-        nome: "",
-        tipo: "rifa",
-        descricao: "",
-        preco: "",
-        stockInicial: "",
-        limitePorUsuario: "10",
-        numeroInicial: "1",
-        numeroFinal: "1000",
-      });
+      if (!initialData) {
+        setFormData({
+          nome: "",
+          tipo: "rifa",
+          descricao: "",
+          preco: "",
+          stockInicial: "",
+          limitePorUsuario: "10",
+          numeroInicial: "1",
+          numeroFinal: "1000",
+          modoSorteio: "app",
+          detalhesSorteioExterno: "",
+        });
+        setPremios([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
+      }
       onOpenChange(false);
     } finally {
       setLoading(false);
@@ -117,9 +206,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId }: Crea
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Novo Jogo</DialogTitle>
+          <DialogTitle>{initialData ? "Editar Jogo" : "Novo Jogo"}</DialogTitle>
           <DialogDescription>
-            Crie um novo jogo para este evento.
+            {initialData ? "Edite as informações do jogo." : "Crie um novo jogo para este evento."}
           </DialogDescription>
         </DialogHeader>
 
@@ -231,6 +320,96 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId }: Crea
                 onChange={(e) => setFormData({ ...formData, limitePorUsuario: e.target.value })}
               />
             </div>
+
+            <div className="border-t pt-4 mt-2">
+              <h3 className="text-sm font-semibold mb-3">Configuração de Sorteio</h3>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label>Método de Sorteio</Label>
+                  <Select
+                    value={formData.modoSorteio}
+                    onValueChange={(value: "app" | "externo") =>
+                      setFormData({ ...formData, modoSorteio: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="app">Sorteio Seguro pela App</SelectItem>
+                      <SelectItem value="externo">Sorteio Externo (ex: EuroMilhões)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {formData.modoSorteio === "externo" && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="detalhesSorteio">Detalhes do Sorteio Externo</Label>
+                    <Input
+                      id="detalhesSorteio"
+                      placeholder="Ex: 1º número do EuroMilhões de sexta-feira"
+                      value={formData.detalhesSorteioExterno}
+                      onChange={(e) => setFormData({ ...formData, detalhesSorteioExterno: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-2">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold">Prémios</h3>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setPremios([...premios, { nome: "", descricao: "", valorDinheiroAlternative: "", ordem: premios.length }])}
+                >
+                  Adicionar Prémio
+                </Button>
+              </div>
+              <div className="grid gap-4">
+                {premios.map((premio, index) => (
+                  <div key={index} className="grid gap-3 p-3 border rounded-lg relative bg-muted/30">
+                    <div className="grid gap-2">
+                      <Label className="text-xs">Prémio {index + 1}</Label>
+                      <Input
+                        placeholder="Ex: Presunto"
+                        value={premio.nome}
+                        onChange={(e) => {
+                          const newPremios = [...premios];
+                          newPremios[index].nome = e.target.value;
+                          setPremios(newPremios);
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-xs">Ou em Dinheiro? (€)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 25.00"
+                        value={premio.valorDinheiroAlternative}
+                        onChange={(e) => {
+                          const newPremios = [...premios];
+                          newPremios[index].valorDinheiroAlternative = e.target.value;
+                          setPremios(newPremios);
+                        }}
+                      />
+                    </div>
+                    {premios.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 text-destructive"
+                        onClick={() => setPremios(premios.filter((_, i) => i !== index))}
+                      >
+                        Remover
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -238,7 +417,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId }: Crea
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "A criar..." : "Criar Jogo"}
+              {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Jogo")}
             </Button>
           </DialogFooter>
         </form>

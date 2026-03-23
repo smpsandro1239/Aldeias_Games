@@ -129,6 +129,13 @@ export async function POST(request: NextRequest) {
       imagemUrl = saved.url;
     }
 
+    const dInicio = new Date(data.dataInicio);
+    const dFim = new Date(data.dataFim);
+
+    if (isNaN(dInicio.getTime()) || isNaN(dFim.getTime())) {
+      return NextResponse.json({ error: 'Datas inválidas' }, { status: 400 });
+    }
+
     // Criar evento
     const evento = await prisma.evento.create({
       data: {

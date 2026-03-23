@@ -42,10 +42,39 @@ model User {
   alteracoes            AlteracaoParticipacao[]
   vendas                Venda[]
 
+  saldo                 Float                   @default(0)
+  transacoes            Transacao[]
+
   @@index([email])
   @@index([role])
   @@index([aldeiaId])
   @@map("users")
+}
+
+model Transacao {
+  id          String           @id @default(cuid())
+  valor       Float
+  tipo        TipoTransacao
+  descricao   String?
+  referencia  String?          // ID da participação ou prémio associado
+  createdAt   DateTime         @default(now())
+
+  // Relações
+  user        User             @relation(fields: [userId], references: [id])
+  userId      String
+
+  @@index([userId])
+  @@index([tipo])
+  @@index([createdAt])
+  @@map("transacoes")
+}
+
+enum TipoTransacao {
+  deposito
+  levantamento
+  cashback
+  pagamento_jogo
+  premio_dinheiro
 }
 
 model LogAcesso {
@@ -231,17 +260,26 @@ model Jogo {
   evento   Evento @relation(fields: [eventoId], references: [id])
   eventoId String
 
-  premio   Premio? @relation(fields: [premioId], references: [id])
-  premioId String?
+  premios Premio[] @relation("JogoPremios")
+  premioId String? // Mantido para retrocompatibilidade temporária ou como prémio principal
 
   participacoes Participacao[]
   sorteios      Sorteio[]
+
+  // Sorteio
+  modoSorteio            ModoSorteio @default(app)
+  detalhesSorteioExterno String?
 
   @@index([eventoId])
   @@index([tipo])
   @@index([estado])
   @@index([premioId])
   @@map("jogos")
+}
+
+enum ModoSorteio {
+  app
+  externo
 }
 
 // ============================================
@@ -253,12 +291,8 @@ model Premio {
   nome          String
   descricao     String?
   imagemUrl     String?
-  valorEstimado Float?
-  tipo          TipoPremio @default(fisico)
-
-  // Para raspadinhas
-  percentagem Float? // Percentagem de probabilidade (0-1)
-  quantidade  Int? // Quantidade disponível
+  valorDinheiroAlternative Float?
+  ordem                    Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -267,7 +301,8 @@ model Premio {
   aldeia   Aldeia @relation(fields: [aldeiaId], references: [id])
   aldeiaId String
 
-  jogos Jogo[]
+  jogo   Jogo?   @relation(fields: [jogoId], references: [id], name: "JogoPremios")
+  jogoId String?
 
   @@index([aldeiaId])
   @@map("premios")
@@ -302,6 +337,11 @@ model Participacao {
   // Vendedor (se aplicável)
   vendedorId String?
 
+  // Dados do cliente para vendas manuais/offline
+  nomeCliente     String?
+  telefoneCliente String?
+  emailCliente    String?
+
   // Sorteio
   ganhador       Boolean @default(false)
   premioEntregue Boolean @default(false)
@@ -313,8 +353,8 @@ model Participacao {
   jogo   Jogo   @relation(fields: [jogoId], references: [id])
   jogoId String
 
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
 
   vendedor   User?                   @relation(fields: [vendedorId], references: [id], name: "vendedor")
   alteracoes AlteracaoParticipacao[]

@@ -24,6 +24,9 @@ import {
   Bell
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { AdminDashboard } from "@/features/admin/admin-dashboard";
+import { ClienteDashboard } from "@/features/cliente/cliente-dashboard";
+import { VendedorDashboard } from "@/features/vendedor/vendedor-dashboard";
 
 // Tipos
 interface User {
@@ -336,63 +339,87 @@ export default function Home() {
         )}
       </header>
 
-      {/* Hero Section */}
-      <section className="container py-12 md:py-24 lg:py-32">
-        <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
-          <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl">
-            Angariação de Fundos
-            <br className="hidden sm:inline" />
-            <span className="text-primary"> Digital e Divertida</span>
-          </h1>
-          <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-            Plataforma completa para aldeias, escolas e associações realizarem
-            campanhas de angariação através de jogos tradicionais digitalizados.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" onClick={() => setRegisterModalOpen(true)}>
-              Começar Agora
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => document.getElementById("jogos")?.scrollIntoView()}>
-              Ver Jogos
-            </Button>
+      {/* Main Content */}
+      <main className="container py-6">
+        {user ? (
+          <div className="space-y-8">
+            {/* Role-based Dashboard */}
+            {(user.role === "super_admin" || user.role === "aldeia_admin") && (
+              <AdminDashboard 
+                token={token || ""} 
+                aldeiaId={user.aldeiaId} 
+                userRole={user.role} 
+              />
+            )}
+            {user.role === "vendedor" && (
+              <VendedorDashboard token={token || ""} />
+            )}
+            {user.role === "user" && (
+              <ClienteDashboard token={token || ""} />
+            )}
           </div>
-        </div>
-      </section>
+        ) : (
+          <>
+            {/* Hero Section - Only shown when not logged in */}
+            <section className="py-12 md:py-24 lg:py-32">
+              <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
+                <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl">
+                  Angariação de Fundos
+                  <br className="hidden sm:inline" />
+                  <span className="text-primary"> Digital e Divertida</span>
+                </h1>
+                <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
+                  Plataforma completa para aldeias, escolas e associações realizarem
+                  campanhas de angariação através de jogos tradicionais digitalizados.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Button size="lg" onClick={() => setRegisterModalOpen(true)}>
+                    Começar Agora
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={() => document.getElementById("jogos")?.scrollIntoView()}>
+                    Ver Jogos
+                  </Button>
+                </div>
+              </div>
+            </section>
 
-      {/* Features Section */}
-      <section className="container py-12">
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <Trophy className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Jogos Tradicionais</CardTitle>
-              <CardDescription>
-                Poio da Vaca, Rifas, Tombolas e Raspadinhas digitais com experiência imersiva.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CreditCard className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Pagamentos Seguros</CardTitle>
-              <CardDescription>
-                Integração com Stripe e MBWay real para pagamentos rápidos e seguros.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <Shield className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Sorteios Auditáveis</CardTitle>
-              <CardDescription>
-                Algoritmos SHA-256 garantem transparência e justiça em todos os sorteios.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </section>
+            {/* Features Section */}
+            <section className="py-12">
+              <div className="grid gap-6 md:grid-cols-3">
+                <Card>
+                  <CardHeader>
+                    <Trophy className="h-8 w-8 text-primary mb-2" />
+                    <CardTitle>Jogos Tradicionais</CardTitle>
+                    <CardDescription>
+                      Poio da Vaca, Rifas, Tombolas e Raspadinhas digitais com experiência imersiva.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CreditCard className="h-8 w-8 text-primary mb-2" />
+                    <CardTitle>Pagamentos Seguros</CardTitle>
+                    <CardDescription>
+                      Integração com Stripe e MBWay real para pagamentos rápidos e seguros.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <Shield className="h-8 w-8 text-primary mb-2" />
+                    <CardTitle>Sorteios Auditáveis</CardTitle>
+                    <CardDescription>
+                      Algoritmos SHA-256 garantem transparência e justiça em todos os sorteios.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </section>
+          </>
+        )}
+      </main>
 
       {/* Eventos Section */}
       <section id="eventos" className="container py-12">

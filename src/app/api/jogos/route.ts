@@ -40,14 +40,14 @@ export async function GET(request: NextRequest) {
     if (user) {
       if (user.role === 'aldeia_admin') {
         const eventos = await prisma.evento.findMany({
-          where: { aldeiaId: user.aldeiaId },
+          where: { aldeiaId: user.aldeiaId as string },
           select: { id: true },
         });
         const eventoIds = eventos.map(e => e.id);
         where.eventoId = { in: eventoIds };
       } else if (user.role === 'vendedor') {
         const eventos = await prisma.evento.findMany({
-          where: { aldeiaId: user.aldeiaId },
+          where: { aldeiaId: user.aldeiaId as string },
           select: { id: true },
         });
         const eventoIds = eventos.map(e => e.id);
@@ -80,12 +80,16 @@ export async function GET(request: NextRequest) {
               },
             },
           },
-          premio: {
+          premios: {
             select: {
               id: true,
               nome: true,
               imagemUrl: true,
-              valorEstimado: true,
+              valorDinheiroAlternative: true,
+              ordem: true,
+            },
+            orderBy: {
+              ordem: 'asc',
             },
           },
           _count: {
@@ -170,7 +174,15 @@ export async function POST(request: NextRequest) {
         limitePorUsuario: data.limitePorUsuario,
         estado: 'rascunho',
         eventoId: data.eventoId,
-        premioId: data.premioId,
+        modoSorteio: data.modoSorteio,
+        detalhesSorteioExterno: data.detalhesSorteioExterno,
+        // Se vierem prémios no createJogo, criá-los
+        premios: data.premios ? {
+          create: data.premios.map(p => ({
+            ...p,
+            aldeiaId: evento.aldeiaId,
+          }))
+        } : undefined,
       },
       include: {
         evento: {
@@ -180,10 +192,11 @@ export async function POST(request: NextRequest) {
             aldeiaId: true,
           },
         },
-        premio: {
+        premios: {
           select: {
             id: true,
             nome: true,
+            ordem: true,
           },
         },
       },

@@ -17,7 +17,7 @@ export type SoundType =
 interface SoundConfig {
   frequency: number;
   duration: number;
-  type: OscillatorType;
+  type: OscillatorType | 'noise';
   volume: number;
   fadeOut?: boolean;
 }

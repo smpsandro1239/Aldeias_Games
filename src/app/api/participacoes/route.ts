@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       const jogos = await prisma.jogo.findMany({
         where: {
           evento: {
-            aldeiaId: user.aldeiaId,
+            aldeiaId: user.aldeiaId as string,
           },
         },
         select: { id: true },
@@ -64,8 +64,15 @@ export async function GET(request: NextRequest) {
       // Vendedor vê as que registou
       where.vendedorId = user.id;
     } else {
-      // User normal só vê as suas
-      where.userId = user.id;
+      // User normal vê as suas participações (por userId OU por email/telefone)
+      const orConditions: any[] = [{ userId: user.id }];
+      if ((user as any).email) {
+        orConditions.push({ emailCliente: (user as any).email });
+      }
+      if ((user as any).telefone) {
+        orConditions.push({ telefoneCliente: (user as any).telefone });
+      }
+      where.OR = orConditions;
     }
 
     const [participacoes, total] = await Promise.all([
@@ -166,7 +173,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar stock
+    // Verificar stock (apenas para resposta inicial, a transação atomicará)
     if (jogo.stockAtual < data.quantidade) {
       return NextResponse.json(
         { error: 'Stock insuficiente' },
@@ -177,74 +184,158 @@ export async function POST(request: NextRequest) {
     // Calcular valor total
     const valorTotal = jogo.preco * data.quantidade;
 
-    // Criar participações (pode ser múltipla)
-    const participacoes = [];
-    
-    for (let i = 0; i < data.quantidade; i++) {
-      const dados: Record<string, unknown> = {
-        dadosParticipacao: JSON.stringify(data.dadosParticipacao),
-        valorPago: jogo.preco,
-        metodoPagamento: data.metodoPagamento,
-        estadoPagamento: data.metodoPagamento === 'dinheiro' ? 'concluido' : 'pendente',
-        jogoId: data.jogoId,
-        userId: data.dadosCliente ? user.id : user.id, // Se tem dadosCliente, é venda externa
-        vendedorId: hasRole(user.role, ['aldeia_admin', 'vendedor']) ? user.id : undefined,
-      };
+    // Verificar pagamento por saldo
+    if (data.metodoPagamento === 'saldo') {
+      if (((user as any).saldo || 0) < valorTotal) {
+        return NextResponse.json(
+          { error: 'Saldo insuficiente na carteira' },
+          { status: 400 }
+        );
+      }
+    }
 
-      // Para raspadinha, gerar seed e hash
-      if (jogo.tipo === 'raspadinha') {
-        const seed = generateSeed();
-        const resultado = determineRaspadinhaResult(jogo.configuracao, jogo.stockInicial, jogo.stockAtual - i);
-        const hash = generateHash(seed, resultado, jogo.stockAtual - i);
-        
-        dados.seedRaspe = seed;
-        dados.hashRaspe = hash;
-        dados.resultadoRaspe = resultado;
+    // Usar transação atómica para evitar race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Verificar stock dentro da transação com locking
+      const jogoLocked = await tx.jogo.findUnique({
+        where: { id: data.jogoId },
+        select: { stockAtual: true, preco: true, tipo: true, nome: true },
+      });
+
+      if (!jogoLocked || jogoLocked.stockAtual < data.quantidade) {
+        throw new Error('Stock insuficiente');
       }
 
-      const participacao = await prisma.participacao.create({
-        data: dados as never,
-        include: {
-          jogo: {
-            select: {
-              id: true,
-              nome: true,
-              tipo: true,
-              preco: true,
-            },
-          },
+      // Atualizar stock atomicamente (só executa se stock for suficiente)
+      const updated = await tx.jogo.updateMany({
+        where: {
+          id: data.jogoId,
+          stockAtual: { gte: data.quantidade }, // Condição atómica
+        },
+        data: {
+          stockAtual: { decrement: data.quantidade },
+          totalParticipacoes: { increment: data.quantidade },
+          totalAngariado: { increment: valorTotal },
         },
       });
 
-      participacoes.push(participacao);
-    }
+      if (updated.count === 0) {
+        throw new Error('Stock insuficiente - operação concorrente');
+      }
 
-    // Atualizar stock do jogo
-    await prisma.jogo.update({
-      where: { id: jogo.id },
-      data: {
-        stockAtual: { decrement: data.quantidade },
-        totalParticipacoes: { increment: data.quantidade },
-        totalAngariado: { increment: valorTotal },
-      },
-    });
+      // Criar participações (pode ser múltipla)
+      const participacoes = [];
+      
+      for (let i = 0; i < data.quantidade; i++) {
+        const dados: Record<string, unknown> = {
+          dadosParticipacao: JSON.stringify(data.dadosParticipacao),
+          valorPago: jogo.preco,
+          metodoPagamento: data.metodoPagamento,
+          estadoPagamento: data.metodoPagamento === 'dinheiro' ? 'concluido' : 'pendente',
+          jogoId: data.jogoId,
+          userId: data.dadosCliente ? null : user.id,
+          vendedorId: hasRole(user.role, ['aldeia_admin', 'vendedor']) ? user.id : undefined,
+          nomeCliente: data.dadosCliente?.nome,
+          telefoneCliente: data.dadosCliente?.telefone,
+          emailCliente: data.dadosCliente?.email,
+        };
 
-    // Atualizar total do evento
-    await prisma.evento.update({
-      where: { id: jogo.eventoId },
-      data: {
-        totalParticipacoes: { increment: data.quantidade },
-        totalAngariado: { increment: valorTotal },
-      },
+        if (jogo.tipo === 'raspadinha') {
+          const seed = generateSeed();
+          const resultado = determineRaspadinhaResult(jogo.configuracao, jogo.stockInicial, jogo.stockAtual - i);
+          const hash = generateHash(seed, resultado, jogo.stockAtual - i);
+          
+          dados.seedRaspe = seed;
+          dados.hashRaspe = hash;
+          dados.resultadoRaspe = resultado;
+        }
+
+        const participacao = await tx.participacao.create({
+          data: dados as never,
+          include: {
+            jogo: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                preco: true,
+              },
+            },
+          },
+        });
+
+        participacoes.push(participacao);
+      }
+
+      // Atualizar total do evento
+      await tx.evento.update({
+        where: { id: jogo.eventoId },
+        data: {
+          totalParticipacoes: { increment: data.quantidade },
+          totalAngariado: { increment: valorTotal },
+        },
+      });
+
+      // --- LÓGICA DE CARTEIRA E CASHBACK ---
+      if (user.id) {
+        const cashbackPercent = 0.05;
+        const cashbackValor = valorTotal * cashbackPercent;
+
+        // Se pagou com saldo, descontar
+        if (data.metodoPagamento === 'saldo') {
+          await tx.user.update({
+            where: { id: user.id },
+            data: {
+              saldo: { decrement: valorTotal },
+            },
+          });
+
+          await tx.transacao.create({
+            data: {
+              userId: user.id,
+              valor: -valorTotal,
+              tipo: 'pagamento_jogo',
+              descricao: `Pagamento de ${data.quantidade}x ${jogo.nome}`,
+              referencia: jogo.id,
+            },
+          });
+        }
+
+        // Adicionar Cashback
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            saldo: { increment: cashbackValor },
+          },
+        });
+
+        await tx.transacao.create({
+          data: {
+            userId: user.id,
+            valor: cashbackValor,
+            tipo: 'cashback',
+            descricao: `Cashback de compra: ${jogo.nome}`,
+            referencia: jogo.id,
+          },
+        });
+      }
+
+      return { participacoes, valorTotal };
     });
 
     return NextResponse.json({
       success: true,
-      data: data.quantidade === 1 ? participacoes[0] : participacoes,
-      valorTotal,
+      data: data.quantidade === 1 ? result.participacoes[0] : result.participacoes,
+      valorTotal: result.valorTotal,
     }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao criar participação:', error);
+    if (error.message === 'Stock insuficiente' || error.message.includes('Stock insuficiente')) {
+      return NextResponse.json(
+        { error: 'Stock insuficiente' },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

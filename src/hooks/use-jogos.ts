@@ -44,6 +44,7 @@ interface CreateJogoData {
   limitePorUsuario?: number;
   eventoId: string;
   premioId?: string;
+  estado?: string;
 }
 
 export function useJogos(token: string | null) {

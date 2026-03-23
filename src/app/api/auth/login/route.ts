@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
-      aldeiaId: user.aldeiaId,
+      aldeiaId: user.aldeiaId as string,
     });
 
     // Atualizar último login
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         nome: user.nome,
         telefone: user.telefone,
         role: user.role,
-        aldeiaId: user.aldeiaId,
+        aldeiaId: user.aldeiaId as string,
         aldeia: user.aldeia,
         notificacoesEmail: user.notificacoesEmail,
       },

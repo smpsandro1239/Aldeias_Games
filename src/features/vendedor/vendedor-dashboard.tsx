@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
+import { POSView } from "./pos-view";
 
 interface VendedorDashboardProps {
   token: string;
@@ -68,12 +69,20 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
   const [activeTab, setActiveTab] = useState("vendas");
 
   // Form de nova venda
-  const [novaVenda, setNovaVenda] = useState({
+  const [novaVenda, setNovaVenda] = useState<{
+    jogoId: string;
+    quantidade: number;
+    metodoPagamento: "mbway" | "dinheiro" | "stripe" | "transferencia";
+    nomeCliente: string;
+    telefoneCliente: string;
+    emailCliente: string;
+  }>({
     jogoId: "",
     quantidade: 1,
-    metodoPagamento: "dinheiro" as const,
+    metodoPagamento: "dinheiro",
     nomeCliente: "",
     telefoneCliente: "",
+    emailCliente: "",
   });
 
   useEffect(() => {
@@ -127,10 +136,11 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         quantidade: novaVenda.quantidade,
         metodoPagamento: novaVenda.metodoPagamento,
         dadosCliente:
-          novaVenda.nomeCliente && novaVenda.telefoneCliente
+          novaVenda.nomeCliente && (novaVenda.telefoneCliente || novaVenda.emailCliente)
             ? {
                 nome: novaVenda.nomeCliente,
-                telefone: novaVenda.telefoneCliente,
+                telefone: novaVenda.telefoneCliente || undefined,
+                email: novaVenda.emailCliente || undefined,
               }
             : undefined,
       }),
@@ -144,6 +154,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         metodoPagamento: "dinheiro",
         nomeCliente: "",
         telefoneCliente: "",
+        emailCliente: "",
       });
       fetchData();
     } else {
@@ -223,16 +234,28 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="vendas">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Venda
-          </TabsTrigger>
-          <TabsTrigger value="historico">
-            <TrendingUp className="h-4 w-4 mr-2" />
-            Histórico
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="pos">POS Mobile</TabsTrigger>
+          <TabsTrigger value="vendas">Venda Desktop</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pos">
+          <POSView jogos={jogos} onSell={async (data) => {
+            const res = await fetch("/api/participacoes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify(data),
+            });
+            if (res.ok) {
+              toast.success("Venda realizada!");
+              fetchData();
+            } else {
+              const err = await res.json();
+              toast.error(err.error);
+            }
+          }} loading={loading} />
+        </TabsContent>
 
         <TabsContent value="vendas" className="space-y-4">
           <Card>
@@ -295,27 +318,41 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                   </Select>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="nomeCliente">Nome do Cliente</Label>
+                    <Label htmlFor="nomeCliente">Nome do Cliente *</Label>
                     <Input
                       id="nomeCliente"
-                      placeholder="Opcional"
+                      placeholder="Nome obrigatório"
                       value={novaVenda.nomeCliente}
                       onChange={(e) =>
                         setNovaVenda({ ...novaVenda, nomeCliente: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+ 
+                  <div className="space-y-2">
+                    <Label htmlFor="telefoneCliente">Telefone do Cliente</Label>
+                    <Input
+                      id="telefoneCliente"
+                      placeholder="Pelo menos um contacto"
+                      value={novaVenda.telefoneCliente}
+                      onChange={(e) =>
+                        setNovaVenda({ ...novaVenda, telefoneCliente: e.target.value })
                       }
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="telefoneCliente">Telefone do Cliente</Label>
+                    <Label htmlFor="emailCliente">Email do Cliente</Label>
                     <Input
-                      id="telefoneCliente"
-                      placeholder="Opcional"
-                      value={novaVenda.telefoneCliente}
+                      id="emailCliente"
+                      type="email"
+                      placeholder="Pelo menos um contacto"
+                      value={novaVenda.emailCliente}
                       onChange={(e) =>
-                        setNovaVenda({ ...novaVenda, telefoneCliente: e.target.value })
+                        setNovaVenda({ ...novaVenda, emailCliente: e.target.value })
                       }
                     />
                   </div>

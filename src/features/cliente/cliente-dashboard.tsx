@@ -17,6 +17,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal } from "@/components/modals";
 import { toast } from "sonner";
+import { WalletCard } from "@/components/wallet/wallet-card";
 
 interface ClienteDashboardProps {
   token: string;
@@ -64,6 +65,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("jogos");
+  const [saldo, setSaldo] = useState(0);
 
   // Modais
   const [scratchCardOpen, setScratchCardOpen] = useState(false);
@@ -101,6 +103,15 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         const jogosData = await jogosRes.json();
         setJogos(jogosData.data);
       }
+
+      // Fetch saldo
+      const walletRes = await fetch("/api/wallet", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (walletRes.ok) {
+        const walletData = await walletRes.json();
+        setSaldo(walletData.saldo);
+      }
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -130,7 +141,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
     setScratchCardOpen(true);
   };
 
-  const handleConfirmarPagamento = async () => {
+  const handleConfirmarPagamento = async (metodo: string = "mbway") => {
     if (!selectedJogo) return;
 
     let dadosParticipacao: Record<string, unknown> = {};
@@ -153,7 +164,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         jogoId: selectedJogo.id,
         dadosParticipacao,
         quantidade: numerosSelecionados.length || selecaoPoioDaVaca.length || 1,
-        metodoPagamento: "mbway",
+        metodoPagamento: metodo,
       }),
     });
 
@@ -181,9 +192,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
     if (response.ok) {
       fetchData();
-      return { success: true };
     }
-    return { success: false };
   };
 
   const getTipoIcon = (tipo: string) => {
@@ -207,10 +216,15 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Os Meus Jogos</h1>
-        <p className="text-muted-foreground">Participe em jogos e campanhas</p>
+      {/* Header e Wallet */}
+      <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 items-start">
+        <div className="md:col-span-2 lg:col-span-3">
+          <h1 className="text-3xl font-bold">Os Meus Jogos</h1>
+          <p className="text-muted-foreground">Participe em jogos e campanhas</p>
+        </div>
+        <div className="md:col-span-1">
+          <WalletCard token={token} />
+        </div>
       </div>
 
       {/* Stats */}
@@ -355,11 +369,15 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           onOpenChange={setPaymentOpen}
           valor={selectedJogo.preco}
           descricao={selectedJogo.nome}
+          saldoDisponivel={saldo}
           onMBWayPayment={async () => {
-            await handleConfirmarPagamento();
+            await handleConfirmarPagamento("mbway");
           }}
           onStripePayment={async () => {
-            await handleConfirmarPagamento();
+            await handleConfirmarPagamento("stripe");
+          }}
+          onSaldoPayment={async () => {
+            await handleConfirmarPagamento("saldo");
           }}
         />
       )}

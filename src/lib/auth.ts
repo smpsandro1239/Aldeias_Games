@@ -4,9 +4,9 @@ import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import prisma from './db';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
 
-if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+if (!JWT_SECRET && process.env.NODE_ENV === 'production' && !process.env.NEXT_PHASE?.includes('build')) {
   throw new Error('JWT_SECRET é obrigatório em produção');
 }
 

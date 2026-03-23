@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { executarSorteioSchema } from '@/lib/validations';
 import crypto from 'crypto';
+import { sendWinnerEmail } from '@/lib/email';
+import { sendWinnerSMS } from '@/lib/sms';
 
 // GET - Listar sorteios
 export async function GET(request: NextRequest) {
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
       const jogos = await prisma.jogo.findMany({
         where: {
           evento: {
-            aldeiaId: user.aldeiaId,
+            aldeiaId: user.aldeiaId as string,
           },
         },
         select: { id: true },
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
     const { jogoId, observacoes } = validation.data;
 
     // Buscar jogo
-    const jogo = await prisma.jogo.findUnique({
+    const jogo = (await prisma.jogo.findUnique({
       where: { id: jogoId },
       include: {
         evento: true,
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-    });
+    })) as any;
 
     if (!jogo) {
       return NextResponse.json(
@@ -177,23 +179,30 @@ export async function POST(request: NextRequest) {
     if (jogo.tipo === 'poio_da_vaca') {
       // Sortear coordenada vencedora
       const config = JSON.parse(jogo.configuracao);
-      const letra = config.letras[Math.floor(Math.random() * config.letras.length)];
-      const numero = Math.floor(Math.random() * config.numerosPorLetra) + 1;
+      let letra = body.letraVencedora;
+      let numero = body.numeroVencedor;
+
+      if (jogo.modoSorteio === 'app' || (!letra || !numero)) {
+        letra = config.letras[Math.floor(Math.random() * config.letras.length)];
+        numero = Math.floor(Math.random() * config.numerosPorLetra) + 1;
+      }
       
       resultado = { letraVencedora: letra, numeroVencedor: numero };
       
       // Encontrar vencedor(es)
-      const vencedoresPoio = jogo.participacoes.filter(p => {
+      const vencedoresPoio = jogo.participacoes.filter((p: any) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
         return dados.letra === letra && dados.numero === numero;
       });
 
-      vencedores = vencedoresPoio.map((v, index) => ({
+      vencedores = vencedoresPoio.map((v: any, index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.user.id,
-          userNome: v.user.nome,
+          userId: v.userId,
+          userNome: v.user?.nome || v.nomeCliente,
+          userEmail: v.user?.email || v.emailCliente,
+          userTelefone: v.user?.telefone || v.telefoneCliente,
           letra,
           numero,
         },
@@ -201,24 +210,30 @@ export async function POST(request: NextRequest) {
     } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
       // Sortear número vencedor
       const config = JSON.parse(jogo.configuracao);
-      const numeroVencedor = Math.floor(
-        Math.random() * (config.numeroFinal - config.numeroInicial + 1)
-      ) + config.numeroInicial;
+      let numeroVencedor = body.numeroVencedor;
+
+      if (jogo.modoSorteio === 'app' || !numeroVencedor) {
+        numeroVencedor = Math.floor(
+          Math.random() * (config.numeroFinal - config.numeroInicial + 1)
+        ) + config.numeroInicial;
+      }
       
       resultado = { numeroVencedor };
       
       // Encontrar vencedor(es)
-      const vencedoresRifa = jogo.participacoes.filter(p => {
+      const vencedoresRifa = jogo.participacoes.filter((p: any) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
         return dados.numero === numeroVencedor;
       });
 
-      vencedores = vencedoresRifa.map((v, index) => ({
+      vencedores = vencedoresRifa.map((v: any, index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.user.id,
-          userNome: v.user.nome,
+          userId: v.userId,
+          userNome: v.user?.nome || v.nomeCliente,
+          userEmail: v.user?.email || v.emailCliente,
+          userTelefone: v.user?.telefone || v.telefoneCliente,
           numero: numeroVencedor,
         },
       }));
@@ -271,16 +286,32 @@ export async function POST(request: NextRequest) {
         data: { ganhador: true },
       });
 
-      // Criar notificação para o vencedor
-      const dados = vencedor.dados as { userId: string; userNome: string };
-      await prisma.notificacao.create({
-        data: {
-          tipo: 'sorteio',
-          titulo: 'Parabéns! Você ganhou!',
-          mensagem: `Você foi o vencedor do sorteio "${jogo.nome}". Entre em contacto com a organização para receber o seu prémio!`,
-          userId: dados.userId,
-        },
-      });
+      // Criar notificação apenas se houver utilizador registado
+      const dadosVencedor = vencedor.dados as { userId: string | null; userNome: string; userEmail?: string; userTelefone?: string };
+      if (dadosVencedor.userId) {
+        await prisma.notificacao.create({
+          data: {
+            tipo: 'sorteio',
+            titulo: 'Parabéns! Você ganhou!',
+            mensagem: `Você foi o vencedor do sorteio "${jogo.nome}". Entre em contacto com a organização para receber o seu prémio!`,
+            userId: dadosVencedor.userId,
+          },
+        });
+
+        // Enviar email de notificação
+        if (dadosVencedor.userEmail) {
+          const premios = await prisma.premio.findMany({ where: { jogoId } });
+          const premioNome = premios.length > 0 ? premios[0].nome : 'Prémio do sorteio';
+          sendWinnerEmail(dadosVencedor.userEmail, dadosVencedor.userNome, jogo.nome, premioNome).catch(console.error);
+        }
+
+        // Enviar SMS de notificação
+        if (dadosVencedor.userTelefone) {
+          const premios = await prisma.premio.findMany({ where: { jogoId } });
+          const premioNome = premios.length > 0 ? premios[0].nome : 'Prémio do sorteio';
+          sendWinnerSMS(dadosVencedor.userTelefone, dadosVencedor.userNome, jogo.nome, premioNome).catch(console.error);
+        }
+      }
     }
 
     return NextResponse.json({
