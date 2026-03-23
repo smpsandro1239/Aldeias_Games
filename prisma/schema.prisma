@@ -75,6 +75,23 @@ enum TipoTransacao {
   cashback
   pagamento_jogo
   premio_dinheiro
+  comissao
+  bonus_meta
+}
+
+model Comissao {
+  id          String   @id @default(cuid())
+  vendedorId  String
+  percentual  Float    @default(5)
+  metaVendas  Float?
+  bonusMeta   Float?
+  aldeiaId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([vendedorId])
+  @@index([aldeiaId])
+  @@map("comissoes")
 }
 
 model LogAcesso {

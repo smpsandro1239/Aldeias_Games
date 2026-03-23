@@ -136,8 +136,8 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 6.5 | [IMPL] Sistema de comissões | 🟡 PENDING | % por venda |
-| 6.6 | [IMPL] Dashboard de comissões | 🟡 PENDING | Ver earnings |
+| 6.5 | [IMPL] Sistema de comissões | ✅ FEITO | % por venda + API |
+| 6.6 | [IMPL] Dashboard de comissões | ✅ FEITO | Ver earnings |
 | 6.7 | [IMPL]绩效考核 | 🟡 PENDING | Bónus por meta |
 
 ---
@@ -217,11 +217,11 @@ FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
 FASE 3 - UX/UI:          ██████████ 100% (7/7)
 FASE 4 - Analytics:      ██████████ 100% (5/5)
 FASE 5 - Utilizadores:   ███░░░░░░░ 60% (3/5)
-FASE 6 - Vendas:         ███░░░░░░░ 30% (2/7)
+FASE 6 - Vendas:         █████░░░░░ 43% (3/7)
 FASE 7 - Extras:         ██░░░░░░░░ 20% (1/6)
 FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
 
-TOTAL: ████████░░░ 65%
+TOTAL: █████████░ 71%
 ```
 FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
 FASE 2 - Pagamentos:     ██░░░░░░░░ 15% (1/10)
