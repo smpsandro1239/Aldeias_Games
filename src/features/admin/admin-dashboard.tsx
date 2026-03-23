@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -48,6 +49,14 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
   const [sorteioOpen, setSorteioOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [resultadosExternosOpen, setResultadosExternosOpen] = useState(false);
+  
+  // Modal de converter prémio em saldo
+  const [convertPrizeOpen, setConvertPrizeOpen] = useState(false);
+  const [selectedPremio, setSelectedPremio] = useState<any>(null);
+  const [convertValor, setConvertValor] = useState("25");
+  
+  // Modal de confirmar entrega
+  const [confirmEntregaOpen, setConfirmEntregaOpen] = useState(false);
 
   // Selections
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
@@ -452,25 +461,18 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
                           size="sm" 
                           variant="outline"
                           onClick={() => {
-                            const valor = prompt("Introduza o valor a creditar na carteira (€):", "25");
-                            if (valor && !isNaN(parseFloat(valor))) {
-                              handleConvertPrize(v.id, parseFloat(valor));
-                            }
+                            setSelectedPremio(v);
+                            setConvertValor("25");
+                            setConvertPrizeOpen(true);
                           }}
                         >
                           <DollarSign className="h-4 w-4 mr-1" /> Converter em Saldo
                         </Button>
                         <Button 
                            size="sm"
-                           onClick={async () => {
-                             if (confirm("Marcar prémio como entregue fisicamente?")) {
-                               const res = await fetch(`/api/participacoes/${v.id}`, {
-                                 method: 'PUT',
-                                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                                 body: JSON.stringify({ premioEntregue: true })
-                               });
-                               if(res.ok) { toast.success("Marcado como entregue"); fetchData(); }
-                             }
+                           onClick={() => {
+                             setSelectedPremio(v);
+                             setConfirmEntregaOpen(true);
                            }}
                         >
                           Entregar Prémio
@@ -554,6 +556,50 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
         description="Tem a certeza que deseja eliminar este registo? Esta ação não pode ser desfeita."
         onConfirm={executeDelete}
       />
+      
+      {/* Modal Converter Prémio em Saldo */}
+      <ConfirmModal
+        open={convertPrizeOpen}
+        onOpenChange={setConvertPrizeOpen}
+        title="Converter Prémio em Saldo"
+        description={
+          <div className="space-y-4">
+            <p>Introduza o valor a creditar na carteira do utilizador:</p>
+            <Input
+              type="number"
+              value={convertValor}
+              onChange={(e) => setConvertValor(e.target.value)}
+              placeholder="Valor em euros"
+            />
+          </div>
+        }
+        confirmText="Converter"
+        onConfirm={() => {
+          const valor = parseFloat(convertValor);
+          if (selectedPremio && !isNaN(valor) && valor > 0) {
+            handleConvertPrize(selectedPremio.id, valor);
+          }
+        }}
+      />
+      
+      {/* Modal Confirmar Entrega */}
+      <ConfirmModal
+        open={confirmEntregaOpen}
+        onOpenChange={setConfirmEntregaOpen}
+        title="Confirmar Entrega"
+        description="Tem a certeza que deseja marcar este prémio como entregue fisicamente?"
+        onConfirm={async () => {
+          if (selectedPremio) {
+            const res = await fetch(`/api/participacoes/${selectedPremio.id}`, {
+              method: 'PUT',
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ premioEntregue: true })
+            });
+            if(res.ok) { toast.success("Marcado como entregue"); fetchData(); }
+          }
+        }}
+      />
+      
       <ResultadosExternosModal
         open={resultadosExternosOpen}
         onOpenChange={setResultadosExternosOpen}

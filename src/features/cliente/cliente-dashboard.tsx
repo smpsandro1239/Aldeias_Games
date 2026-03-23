@@ -76,6 +76,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [selectedParticipacao, setSelectedParticipacao] = useState<Participacao | null>(null);
   const [numerosSelecionados, setNumerosSelecionados] = useState<number[]>([]);
   const [selecaoPoioDaVaca, setSelecaoPoioDaVaca] = useState<{ letra: string; numero: number }[]>([]);
+  const [numerosOcupadosPoio, setNumerosOcupadosPoio] = useState<{ letra: string; numero: number }[]>([]);
+  const [numerosOcupadosRifa, setNumerosOcupadosRifa] = useState<number[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -119,8 +121,35 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
     }
   };
 
-  const handleJogar = (jogo: Jogo) => {
+  const handleJogar = async (jogo: Jogo) => {
     setSelectedJogo(jogo);
+
+    // Buscar números ocupados para o jogo
+    try {
+      const res = await fetch(`/api/participacoes?jogoId=${jogo.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const participacoes = data.data || [];
+
+        if (jogo.tipo === "poio_da_vaca") {
+          const ocupdos = participacoes.map((p: any) => {
+            const dados = JSON.parse(p.dadosParticipacao || "{}");
+            return dados.selecao || [];
+          }).flat();
+          setNumerosOcupadosPoio(ocupdos);
+        } else if (jogo.tipo === "rifa" || jogo.tipo === "tombola") {
+          const ocupdos = participacoes.map((p: any) => {
+            const dados = JSON.parse(p.dadosParticipacao || "{}");
+            return dados.numero;
+          }).filter(Boolean);
+          setNumerosOcupadosRifa(ocupdos);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar números ocupados:", error);
+    }
 
     switch (jogo.tipo) {
       case "raspadinha":
@@ -388,7 +417,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           onOpenChange={setNumberSelectorOpen}
           numeroInicial={selectedJogo.configuracao.numeroInicial as number}
           numeroFinal={selectedJogo.configuracao.numeroFinal as number}
-          numerosOcupados={[]}
+          numerosOcupados={numerosOcupadosRifa}
           numerosSelecionados={numerosSelecionados}
           onSelect={setNumerosSelecionados}
           onConfirm={() => {
@@ -405,7 +434,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           onOpenChange={setPoioDaVacaOpen}
           letras={(selectedJogo.configuracao.letras as string[]) || ["A", "B", "C", "D", "E"]}
           numerosPorLetra={(selectedJogo.configuracao.numerosPorLetra as number) || 20}
-          numerosOcupados={[]}
+          numerosOcupados={numerosOcupadosPoio}
           precoIndividual={selectedJogo.preco}
           precoCartao={((selectedJogo.configuracao.precos as { cartao: number })?.cartao) || selectedJogo.preco * 4}
           onSelect={setSelecaoPoioDaVaca}

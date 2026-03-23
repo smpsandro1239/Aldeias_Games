@@ -17,11 +17,11 @@
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
 | 1.1 | [FIX] Corrigir race condition no stock de participações | ✅ FEITO | Transação atómica necessária |
-| 1.2 | [FIX] Corrigir cashback aplicado a user errado (vendas anónima) | 🔴 PENDING | Verificar se user existe antes de aplicar |
-| 1.3 | [FIX] Substituir prompt() nativo por modal customizado | 🔴 PENDING | Em admin-dashboard linha 455 |
-| 1.4 | [FIX] Substituir confirm() nativo por ConfirmModal | 🔴 PENDING | Váriaslocalizações |
-| 1.5 | [FIX] Validar números ocupados no Poio da Vaca | 🔴 PENDING | cliente-dashboard |
-| 1.6 | [FIX] Validar números ocupados nas Rifas | 🔴 PENDING | number-selector-modal |
+| 1.2 | [FIX] Corrigir cashback aplicado a user errado (vendas anónima) | ✅ FEITO | Verificar se user existe antes de aplicar |
+| 1.3 | [FIX] Substituir prompt() nativo por modal customizado | ✅ FEITO | Admin dashboard convert prize |
+| 1.4 | [FIX] Substituir confirm() nativo por ConfirmModal | ✅ FEITO | Váriaslocalizações |
+| 1.5 | [FIX] Validar números ocupados no Poio da Vaca | ✅ FEITO | cliente-dashboard |
+| 1.6 | [FIX] Validar números ocupados nas Rifas | ✅ FEITO | number-selector-modal |
 
 ### 🟠 Segurança - Prioridade 2
 

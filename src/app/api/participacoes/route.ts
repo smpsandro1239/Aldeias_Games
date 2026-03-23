@@ -277,7 +277,11 @@ export async function POST(request: NextRequest) {
       });
 
       // --- LÓGICA DE CARTEIRA E CASHBACK ---
-      if (user.id) {
+      // Apenas aplicar cashback se a participação for para o utilizador autenticado
+      // (não para vendas externas anónimas)
+      const isVendaInterna = !data.dadosCliente && user.id;
+      
+      if (isVendaInterna) {
         const cashbackPercent = 0.05;
         const cashbackValor = valorTotal * cashbackPercent;
 
@@ -301,7 +305,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Adicionar Cashback
+        // Adicionar Cashback apenas para vendas internas
         await tx.user.update({
           where: { id: user.id },
           data: {
@@ -315,6 +319,24 @@ export async function POST(request: NextRequest) {
             valor: cashbackValor,
             tipo: 'cashback',
             descricao: `Cashback de compra: ${jogo.nome}`,
+            referencia: jogo.id,
+          },
+        });
+      } else if (data.metodoPagamento === 'saldo' && data.dadosCliente) {
+        // Venda externa com saldo - não há cashback mas desconta do vendedor/admin
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            saldo: { decrement: valorTotal },
+          },
+        });
+
+        await tx.transacao.create({
+          data: {
+            userId: user.id,
+            valor: -valorTotal,
+            tipo: 'pagamento_jogo',
+            descricao: `Pagamento de ${data.quantidade}x ${jogo.nome} (venda externa)`,
             referencia: jogo.id,
           },
         });
