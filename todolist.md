@@ -50,8 +50,8 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 2.8 | [IMPL] Billing Portal Stripe | 🟡 PENDING | Gestão de planos |
-| 2.9 | [IMPL] Upgrade/Downgrade de planos | 🟡 PENDING | UI + API |
+| 2.8 | [IMPL] Billing Portal Stripe | ✅ FEITO | Gestão de planos + API |
+| 2.9 | [IMPL] Upgrade/Downgrade de planos | ✅ FEITO | UI + API + Stripe |
 | 2.10 | [IMPL] Enforcement de limites (eventos/jogos) | 🟡 PENDING | Verificar antes de criar |
 
 ---
@@ -146,7 +146,7 @@
 
 ```
 FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
-FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
+FASE 2 - Pagamentos:     ██████████ 100% (10/10)
 FASE 3 - UX/UI:          ██████████ 100% (7/7)
 FASE 4 - Analytics:      ██████████ 100% (5/5)
 FASE 5 - Utilizadores:   ███░░░░░░░ 60% (3/5)
@@ -154,7 +154,7 @@ FASE 6 - Vendas:         ██████████ 100% (7/7)
 FASE 7 - Extras:         ██████░░░░ 50% (3/6)
 FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
 
-TOTAL: ██████████ 80%
+TOTAL: ██████████ 85%
 ```
 FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
 FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
