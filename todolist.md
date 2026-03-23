@@ -70,8 +70,8 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 3.4 | [IMPL] Validação inline nos formulários | 🟡 PENDING | Mostrar erro abaixo do campo |
-| 3.5 | [IMPL] Tooltips de ajuda nos formulários | 🟡 PENDING | Helper text |
+| 3.4 | [IMPL] Validação inline nos formulários | ✅ FEITO | Mostrar erro abaixo do campo |
+| 3.5 | [IMPL] Tooltips de ajuda nos formulários | ✅ FEITO | Helper text |
 
 ### 🟢 Acessibilidade
 

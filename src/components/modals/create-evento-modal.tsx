@@ -47,6 +47,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
     aldeiaId: aldeiaId || "",
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (initialData && open) {
@@ -74,6 +75,30 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar campos
+    const newErrors: Record<string, string> = {};
+    if (!formData.nome || formData.nome.length < 2) {
+      newErrors.nome = "Nome deve ter pelo menos 2 caracteres";
+    }
+    if (!formData.dataInicio) {
+      newErrors.dataInicio = "Data de início é obrigatória";
+    }
+    if (!formData.dataFim) {
+      newErrors.dataFim = "Data de fim é obrigatória";
+    }
+    if (formData.dataInicio && formData.dataFim && new Date(formData.dataFim) < new Date(formData.dataInicio)) {
+      newErrors.dataFim = "Data de fim deve ser posterior à data de início";
+    }
+    if (!formData.aldeiaId) {
+      newErrors.aldeiaId = "Selecione uma organização";
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -102,6 +127,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         });
       }
       onOpenChange(false);
+      setErrors({});
     } finally {
       setLoading(false);
     }
@@ -138,6 +164,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.aldeiaId && <p className="text-sm text-destructive">{errors.aldeiaId}</p>}
               </div>
             )}
 
@@ -147,9 +174,14 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 id="nome"
                 placeholder="Ex: Festa de Verão 2024"
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, nome: e.target.value });
+                  if (errors.nome) setErrors({ ...errors, nome: "" });
+                }}
                 required
               />
+              <p className="text-xs text-muted-foreground">Nome que will appear nos cartões e materiais</p>
+              {errors.nome && <p className="text-sm text-destructive">{errors.nome}</p>}
             </div>
 
             <div className="grid gap-2">
@@ -170,9 +202,14 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                   id="dataInicio"
                   type="datetime-local"
                   value={formData.dataInicio}
-                  onChange={(e) => setFormData({ ...formData, dataInicio: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, dataInicio: e.target.value });
+                    if (errors.dataInicio) setErrors({ ...errors, dataInicio: "" });
+                  }}
                   required
                 />
+                <p className="text-xs text-muted-foreground">Data de inicio do evento</p>
+                {errors.dataInicio && <p className="text-sm text-destructive">{errors.dataInicio}</p>}
               </div>
 
               <div className="grid gap-2">
@@ -181,9 +218,14 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                   id="dataFim"
                   type="datetime-local"
                   value={formData.dataFim}
-                  onChange={(e) => setFormData({ ...formData, dataFim: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, dataFim: e.target.value });
+                    if (errors.dataFim) setErrors({ ...errors, dataFim: "" });
+                  }}
                   required
                 />
+                <p className="text-xs text-muted-foreground">Data de fim do evento</p>
+                {errors.dataFim && <p className="text-sm text-destructive">{errors.dataFim}</p>}
               </div>
             </div>
 
@@ -198,6 +240,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 value={formData.objectivoAngariacao}
                 onChange={(e) => setFormData({ ...formData, objectivoAngariacao: e.target.value })}
               />
+              <p className="text-xs text-muted-foreground">Valor objetivo a angariar (opcional)</p>
             </div>
 
             <div className="flex items-center justify-between rounded-lg border p-3">
