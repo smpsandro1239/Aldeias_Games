@@ -200,4 +200,4 @@ TOTAL: █████░░░░░░ 33%
 ---
 
 *Última actualização: 23/03/2026*  
-*Projeto: Aldeias Games v3.11.0*
+*Projeto: Aldeias Games v3.12.0 - 85% completo*
