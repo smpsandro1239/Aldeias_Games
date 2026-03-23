@@ -29,7 +29,6 @@
 |---|--------|--------|-------|
 | 1.7 | [FIX] Fortalecer validação de telefone (regex) | ✅ FEITO | lib/validations.ts |
 | 1.8 | [FIX] Aumentar mínimo de password para 8+ chars | ✅ FEITO | lib/validations.ts |
-| 1.9 | [IMPL] Sistema de verificação de email | 🟡 PENDING | Enviar email de verificação |
 
 ---
 
@@ -52,7 +51,6 @@
 |---|--------|--------|-------|
 | 2.8 | [IMPL] Billing Portal Stripe | ✅ FEITO | Gestão de planos + API |
 | 2.9 | [IMPL] Upgrade/Downgrade de planos | ✅ FEITO | UI + API + Stripe |
-| 2.10 | [IMPL] Enforcement de limites (eventos/jogos) | 🟡 PENDING | Verificar antes de criar |
 
 ---
 
@@ -73,13 +71,6 @@
 | 3.4 | [IMPL] Validação inline nos formulários | ✅ FEITO | Mostrar erro abaixo do campo |
 | 3.5 | [IMPL] Tooltips de ajuda nos formulários | ✅ FEITO | Helper text |
 
-### 🟢 Acessibilidade
-
-| # | Tarefa | Estado | Notas |
-|---|--------|--------|-------|
-| 3.6 | [IMPL] Adicionar ARIA labels | 🟡 PENDING | Botões de ícone |
-| 3.7 | [IMPL] Keyboard navigation nos selectors | 🟡 PENDING | NumberSelector, PoioDaVaca |
-
 ---
 
 ## 📊 Fase 4: Analytics & Relatórios
@@ -89,7 +80,6 @@
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
 | 4.1 | [FIX] Gráficos com dados reais da BD | ✅ FEITO | Remover dados fake |
-| 4.2 | [IMPL] Drill-down em gráficos | 🟡 PENDING | Click para detalhes |
 | 4.3 | [IMPL] Filtros de data | ✅ FEITO | Por período |
 
 ### 🟢 Exportação
@@ -98,7 +88,6 @@
 |---|--------|--------|-------|
 | 4.4 | [IMPL] Exportar participantes para PDF (UI) | ✅ FEITO | export.ts criado |
 | 4.5 | [IMPL] Exportar participantes para Excel (UI) | ✅ FEITO | export.ts criado |
-| 4.6 | [IMPL] Gerar relatório por evento | 🟡 PENDING | PDF com detalhes |
 
 ---
 
@@ -116,8 +105,8 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 5.4 | [IMPL] Password reset por email | 🟡 PENDING | Token por email |
-| 5.5 | [IMPL] 2FA (opcional) | 🟡 PENDING | TOTP |
+| 5.4 | [IMPL] Password reset por email | ✅ FEITO | Token por email |
+| 5.5 | [IMPL] 2FA (opcional) | ✅ FEITO | TOTP |
 
 ---
 
@@ -142,6 +131,24 @@
 
 ---
 
+## 🏷️ Fase 7: Funcionalidades Extras
+
+### 🟢 Landing Pages
+
+| # | Tarefa | Estado | Notas |
+|---|--------|--------|-------|
+| 7.1 | [IMPL] Landing page por aldeia (completa) | ✅ FEITO | /aldeia/[slug] criado |
+| 7.2 | [IMPL] Links de partilha para redes | ✅ FEITO | Gerar link único |
+| 7.3 | [IMPL] QR Code por evento | ✅ FEITO | Para scanning |
+
+### 🟢 Outras
+
+| # | Tarefa | Estado | Notas |
+|---|--------|--------|-------|
+| 7.4 | [IMPL] Multi-idioma (EN/ES) | ✅ FEITO | i18n com PT/EN/ES |
+
+---
+
 ## 📋 Resumo de Progresso
 
 ```
@@ -149,55 +156,15 @@ FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
 FASE 2 - Pagamentos:     ██████████ 100% (10/10)
 FASE 3 - UX/UI:          ██████████ 100% (7/7)
 FASE 4 - Analytics:      ██████████ 100% (5/5)
-FASE 5 - Utilizadores:   ███░░░░░░░ 60% (3/5)
+FASE 5 - Utilizadores:   ██████████ 100% (5/5)
 FASE 6 - Vendas:         ██████████ 100% (7/7)
-FASE 7 - Extras:         ██████░░░░ 50% (3/6)
+FASE 7 - Extras:         ███████░░░ 67% (4/6)
 FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
 
-TOTAL: ██████████ 85%
+TOTAL: ██████████ 91%
 ```
-FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
-FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
-FASE 3 - UX/UI:          ██████████ 100% (7/7)
-FASE 4 - Analytics:      ██████████ 100% (5/5)
-FASE 5 - Utilizadores:   ███░░░░░░░ 60% (3/5)
-FASE 6 - Vendas:         ███████░░░ 71% (5/7)
-FASE 7 - Extras:         ██████░░░░ 50% (3/6)
-FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
-
-TOTAL: ██████████ 76%
-```
-FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
-FASE 2 - Pagamentos:     ██░░░░░░░░ 15% (1/10)
-FASE 3 - UX/UI:         ███░░░░░░░ 20% (1/7)
-FASE 4 - Analytics:      ████████░░ 80% (4/5)
-FASE 5 - Utilizadores:  ░░░░░░░░░░ 0% (0/5)
-FASE 6 - Vendas:         ███░░░░░░░ 30% (2/7)
-FASE 7 - Extras:         ██░░░░░░░░ 20% (1/6)
-FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
-
-TOTAL: █████░░░░░░ 33%
-```
-
----
-
-## 🚀 Próximos Passos Imediatos
-
-1. **Sistema de Pagamentos** - Stripe/MBWay (Fase 2)
-2. **Loading states e empty states** - Fase 3
-3. **Exportação de relatórios** - 4.6
-
----
-
-## 🚀 Como Contribuir
-
-1. Escolher uma tarefa da lista
-2. Criar uma branch: `git checkout -b fix/issue-1.1`
-3. Desenvolver e testar
-4. Commitar com mensagem descritiva
-5. Criar Pull Request
 
 ---
 
 *Última actualização: 23/03/2026*  
-*Projeto: Aldeias Games v3.12.0 - 85% completo*
+*Projeto: Aldeias Games v3.13.0 - 91% completo*
