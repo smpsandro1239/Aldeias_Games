@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.participacao.findMany({
         where: eventoId ? { jogo: { eventoId } } : { jogo: { evento: aldeiaFilter } },
-        select: { valorPago: true, createdAt: true, estadoPagamento: true },
+        select: { valorPago: true, createdAt: true, estadoPagamento: true, metodoPagamento: true },
       }),
       prisma.venda.findMany({
         where: {
@@ -108,6 +108,24 @@ export async function GET(request: NextRequest) {
         .map(([mes, dados]) => ({ mes, ...dados }))
         .reverse(),
       topVendedores: topVendedoresData,
+      jogosPorTipo: jogos.reduce((acc: Record<string, number>, j: any) => {
+        const tipoMap: Record<string, string> = {
+          rifa: 'Rifas',
+          tombola: 'Tombolas',
+          poio_da_vaca: 'Poio da Vaca',
+          raspadinha: 'Raspadinhas',
+        };
+        const tipo = tipoMap[j.tipo] || 'Outros';
+        acc[tipo] = (acc[tipo] || 0) + 1;
+        return acc;
+      }, {}),
+      vendasPorMetodo: participacoes
+        .filter((p: any) => p.estadoPagamento === 'concluido')
+        .reduce((acc: Record<string, number>, p: any) => {
+          const metodo = p.metodoPagamento || 'dinheiro';
+          acc[metodo] = (acc[metodo] || 0) + p.valorPago;
+          return acc;
+        }, {}),
     };
 
     return NextResponse.json({ success: true, data });

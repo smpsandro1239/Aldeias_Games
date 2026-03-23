@@ -48,6 +48,8 @@ interface StatsData {
   jogosAtivos: number;
   evolucaoMensal: { mes: string; valor: number; participacoes: number }[];
   topVendedores: { id: string; nome: string; totalVendas: number; valorTotal: number }[];
+  jogosPorTipo: Record<string, number>;
+  vendasPorMetodo: Record<string, number>;
 }
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f97316", "#eab308"];
@@ -108,19 +110,15 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
     valorFormatado: formatCurrency(item.valor),
   }));
 
-  const jogosPorTipo = [
-    { name: "Rifas", value: stats.totalJogos * 0.4 },
-    { name: "Tombolas", value: stats.totalJogos * 0.25 },
-    { name: "Poio da Vaca", value: stats.totalJogos * 0.2 },
-    { name: "Raspadinhas", value: stats.totalJogos * 0.15 },
-  ].filter((d) => d.value > 0);
+  const jogosPorTipo = Object.entries(stats.jogosPorTipo || {}).map(([name, value]) => ({
+    name,
+    value,
+  }));
 
-  const vendasPorMetodo = [
-    { name: "Dinheiro", value: Math.floor(stats.totalAngariado * 0.5) },
-    { name: "MBWay", value: Math.floor(stats.totalAngariado * 0.3) },
-    { name: "Stripe", value: Math.floor(stats.totalAngariado * 0.15) },
-    { name: "Saldo", value: Math.floor(stats.totalAngariado * 0.05) },
-  ];
+  const vendasPorMetodo = Object.entries(stats.vendasPorMetodo || {}).map(([name, value]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    value,
+  }));
 
   return (
     <div className="space-y-6">

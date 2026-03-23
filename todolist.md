@@ -94,7 +94,7 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 4.1 | [FIX] Gráficos com dados reais da BD | 🔴 PENDING | Remover dados fake |
+| 4.1 | [FIX] Gráficos com dados reais da BD | ✅ FEITO | Remover dados fake |
 | 4.2 | [IMPL] Drill-down em gráficos | 🟡 PENDING | Click para detalhes |
 | 4.3 | [IMPL] Filtros de data | 🟡 PENDING | Por período |
 
