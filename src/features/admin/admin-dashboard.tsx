@@ -376,6 +376,20 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
 
         <TabsContent value="eventos" className="space-y-4">
           <div className="flex justify-between"><h2 className="text-xl font-semibold">Gestão de Eventos</h2></div>
+          {eventos.length === 0 ? (
+            <Card className="p-8 text-center">
+              <CardContent className="flex flex-col items-center justify-center space-y-4">
+                <Calendar className="h-12 w-12 text-muted-foreground" />
+                <div>
+                  <p className="text-lg font-medium">Nenhum evento encontrado</p>
+                  <p className="text-sm text-muted-foreground">Clique em "Novo Evento" para criar o primeiro evento.</p>
+                </div>
+                <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-2" /> Novo Evento
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
           <div className="grid gap-4">
             {eventos.map((ev) => (
               <Card key={ev.id}>
@@ -393,6 +407,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
               </Card>
             ))}
           </div>
+          )}
         </TabsContent>
 
         <TabsContent value="jogos" className="space-y-4">
@@ -402,6 +417,17 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
               <Plus className="h-4 w-4 mr-2" /> Novo Jogo
             </Button>
           </div>
+          {jogos.length === 0 ? (
+            <Card className="p-8 text-center">
+              <CardContent className="flex flex-col items-center justify-center space-y-4">
+                <Gamepad2 className="h-12 w-12 text-muted-foreground" />
+                <div>
+                  <p className="text-lg font-medium">Nenhum jogo encontrado</p>
+                  <p className="text-sm text-muted-foreground">Clique em "Novo Jogo" para criar o primeiro jogo.</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
           <div className="grid gap-4">
             {jogos.map((jg) => (
               <Card key={jg.id}>
@@ -428,6 +454,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
               </Card>
             ))}
           </div>
+          )}
         </TabsContent>
 
         <TabsContent value="vencedores" className="space-y-4">
@@ -493,6 +520,17 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
               <Plus className="h-4 w-4 mr-2" /> Novo Utilizador
             </Button>
           </div>
+          {users.length === 0 ? (
+            <Card className="p-8 text-center">
+              <CardContent className="flex flex-col items-center justify-center space-y-4">
+                <Users className="h-12 w-12 text-muted-foreground" />
+                <div>
+                  <p className="text-lg font-medium">Nenhum utilizador encontrado</p>
+                  <p className="text-sm text-muted-foreground">Clique em "Novo Utilizador" para adicionar.</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
           <div className="grid gap-4">
             {users.map((u) => (
               <Card key={u.id}>
@@ -509,15 +547,27 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
               </Card>
             ))}
           </div>
+          )}
         </TabsContent>
 
         {userRole === "super_admin" && (
           <TabsContent value="aldeias" className="space-y-4">
              <div className="flex justify-between">
-              <h2 className="text-xl font-semibold">Gestão de Aldeias/Organizações</h2>
-            </div>
-            <div className="grid gap-4">
-              {aldeias.map((al) => (
+               <h2 className="text-xl font-semibold">Gestão de Aldeias/Organizações</h2>
+             </div>
+             {aldeias.length === 0 ? (
+               <Card className="p-8 text-center">
+                 <CardContent className="flex flex-col items-center justify-center space-y-4">
+                   <Building2 className="h-12 w-12 text-muted-foreground" />
+                   <div>
+                     <p className="text-lg font-medium">Nenhuma organização encontrada</p>
+                     <p className="text-sm text-muted-foreground">Clique em "Nova Organização" para adicionar.</p>
+                   </div>
+                 </CardContent>
+               </Card>
+             ) : (
+             <div className="grid gap-4">
+               {aldeias.map((al) => (
                 <Card key={al.id}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
@@ -532,6 +582,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
                 </Card>
               ))}
             </div>
+            )}
           </TabsContent>
         )}
       </Tabs>

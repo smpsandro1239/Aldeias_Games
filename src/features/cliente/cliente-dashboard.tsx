@@ -307,6 +307,17 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         </TabsList>
 
         <TabsContent value="jogos" className="space-y-4">
+          {jogos.length === 0 ? (
+            <Card className="p-8 text-center">
+              <CardContent className="flex flex-col items-center justify-center space-y-4">
+                <Gamepad2 className="h-12 w-12 text-muted-foreground" />
+                <div>
+                  <p className="text-lg font-medium">Nenhum jogo disponível</p>
+                  <p className="text-sm text-muted-foreground">De momento não há jogos ativos. Volte mais tarde!</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {jogos.map((jogo) => (
               <Card key={jogo.id} className="hover:shadow-lg transition-shadow">
@@ -343,9 +354,21 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
               </Card>
             ))}
           </div>
+          )}
         </TabsContent>
 
         <TabsContent value="participacoes" className="space-y-4">
+          {participacoes.length === 0 ? (
+            <Card className="p-8 text-center">
+              <CardContent className="flex flex-col items-center justify-center space-y-4">
+                <Ticket className="h-12 w-12 text-muted-foreground" />
+                <div>
+                  <p className="text-lg font-medium">Nenhuma participação</p>
+                  <p className="text-sm text-muted-foreground">Ainda não参加了 nenhum jogo. Escolha um jogo para participar!</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
           <div className="grid gap-4">
             {participacoes.map((participacao) => (
               <Card key={participacao.id}>
@@ -388,6 +411,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
               </Card>
             ))}
           </div>
+          )}
         </TabsContent>
       </Tabs>
 

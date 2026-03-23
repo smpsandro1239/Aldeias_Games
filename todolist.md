@@ -62,8 +62,8 @@
 
 | # | Tarefa | Estado | Notas |
 |---|--------|--------|-------|
-| 3.1 | [IMPL] Adicionar loading states aos botões | 🟡 PENDING | Usar isPending |
-| 3.2 | [IMPL] Adicionar empty states aos dashboards | 🟡 PENDING | Mensagens personalizadas |
+| 3.1 | [IMPL] Adicionar loading states aos botões | ✅ FEITO | isPending nos formulários |
+| 3.2 | [IMPL] Adicionar empty states aos dashboards | ✅ FEITO | Mensagens personalizadas |
 | 3.3 | [IMPL] Skeleton loading para tabelas | ✅ FEITO | componente skeleton.tsx criado |
 
 ### 🟡 Form Validation
@@ -211,6 +211,17 @@
 
 ## 📋 Resumo de Progresso
 
+```
+FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
+FASE 2 - Pagamentos:     ███████░░░ 70% (7/10)
+FASE 3 - UX/UI:          ███████░░░ 57% (4/7)
+FASE 4 - Analytics:      ████████░░ 80% (4/5)
+FASE 5 - Utilizadores:  ░░░░░░░░░░ 0% (0/5)
+FASE 6 - Vendas:         ███░░░░░░░ 30% (2/7)
+FASE 7 - Extras:         ██░░░░░░░░ 20% (1/6)
+FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
+
+TOTAL: ██████░░░░░ 46%
 ```
 FASE 1 - Bug Fixes:      ██████████ 100% (8/8)
 FASE 2 - Pagamentos:     ██░░░░░░░░ 15% (1/10)
