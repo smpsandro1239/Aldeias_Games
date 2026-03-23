@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,21 @@ import {
   Banknote,
   Minus,
   Plus,
-  ArrowRight
+  ArrowRight,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
+
+interface PendingSale {
+  id: string;
+  jogoId: string;
+  quantidade: number;
+  metodoPagamento: string;
+  dadosCliente: { nome: string; telefone?: string; email?: string };
+  timestamp: number;
+}
 
 interface POSViewProps {
   jogos: any[];
@@ -23,12 +35,69 @@ interface POSViewProps {
   loading?: boolean;
 }
 
+const OFFLINE_SALES_KEY = "aldeias_offline_sales";
+
 export function POSView({ jogos, onSell, loading }: POSViewProps) {
   const [selectedJogo, setSelectedJogo] = useState<any>(null);
   const [quantidade, setQuantidade] = useState(1);
-  const [step, setStep] = useState(1); // 1: Select Jogo, 2: Config, 3: Client Info
+  const [step, setStep] = useState(1);
   const [cliente, setCliente] = useState({ nome: "", telefone: "", email: "" });
   const [metodo, setMetodo] = useState<any>("dinheiro");
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const saved = localStorage.getItem(OFFLINE_SALES_KEY);
+    if (saved) {
+      try {
+        setPendingSales(JSON.parse(saved));
+      } catch (e) {
+        console.error("Erro ao carregar vendas offline:", e);
+      }
+    }
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncOfflineSales();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  const saveOfflineSale = (sale: PendingSale) => {
+    const updated = [...pendingSales, sale];
+    setPendingSales(updated);
+    localStorage.setItem(OFFLINE_SALES_KEY, JSON.stringify(updated));
+  };
+
+  const syncOfflineSales = async () => {
+    if (!isOnline || pendingSales.length === 0) return;
+
+    for (const sale of pendingSales) {
+      try {
+        await onSell({
+          jogoId: sale.jogoId,
+          quantidade: sale.quantidade,
+          metodoPagamento: sale.metodoPagamento,
+          dadosCliente: sale.dadosCliente,
+        });
+      } catch (error) {
+        console.error("Erro ao sincronizar venda:", error);
+      }
+    }
+
+    setPendingSales([]);
+    localStorage.removeItem(OFFLINE_SALES_KEY);
+    toast.success(`${pendingSales.length} venda(s) sincronizada(s)`);
+  };
 
   const handleNext = () => {
     if (step === 1 && selectedJogo) setStep(2);
@@ -36,13 +105,41 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
   };
 
   const handleFinish = async () => {
-    await onSell({
+    const saleData = {
       jogoId: selectedJogo.id,
       quantidade,
       metodoPagamento: metodo,
       dadosCliente: cliente.nome ? cliente : undefined,
-    });
-    // Reset
+    };
+
+    if (!isOnline) {
+      const offlineSale: PendingSale = {
+        id: `offline_${Date.now()}`,
+        ...saleData,
+        timestamp: Date.now(),
+      };
+      saveOfflineSale(offlineSale);
+      toast.info("Venda guardada offline. Será sincronizada quando houver conexão.");
+      resetForm();
+      return;
+    }
+
+    try {
+      await onSell(saleData);
+      toast.success("Venda registada com sucesso!");
+    } catch (error) {
+      const offlineSale: PendingSale = {
+        id: `offline_${Date.now()}`,
+        ...saleData,
+        timestamp: Date.now(),
+      };
+      saveOfflineSale(offlineSale);
+      toast.warning("Erro ao registar. Venda guardada offline.");
+    }
+    resetForm();
+  };
+
+  const resetForm = () => {
     setStep(1);
     setSelectedJogo(null);
     setQuantidade(1);
@@ -51,6 +148,18 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
 
   return (
     <div className="max-w-md mx-auto space-y-4">
+      {/* Status Online/Offline */}
+      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${isOnline ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
+        {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+        <span className="text-sm font-medium">
+          {isOnline ? "Online" : `Offline (${pendingSales.length} venda(s) pendente(s))`}
+        </span>
+        {!isOnline && pendingSales.length > 0 && (
+          <Button size="sm" variant="outline" className="ml-auto" onClick={syncOfflineSales}>
+            Sincronizar
+          </Button>
+        )}
+      </div>
       {/* Progresso */}
       <div className="flex justify-between items-center px-2">
         <div className="flex gap-1">
