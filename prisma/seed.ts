@@ -204,10 +204,9 @@ async function main() {
       nome: 'Viagem aos Açores',
       descricao: 'Viagem de 3 dias para 2 pessoas aos Açores',
       valorDinheiroAlternative: 1500,
-      tipo: 'experiencia',
       aldeiaId: aldeia.id,
       ordem: 1,
-    } as any,
+    },
   });
 
   const premio2 = await prisma.premio.create({
@@ -215,10 +214,9 @@ async function main() {
       nome: 'Smartphone Samsung Galaxy',
       descricao: 'Samsung Galaxy S24 Ultra 256GB',
       valorDinheiroAlternative: 1200,
-      tipo: 'fisico',
       aldeiaId: aldeia.id,
       ordem: 2,
-    } as any,
+    },
   });
 
   const premio3 = await prisma.premio.create({
@@ -226,10 +224,9 @@ async function main() {
       nome: 'Prémio em Dinheiro €500',
       descricao: 'Transferência bancária de €500',
       valorDinheiroAlternative: 500,
-      tipo: 'dinheiro',
       aldeiaId: aldeia.id,
       ordem: 3,
-    } as any,
+    },
   });
 
   console.log('✅ Prémios criados');
