@@ -19,6 +19,9 @@ interface ScratchCardModalProps {
   premio: string | null;
   onReveal: () => Promise<void>;
   jaRevelado: boolean;
+  titulo?: string;
+  subtitulo?: string;
+  organizacao?: string;
 }
 
 export function ScratchCardModal({
@@ -27,6 +30,9 @@ export function ScratchCardModal({
   premio,
   onReveal,
   jaRevelado,
+  titulo = "RASPADINHA DA SORTE",
+  subtitulo = "Raspe com o dedo para revelar o seu prémio!",
+  organizacao = "",
 }: ScratchCardModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isScratching, setIsScratching] = useState(false);
@@ -179,11 +185,14 @@ export function ScratchCardModal({
               </div>
             </motion.div>
             <DialogTitle className="text-2xl font-black tracking-wide text-white drop-shadow-lg">
-              RASPADINHA DA SORTE
+              {titulo}
             </DialogTitle>
             <DialogDescription className="text-white/70">
-              Raspe com o dedo para revelar o seu prémio!
+              {subtitulo}
             </DialogDescription>
+            {organizacao && (
+              <p className="text-sm text-yellow-400 font-medium mt-1">{organizacao}</p>
+            )}
           </DialogHeader>
 
           <div className="relative mt-6">

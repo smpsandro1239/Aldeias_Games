@@ -63,6 +63,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
     numeroFinal: string;
     modoSorteio: "app" | "externo";
     detalhesSorteioExterno: string;
+    raspadinhaTitulo: string;
+    raspadinhaSubtitulo: string;
+    raspadinhaOrganizacao: string;
   }>({
     nome: "",
     tipo: "rifa",
@@ -74,6 +77,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
     numeroFinal: "1000",
     modoSorteio: "app",
     detalhesSorteioExterno: "",
+    raspadinhaTitulo: "RASPADINHA DA SORTE",
+    raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
+    raspadinhaOrganizacao: "",
   });
 
   const [premios, setPremios] = useState<Array<{
@@ -97,6 +103,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
         numeroFinal: initialData.configuracao?.numeroFinal ? String(initialData.configuracao.numeroFinal) : "1000",
         modoSorteio: initialData.modoSorteio || "app",
         detalhesSorteioExterno: initialData.detalhesSorteioExterno || "",
+        raspadinhaTitulo: initialData.configuracao?.raspadinhaTitulo as string || "RASPADINHA DA SORTE",
+        raspadinhaSubtitulo: initialData.configuracao?.raspadinhaSubtitulo as string || "Raspe com o dedo para revelar o seu prémio!",
+        raspadinhaOrganizacao: initialData.configuracao?.raspadinhaOrganizacao as string || "",
       });
       if (initialData.premios && initialData.premios.length > 0) {
         setPremios(initialData.premios.map(p => ({
@@ -120,6 +129,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
         numeroFinal: "1000",
         modoSorteio: "app",
         detalhesSorteioExterno: "",
+        raspadinhaTitulo: "RASPADINHA DA SORTE",
+        raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
+        raspadinhaOrganizacao: "",
       });
       setPremios([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
     }
@@ -156,6 +168,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
             { nome: "€5", tipo: "dinheiro", percentagem: 0.2, valor: 5 },
           ],
           semPremioPercentagem: 0.62,
+          raspadinhaTitulo: formData.raspadinhaTitulo || "RASPADINHA DA SORTE",
+          raspadinhaSubtitulo: formData.raspadinhaSubtitulo || "Raspe com o dedo para revelar o seu prémio!",
+          raspadinhaOrganizacao: formData.raspadinhaOrganizacao || "",
         };
         break;
     }
@@ -193,6 +208,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
           numeroFinal: "1000",
           modoSorteio: "app",
           detalhesSorteioExterno: "",
+          raspadinhaTitulo: "RASPADINHA DA SORTE",
+          raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
+          raspadinhaOrganizacao: "",
         });
         setPremios([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
       }
@@ -277,6 +295,41 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
                     value={formData.numeroFinal}
                     onChange={(e) => setFormData({ ...formData, numeroFinal: e.target.value })}
                   />
+                </div>
+              </div>
+            )}
+
+            {formData.tipo === "raspadinha" && (
+              <div className="border-t pt-4 mt-2 space-y-4">
+                <h3 className="text-sm font-semibold">Personalização da Raspadinha</h3>
+                <div className="grid gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="raspadinhaTitulo">Título</Label>
+                    <Input
+                      id="raspadinhaTitulo"
+                      placeholder="Ex: RASPADINHA DA FESTA"
+                      value={formData.raspadinhaTitulo}
+                      onChange={(e) => setFormData({ ...formData, raspadinhaTitulo: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="raspadinhaSubtitulo">Subtítulo</Label>
+                    <Input
+                      id="raspadinhaSubtitulo"
+                      placeholder="Ex: Raspe com o dedo para revelar o seu prémio!"
+                      value={formData.raspadinhaSubtitulo}
+                      onChange={(e) => setFormData({ ...formData, raspadinhaSubtitulo: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="raspadinhaOrganizacao">Nome da Organização/Freguesia</Label>
+                    <Input
+                      id="raspadinhaOrganizacao"
+                      placeholder="Ex: Junta de Freguesia de Vila Verde"
+                      value={formData.raspadinhaOrganizacao}
+                      onChange={(e) => setFormData({ ...formData, raspadinhaOrganizacao: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
             )}
