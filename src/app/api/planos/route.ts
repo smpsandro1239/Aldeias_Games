@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const where = aldeiaId ? { aldeiaId } : {};
 
     const planos = await prisma.plano.findMany({
-      orderBy: { ordem: 'asc' },
+      orderBy: { nome: 'asc' },
     });
 
     let aldeiaPlano = null;
@@ -47,9 +47,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { nome, descricao, preco, maxEventos, maxJogos, maxVendedores, maxParticipacoes, ordem } = body;
+    const { nome, descricao, precoMensal, maxEventos, maxJogos, maxVendedores, maxParticipacoes } = body;
 
-    if (!nome || preco === undefined) {
+    if (!nome || precoMensal === undefined) {
       return NextResponse.json({ error: 'Nome e preço são obrigatórios' }, { status: 400 });
     }
 
@@ -57,12 +57,11 @@ export async function POST(request: NextRequest) {
       data: {
         nome,
         descricao: descricao || null,
-        precoMensal: preco,
+        precoMensal: precoMensal,
         maxEventos: maxEventos || 10,
         maxJogos: maxJogos || 50,
         maxVendedores: maxVendedores || 5,
         maxParticipacoes: maxParticipacoes || 1000,
-        ordem: ordem || 0,
       },
     });
 

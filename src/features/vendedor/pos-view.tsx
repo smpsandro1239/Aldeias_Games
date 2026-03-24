@@ -25,7 +25,7 @@ interface PendingSale {
   jogoId: string;
   quantidade: number;
   metodoPagamento: string;
-  dadosCliente: { nome: string; telefone?: string; email?: string };
+  dadosCliente?: { nome: string; telefone?: string; email?: string };
   timestamp: number;
 }
 

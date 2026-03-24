@@ -31,9 +31,9 @@ interface RifaPlacarModalProps {
   numeroInicial: number;
   numeroFinal: number;
   numerosOcupados: number[];
+  rifasCompradas?: RifaComprada[];
   onComprar: (quantidade: number, modo: 'sequencial' | 'escolher', numeros?: number[]) => Promise<void>;
   preco: number;
-  rifasCompradas?: RifaComprada[];
   loading?: boolean;
 }
 

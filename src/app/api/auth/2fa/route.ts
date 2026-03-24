@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
-import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
+
+const otplib = require('otplib');
+const authenticator = otplib.authenticator;
 
 export async function POST(request: NextRequest) {
   try {

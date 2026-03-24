@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const { telefone, valor, descricao } = validation.data;
 
     if (!telefone) {
-      return NextResponse.json({ error: 'Número de telefone é obrigatório' }, { status: 400 });
+      return NextResponse.json({ error: 'Telefone é obrigatório' }, { status: 400 });
     }
 
     // Normalizar telefone

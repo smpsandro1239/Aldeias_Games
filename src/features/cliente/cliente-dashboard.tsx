@@ -41,6 +41,7 @@ interface Participacao {
     sorteado: boolean;
     dataSorteio?: string;
     premioId?: string;
+    configuracao?: Record<string, unknown>;
     evento?: {
       nome: string;
       aldeia?: { nome: string };
@@ -236,13 +237,21 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
     });
 
     if (response.ok) {
+      const data = await response.json();
       toast.success("Participação registada!");
-      fetchData();
+      
       setPaymentOpen(false);
       setNumberSelectorOpen(false);
       setPoioDaVacaOpen(false);
       setNumerosSelecionados([]);
       setSelecaoPoioDaVaca([]);
+      
+      if (selectedJogo.tipo === "raspadinha" && data.participacao) {
+        setSelectedParticipacao(data.participacao);
+        setScratchCardOpen(true);
+      }
+      
+      fetchData();
     } else {
       const error = await response.json();
       toast.error(error.error || "Erro ao registar participação");
@@ -580,6 +589,9 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           premio={selectedParticipacao.resultadoRaspe || null}
           onReveal={handleRevelar}
           jaRevelado={selectedParticipacao.revelado}
+          titulo={selectedParticipacao.jogo?.configuracao?.raspadinhaTitulo as string || "RASPADINHA DA SORTE"}
+          subtitulo={selectedParticipacao.jogo?.configuracao?.raspadinhaSubtitulo as string || "Raspe com o dedo para revelar o seu prémio!"}
+          organizacao={selectedParticipacao.jogo?.configuracao?.raspadinhaOrganizacao as string || ""}
         />
       )}
 

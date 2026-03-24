@@ -14,7 +14,7 @@ export const telefoneSchema = z.string()
 
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
 });
 
 export const registerSchema = z.object({
