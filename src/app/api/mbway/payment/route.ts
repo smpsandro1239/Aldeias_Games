@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
 
     const { telefone, valor, descricao } = validation.data;
 
+    if (!telefone) {
+      return NextResponse.json({ error: 'Telefone é obrigatório' }, { status: 400 });
+    }
+
     const result = await initiatePayment(
       telefone,
       valor,
