@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { nome, descricao, preco, limiteEventos, limiteJogos, limiteVendedores, limiteParticipacoes,ordem } = body;
+    const { nome, descricao, preco, maxEventos, maxJogos, maxVendedores, maxParticipacoes, ordem } = body;
 
     if (!nome || preco === undefined) {
       return NextResponse.json({ error: 'Nome e preço são obrigatórios' }, { status: 400 });
@@ -57,11 +57,11 @@ export async function POST(request: NextRequest) {
       data: {
         nome,
         descricao: descricao || null,
-        preco,
-        limiteEventos: limiteEventos || null,
-        limiteJogos: limiteJogos || null,
-        limiteVendedores: limiteVendedores || null,
-        limiteParticipacoes: limiteParticipacoes || null,
+        precoMensal: preco,
+        maxEventos: maxEventos || 10,
+        maxJogos: maxJogos || 50,
+        maxVendedores: maxVendedores || 5,
+        maxParticipacoes: maxParticipacoes || 1000,
         ordem: ordem || 0,
       },
     });

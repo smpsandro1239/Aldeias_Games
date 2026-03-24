@@ -1,5 +1,5 @@
 // Setup para testes Jest
-import "@testing-library/jest-dom";
+require("@testing-library/jest-dom");
 
 // Mock do localStorage
 global.localStorage = {
@@ -13,19 +13,21 @@ global.localStorage = {
 global.fetch = jest.fn();
 
 // Mock do matchMedia
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+}
 
 // Mock do IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {

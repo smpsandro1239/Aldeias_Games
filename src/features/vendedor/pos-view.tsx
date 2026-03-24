@@ -109,7 +109,11 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
       jogoId: selectedJogo.id,
       quantidade,
       metodoPagamento: metodo,
-      dadosCliente: cliente.nome ? cliente : undefined,
+      dadosCliente: cliente.nome ? {
+        nome: cliente.nome,
+        telefone: cliente.telefone || undefined,
+        email: cliente.email || undefined
+      } : { nome: "Anónimo" },
     };
 
     if (!isOnline) {

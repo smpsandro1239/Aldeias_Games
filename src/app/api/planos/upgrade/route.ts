@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const dataFimPlano = new Date(now);
     dataFimPlano.setMonth(dataFimPlano.getMonth() + 1);
 
-    if (novoPlano.preco > 0 && aldeia.email) {
+    if (novoPlano.precoMensal > 0 && aldeia.email) {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
         apiVersion: '2025-02-24.acacia',
       });
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
                 product_data: {
                   name: `Plano ${novoPlano.nome} - Aldeias Games`,
                 },
-                unit_amount: Math.round(novoPlano.preco * 100),
+                unit_amount: Math.round(novoPlano.precoMensal * 100),
               },
               quantity: 1,
             },

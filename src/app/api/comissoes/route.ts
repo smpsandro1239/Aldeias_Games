@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { vendedorId, percentual, metaVendas, bônusMeta } = body;
+    const { vendedorId, percentual, metaVendas, bonusMeta } = body;
 
     if (!vendedorId || !percentual) {
       return NextResponse.json(

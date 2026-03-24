@@ -56,6 +56,22 @@
   }
 }
 
+.bg-tile-pattern {
+    background-color: #110d0c;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuAX3k2tQIqzJoHxXfF42VLbpUPDKgoVZS2EtkTc77J5scUT3Z6OKm85aC_hMnBbob-5XC8csls3EFBVh7GLmt5U8GIACGAtE0DqUtzg7ciSbxGtPNX1eoTiJ7DR4a8bGnqc1WWAPZ-zTrNSTTjlYKlfqxMC_-pOL-nSmEFGEK1DJjde6IyFTaFDbJGQ52zeg_EmWeFrjF4y7afjLXLGJN3n0dqJVNYmWEnxo9tmGgPy_1wH80Jkuu-DrNxw5cKc3L9XjNWOLGZoiuKF);
+    background-blend-mode: overlay;
+    opacity: 0.15
+}
+
+.scratch-texture {
+    background: repeating-linear-gradient(45deg, #2b2421, #2b2421 2px, #322a26 2px, #322a26 4px)
+}
+
+.glass-card {
+    background: rgba(43, 36, 33, 0.6);
+    backdrop-filter: blur(20px)
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

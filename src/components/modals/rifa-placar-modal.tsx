@@ -31,9 +31,9 @@ interface RifaPlacarModalProps {
   numeroInicial: number;
   numeroFinal: number;
   numerosOcupados: number[];
-  rifasCompradas?: RifaComprada[];
-  onComprar: (quantidade: number, numeros?: number[], modo: 'sequencial' | 'escolher') => Promise<void>;
+  onComprar: (quantidade: number, modo: 'sequencial' | 'escolher', numeros?: number[]) => Promise<void>;
   preco: number;
+  rifasCompradas?: RifaComprada[];
   loading?: boolean;
 }
 
@@ -95,7 +95,7 @@ export function RifaPlacarModal({
     setLoadingCompra(true);
     try {
       const qtd = quantidade === 'bloco' ? 20 : quantidade;
-      await onComprar(qtd, undefined, 'sequencial');
+      await onComprar(qtd, 'sequencial');
       setQuantidadeRapida(null);
     } finally {
       setLoadingCompra(false);
@@ -106,7 +106,7 @@ export function RifaPlacarModal({
     if (numerosSelecionados.length === 0) return;
     setLoadingCompra(true);
     try {
-      await onComprar(numerosSelecionados.length, numerosSelecionados, 'escolher');
+      await onComprar(numerosSelecionados.length, 'escolher', numerosSelecionados);
       setNumerosSelecionados([]);
       onOpenChange(false);
     } finally {

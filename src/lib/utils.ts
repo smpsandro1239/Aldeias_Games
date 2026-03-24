@@ -112,8 +112,7 @@ export function getInitials(name: string): string {
     .split(' ')
     .map((n) => n[0])
     .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .toUpperCase();
 }
 
 /**

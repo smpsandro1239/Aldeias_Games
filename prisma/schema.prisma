@@ -46,6 +46,9 @@ model User {
   logsAcesso            LogAcesso[]
   alteracoes            AlteracaoParticipacao[]
   vendas                Venda[]
+  passwordResets        PasswordReset[]
+  twoFactorAuth         TwoFactorAuth?
+  comissoes             Comissao[]
 
   saldo                 Float                   @default(0)
   transacoes            Transacao[]
@@ -87,7 +90,8 @@ enum TipoTransacao {
 
 model Comissao {
   id          String   @id @default(cuid())
-  vendedorId  String
+  vendedorId  String   @unique
+  vendedor    User     @relation(fields: [vendedorId], references: [id])
   percentual  Float    @default(5)
   metaVendas  Float?
   bonusMeta   Float?
@@ -103,6 +107,7 @@ model Comissao {
 model PasswordReset {
   id        String   @id @default(cuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id])
   token     String   @unique
   expires   DateTime
   used      Boolean  @default(false)
@@ -115,6 +120,7 @@ model PasswordReset {
 model TwoFactorAuth {
   id        String   @id @default(cuid())
   userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
   secret    String
   enabled   Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -154,6 +160,7 @@ model Plano {
   maxJogos         Int      @default(50)
   maxParticipacoes Int      @default(1000)
   maxVendedores    Int      @default(5)
+  ordem            Int      @default(0)
   recursos         String? // JSON com recursos adicionais
   stripePriceId    String?
   ativo            Boolean  @default(true)
@@ -339,6 +346,7 @@ model Premio {
   nome          String
   descricao     String?
   imagemUrl     String?
+  tipo          TipoPremio @default(fisico)
   valorDinheiroAlternative Float?
   ordem                    Int     @default(0)
 
