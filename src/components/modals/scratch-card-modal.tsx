@@ -56,9 +56,12 @@ export function ScratchCardModal({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    canvas.width = 320;
-    canvas.height = 200;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width || 320;
+    canvas.height = rect.height || 200;
 
+    ctx.globalCompositeOperation = "source-over";
+    
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, "#6366f1");
     gradient.addColorStop(0.5, "#8b5cf6");
@@ -82,19 +85,6 @@ export function ScratchCardModal({
     ctx.font = "bold 24px system-ui";
     ctx.textAlign = "center";
     ctx.fillText("✨ RASPE AQUI ✨", canvas.width / 2, canvas.height / 2);
-
-    const sparkleCtx = canvas.getContext("2d");
-    if (sparkleCtx) {
-      const time = Date.now();
-      for (let i = 0; i < 5; i++) {
-        const x = (Math.sin(time * 0.002 + i) + 1) * canvas.width / 2;
-        const y = (Math.cos(time * 0.003 + i * 2) + 1) * canvas.height / 2;
-        sparkleCtx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        sparkleCtx.beginPath();
-        sparkleCtx.arc(x, y, 2, 0, Math.PI * 2);
-        sparkleCtx.fill();
-      }
-    }
   }, [open, jaRevelado]);
 
   const getMousePos = (e: React.MouseEvent | React.TouchEvent) => {
@@ -102,36 +92,36 @@ export function ScratchCardModal({
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
     let clientX, clientY;
 
-    if ("touches" in e) {
+    if ("touches" in e && e.touches.length > 0) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
+    } else if ("clientX" in e) {
+      clientX = e.clientX;
+      clientY = e.clientY;
     } else {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
+      return { x: 0, y: 0 };
     }
 
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
     };
   };
 
   const scratch = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isScratching || revealed) return;
+    if (revealed) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
     const pos = getMousePos(e);
-
+    
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, 30, 0, Math.PI * 2);
     ctx.fill();
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -270,14 +260,24 @@ export function ScratchCardModal({
               {!revealed && (
                 <canvas
                   ref={canvasRef}
-                  className="w-full h-[200px] cursor-crosshair touch-none rounded-2xl border-2 border-white/20"
-                  onMouseDown={() => setIsScratching(true)}
+                  className="w-full h-[200px] cursor-crosshair rounded-2xl border-2 border-white/20"
+                  onMouseDown={(e) => {
+                    setIsScratching(true);
+                    scratch(e);
+                  }}
                   onMouseUp={() => setIsScratching(false)}
                   onMouseLeave={() => setIsScratching(false)}
-                  onMouseMove={scratch}
-                  onTouchStart={() => setIsScratching(true)}
+                  onMouseMove={(e) => {
+                    if (e.buttons === 1) scratch(e);
+                  }}
+                  onTouchStart={(e) => {
+                    setIsScratching(true);
+                    scratch(e);
+                  }}
                   onTouchEnd={() => setIsScratching(false)}
-                  onTouchMove={scratch}
+                  onTouchMove={(e) => {
+                    if (isScratching) scratch(e);
+                  }}
                 />
               )}
             </motion.div>
