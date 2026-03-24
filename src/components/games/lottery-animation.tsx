@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Trophy, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LotteryAnimationProps {
   finalResult: string;
@@ -18,6 +20,7 @@ export function LotteryAnimation({
 }: LotteryAnimationProps) {
   const [displayValue, setDisplayValue] = useState("?");
   const [counter, setCounter] = useState(0);
+  const [showResult, setShowResult] = useState(false);
 
   const getRandomValue = useCallback(() => {
     if (type === "number") {
@@ -34,14 +37,17 @@ export function LotteryAnimation({
     let interval: NodeJS.Timeout;
 
     if (isSpinning) {
+      setShowResult(false);
       interval = setInterval(() => {
         setDisplayValue(getRandomValue());
         setCounter((prev) => prev + 1);
-      }, 80);
+      }, 60);
     } else if (counter > 0) {
-      // Quando para, mostra o resultado final
       setDisplayValue(finalResult);
-      if (onFinish) onFinish();
+      setShowResult(true);
+      setTimeout(() => {
+        if (onFinish) onFinish();
+      }, 1500);
     }
 
     return () => {
@@ -50,28 +56,137 @@ export function LotteryAnimation({
   }, [isSpinning, finalResult, getRandomValue, onFinish, counter]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl border-2 border-primary/20 shadow-inner">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={displayValue}
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -20, opacity: 0 }}
-          transition={{ duration: 0.05 }}
-          className="text-6xl font-black tracking-tighter text-primary drop-shadow-md"
-        >
-          {displayValue}
-        </motion.div>
-      </AnimatePresence>
-      <div className="mt-4 flex gap-1">
-        {[1, 2, 3].map((i) => (
-          <motion.div
-            key={i}
-            animate={isSpinning ? { scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] } : {}}
-            transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.1 }}
-            className="w-2 h-2 rounded-full bg-primary"
-          />
-        ))}
+    <div className="relative flex flex-col items-center justify-center p-8">
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-3xl" />
+      
+      <div className="relative z-10 w-full">
+        <div className="flex justify-center mb-6">
+          {isSpinning ? (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+              className="p-4 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full shadow-[0_0_30px_rgba(251,191,36,0.5)]"
+            >
+              <Sparkles className="w-8 h-8 text-white" />
+            </motion.div>
+          ) : showResult ? (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
+              className="p-4 bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 rounded-full shadow-[0_0_40px_rgba(251,191,36,0.6)]"
+            >
+              <Trophy className="w-8 h-8 text-white" />
+            </motion.div>
+          ) : null}
+        </div>
+
+        <div className="relative bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 rounded-3xl p-8 shadow-2xl border-2 border-white/10 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEwIDBoMTB2MTBIMTB6TTAgMTBoMTB2MTBIMHoiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')] opacity-30" />
+          
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={displayValue}
+              initial={isSpinning ? { y: 30, opacity: 0, rotateX: -30 } : false}
+              animate={{ y: 0, opacity: 1, rotateX: 0 }}
+              exit={{ y: -30, opacity: 0, rotateX: 30 }}
+              transition={{ duration: 0.1 }}
+              className={cn(
+                "text-7xl md:text-8xl font-black tracking-wider text-center",
+                isSpinning
+                  ? "text-white/80 drop-shadow-lg"
+                  : showResult
+                  ? "bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(251,191,36,0.8)]"
+                  : "text-white"
+              )}
+            >
+              {displayValue}
+            </motion.div>
+          </AnimatePresence>
+
+          {showResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-1/2"
+            >
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1,
+                      delay: i * 0.15,
+                    }}
+                    className="w-2 h-2 rounded-full bg-yellow-400"
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        <div className="flex justify-center mt-6">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              animate={
+                isSpinning
+                  ? {
+                      scale: [1, 1.8, 1],
+                      opacity: [0.2, 1, 0.2],
+                      x: [0, (i % 2 === 0 ? 1 : -1) * 10],
+                    }
+                  : showResult
+                  ? {
+                      scale: [1, 1.5],
+                      opacity: [0.5, 1],
+                    }
+                  : {}
+              }
+              transition={{
+                repeat: isSpinning ? Infinity : 0,
+                duration: isSpinning ? 0.8 : 0.5,
+                delay: i * 0.1,
+              }}
+              className={cn(
+                "w-3 h-3 rounded-full mx-1",
+                isSpinning
+                  ? "bg-purple-500"
+                  : showResult
+                  ? "bg-yellow-400"
+                  : "bg-white/30"
+              )}
+            />
+          ))}
+        </div>
+
+        {!isSpinning && !showResult && (
+          <p className="text-center text-white/50 text-sm mt-4">
+            A sortear...
+          </p>
+        )}
+
+        {showResult && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-center text-white/80 text-lg font-bold mt-4"
+          >
+            <Star className="w-5 h-5 inline mr-2 text-yellow-400" />
+            Resultado Final!
+          </motion.p>
+        )}
       </div>
     </div>
   );

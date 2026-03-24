@@ -15,7 +15,7 @@ import {
   Play,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal } from "@/components/modals";
+import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal } from "@/components/modals";
 import { toast } from "sonner";
 import { WalletCard } from "@/components/wallet/wallet-card";
 
@@ -25,7 +25,7 @@ interface ClienteDashboardProps {
 
 interface Participacao {
   id: string;
-  dadosParticipacao: Record<string, unknown>;
+  dadosParticipacao: string;
   valorPago: number;
   estadoPagamento: string;
   revelado: boolean;
@@ -38,10 +38,22 @@ interface Participacao {
     nome: string;
     tipo: string;
     preco: number;
+    sorteado: boolean;
+    dataSorteio?: string;
+    premioId?: string;
     evento?: {
       nome: string;
       aldeia?: { nome: string };
     };
+    premios?: Array<{
+      id: string;
+      nome: string;
+      ordem: number;
+    }>;
+  };
+  premio?: {
+    id: string;
+    nome: string;
   };
 }
 
@@ -79,6 +91,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [selecaoPoioDaVaca, setSelecaoPoioDaVaca] = useState<{ letra: string; numero: number }[]>([]);
   const [numerosOcupadosPoio, setNumerosOcupadosPoio] = useState<{ letra: string; numero: number }[]>([]);
   const [numerosOcupadosRifa, setNumerosOcupadosRifa] = useState<number[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAldeia, setConfirmAldeia] = useState<{ jogo: Jogo; nome: string } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -137,12 +151,15 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
     // Verificar se está a jogar noutra aldeia
     const aldeiaDoJogo = jogo.evento?.aldeia?.nome;
     if (aldeiaPrincipal && aldeiaDoJogo && aldeiaDoJogo !== aldeiaPrincipal.nome) {
-      const confirmed = window.confirm(
-        `Atenção: Está a jogar na aldeia "${aldeiaDoJogo}", que não é a sua aldeia de registo "${aldeiaPrincipal.nome}".\n\nDeseja continuar?`
-      );
-      if (!confirmed) return;
+      setConfirmAldeia({ jogo, nome: aldeiaDoJogo });
+      setConfirmOpen(true);
+      return;
     }
 
+    proceedToJogo(jogo);
+  };
+
+  const proceedToJogo = async (jogo: Jogo) => {
     setSelectedJogo(jogo);
 
     // Buscar números ocupados para o jogo
@@ -404,6 +421,59 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                       <p className="text-sm text-muted-foreground">
                         {formatCurrency(participacao.valorPago)}
                       </p>
+                      {/* Números jogados */}
+                      {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
+                        <div className="mt-2">
+                          <p className="text-xs text-muted-foreground">Números jogados:</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(() => {
+                              const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                              const numeros = dados.numeros || [];
+                              return numeros.map((n: number) => (
+                                <span
+                                  key={n}
+                                  className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
+                                >
+                                  {n}
+                                </span>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+                      ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
+                        <div className="mt-2">
+                          <p className="text-xs text-muted-foreground">Coordenadas:</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(() => {
+                              const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                              const coordenadas = dados.coordenadas || dados.selecao || [];
+                              return coordenadas.map((c: { letra: string; numero: number }) => (
+                                <span
+                                  key={`${c.letra}${c.numero}`}
+                                  className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
+                                >
+                                  {c.letra}{c.numero}
+                                </span>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {/* Resultado do sorteio */}
+                      {participacao.jogo?.sorteado && (
+                        <div className="mt-2">
+                          {participacao.ganhador ? (
+                            <p className="text-sm text-green-600 font-medium">
+                              ✓ Ganhou!
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Sorteio realizado: não foi sorteado
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {participacao.ganhador && (
@@ -422,6 +492,11 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                         <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"}>
                           {participacao.resultadoRaspe || "Sem prémio"}
                         </Badge>
+                      )}
+                      {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
+                        <Button variant="outline" size="sm">
+                          Ver Prémios
+                        </Button>
                       )}
                       <Button variant="ghost" size="icon">
                         <Eye className="h-4 w-4" />
@@ -480,6 +555,14 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           letras={(selectedJogo.configuracao.letras as string[]) || ["A", "B", "C", "D", "E"]}
           numerosPorLetra={(selectedJogo.configuracao.numerosPorLetra as number) || 20}
           numerosOcupados={numerosOcupadosPoio}
+          numerosJogados={participacoes
+            .filter(p => p.jogo?.id === selectedJogo.id)
+            .map(p => {
+              const dados = p.dadosParticipacao as unknown as { coordenadas?: { letra: string; numero: number }[] };
+              return dados?.coordenadas || [];
+            })
+            .flat()
+            .map((c: { letra: string; numero: number }) => ({ letra: c.letra, numero: c.numero }))}
           precoIndividual={selectedJogo.preco}
           precoCartao={((selectedJogo.configuracao.precos as { cartao: number })?.cartao) || selectedJogo.preco * 4}
           onSelect={setSelecaoPoioDaVaca}
@@ -499,6 +582,30 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           jaRevelado={selectedParticipacao.revelado}
         />
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          setConfirmOpen(open);
+          if (!open) setConfirmAldeia(null);
+        }}
+        title="Aviso - Aldeia Diferente"
+        description={
+          <div>
+            <p className="mb-2">
+              Está a jogar na aldeia <strong>"{confirmAldeia?.nome}"</strong>, que não é a sua aldeia de registo <strong>"{aldeiaPrincipal?.nome}"</strong>.
+            </p>
+            <p>Deseja continuar?</p>
+          </div>
+        }
+        confirmText="Continuar"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          if (confirmAldeia?.jogo) {
+            proceedToJogo(confirmAldeia.jogo);
+          }
+        }}
+      />
     </div>
   );
 }

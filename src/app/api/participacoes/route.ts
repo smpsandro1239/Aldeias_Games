@@ -85,6 +85,9 @@ export async function GET(request: NextRequest) {
               nome: true,
               tipo: true,
               preco: true,
+              sorteado: true,
+              dataSorteio: true,
+              premioId: true,
               evento: {
                 select: {
                   id: true,
@@ -96,6 +99,14 @@ export async function GET(request: NextRequest) {
                     },
                   },
                 },
+              },
+              premios: {
+                select: {
+                  id: true,
+                  nome: true,
+                  ordem: true,
+                },
+                orderBy: { ordem: 'asc' },
               },
             },
           },
