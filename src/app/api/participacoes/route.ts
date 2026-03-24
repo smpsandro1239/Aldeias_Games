@@ -270,6 +270,7 @@ export async function POST(request: NextRequest) {
                 nome: true,
                 tipo: true,
                 preco: true,
+                configuracao: true,
               },
             },
           },
@@ -358,7 +359,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: data.quantidade === 1 ? result.participacoes[0] : result.participacoes,
+      participacao: data.quantidade === 1 ? result.participacoes[0] : result.participacoes,
       valorTotal: result.valorTotal,
     }, { status: 201 });
   } catch (error: any) {
