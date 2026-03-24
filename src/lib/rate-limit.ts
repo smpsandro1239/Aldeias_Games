@@ -20,9 +20,9 @@ interface RateLimitEntry {
 
 // Configurações pré-definidas para diferentes endpoints
 export const rateLimitConfigs = {
-  // Login: 5 tentativas por minuto
+  // Login: 20 tentativas por minuto
   login: {
-    maxRequests: 5,
+    maxRequests: 20,
     windowMs: 60 * 1000, // 1 minuto
   },
   // Register: 3 tentativas por minuto

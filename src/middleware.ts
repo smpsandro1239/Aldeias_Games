@@ -13,24 +13,10 @@ const publicRoutes = [
 ];
 
 // Rotas que precisam de rate limiting
-const rateLimitedRoutes = [
-  { path: '/api/auth/login', config: rateLimitConfigs.login },
-  { path: '/api/auth/register', config: rateLimitConfigs.register },
-];
+const rateLimitedRoutes: { path: string; config: typeof rateLimitConfigs.api }[] = [];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Rate limiting para rotas específicas
-  const rateLimitedRoute = rateLimitedRoutes.find(r => pathname.startsWith(r.path));
-  if (rateLimitedRoute) {
-    const clientId = getClientIdentifier(request);
-    const rateLimit = checkRateLimit(clientId, rateLimitedRoute.config);
-
-    if (!rateLimit.allowed) {
-      return createRateLimitResponse(rateLimit.resetTime);
-    }
-  }
 
   // Rate limiting geral para API
   if (pathname.startsWith('/api/')) {
