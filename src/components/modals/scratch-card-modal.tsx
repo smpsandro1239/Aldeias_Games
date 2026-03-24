@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Star } from "lucide-react";
+import { Sparkles, Star, Gift, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ScratchCardModalProps {
@@ -27,8 +27,8 @@ export function ScratchCardModal({
   premio,
   onReveal,
   jaRevelado,
-  titulo = "RASPADINHA DA SORTE",
-  subtitulo = "Raspe com o dedo para revelar o seu prémio!",
+  titulo = "RASPADINHA",
+  subtitulo = "Raspe para descobrir o seu prémio!",
   organizacao = "",
 }: ScratchCardModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,37 +53,54 @@ export function ScratchCardModal({
 
     ctx.globalCompositeOperation = "source-over";
 
+    // Silver metallic gradient
     const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
-    gradient.addColorStop(0, "#94a3b8");
-    gradient.addColorStop(0.3, "#cbd5e1");
-    gradient.addColorStop(0.5, "#e2e8f0");
-    gradient.addColorStop(0.7, "#cbd5e1");
-    gradient.addColorStop(1, "#94a3b8");
+    gradient.addColorStop(0, "#d1d5db");
+    gradient.addColorStop(0.25, "#f3f4f6");
+    gradient.addColorStop(0.5, "#e5e7eb");
+    gradient.addColorStop(0.75, "#d1d5db");
+    gradient.addColorStop(1, "#9ca3af");
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, rect.width, rect.height);
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-    for (let i = 0; i < rect.width; i += 4) {
-      for (let j = 0; j < rect.height; j += 4) {
-        if (Math.random() > 0.85) {
+    // Metallic texture dots
+    for (let i = 0; i < rect.width; i += 3) {
+      for (let j = 0; j < rect.height; j += 3) {
+        if (Math.random() > 0.9) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
+          ctx.fillRect(i, j, 1, 1);
+        } else if (Math.random() > 0.9) {
+          ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.1})`;
           ctx.fillRect(i, j, 1, 1);
         }
       }
     }
 
-    ctx.fillStyle = "#1e293b";
-    ctx.font = "bold 14px system-ui";
+    // Diagonal lines pattern
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    ctx.lineWidth = 1;
+    for (let i = -rect.height; i < rect.width; i += 8) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + rect.height, rect.height);
+      ctx.stroke();
+    }
+
+    // "RASPE" text with shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.font = "bold 24px system-ui";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    
-    const text = "✨ RASPE AQUI ✨";
-    const textWidth = ctx.measureText(text).width;
-    ctx.fillStyle = "rgba(30, 41, 59, 0.7)";
-    ctx.fillRect((rect.width - textWidth - 40) / 2, (rect.height - 30) / 2, textWidth + 40, 40);
-    ctx.fillStyle = "#f8fafc";
-    ctx.fillText(text, rect.width / 2, rect.height / 2);
+    ctx.fillText("RASPE", rect.width / 2 + 2, rect.height / 2 - 10);
+    ctx.fillText("AQUI", rect.width / 2 + 2, rect.height / 2 + 12);
 
+    ctx.fillStyle = "#1f2937";
+    ctx.font = "bold 24px system-ui";
+    ctx.fillText("RASPE", rect.width / 2, rect.height / 2 - 10);
+    ctx.fillText("AQUI", rect.width / 2, rect.height / 2 + 12);
+
+    // Set composite for scratching
     ctx.globalCompositeOperation = "destination-out";
   }, []);
 
@@ -121,9 +138,19 @@ export function ScratchCardModal({
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
+    // Draw scratch circle with some randomness for realism
     ctx.beginPath();
-    ctx.arc(x, y, 35, 0, Math.PI * 2);
+    ctx.arc(x, y, 30 + Math.random() * 5, 0, Math.PI * 2);
     ctx.fill();
+
+    // Add some random scratches around
+    for (let i = 0; i < 3; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * 20;
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, 10 + Math.random() * 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = imageData.data;
@@ -134,7 +161,7 @@ export function ScratchCardModal({
     const percent = (transparent / (pixels.length / 4)) * 100;
     setScratchedPercent(percent);
 
-    if (percent > 50 && !revealed) {
+    if (percent > 40 && !revealed) {
       setRevealed(true);
       setShowCelebration(!!isPremio);
       onReveal();
@@ -163,97 +190,102 @@ export function ScratchCardModal({
     return "🎉";
   };
 
+  const getPremioIcon = () => {
+    if (!premio) return <Gift className="w-16 h-16" />;
+    const prizeLower = premio.toLowerCase();
+    if (prizeLower.includes("€") || prizeLower.includes("euro")) return <Coins className="w-16 h-16" />;
+    return <Gift className="w-16 h-16" />;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] overflow-hidden p-0">
-        <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuMDUiLz48L3N2Zz4=')] opacity-30" />
-
-          <div className="relative z-10">
-            <div className="text-center mb-8">
+      <DialogContent className="sm:max-w-lg overflow-hidden p-0">
+        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6">
+          {/* Celebration confetti */}
+          <AnimatePresence>
+            {showCelebration && (
               <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="flex justify-center mb-4"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 pointer-events-none overflow-hidden z-20"
               >
-                <div className="p-4 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-lg shadow-yellow-500/30">
-                  <Sparkles className="w-10 h-10 text-white" />
-                </div>
+                {[...Array(40)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ 
+                      x: Math.random() * 400 + 50, 
+                      y: -30,
+                      rotate: 0,
+                      scale: 0
+                    }}
+                    animate={{ 
+                      y: 500,
+                      x: Math.random() * 500,
+                      rotate: Math.random() * 720,
+                      scale: [0, 1, 1, 0]
+                    }}
+                    transition={{ 
+                      duration: 2 + Math.random() * 2,
+                      delay: Math.random() * 0.8,
+                      ease: "easeOut"
+                    }}
+                    className="absolute text-2xl"
+                    style={{ left: `${Math.random() * 90}%` }}
+                  >
+                    {["🎉", "🎊", "⭐", "✨", "💫", "🌟", "🏆", "🎁", "💰"][Math.floor(Math.random() * 9)]}
+                  </motion.div>
+                ))}
               </motion.div>
-              <motion.h2 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-3xl font-black text-white tracking-wider drop-shadow-lg"
-              >
-                {titulo}
-              </motion.h2>
+            )}
+          </AnimatePresence>
+
+          {/* Header */}
+          <div className="text-center mb-6">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
+              className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-3"
+            >
+              <Sparkles className="w-8 h-8 text-yellow-300" />
+            </motion.div>
+            
+            <motion.h2 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl font-black text-white tracking-widest drop-shadow-lg"
+            >
+              {titulo}
+            </motion.h2>
+            
+            {organizacao && (
               <motion.p 
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-white/70 mt-2"
+                className="text-yellow-300 font-semibold mt-2"
               >
-                {subtitulo}
+                {organizacao}
               </motion.p>
-              {organizacao && (
-                <motion.p 
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-yellow-400 font-semibold mt-3"
-                >
-                  {organizacao}
-                </motion.p>
-              )}
-            </div>
+            )}
+          </div>
 
-            <AnimatePresence>
-              {showCelebration && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center"
-                >
-                  {[...Array(30)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ 
-                        x: 300, 
-                        y: 400,
-                        scale: 0,
-                        rotate: 0
-                      }}
-                      animate={{ 
-                        y: -100,
-                        x: Math.random() * 600,
-                        rotate: Math.random() * 360,
-                        scale: [0, 1, 1, 0]
-                      }}
-                      transition={{ 
-                        duration: 2 + Math.random(),
-                        delay: Math.random() * 0.5,
-                        ease: "easeOut"
-                      }}
-                      className="absolute text-3xl"
-                    >
-                      {["🎉", "🎊", "⭐", "✨", "💫", "🌟", "🏆", "🎁"][Math.floor(Math.random() * 8)]}
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="relative"
-            >
+          {/* Prize Card */}
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="relative"
+          >
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+              {/* Card header with prize */}
               <div 
                 className={cn(
-                  "rounded-3xl overflow-hidden shadow-2xl",
-                  revealed ? "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500" : "bg-slate-800/50 border border-slate-700"
+                  "p-6 text-center",
+                  isPremio 
+                    ? "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500" 
+                    : "bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600"
                 )}
               >
                 <AnimatePresence mode="wait">
@@ -262,120 +294,152 @@ export function ScratchCardModal({
                       key="revealed"
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.5, opacity: 0 }}
-                      className="p-12 text-center"
+                      className="py-4"
                     >
                       <motion.div
                         animate={isPremio ? { 
-                          y: [0, -15, 0],
-                          rotate: [0, -5, 5, 0]
+                          y: [0, -10, 0],
+                          scale: [1, 1.1, 1]
                         } : {}}
                         transition={{ repeat: Infinity, duration: 2 }}
-                        className="mb-6"
+                        className="mb-4"
                       >
-                        <div className="text-8xl mb-4">
-                          {getPremioEmoji()}
-                        </div>
-                        {isPremio ? (
-                          <>
-                            <div className="text-white text-xl font-bold mb-2">
-                              🎉 PARABÉNS! GANHOU! 🎉
-                            </div>
-                            <div className="text-white text-5xl font-black tracking-wider drop-shadow-md">
-                              {premio}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-slate-700 text-xl font-bold mb-2">
-                              😔 Sem prémio desta vez
-                            </div>
-                            <div className="text-slate-600 text-2xl font-semibold">
-                              Mas obrigado pela participação!
-                            </div>
-                          </>
-                        )}
+                        <div className="text-7xl mb-2">{getPremioEmoji()}</div>
                       </motion.div>
+                      
+                      <div className="text-white">
+                        <p className="text-lg font-bold mb-1">
+                          {isPremio ? "🎉 GANHOU! 🎉" : "Sem prémio"}
+                        </p>
+                        <p className="text-4xl font-black tracking-wider drop-shadow-md">
+                          {premio || "Tente novamente"}
+                        </p>
+                      </div>
+
                       {isPremio && (
-                        <div className="mt-6 inline-block bg-white/20 text-white px-6 py-2 rounded-full text-sm">
-                          Contacte a organização para receber
-                        </div>
+                        <motion.p 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.5 }}
+                          className="text-white/80 text-sm mt-4"
+                        >
+                          Contacte a organização para receber o prémio
+                        </motion.p>
                       )}
                     </motion.div>
                   ) : (
                     <motion.div
-                      key="scratch"
+                      key="hidden"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="p-2"
+                      className="relative"
                     >
-                      <div className="relative rounded-2xl overflow-hidden">
-                        <div className="bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 p-8 text-center">
-                          <div className="text-white text-5xl font-black tracking-widest drop-shadow-md">
-                            {premio || "???"}
-                          </div>
-                          <p className="text-white/80 text-sm mt-2">
-                            {isPremio ? "Prémio escondido!" : "Tente a sua sorte!"}
-                          </p>
-                        </div>
-                        
-                        <canvas
-                          ref={canvasRef}
-                          className="absolute inset-0 w-full h-full cursor-crosshair touch-none"
-                          onMouseDown={(e) => {
-                            setIsScratching(true);
-                            scratch(e);
-                          }}
-                          onMouseUp={() => setIsScratching(false)}
-                          onMouseLeave={() => setIsScratching(false)}
-                          onMouseMove={(e) => {
-                            if (e.buttons === 1) scratch(e);
-                          }}
-                          onTouchStart={(e) => {
-                            setIsScratching(true);
-                            scratch(e);
-                          }}
-                          onTouchEnd={() => setIsScratching(false)}
-                          onTouchMove={(e) => {
-                            if (isScratching) scratch(e);
-                          }}
-                        />
+                      {/* Prize hidden underneath - blurred effect */}
+                      <div className="blur-sm opacity-50">
+                        <p className="text-white/60 text-sm font-medium mb-1">O SEU PRÉMIO</p>
+                        <p className="text-white text-3xl font-black tracking-wider">
+                          {premio || "???€"}
+                        </p>
                       </div>
+
+                      {/* Scratch overlay */}
+                      <canvas
+                        ref={canvasRef}
+                        className="absolute inset-0 w-full h-full cursor-crosshair touch-none rounded-xl"
+                        onMouseDown={(e) => {
+                          setIsScratching(true);
+                          scratch(e);
+                        }}
+                        onMouseUp={() => setIsScratching(false)}
+                        onMouseLeave={() => setIsScratching(false)}
+                        onMouseMove={(e) => {
+                          if (e.buttons === 1) scratch(e);
+                        }}
+                        onTouchStart={(e) => {
+                          setIsScratching(true);
+                          scratch(e);
+                        }}
+                        onTouchEnd={() => setIsScratching(false)}
+                        onTouchMove={(e) => {
+                          if (isScratching) scratch(e);
+                        }}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {!revealed && (
-                <div className="mt-6 space-y-4">
-                  <div className="w-full h-4 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${scratchedPercent}%` }}
-                      transition={{ type: "spring", stiffness: 100 }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-white/60 text-sm px-2">
-                    <span>Arraste para raspar</span>
-                    <span className="font-mono">{Math.round(scratchedPercent)}%</span>
-                  </div>
-
-                  <div className="flex justify-center pt-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleRevealAll}
-                      className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    >
-                      <Star className="w-4 h-4 mr-2" />
-                      Revelar Tudo
-                    </Button>
-                  </div>
+              {/* Card footer */}
+              <div className="bg-slate-50 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span>Resultado válido</span>
                 </div>
-              )}
+                
+                {!revealed && (
+                  <div className="text-xs text-slate-400">
+                    {Math.round(scratchedPercent)}% raspado
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            {!revealed && (
+              <div className="mt-4 space-y-2">
+                <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-yellow-400"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${scratchedPercent}%` }}
+                    transition={{ type: "spring", stiffness: 100 }}
+                  />
+                </div>
+
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRevealAll}
+                    className="bg-white/20 border-white/30 text-white hover:bg-white/30 text-xs"
+                  >
+                    <Star className="w-3 h-3 mr-1" />
+                    Revelar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Instructions */}
+          {!revealed && (
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-center text-white/70 text-sm mt-4"
+            >
+              {subtitulo}
+            </motion.p>
+          )}
+
+          {/* Close button when revealed */}
+          {revealed && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex justify-center mt-6"
+            >
+              <Button
+                onClick={() => onOpenChange(false)}
+                className="bg-white text-purple-600 hover:bg-slate-100 font-bold px-8"
+              >
+                Fechar
+              </Button>
             </motion.div>
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
