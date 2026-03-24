@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { vendedorId, percentual, metaVendas, bônusMeta } = body;
+    const { vendedorId, percentual, metaVendas, bonusMeta } = body;
 
     if (!vendedorId || !percentual) {
       return NextResponse.json(
@@ -85,21 +85,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Vendedor não encontrado' }, { status: 404 });
     }
 
-    const comissao = await prisma.comissao.upsert({
+    const existingComissao = await prisma.comissao.findFirst({
       where: { vendedorId },
-      update: {
-        percentual,
-        metaVendas: metaVendas || null,
-        bonusMeta: bonusMeta || null,
-      },
-      create: {
-        vendedorId,
-        percentual,
-        metaVendas: metaVendas || null,
-        bonusMeta: bonusMeta || null,
-        aldeiaId: vendedor.aldeiaId,
-      },
     });
+
+    let comissao;
+    if (existingComissao) {
+      comissao = await prisma.comissao.update({
+        where: { id: existingComissao.id },
+        data: {
+          percentual,
+          metaVendas: metaVendas || null,
+          bonusMeta: bonusMeta || null,
+        },
+      });
+    } else {
+      comissao = await prisma.comissao.create({
+        data: {
+          vendedorId,
+          percentual,
+          metaVendas: metaVendas || null,
+          bonusMeta: bonusMeta || null,
+          aldeiaId: vendedor.aldeiaId,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
