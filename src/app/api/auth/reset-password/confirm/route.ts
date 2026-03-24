@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
 
     const reset = await prisma.passwordReset.findUnique({
       where: { token },
-      include: { user: true },
     });
 
     if (!reset) {
@@ -36,6 +35,14 @@ export async function POST(request: NextRequest) {
 
     if (new Date() > reset.expires) {
       return NextResponse.json({ error: 'Token expirou' }, { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: reset.userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 400 });
     }
 
     const hashedPassword = await hash(novaPassword, 12);
