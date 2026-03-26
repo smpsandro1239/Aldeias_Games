@@ -2,14 +2,26 @@ import Stripe from 'stripe';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
-if (!STRIPE_SECRET_KEY && process.env.NODE_ENV === 'production') {
-  throw new Error('STRIPE_SECRET_KEY é obrigatório em produção');
+let stripeInstance: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!stripeInstance) {
+    if (!STRIPE_SECRET_KEY && process.env.NODE_ENV === 'production') {
+      throw new Error('STRIPE_SECRET_KEY é obrigatório em produção');
+    }
+    stripeInstance = new Stripe(STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+      apiVersion: '2025-02-24.acacia',
+      typescript: true,
+    });
+  }
+  return stripeInstance;
 }
 
-export const stripe = new Stripe(STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia',
-  typescript: true,
-});
+export const stripe = {
+  get instance() {
+    return getStripe();
+  }
+};
 
 /**
  * Criar sessão de checkout
@@ -23,7 +35,7 @@ export async function createCheckoutSession(
     cancelUrl: string;
   }
 ) {
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripe.instance.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
       {
@@ -56,7 +68,7 @@ export async function createPaymentIntent(
     metadata?: Record<string, string>;
   }
 ) {
-  const paymentIntent = await stripe.paymentIntents.create({
+  const paymentIntent = await stripe.instance.paymentIntents.create({
     amount: Math.round(params.valor * 100),
     currency: 'eur',
     description: params.descricao,
@@ -77,14 +89,14 @@ export function verifyWebhookSignature(
   signature: string,
   secret: string
 ): Stripe.Event {
-  return stripe.webhooks.constructEvent(payload, signature, secret);
+  return stripe.instance.webhooks.constructEvent(payload, signature, secret);
 }
 
 /**
  * Obter sessão de checkout
  */
 export async function getCheckoutSession(sessionId: string) {
-  return stripe.checkout.sessions.retrieve(sessionId);
+  return stripe.instance.checkout.sessions.retrieve(sessionId);
 }
 
 /**
@@ -97,7 +109,7 @@ export async function createCustomer(
     phone?: string;
   }
 ) {
-  return stripe.customers.create(params);
+  return stripe.instance.customers.create(params);
 }
 
 /**

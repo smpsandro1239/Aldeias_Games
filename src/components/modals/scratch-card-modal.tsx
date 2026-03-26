@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ScratchCard } from "@/components/games/ScratchCard";
 import { Sparkles } from "lucide-react";
+import confetti from "canvas-confetti";
 
 interface ScratchCardModalProps {
   open: boolean;
@@ -49,25 +50,39 @@ export function ScratchCardModal({
   onReveal,
   jaRevelado = false,
 }: ScratchCardModalProps) {
-  // Verificar se são props novas ou antigas
   const isNewProps = premio !== undefined;
   
   const [revealed, setRevealed] = useState(isNewProps ? false : jaRevelado);
   const [result, setResult] = useState<{ ganhou: boolean; premio: ScratchCardModalProps["premio"] } | null>(null);
+  const hasRevealedRef = useRef(false); // Previne chamadas múltiplas
 
-  const handleReveal = useCallback((ganhou: boolean, premioResult: NonNullable<ScratchCardModalProps["premio"]>) => {
+  const handleReveal = useCallback(async (ganhou: boolean, premioResult: NonNullable<ScratchCardModalProps["premio"]>) => {
+    // Previne chamada múltipla
+    if (hasRevealedRef.current) return;
+    hasRevealedRef.current = true;
+
     setRevealed(true);
     setResult({ ganhou, premio: premioResult });
+
+    // Confetti se ganhou
+    if (ganhou) {
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    }
     
-    // Se for props antigas, chama o onReveal
+    // Chama o onReveal apenas uma vez (para props antigas)
     if (!isNewProps && onReveal && participacaoId) {
-      onReveal(participacaoId);
+      try {
+        await onReveal(participacaoId);
+      } catch (error) {
+        console.error("Erro ao revelar:", error);
+      }
     }
   }, [isNewProps, onReveal, participacaoId]);
 
   const handleClose = useCallback(() => {
     setRevealed(false);
     setResult(null);
+    hasRevealedRef.current = false; // Reset para permitir nova revelação
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -80,9 +95,8 @@ export function ScratchCardModal({
     valorDinheiroAlternative: null,
   };
 
-  // Usar o prémio das props novas ou criar um a partir das props antigas
   const finalPremio = premio || defaultPremio;
-  const finalJogoId = jogoId || "legacy-game";
+  const finalJogoId = participacaoId || jogoId || "legacy-game";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -122,6 +136,7 @@ export function ScratchCardModal({
               premio={finalPremio}
               jogoId={finalJogoId}
               onRevelado={handleReveal}
+              skipApiCall={!isNewProps} // Pula API call se for props antigas
             />
           </div>
 

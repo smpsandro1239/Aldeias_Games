@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
-import Stripe from 'stripe';
+import { createCheckoutSession } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,31 +40,14 @@ export async function POST(request: NextRequest) {
     dataFimPlano.setMonth(dataFimPlano.getMonth() + 1);
 
     if (novoPlano.precoMensal > 0 && aldeia.email) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-        apiVersion: '2025-02-24.acacia',
-      });
-
       let sessionUrl: string | null = null;
 
       try {
-        const session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          line_items: [
-            {
-              price_data: {
-                currency: 'eur',
-                product_data: {
-                  name: `Plano ${novoPlano.nome} - Aldeias Games`,
-                },
-                unit_amount: Math.round(novoPlano.precoMensal * 100),
-              },
-              quantity: 1,
-            },
-          ],
-          mode: 'subscription',
-          success_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/plano?success=true`,
-          cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/plano?cancelled=true`,
-          customer_email: aldeia.email,
+        const session = await createCheckoutSession({
+          valor: novoPlano.precoMensal,
+          descricao: `Plano ${novoPlano.nome} - Aldeias Games`,
+          successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin/plano?success=true`,
+          cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin/plano?cancelled=true`,
           metadata: {
             aldeiaId,
             planoId,

@@ -15,19 +15,10 @@ interface ScratchCardProps {
   };
   jogoId: string;
   onRevelado: (ganhou: boolean, premio: NonNullable<ScratchCardProps["premio"]>) => void;
+  skipApiCall?: boolean; // Pula a chamada à API (usado pelo modal)
 }
 
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  size: number;
-}
-
-export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
-  // Prémio padrão para quando não temos os dados completos
+export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }: ScratchCardProps) {
   const defaultPremio = {
     id: "default",
     nome: "Prémio Especial",
@@ -43,12 +34,13 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
   const [revelado, setRevelado] = useState(false);
   const { playScratch } = useScratchSound();
 
-  const particlesRef = useRef<Particle[]>([]);
+  const maxPercentRef = useRef(0); // Track máximo de percentagem
   const isDraggingRef = useRef(false);
   const lastX = useRef(0);
   const lastY = useRef(0);
-  const animationFrameRef = useRef<number | null>(null);
   const isRevealingRef = useRef(false);
+  const moveCountRef = useRef(0); // Para calcular percentagem menos vezes
+  const soundThrottleRef = useRef(0); // Para throttle do som
 
   const W = 420;
   const H = 260;
@@ -68,15 +60,15 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
     ctx.fillStyle = "#a8a8a8";
     ctx.fillRect(0, 0, W, H);
     
-    // Ruído para textura metálica
+    // Ruído reduzido para melhor performance (4000 em vez de 12000)
     ctx.fillStyle = "rgba(255,255,255,0.4)";
-    for (let i = 0; i < 12000; i++) {
+    for (let i = 0; i < 4000; i++) {
       ctx.fillRect(Math.random() * W, Math.random() * H, 1.5, 1.5);
     }
 
-    // Linhas de brilho metálico
+    // Linhas de brilho metálico reduzidas
     ctx.strokeStyle = "rgba(180,180,180,0.6)";
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 20; i++) {
       ctx.beginPath();
       ctx.moveTo(Math.random() * W, Math.random() * H);
       ctx.lineTo(Math.random() * W, Math.random() * H);
@@ -91,11 +83,14 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
     ctx.fillText("✨ RASPE AQUI ✨", W / 2, H / 2 - 15);
     ctx.font = "16px system-ui";
     ctx.fillText("para revelar o seu prémio", W / 2, H / 2 + 20);
+
+    // Reset do máximo
+    maxPercentRef.current = 0;
   }, []);
 
-  // Função de raspagem com spray
+  // Função de raspagem com spray otimizada
   const scratch = useCallback(
-    (x: number, y: number, intensity: number = 1) => {
+    (x: number, y: number) => {
       if (revelado) return;
 
       const canvas = canvasRef.current;
@@ -107,37 +102,30 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
       ctx.save();
       ctx.globalCompositeOperation = "destination-out";
       ctx.beginPath();
-      ctx.arc(x, y, 28, 0, Math.PI * 2);
+      ctx.arc(x, y, 30, 0, Math.PI * 2);
       ctx.fill();
 
-      // SPRAY ultra realista (50 pontos aleatórios)
-      for (let i = 0; i < 50; i++) {
-        const ox = (Math.random() - 0.5) * 52;
-        const oy = (Math.random() - 0.5) * 52;
+      // SPRAY otimizado (15 pontos em vez de 50)
+      for (let i = 0; i < 15; i++) {
+        const ox = (Math.random() - 0.5) * 50;
+        const oy = (Math.random() - 0.5) * 50;
         ctx.beginPath();
-        ctx.arc(x + ox, y + oy, Math.random() * 9 + 5, 0, Math.PI * 2);
+        ctx.arc(x + ox, y + oy, Math.random() * 8 + 4, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
 
-      playScratch(intensity);
-
-      // Partículas de poeira voando
-      for (let i = 0; i < 12; i++) {
-        particlesRef.current.push({
-          x: x + (Math.random() - 0.5) * 30,
-          y: y + (Math.random() - 0.5) * 30,
-          vx: (Math.random() - 0.5) * 4,
-          vy: -Math.random() * 3 - 1,
-          life: 35 + Math.random() * 25,
-          size: Math.random() * 4 + 2,
-        });
+      // Throttle do som - só toca a cada 50ms
+      const now = Date.now();
+      if (now - soundThrottleRef.current > 50) {
+        playScratch(0.5);
+        soundThrottleRef.current = now;
       }
     },
     [revelado, playScratch]
   );
 
-  // Calcula a percentagem raspada
+  // Calcula a percentagem raspada - COM REGISTO DO MÁXIMO
   const calcularPercent = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -147,13 +135,22 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
 
     const data = ctx.getImageData(0, 0, W, H).data;
     let transparent = 0;
-    for (let i = 3; i < data.length; i += 4) {
+    const totalPixels = W * H;
+    
+    // Amostragem para melhor performance (verifica 1 em cada 4 pixels)
+    for (let i = 3; i < data.length; i += 16) {
       if (data[i] === 0) transparent++;
     }
-    const p = Math.round((transparent / (W * H)) * 100);
-    setPercent(p);
+    
+    const p = Math.round((transparent * 4 / totalPixels) * 100);
+    
+    // SÓ ATUALIZA SE FOR MAIOR QUE O MÁXIMO ANTERIOR
+    if (p > maxPercentRef.current) {
+      maxPercentRef.current = p;
+      setPercent(p);
+    }
 
-    if (p >= 68 && !revelado && !isRevealingRef.current) {
+    if (maxPercentRef.current >= 68 && !revelado && !isRevealingRef.current) {
       isRevealingRef.current = true;
       setRevelado(true);
       revealAll();
@@ -173,7 +170,12 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
 
-    // Chama API para revelar
+    // Se skipApiCall for true, não faz chamada à API
+    if (skipApiCall) {
+      onRevelado(true, finalPremio); // Assume ganhou (o modal tratará)
+      return;
+    }
+
     fetch("/api/jogos/revelar-raspadinha", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -183,44 +185,13 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
       .then((data) => {
         onRevelado(data.ganhou, finalPremio);
         if (data.ganhou) {
-          confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
       })
       .catch(() => {
         onRevelado(false, finalPremio);
       });
-  }, [jogoId, finalPremio, onRevelado]);
-
-  // Animação das partículas de poeira
-  const animateParticles = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
-
-    ctx.save();
-    ctx.globalCompositeOperation = "source-over";
-    particlesRef.current = particlesRef.current.filter((p) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.08; // gravidade leve
-      p.life -= 1;
-      p.vx *= 0.96;
-      p.vy *= 0.96;
-
-      if (p.life <= 0) return false;
-
-      ctx.fillStyle = `rgba(220,220,220,${p.life / 40})`;
-      ctx.fillRect(p.x, p.y, p.size, p.size);
-      return true;
-    });
-    ctx.restore();
-
-    if (particlesRef.current.length > 0 || isDraggingRef.current) {
-      animationFrameRef.current = requestAnimationFrame(animateParticles);
-    }
-  }, []);
+  }, [jogoId, finalPremio, onRevelado, skipApiCall]);
 
   // Inicialização
   useEffect(() => {
@@ -245,8 +216,7 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
           : e.touches[0].clientY - rect.top;
       lastX.current = x;
       lastY.current = y;
-      scratch(x, y, 1.2);
-      animateParticles();
+      scratch(x, y);
     };
 
     const handleMove = (e: MouseEvent | TouchEvent) => {
@@ -262,19 +232,26 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
           : e.touches[0].clientY - rect.top;
 
       // Linha entre pontos para suavidade
-      const steps = 10;
+      const steps = 6; // Reduzido de 10 para 6
       for (let i = 0; i < steps; i++) {
         const ix = lastX.current + (x - lastX.current) * (i / steps);
         const iy = lastY.current + (y - lastY.current) * (i / steps);
-        scratch(ix, iy, 0.8);
+        scratch(ix, iy);
       }
       lastX.current = x;
       lastY.current = y;
-      calcularPercent();
+
+      // Só calcula percentagem a cada 5 movimentos
+      moveCountRef.current++;
+      if (moveCountRef.current % 5 === 0) {
+        calcularPercent();
+      }
     };
 
     const handleEnd = () => {
       isDraggingRef.current = false;
+      // Calcula no final também
+      calcularPercent();
     };
 
     canvas.addEventListener("mousedown", handleStart);
@@ -287,7 +264,6 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
     canvas.addEventListener("touchend", handleEnd, { passive: false });
 
     return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       canvas.removeEventListener("mousedown", handleStart);
       canvas.removeEventListener("mousemove", handleMove);
       canvas.removeEventListener("mouseup", handleEnd);
@@ -296,7 +272,7 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
       canvas.removeEventListener("touchmove", handleMove);
       canvas.removeEventListener("touchend", handleEnd);
     };
-  }, [scratch, animateParticles, calcularPercent]);
+  }, [scratch, calcularPercent]);
 
   const getPrizeLevel = (prize: string | null | undefined): string => {
     if (!prize) return "bronze";
@@ -326,7 +302,7 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
     <motion.div
       initial={{ scale: 0.92, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="relative mx-auto w-[420px] h-[260px] cursor-[url('/assets/raspadinha/coin-cursor.png')_12_12,auto]"
+      className="relative mx-auto w-[420px] h-[260px] cursor-crosshair"
     >
       {/* Prémio por baixo */}
       <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-600 rounded-3xl flex flex-col items-center justify-center p-6 shadow-2xl overflow-hidden">
@@ -334,17 +310,17 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
           <img
             src={finalPremio.imagemUrl}
             alt={finalPremio.nome || "Prémio"}
-            className="w-52 h-52 object-contain drop-shadow-2xl"
+            className="w-40 h-40 object-contain drop-shadow-2xl"
           />
         )}
-        <h1 className="text-5xl font-black text-white text-center mt-4 tracking-tighter">
+        <h1 className="text-4xl font-black text-white text-center mt-2 tracking-tighter">
           {finalPremio.nome || "Prémio Especial"}
         </h1>
-        <p className="text-white/90 text-2xl mt-3">
+        <p className="text-white/90 text-xl mt-2">
           {finalPremio.descricao || "Prémio Especial"}
         </p>
         {finalPremio.valorDinheiroAlternative && (
-          <p className="text-6xl font-bold text-white mt-6">
+          <p className="text-5xl font-bold text-white mt-4">
             €{finalPremio.valorDinheiroAlternative}
           </p>
         )}
@@ -357,10 +333,10 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
         style={{ touchAction: "none" }}
       />
 
-      {/* Percentagem */}
+      {/* Percentagem - só mostra se > 10% */}
       {percent > 10 && !revelado && (
-        <div className="absolute top-6 right-6 bg-black/80 text-white text-sm px-4 py-1 rounded-full font-mono">
-          {percent}% raspado
+        <div className="absolute top-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-mono">
+          {percent}%
         </div>
       )}
 
@@ -369,18 +345,18 @@ export function ScratchCard({ premio, jogoId, onRevelado }: ScratchCardProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-3xl"
         >
           <div className="text-center">
-            <div className="text-7xl mb-4">🎉</div>
+            <div className="text-6xl mb-3">🎉</div>
             <div
-              className={`inline-flex items-center gap-2 px-6 py-2 rounded-full text-white text-sm font-bold bg-gradient-to-r ${getPrizeLevelColor(prizeLevel)}`}
+              className={`inline-flex items-center gap-2 px-4 py-1 rounded-full text-white text-sm font-bold bg-gradient-to-r ${getPrizeLevelColor(prizeLevel)}`}
             >
               {prizeLevel.toUpperCase()}
             </div>
-            <p className="text-4xl font-black mt-4 text-white">{finalPremio.nome}</p>
+            <p className="text-3xl font-black mt-3 text-white">{finalPremio.nome}</p>
             {finalPremio.valorDinheiroAlternative && (
-              <p className="text-6xl font-bold text-white mt-6">
+              <p className="text-4xl font-bold text-white mt-2">
                 €{finalPremio.valorDinheiroAlternative}
               </p>
             )}
