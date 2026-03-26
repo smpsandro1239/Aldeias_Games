@@ -19,10 +19,12 @@ const config: Config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          container: "hsl(var(--primary-container))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          container: "hsl(var(--secondary-container))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -35,6 +37,7 @@ const config: Config = {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          container: "hsl(var(--tertiary-container))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -44,6 +47,33 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          dim: "hsl(var(--surface-dim))",
+          'container-lowest': "hsl(var(--surface-container-lowest))",
+          'container-low': "hsl(var(--surface-container-low))",
+          container: "hsl(var(--surface-container))",
+          'container-high': "hsl(var(--surface-container-high))",
+          'container-highest': "hsl(var(--surface-container-highest))",
+        },
+        'on-surface': {
+          DEFAULT: "hsl(var(--on-surface))",
+          variant: "hsl(var(--on-surface-variant))",
+        },
+        tertiary: {
+          DEFAULT: "hsl(var(--tertiary))",
+          foreground: "hsl(var(--tertiary-foreground))",
+          container: "hsl(var(--tertiary-container))",
+        },
+        outline: {
+          DEFAULT: "hsl(var(--outline))",
+          variant: "hsl(var(--outline-variant))",
+        },
+      },
+      fontFamily: {
+        headline: ['"Noto Serif"', 'Georgia', 'serif'],
+        body: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+        label: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -59,35 +89,20 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "fade-in": {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
+        fade: {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        "fade-out": {
-          from: { opacity: "1" },
-          to: { opacity: "0" },
-        },
-        "slide-in": {
-          from: { transform: "translateY(10px)", opacity: "0" },
-          to: { transform: "translateY(0)", opacity: "1" },
-        },
-        "scale-in": {
-          from: { transform: "scale(0.95)", opacity: "0" },
-          to: { transform: "scale(1)", opacity: "1" },
-        },
-        confetti: {
-          "0%": { transform: "translateY(0) rotate(0deg)", opacity: "1" },
-          "100%": { transform: "translateY(100vh) rotate(720deg)", opacity: "0" },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.2s ease-out",
-        "fade-out": "fade-out 0.2s ease-out",
-        "slide-in": "slide-in 0.3s ease-out",
-        "scale-in": "scale-in 0.2s ease-out",
-        confetti: "confetti 3s ease-out forwards",
+        fade: "fade 0.4s ease-out forwards",
+        shimmer: "shimmer 2s infinite",
       },
     },
   },

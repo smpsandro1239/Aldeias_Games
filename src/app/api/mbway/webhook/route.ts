@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const result = processWebhookCallback(body);
 
     if (result.success) {
+      // Buscar participação pelo transactionId nos dados
       const participacao = await prisma.participacao.findFirst({
         where: {
           dadosParticipacao: {
@@ -32,21 +33,41 @@ export async function POST(request: NextRequest) {
       });
 
       if (participacao) {
+        // Verificar se já foi processado para evitar duplicados
+        if (participacao.estadoPagamento === 'concluido') {
+          return NextResponse.json({ received: true, status: 'already_processed' });
+        }
+
         await prisma.participacao.update({
           where: { id: participacao.id },
           data: {
             estadoPagamento: 'concluido',
+            dataPagamento: new Date(),
           },
         });
 
-        await prisma.jogo.update({
-          where: { id: participacao.jogoId },
-          data: {
-            stockAtual: { decrement: 1 },
-            totalParticipacoes: { increment: 1 },
-            totalAngariado: { increment: participacao.valorPago },
-          },
-        });
+        // DAR CASHBACK ao utilizador (5%)
+        const cashbackPercent = 0.05;
+        const cashbackValor = participacao.valorPago * cashbackPercent;
+
+        if (participacao.userId) {
+          await prisma.user.update({
+            where: { id: participacao.userId },
+            data: {
+              saldo: { increment: cashbackValor },
+            },
+          });
+
+          await prisma.transacao.create({
+            data: {
+              userId: participacao.userId,
+              valor: cashbackValor,
+              tipo: 'cashback',
+              descricao: `Cashback de compra: raspadinha`,
+              referencia: participacao.jogoId,
+            },
+          });
+        }
       }
     }
 

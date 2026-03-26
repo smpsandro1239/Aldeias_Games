@@ -293,7 +293,11 @@ export async function POST(request: NextRequest) {
       // (não para vendas externas anónimas)
       const isVendaInterna = !data.dadosCliente && user.id;
       
-      if (isVendaInterna) {
+      // Cashback só é dado quando pagamento é confirmado (dinheiro ou saldo)
+      // Para MBWay/Stripe, o cashback será dado quando o webhook confirmar o pagamento
+      const pagamentoConfirmado = data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo';
+      
+      if (isVendaInterna && pagamentoConfirmado) {
         const cashbackPercent = 0.05;
         const cashbackValor = valorTotal * cashbackPercent;
 
@@ -317,7 +321,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Adicionar Cashback apenas para vendas internas
+        // Adicionar Cashback APENAS para pagamentos confirmados
         await tx.user.update({
           where: { id: user.id },
           data: {

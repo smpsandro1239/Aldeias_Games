@@ -41,3 +41,16 @@ next-env.d.ts
 
 # uploads/media
 /public/uploads/
+
+# agent / opencode
+.agent/
+.opencode/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db

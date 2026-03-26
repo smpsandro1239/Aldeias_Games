@@ -1,49 +1,89 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    /* Material Design 3 - Dark Theme (Professional) */
+    --background: 15 7% 5%;
+    --foreground: 20 30% 92%;
+    --card: 15 12% 9%;
+    --card-foreground: 20 30% 92%;
+    --popover: 15 12% 9%;
+    --popover-foreground: 20 30% 92%;
+    --primary: 14 90% 58%;
+    --primary-foreground: 14 95% 12%;
+    --secondary: 187 100% 53%;
+    --secondary-foreground: 187 100% 10%;
+    --muted: 15 15% 12%;
+    --muted-foreground: 20 15% 65%;
+    --accent: 48 100% 55%;
+    --accent-foreground: 48 100% 15%;
+    --destructive: 0 85% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 15 10% 18%;
+    --input: 15 10% 18%;
+    --ring: 14 90% 58%;
+    --radius: 0.75rem;
+    
+    /* Extended Material Design 3 tokens */
+    --surface: 15 7% 5%;
+    --surface-dim: 15 7% 5%;
+    --surface-container-low: 15 9% 7%;
+    --surface-container: 15 10% 9%;
+    --surface-container-high: 15 12% 11%;
+    --surface-container-highest: 15 14% 14%;
+    --on-surface: 20 30% 92%;
+    --on-surface-variant: 20 15% 65%;
+    --outline: 15 10% 35%;
+    --outline-variant: 15 12% 20%;
+    --tertiary: 48 100% 55%;
+    --tertiary-foreground: 48 100% 15%;
+    --primary-container: 14 90% 45%;
+    --secondary-container: 187 80% 20%;
+    --tertiary-container: 48 80% 45%;
+    
+    /* Custom effects */
+    --glass-blur: 24px;
+    --surface-tint: 14 90% 58%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+  .light {
+    /* Material Design 3 - Light Theme */
+    --background: 30 20% 96%;
+    --foreground: 15 15% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 15 15% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 15 15% 10%;
+    --primary: 14 85% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 187 90% 45%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 30 15% 90%;
+    --muted-foreground: 20 10% 40%;
+    --accent: 48 90% 50%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 20 10% 85%;
+    --input: 20 10% 85%;
+    --ring: 14 85% 55%;
+    
+    --surface: 30 20% 96%;
+    --surface-dim: 30 25% 92%;
+    --surface-container-low: 0 0% 98%;
+    --surface-container: 30 10% 94%;
+    --surface-container-high: 30 8% 90%;
+    --surface-container-highest: 30 5% 86%;
+    --on-surface: 15 15% 10%;
+    --on-surface-variant: 20 10% 35%;
+    --outline: 20 10% 75%;
+    --outline-variant: 20 8% 90%;
+    --tertiary: 48 85% 50%;
+    --tertiary-foreground: 0 0% 0%;
+    --primary-container: 14 90% 90%;
+    --secondary-container: 187 60% 90%;
+    --tertiary-container: 48 60% 90%;
   }
 }
 
@@ -52,7 +92,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
@@ -63,60 +103,21 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted;
+  @apply bg-surface-container;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full;
+  @apply bg-outline rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  @apply bg-on-surface-variant;
 }
 
 /* Scratch card canvas */
 .scratch-canvas {
   touch-action: none;
   cursor: crosshair;
-}
-
-/* Confetti animation */
-.confetti-piece {
-  position: fixed;
-  width: 10px;
-  height: 10px;
-  pointer-events: none;
-  z-index: 9999;
-}
-
-/* Grid animations */
-.grid-cell {
-  transition: all 0.2s ease;
-}
-
-.grid-cell:hover {
-  transform: scale(1.05);
-}
-
-/* Number selector */
-.number-cell {
-  @apply flex items-center justify-center w-10 h-10 text-sm font-medium rounded-md transition-all cursor-pointer;
-}
-
-.number-cell.available {
-  @apply bg-primary/10 text-primary hover:bg-primary/20;
-}
-
-.number-cell.occupied {
-  @apply bg-muted text-muted-foreground cursor-not-allowed;
-}
-
-.number-cell.selected {
-  @apply bg-primary text-primary-foreground;
-}
-
-.number-cell.mine {
-  @apply bg-amber-500/20 text-amber-600 border-2 border-amber-500;
 }
 
 /* Toast notifications */
@@ -155,4 +156,164 @@ textarea:focus-visible {
 
 .spinner {
   animation: spin 1s linear infinite;
+}
+
+/* Custom font classes */
+.font-headline {
+  font-family: 'Noto Serif', Georgia, serif;
+  font-weight: 700;
+}
+
+.font-body {
+  font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+}
+
+.font-label {
+  font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+}
+
+/* ===== ANIMATIONS ===== */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+}
+
+@keyframes shimmer {
+  0% { 
+    background-position: -200% 0; 
+  }
+  100% { 
+    background-position: 200% 0; 
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ===== GLASS PANELS ===== */
+
+.glass-panel {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* ===== SELECTION ===== */
+
+::selection {
+  background: hsl(var(--secondary) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+/* ===== SKELETON LOADING ===== */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--surface-container-high)) 0%,
+    hsl(var(--surface-container)) 50%,
+    hsl(var(--surface-container-high)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ===== FOCUS RING ===== */
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-background;
+}
+
+/* ===== CARD STYLES ===== */
+
+.card-m3 {
+  @apply bg-surface-container rounded-2xl border border-outline-variant/10;
+  transition: all 0.2s ease;
+}
+
+.card-m3:hover {
+  @apply border-secondary/30;
+  transform: translateY(-2px);
+}
+
+.card-m3-selected {
+  @apply border-secondary bg-secondary/10;
+}
+
+/* ===== BUTTON STYLES ===== */
+
+.btn-primary-m3 {
+  @apply bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold;
+  box-shadow: 0 4px 14px hsl(var(--primary) / 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-m3:hover {
+  @apply opacity-90;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px hsl(var(--primary) / 0.4);
+}
+
+.btn-secondary-m3 {
+  @apply bg-secondary-container text-secondary-foreground px-6 py-3 rounded-xl font-bold;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-m3:hover {
+  @apply bg-secondary/20;
+}
+
+/* ===== INPUT STYLES ===== */
+
+.input-m3 {
+  @apply bg-surface-container-lowest border-none rounded-xl py-4 px-6;
+  transition: all 0.2s ease;
+}
+
+.input-m3:focus {
+  @apply ring-2 ring-secondary/50;
+}
+
+/* ===== HIDE SCROLLBAR ===== */
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

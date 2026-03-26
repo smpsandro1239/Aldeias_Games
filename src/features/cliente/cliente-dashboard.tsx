@@ -31,6 +31,7 @@ interface Participacao {
   revelado: boolean;
   resultadoRaspe?: string;
   hashRaspe?: string;
+  seedRaspe?: string;
   ganhador: boolean;
   createdAt: string;
   jogo?: {
@@ -258,17 +259,22 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
     }
   };
 
-  const handleRevelar = async () => {
-    if (!selectedParticipacao) return;
+  const handleRevelar = async (participacaoId?: string) => {
+    const id = participacaoId || selectedParticipacao?.id;
+    if (!id) return;
 
-    const response = await fetch(`/api/participacoes/${selectedParticipacao.id}/revelar`, {
+    const response = await fetch(`/api/participacoes/${id}/revelar`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (response.ok) {
-      fetchData();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || "Erro ao revelar";
+      throw new Error(errorMessage);
     }
+
+    fetchData();
   };
 
   const getTipoIcon = (tipo: string) => {
@@ -284,19 +290,34 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+        <div className="absolute inset-0 animated-gradient opacity-30" />
+        <div className="flex flex-col items-center gap-4 relative z-10">
+          <div className="relative">
+            <Gamepad2 className="h-16 w-16 text-secondary animate-pulse" />
+            <div className="absolute inset-0 h-16 w-16 bg-secondary/20 blur-xl rounded-full animate-pulse" />
+          </div>
+          <div className="text-gradient font-gaming text-2xl tracking-wider">
+            A carregar...
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Background Effects */}
+      <div className="fixed inset-0 animated-gradient opacity-20 -z-10" />
+      <div className="fixed inset-0 particle-bg opacity-10 -z-10" />
+      
       {/* Header e Wallet */}
       <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 items-start">
         <div className="md:col-span-2 lg:col-span-3">
-          <h1 className="text-3xl font-bold">Os Meus Jogos</h1>
-          <p className="text-muted-foreground">Participe em jogos e campanhas</p>
+          <h1 className="text-3xl md:text-4xl font-gaming font-bold">
+            <span className="text-gradient">Os Meus Jogos</span>
+          </h1>
+          <p className="text-muted-foreground mt-2">Participa em jogos e ganha prémios</p>
         </div>
         <div className="md:col-span-1">
           <WalletCard token={token} />
@@ -305,49 +326,42 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Participações</CardTitle>
-            <Ticket className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{participacoes.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vitórias</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {participacoes.filter((p) => p.ganhador).length}
-            </div>
-          </CardContent>
-        </Card>
+        {[
+          { icon: Ticket, label: "Participações", value: participacoes.length, color: "secondary" },
+          { icon: CreditCard, label: "Total Gasto", value: formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0)), color: "primary" },
+          { icon: Trophy, label: "Vitórias", value: participacoes.filter((p) => p.ganhador).length, color: "tertiary" },
+        ].map((stat, i) => (
+          <Card 
+            key={i} 
+            className="card-hover bg-card/50 border-white/10 backdrop-blur-sm"
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.label}</CardTitle>
+              <div className={`p-2 rounded-lg bg-${stat.color}/20`}>
+                <stat.icon className={`h-4 w-4 text-${stat.color}`} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-gaming font-bold text-white">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="jogos">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-card/50 border border-white/10 backdrop-blur-sm p-1">
+          <TabsTrigger 
+            value="jogos" 
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
+          >
             <Play className="h-4 w-4 mr-2" />
             Jogar
           </TabsTrigger>
-          <TabsTrigger value="participacoes">
+          <TabsTrigger 
+            value="participacoes"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
+          >
             <Ticket className="h-4 w-4 mr-2" />
             As Minhas Participações
           </TabsTrigger>
@@ -355,44 +369,55 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
         <TabsContent value="jogos" className="space-y-4">
           {jogos.length === 0 ? (
-            <Card className="p-8 text-center">
+            <Card className="p-12 text-center bg-card/50 border-white/10 backdrop-blur-sm">
               <CardContent className="flex flex-col items-center justify-center space-y-4">
-                <Gamepad2 className="h-12 w-12 text-muted-foreground" />
+                <div className="relative">
+                  <Gamepad2 className="h-16 w-16 text-muted-foreground" />
+                  <div className="absolute inset-0 bg-secondary/10 blur-xl rounded-full" />
+                </div>
                 <div>
-                  <p className="text-lg font-medium">Nenhum jogo disponível</p>
-                  <p className="text-sm text-muted-foreground">De momento não há jogos ativos. Volte mais tarde!</p>
+                  <p className="text-xl font-gaming font-bold text-white">Nenhum jogo disponível</p>
+                  <p className="text-sm text-muted-foreground mt-2">De momento não há jogos ativos. Volte mais tarde!</p>
                 </div>
               </CardContent>
             </Card>
           ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {jogos.map((jogo) => (
-              <Card key={jogo.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
+              <Card key={jogo.id} className="card-hover bg-card/50 border-white/10 backdrop-blur-sm overflow-hidden group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <CardHeader className="relative">
                   <div className="flex items-center justify-between">
-                    <div className="p-2 bg-primary/10 rounded-lg">{getTipoIcon(jogo.tipo)}</div>
-                    <Badge variant="outline" className="capitalize">
+                    <div className="p-2 rounded-lg bg-secondary/20">
+                      {getTipoIcon(jogo.tipo)}
+                    </div>
+                    <Badge variant="outline" className="border-secondary/30 text-secondary text-xs capitalize">
                       {jogo.tipo.replace("_", " ")}
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg">{jogo.nome}</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg font-gaming mt-3">{jogo.nome}</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     {jogo.evento?.aldeia?.nome} • {jogo.evento?.nome}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-2">{jogo.descricao}</p>
+                <CardContent className="relative">
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{jogo.descricao}</p>
                   {jogo.premio && (
-                    <p className="text-sm">
-                      <span className="font-medium">Prémio:</span> {jogo.premio.nome}
+                    <p className="text-sm mb-3">
+                      <span className="font-medium text-tertiary">Prémio:</span> {jogo.premio.nome}
                     </p>
                   )}
-                  <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
                     <div>
-                      <p className="text-2xl font-bold text-primary">{formatCurrency(jogo.preco)}</p>
-                      <p className="text-xs text-muted-foreground">{jogo.stockAtual} disponíveis</p>
+                      <p className="text-2xl font-gaming font-bold text-gradient">
+                        {formatCurrency(jogo.preco)}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{jogo.stockAtual} disponíveis</p>
                     </div>
-                    <Button onClick={() => handleJogar(jogo)}>
+                    <Button 
+                      onClick={() => handleJogar(jogo)}
+                      className="bg-secondary hover:bg-secondary/90"
+                    >
                       <Play className="h-4 w-4 mr-2" />
                       Jogar
                     </Button>
@@ -586,11 +611,13 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         <ScratchCardModal
           open={scratchCardOpen}
           onOpenChange={setScratchCardOpen}
-          premio={selectedParticipacao.resultadoRaspe || null}
+          participacaoId={selectedParticipacao.id}
+          hashRaspe={selectedParticipacao.hashRaspe || undefined}
+          seedRaspe={selectedParticipacao.seedRaspe || undefined}
+          resultadoRaspe={selectedParticipacao.resultadoRaspe || undefined}
           onReveal={handleRevelar}
           jaRevelado={selectedParticipacao.revelado}
-          titulo={selectedParticipacao.jogo?.configuracao?.raspadinhaTitulo as string || "RASPADINHA DA SORTE"}
-          subtitulo={selectedParticipacao.jogo?.configuracao?.raspadinhaSubtitulo as string || "Raspe com o dedo para revelar o seu prémio!"}
+          titulo={selectedParticipacao.jogo?.configuracao?.raspadinhaTitulo as string || "RASPADINHA PREMIUM"}
           organizacao={selectedParticipacao.jogo?.configuracao?.raspadinhaOrganizacao as string || ""}
         />
       )}

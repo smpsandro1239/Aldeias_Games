@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   Gamepad2, 
@@ -21,14 +21,28 @@ import {
   X,
   LogOut,
   User,
-  Bell
+  Sparkles,
+  Rocket,
+  Zap,
+  Crown,
+  ArrowRight,
+  Star,
+  Gift,
+  Clock,
+  MapPin,
+  PartyPopper,
+  FileEdit,
+  Ticket,
+  Leaf,
+  Wallet,
+  Compass,
+  Flag
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminDashboard } from "@/features/admin/admin-dashboard";
 import { ClienteDashboard } from "@/features/cliente/cliente-dashboard";
 import { VendedorDashboard } from "@/features/vendedor/vendedor-dashboard";
 
-// Tipos
 interface User {
   id: string;
   email: string;
@@ -76,17 +90,14 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   
-  // Estados de autenticação
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Estados de UI
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Estados de formulários
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({ 
     nome: "", 
@@ -95,7 +106,6 @@ export default function Home() {
     telefone: "" 
   });
   
-  // Estados de dados
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [aldeias, setAldeias] = useState<Aldeia[]>([]);
@@ -103,7 +113,6 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     
-    // Verificar token no localStorage
     const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
     
@@ -114,13 +123,11 @@ export default function Home() {
     
     setLoading(false);
     
-    // Carregar dados públicos
     fetchEventos();
     fetchJogos();
     fetchAldeias();
   }, []);
 
-  // API Calls
   const fetchEventos = async () => {
     try {
       const response = await fetch("/api/eventos?publico=true");
@@ -157,7 +164,6 @@ export default function Home() {
     }
   };
 
-  // Handlers de autenticação
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -222,7 +228,6 @@ export default function Home() {
     toast.success("Logout efetuado!");
   };
 
-  // Quick login para testes
   const quickLogin = async (email: string, password: string) => {
     setLoginForm({ email, password });
     
@@ -248,102 +253,58 @@ export default function Home() {
     }
   };
 
-  if (!mounted) return null;
+  if (!mounted || loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        <span className="text-sm text-on-surface-variant font-label">A carregar...</span>
+      </div>
+    </div>
+  );
+
+  const getJogoIcon = (tipo: string) => {
+    switch (tipo) {
+      case "raspadinha": return <Sparkles className="text-3xl" />;
+      case "poio_da_vaca": return <Leaf className="text-3xl" />;
+      case "rifa": return <Ticket className="text-3xl" />;
+      case "tombola": return <Trophy className="text-3xl" />;
+      default: return <Gamepad2 className="text-3xl" />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-surface text-on-surface font-body">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          <div className="mr-4 flex">
-            <a href="/" className="mr-6 flex items-center space-x-2">
-              <Gamepad2 className="h-6 w-6" />
-              <span className="font-bold">Aldeias Games</span>
-            </a>
+      <header className="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/10">
+        <div className="flex justify-between items-center px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Menu className="text-primary text-2xl cursor-pointer hover:opacity-80 transition-opacity" />
+            <h1 className="font-headline text-2xl font-black text-primary tracking-tight">Aldeias Games</h1>
           </div>
-          
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex flex-1 items-center space-x-6 text-sm font-medium">
-            <a href="#eventos" className="transition-colors hover:text-foreground/80">
-              Eventos
-            </a>
-            <a href="#jogos" className="transition-colors hover:text-foreground/80">
-              Jogos
-            </a>
-            <a href="#aldeias" className="transition-colors hover:text-foreground/80">
-              Aldeias
-            </a>
-          </nav>
-          
-          <div className="flex flex-1 items-center justify-end space-x-2">
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
+          <div className="flex items-center gap-6">
+            <nav className="hidden md:flex gap-8">
+              <a href="#eventos" className="font-label text-sm font-bold tracking-widest uppercase text-on-surface-variant hover:text-secondary transition-colors">Eventos</a>
+              <a href="#aldeias" className="font-label text-sm font-bold tracking-widest uppercase text-secondary transition-colors">Aldeias</a>
+              <a href="#" className="font-label text-sm font-bold tracking-widest uppercase text-on-surface-variant hover:text-secondary transition-colors">Competir</a>
+            </nav>
+            <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border-2 border-primary/20">
+              {user ? (
+                <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
               ) : (
-                <Moon className="h-5 w-5" />
+                <button onClick={() => setLoginModalOpen(true)} className="w-full h-full flex items-center justify-center text-primary font-bold">
+                  +
+                </button>
               )}
-            </Button>
-            
-            {user ? (
-              <>
-                <span className="hidden md:inline text-sm text-muted-foreground">
-                  Olá, {user.nome.split(" ")[0]}
-                </span>
-                <Button variant="ghost" size="icon" onClick={handleLogout}>
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={() => setLoginModalOpen(true)}>
-                  Entrar
-                </Button>
-                <Button onClick={() => setRegisterModalOpen(true)}>
-                  Registar
-                </Button>
-              </>
-            )}
-            
-            {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+            </div>
           </div>
         </div>
-        
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t p-4">
-            <nav className="flex flex-col space-y-4">
-              <a href="#eventos" onClick={() => setMobileMenuOpen(false)}>
-                Eventos
-              </a>
-              <a href="#jogos" onClick={() => setMobileMenuOpen(false)}>
-                Jogos
-              </a>
-              <a href="#aldeias" onClick={() => setMobileMenuOpen(false)}>
-                Aldeias
-              </a>
-            </nav>
-          </div>
-        )}
       </header>
 
-      {/* Main Content */}
-      <main className="container py-6">
+      <main className="pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto">
         {user ? (
           <div className="space-y-8">
-            {/* Role-based Dashboard */}
             {(user.role === "super_admin" || user.role === "aldeia_admin") && (
               <AdminDashboard 
                 token={token || ""} 
@@ -360,231 +321,284 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Hero Section - Only shown when not logged in */}
-            <section className="py-12 md:py-24 lg:py-32">
-              <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
-                <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl">
-                  Angariação de Fundos
-                  <br className="hidden sm:inline" />
-                  <span className="text-primary"> Digital e Divertida</span>
-                </h1>
-                <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-                  Plataforma completa para aldeias, escolas e associações realizarem
-                  campanhas de angariação através de jogos tradicionais digitalizados.
+            {/* Hero Section */}
+            <section className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div className="max-w-2xl">
+                <span className="text-secondary font-label font-bold tracking-widest uppercase text-xs mb-4 block">Portal de Angariação</span>
+                <h2 className="font-headline text-5xl md:text-7xl leading-tight">
+                  Lança a tua <span className="text-primary italic">Campanha Herança</span>
+                </h2>
+                <p className="text-on-surface-variant text-lg mt-6 leading-relaxed">
+                  Cria um evento de angariação de fundos único que combina tradição local com competição digital.
                 </p>
-                <div className="flex flex-wrap justify-center gap-4">
-                  <Button size="lg" onClick={() => setRegisterModalOpen(true)}>
-                    Começar Agora
-                  </Button>
-                  <Button size="lg" variant="outline" onClick={() => document.getElementById("jogos")?.scrollIntoView()}>
-                    Ver Jogos
-                  </Button>
+              </div>
+              <div className="hidden lg:block w-48 h-48 bg-surface-container-high rounded-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
+                <div className="p-6 flex flex-col h-full justify-between">
+                  <PartyPopper className="text-secondary text-4xl" />
+                  <span className="font-label text-xs font-bold leading-tight uppercase opacity-60">Ready to boost your village?</span>
                 </div>
               </div>
             </section>
 
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+              {[
+                { icon: Building2, label: "Aldeias", value: "50+", color: "text-primary" },
+                { icon: Users, label: "Jogadores", value: "10K+", color: "text-secondary" },
+                { icon: CreditCard, label: "Angariado", value: "€500K+", color: "text-tertiary" },
+                { icon: Shield, label: "Transparente", value: "100%", color: "text-primary" },
+              ].map((stat, i) => (
+                <div key={i} className="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <stat.icon className={`${stat.color} text-xl`} />
+                    <span className="text-xs font-bold uppercase tracking-widest opacity-60">{stat.label}</span>
+                  </div>
+                  <span className="font-headline text-3xl font-bold">{stat.value}</span>
+                </div>
+              ))}
+            </div>
+
             {/* Features Section */}
-            <section className="py-12">
-              <div className="grid gap-6 md:grid-cols-3">
-                <Card>
-                  <CardHeader>
-                    <Trophy className="h-8 w-8 text-primary mb-2" />
-                    <CardTitle>Jogos Tradicionais</CardTitle>
-                    <CardDescription>
-                      Poio da Vaca, Rifas, Tombolas e Raspadinhas digitais com experiência imersiva.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CreditCard className="h-8 w-8 text-primary mb-2" />
-                    <CardTitle>Pagamentos Seguros</CardTitle>
-                    <CardDescription>
-                      Integração com Stripe e MBWay real para pagamentos rápidos e seguros.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <Shield className="h-8 w-8 text-primary mb-2" />
-                    <CardTitle>Sorteios Auditáveis</CardTitle>
-                    <CardDescription>
-                      Algoritmos SHA-256 garantem transparência e justiça em todos os sorteios.
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+            <section className="mb-16">
+              <h3 className="font-headline text-3xl mb-8 flex items-center gap-4">
+                <span className="text-secondary">Porquê escolher-nos?</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { icon: Gamepad2, title: "Jogos Imersivos", desc: "Poio da Vaca, Rifas, Tombolas e Raspadinhas com experiência única.", color: "primary", tags: ["High Engagement", "Traditional"] },
+                  { icon: Shield, title: "Sorteios Transparentes", desc: "Algoritmos SHA-256 auditáveis garantem justiça absoluta.", color: "secondary", tags: ["Blockchain", "Auditoria"] },
+                  { icon: CreditCard, title: "Pagamentos Instant", desc: "Stripe + MBWay integrados para transações rápidas.", color: "tertiary", tags: ["MBWay", "Stripe"] },
+                ].map((feature, i) => (
+                  <div key={i} className="group bg-surface-container-high rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-outline-variant/10 hover:ring-primary/50">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="w-14 h-14 bg-surface-container-highest rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <feature.icon className={`text-${feature.color} text-3xl`} />
+                      </div>
+                    </div>
+                    <h4 className="font-headline text-2xl mb-2">{feature.title}</h4>
+                    <p className="text-on-surface-variant text-sm leading-relaxed mb-4">{feature.desc}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {feature.tags.map((tag, j) => (
+                        <span key={j} className={`bg-surface-container px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tighter ${j === 0 ? `text-${feature.color}` : 'text-on-surface-variant'}`}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Games Section */}
+            {jogos.length > 0 && (
+              <section className="mb-16" id="eventos">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="font-headline text-3xl flex items-center gap-4">
+                    <span className="text-secondary">Jogos em Destaque</span>
+                  </h3>
+                  <Button variant="outline" className="border-outline-variant/20">
+                    Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {jogos.slice(0, 4).map((jogo, i) => (
+                    <div key={jogo.id} className="group bg-surface-container-high rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-outline-variant/10 hover:ring-primary/50">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center">
+                          {getJogoIcon(jogo.tipo)}
+                        </div>
+                        <Badge variant="secondary" className="bg-secondary/20 text-secondary text-xs capitalize">
+                          {jogo.tipo.replace("_", " ")}
+                        </Badge>
+                      </div>
+                      <h4 className="font-headline text-xl mb-2 group-hover:text-primary transition-colors">{jogo.nome}</h4>
+                      <p className="text-on-surface-variant text-sm mb-4 line-clamp-2">{jogo.descricao}</p>
+                      <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
+                        <div>
+                          <span className="font-headline text-2xl font-bold text-primary">{jogo.preco.toFixed(2)}€</span>
+                          <p className="text-xs text-on-surface-variant mt-1 flex items-center gap-1">
+                            <Star className="h-3 w-3 text-tertiary" />
+                            {jogo.stockAtual} disponíveis
+                          </p>
+                        </div>
+                        <Button size="sm" className="bg-primary text-primary-foreground">
+                          Jogar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Events Section */}
+            {eventos.length > 0 && (
+              <section className="mb-16">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="font-headline text-3xl flex items-center gap-4">
+                    <span className="text-primary">Eventos Ativos</span>
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {eventos.slice(0, 6).map((evento, i) => (
+                    <div key={evento.id} className="group bg-surface-container-high rounded-3xl overflow-hidden transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-outline-variant/10 hover:ring-primary/50">
+                      {evento.imagemUrl && (
+                        <div className="aspect-video w-full overflow-hidden">
+                          <img src={evento.imagemUrl} alt={evento.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </div>
+                      )}
+                      <div className="p-6">
+                        <div className="flex items-center gap-2 text-sm text-on-surface-variant mb-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span>{evento.aldeia?.nome}</span>
+                        </div>
+                        <h4 className="font-headline text-xl mb-2 group-hover:text-primary transition-colors">{evento.nome}</h4>
+                        <p className="text-on-surface-variant text-sm line-clamp-2 mb-4">{evento.descricao}</p>
+                        <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                          <Clock className="h-3 w-3" />
+                          <span>{new Date(evento.dataInicio).toLocaleDateString("pt-PT")} - {new Date(evento.dataFim).toLocaleDateString("pt-PT")}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Aldeias Section */}
+            <section className="mb-16" id="aldeias">
+              <h3 className="font-headline text-3xl mb-8 flex items-center gap-4">
+                <span className="text-tertiary">Nossas Aldeias</span>
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {aldeias.slice(0, 8).map((aldeia, i) => (
+                  <div key={aldeia.id} className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/10 hover:border-primary/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      {aldeia.logoUrl ? (
+                        <img src={aldeia.logoUrl} alt={aldeia.nome} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/30" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                          <Building2 className="h-5 w-5 text-primary" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold text-sm">{aldeia.nome}</p>
+                        <p className="text-xs text-on-surface-variant capitalize">{aldeia.tipoOrganizacao.replace("_", " ")}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="mb-16">
+              <div className="bg-surface-container-high rounded-3xl p-12 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                <div className="relative z-10 text-center max-w-2xl mx-auto">
+                  <h3 className="font-headline text-4xl mb-4">Pronto para transformar a tua aldeia?</h3>
+                  <p className="text-on-surface-variant text-lg mb-8">Junta-te a dezenas de comunidades que já estão a angariar fundos de forma moderna e transparente.</p>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <Button onClick={() => setRegisterModalOpen(true)} className="bg-gradient-to-r from-primary to-primary-container text-primary-foreground px-10 py-4 rounded-xl font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform flex items-center gap-3">
+                      Criar Conta Grátis
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                    <Button variant="outline" onClick={() => setLoginModalOpen(true)} className="px-10 py-4 rounded-xl border-outline-variant/20">
+                      Já tenho conta
+                    </Button>
+                  </div>
+                </div>
               </div>
             </section>
           </>
         )}
       </main>
 
-      {/* Eventos Section */}
-      <section id="eventos" className="container py-12">
-        <h2 className="text-3xl font-bold mb-6">Eventos em Destaque</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {eventos.slice(0, 6).map((evento) => (
-            <Card key={evento.id}>
-              {evento.imagemUrl && (
-                <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-                  <img
-                    src={evento.imagemUrl}
-                    alt={evento.nome}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle>{evento.nome}</CardTitle>
-                <CardDescription>
-                  {evento.aldeia?.nome}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {evento.descricao}
-                </p>
-                <p className="text-sm mt-2">
-                  {new Date(evento.dataInicio).toLocaleDateString("pt-PT")} -{" "}
-                  {new Date(evento.dataFim).toLocaleDateString("pt-PT")}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Jogos Section */}
-      <section id="jogos" className="container py-12">
-        <h2 className="text-3xl font-bold mb-6">Jogos Disponíveis</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {jogos.slice(0, 8).map((jogo) => (
-            <Card key={jogo.id}>
-              <CardHeader>
-                <CardTitle className="text-lg">{jogo.nome}</CardTitle>
-                <CardDescription className="capitalize">
-                  {jogo.tipo.replace("_", " ")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-primary">
-                  {jogo.preco.toFixed(2)}€
-                </p>
-                {jogo.premio && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Prémio: {jogo.premio.nome}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  Stock: {jogo.stockAtual} disponíveis
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Aldeias Section */}
-      <section id="aldeias" className="container py-12">
-        <h2 className="text-3xl font-bold mb-6">Organizações</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {aldeias.slice(0, 8).map((aldeia) => (
-            <Card key={aldeia.id}>
-              <CardHeader className="flex flex-row items-center gap-4">
-                {aldeia.logoUrl ? (
-                  <img
-                    src={aldeia.logoUrl}
-                    alt={aldeia.nome}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <Building2 className="h-12 w-12 text-muted-foreground" />
-                )}
-                <div>
-                  <CardTitle className="text-lg">{aldeia.nome}</CardTitle>
-                  <CardDescription className="capitalize">
-                    {aldeia.tipoOrganizacao.replace("_", " ")}
-                  </CardDescription>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="border-t py-12">
-        <div className="container">
-          <div className="grid gap-8 md:grid-cols-4">
+      <footer className="border-t border-outline-variant/10 py-12 bg-surface">
+        <div className="container max-w-7xl mx-auto px-4 md:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Gamepad2 className="h-6 w-6" />
-                <span className="font-bold">Aldeias Games</span>
+              <div className="flex items-center gap-3 mb-4">
+                <Gamepad2 className="h-8 w-8 text-primary" />
+                <span className="font-headline text-xl font-bold">Aldeias Games</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Plataforma de angariação de fundos para comunidades locais portuguesas.
-              </p>
+              <p className="text-sm text-on-surface-variant">A plataforma de angariação de fundos para comunidades locais portuguesas.</p>
             </div>
-            
             <div>
-              <h4 className="font-semibold mb-4">Links</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#eventos">Eventos</a></li>
-                <li><a href="#jogos">Jogos</a></li>
-                <li><a href="#aldeias">Aldeias</a></li>
+              <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Navegação</h4>
+              <ul className="space-y-2 text-sm text-on-surface-variant">
+                <li><a href="#" className="hover:text-primary transition-colors">Eventos</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Jogos</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Aldeias</a></li>
               </ul>
             </div>
-            
             <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#">Termos de Serviço</a></li>
-                <li><a href="#">Política de Privacidade</a></li>
-                <li><a href="#">RGPD</a></li>
+              <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm text-on-surface-variant">
+                <li><a href="/termos" className="hover:text-primary transition-colors">Termos de Serviço</a></li>
+                <li><a href="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">RGPD</a></li>
               </ul>
             </div>
-            
             <div>
-              <h4 className="font-semibold mb-4">Contacto</h4>
-              <p className="text-sm text-muted-foreground">
-                suporte@aldeiasgames.pt
-              </p>
+              <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Contacto</h4>
+              <p className="text-sm text-on-surface-variant">suporte@aldeiasgames.pt</p>
             </div>
           </div>
-          
-          <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
+          <div className="mt-8 pt-8 border-t border-outline-variant/10 text-center text-sm text-on-surface-variant">
             © 2024 Aldeias Games. Desenvolvido com ❤️ para Portugal.
           </div>
         </div>
       </footer>
 
+      {/* Mobile Bottom Nav */}
+      <div className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container-high/80 backdrop-blur-2xl z-50 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.4)] md:hidden">
+        <button className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
+          <Compass className="h-6 w-6" />
+          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Explorar</span>
+        </button>
+        <button className="flex flex-col items-center justify-center text-secondary bg-secondary/10 rounded-2xl px-4 py-2 scale-110 transition-all">
+          <Building2 className="h-6 w-6" style={{ fill: 'currentColor' }} />
+          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Aldeias</span>
+        </button>
+        <button className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
+          <Gamepad2 className="h-6 w-6" />
+          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Competir</span>
+        </button>
+        <button className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
+          <Wallet className="h-6 w-6" />
+          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Carteira</span>
+        </button>
+      </div>
+
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Iniciar Sessão</DialogTitle>
-            <DialogDescription>
-              Entre com as suas credenciais para aceder à plataforma.
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-8 pb-4">
+            <DialogTitle className="font-headline text-2xl text-center">Entrar</DialogTitle>
+            <DialogDescription className="text-center text-on-surface-variant">
+              Acede à tua conta para jogar e ganhar prémios
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleLogin}>
-            <div className="space-y-4 py-4">
+          <form onSubmit={handleLogin} className="px-8 pb-8">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder="teu@email.com"
                   value={loginForm.email}
                   onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                   required
+                  className="bg-surface-container-lowest border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -592,54 +606,42 @@ export default function Home() {
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                   required
+                  className="bg-surface-container-lowest border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50"
                 />
               </div>
               
-              {/* Quick Login para testes */}
-              <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground mb-2">Quick Login (Testes):</p>
+              <div className="pt-4 border-t border-outline-variant/10">
+                <p className="text-sm text-on-surface-variant mb-3">Quick Login:</p>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => quickLogin("admin@aldeias.pt", "123456")}
-                  >
-                    Super Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => quickLogin("aldeia@gmail.com", "123456")}
-                  >
-                    Admin Aldeia
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => quickLogin("vendedor@gmail.com", "123456")}
-                  >
-                    Vendedor
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => quickLogin("smpsandro1239@gmail.com", "123456")}
-                  >
-                    Jogador
-                  </Button>
+                  {[
+                    { label: "Admin", email: "admin@aldeias.pt" },
+                    { label: "Aldeia", email: "aldeia@gmail.com" },
+                    { label: "Vendedor", email: "vendedor@gmail.com" },
+                    { label: "Jogador", email: "smpsandro1239@gmail.com" },
+                  ].map((u) => (
+                    <Button
+                      key={u.label}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => quickLogin(u.email, "123456")}
+                      className="text-xs border-primary/30 text-primary hover:bg-primary/10"
+                    >
+                      {u.label}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
             
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)}>
+            <DialogFooter className="mt-6 gap-2">
+              <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button type="submit">Entrar</Button>
+              <Button type="submit" className="flex-1 bg-primary text-primary-foreground">
+                <Zap className="h-4 w-4 mr-2" />
+                Entrar
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -647,39 +649,41 @@ export default function Home() {
 
       {/* Register Modal */}
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Criar Conta</DialogTitle>
-            <DialogDescription>
-              Registe-se para participar nos jogos e campanhas.
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-8 pb-4">
+            <DialogTitle className="font-headline text-2xl text-center">Criar Conta</DialogTitle>
+            <DialogDescription className="text-center text-on-surface-variant">
+              Regista-te para participar nos jogos e campanhas
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleRegister}>
-            <div className="space-y-4 py-4">
+          <form onSubmit={handleRegister} className="px-8 pb-8">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="nome" className="text-xs font-bold uppercase tracking-widest ml-1">Nome</Label>
                 <Input
                   id="nome"
-                  placeholder="O seu nome"
+                  placeholder="O teu nome"
                   value={registerForm.nome}
                   onChange={(e) => setRegisterForm({ ...registerForm, nome: e.target.value })}
                   required
+                  className="bg-surface-container-lowest border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-email">Email</Label>
+                <Label htmlFor="register-email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
                 <Input
                   id="register-email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder="teu@email.com"
                   value={registerForm.email}
                   onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                   required
+                  className="bg-surface-container-lowest border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-password">Password</Label>
+                <Label htmlFor="register-password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
                 <Input
                   id="register-password"
                   type="password"
@@ -688,25 +692,30 @@ export default function Home() {
                   onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                   required
                   minLength={8}
+                  className="bg-surface-container-lowest border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone" className="text-xs font-bold uppercase tracking-widest ml-1">Telefone</Label>
                 <Input
                   id="telefone"
                   type="tel"
                   placeholder="+351 9XX XXX XXX"
                   value={registerForm.telefone}
                   onChange={(e) => setRegisterForm({ ...registerForm, telefone: e.target.value })}
+                  className="bg-surface-container-lowest border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50"
                 />
               </div>
             </div>
             
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setRegisterModalOpen(false)}>
+            <DialogFooter className="mt-6 gap-2">
+              <Button type="button" variant="outline" onClick={() => setRegisterModalOpen(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button type="submit">Registar</Button>
+              <Button type="submit" className="flex-1 bg-gradient-to-r from-primary to-primary-container text-primary-foreground">
+                <Rocket className="h-4 w-4 mr-2" />
+                Registar
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

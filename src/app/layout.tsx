@@ -1,10 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Serif, Plus_Jakarta_Sans, Chakra_Petch, Russo_One } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
+const notoSerif = Noto_Serif({ 
+  subsets: ["latin"],
+  variable: "--font-noto-serif",
+  display: "swap",
+});
+const plusJakartaSans = Plus_Jakarta_Sans({ 
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+const chakraPetch = Chakra_Petch({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-chakra",
+  display: "swap",
+});
+const russoOne = Russo_One({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-russo",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Aldeias Games - Plataforma de Angariação de Fundos",
@@ -35,8 +57,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: light)", color: "#2563eb" },
+    { media: "(prefers-color-scheme: dark)", color: "#1e1b4b" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -49,10 +71,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-PT" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${notoSerif.variable} ${plusJakartaSans.variable} ${chakraPetch.variable} ${russoOne.variable} font-body bg-background text-foreground`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
