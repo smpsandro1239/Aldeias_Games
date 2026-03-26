@@ -54,35 +54,45 @@ export function ScratchCardModal({
   
   const [revealed, setRevealed] = useState(isNewProps ? false : jaRevelado);
   const [result, setResult] = useState<{ ganhou: boolean; premio: ScratchCardModalProps["premio"] } | null>(null);
-  const hasRevealedRef = useRef(false); // Previne chamadas múltiplas
+  const hasRevealedRef = useRef(false);
+  const isProcessingRef = useRef(false);
 
   const handleReveal = useCallback(async (ganhou: boolean, premioResult: NonNullable<ScratchCardModalProps["premio"]>) => {
-    // Previne chamada múltipla
-    if (hasRevealedRef.current) return;
-    hasRevealedRef.current = true;
+    // Previne chamadas múltiplas
+    if (hasRevealedRef.current || isProcessingRef.current) return;
+    isProcessingRef.current = true;
 
     setRevealed(true);
     setResult({ ganhou, premio: premioResult });
 
-    // Confetti se ganhou
+    // Confetti APENAS se ganhou
     if (ganhou) {
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
     
-    // Chama o onReveal apenas uma vez (para props antigas)
-    if (!isNewProps && onReveal && participacaoId) {
+    // Chama onReveal apenas uma vez (para props antigas)
+    // E ignora erro "Já revelada"
+    if (!isNewProps && onReveal && participacaoId && !jaRevelado) {
       try {
         await onReveal(participacaoId);
       } catch (error) {
-        console.error("Erro ao revelar:", error);
+        // Ignora erro "Já revelada" - pode acontecer se já foi revelado
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (!errorMessage.includes("Já revelada")) {
+          console.error("Erro ao revelar:", error);
+        }
       }
     }
-  }, [isNewProps, onReveal, participacaoId]);
+
+    hasRevealedRef.current = true;
+    isProcessingRef.current = false;
+  }, [isNewProps, onReveal, participacaoId, jaRevelado]);
 
   const handleClose = useCallback(() => {
     setRevealed(false);
     setResult(null);
-    hasRevealedRef.current = false; // Reset para permitir nova revelação
+    hasRevealedRef.current = false;
+    isProcessingRef.current = false;
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -136,7 +146,7 @@ export function ScratchCardModal({
               premio={finalPremio}
               jogoId={finalJogoId}
               onRevelado={handleReveal}
-              skipApiCall={!isNewProps} // Pula API call se for props antigas
+              skipApiCall={!isNewProps}
             />
           </div>
 

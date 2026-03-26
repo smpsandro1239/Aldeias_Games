@@ -122,7 +122,7 @@ export async function createSubscription(
     metadata?: Record<string, string>;
   }
 ) {
-  return stripe.subscriptions.create({
+  return stripe.instance.subscriptions.create({
     customer: params.customerId,
     items: [{ price: params.priceId }],
     metadata: params.metadata,
@@ -133,5 +133,5 @@ export async function createSubscription(
  * Cancelar subscrição
  */
 export async function cancelSubscription(subscriptionId: string) {
-  return stripe.subscriptions.cancel(subscriptionId);
+  return stripe.instance.subscriptions.cancel(subscriptionId);
 }
