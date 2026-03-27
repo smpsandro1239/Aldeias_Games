@@ -51,7 +51,7 @@ export default function JogosPage() {
       icon: Sparkles, 
       description: "Raspe e ganhe",
       color: "bg-primary/20 text-primary",
-      page: null
+      page: "/raspadinha-premium"
     },
   ];
 
