@@ -218,7 +218,7 @@ export default function PoioDaVacaPage() {
 
             {/* Letter labels at bottom */}
             <div className="flex justify-between px-1 mb-3">
-              {config.letras.map((letra, i) => (
+              {config.letras.map((letra: string, i: number) => (
                 <span key={letra} className="text-[10px] font-bold text-on-surface-variant">{letra}</span>
               ))}
             </div>
