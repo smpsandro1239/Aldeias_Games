@@ -266,10 +266,38 @@ export default function Home() {
   };
 
   if (!mounted || loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-surface">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-        <span className="text-sm text-on-surface-variant font-label">A carregar...</span>
+    <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest text-on-surface font-body selection:bg-secondary-container selection:text-on-secondary-container overflow-hidden">
+      {/* Grain Texture */}
+      <div className="fixed inset-0 grain-overlay z-10 pointer-events-none" />
+      {/* Background Glow */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-container/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary-container/5 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="flex flex-col items-center z-20">
+        <div className="relative mb-4">
+          <Building2 className="text-primary-container text-5xl" style={{ fontWeight: 200 }} />
+          <div className="absolute -top-1 -right-2 w-3 h-3 rounded-full bg-secondary-container shadow-[0_0_8px_#00daf3]"></div>
+        </div>
+        <h1 className="font-headline text-5xl md:text-6xl font-bold text-primary-container tracking-tight italic">
+          Aldeias Games
+        </h1>
+        
+        {/* Separator */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent my-6 max-w-lg"></div>
+        
+        <p className="font-body text-on-surface-variant text-sm md:text-base tracking-[0.15em] uppercase font-bold">
+          Onde a Tradição, Forja o Presente
+        </p>
+        
+        {/* Loading Element */}
+        <div className="mt-12 flex flex-col items-center gap-4">
+          <div className="relative w-32 h-1 bg-surface-variant/20 rounded-full overflow-hidden">
+            <div className="digital-loader absolute inset-0 rounded-full shadow-[0_0_15px_rgba(0,218,243,0.4)]" />
+          </div>
+          <span className="text-[10px] uppercase tracking-widest text-on-surface/40 font-bold">
+            A Iniciar...
+          </span>
+        </div>
       </div>
     </div>
   );
