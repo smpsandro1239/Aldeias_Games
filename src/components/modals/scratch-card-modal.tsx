@@ -143,6 +143,7 @@ export function ScratchCardModal({
             )}
 
             <ScratchCard
+              key={finalJogoId}
               premio={finalPremio}
               jogoId={finalJogoId}
               onRevelado={handleReveal}

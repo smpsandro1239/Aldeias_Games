@@ -46,6 +46,7 @@ export default function JogosPage() {
         return (
           <div className="flex flex-col items-center gap-6">
             <ScratchCard
+              key="raspadinha-demo"
               premio={premioExemplo}
               jogoId="raspadinha-demo"
               onRevelado={handleScratchCardReveal}

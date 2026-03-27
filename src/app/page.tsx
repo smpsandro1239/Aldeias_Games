@@ -97,6 +97,7 @@ export default function Home() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({ 
@@ -126,6 +127,17 @@ export default function Home() {
     fetchEventos();
     fetchJogos();
     fetchAldeias();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.user-menu')) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   const fetchEventos = async () => {
@@ -287,15 +299,33 @@ export default function Home() {
               <a href="#aldeias" className="font-label text-sm font-bold tracking-widest uppercase text-secondary transition-colors">Aldeias</a>
               <a href="#" className="font-label text-sm font-bold tracking-widest uppercase text-on-surface-variant hover:text-secondary transition-colors">Competir</a>
             </nav>
-            <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border-2 border-primary/20">
+            <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border-2 border-primary/20 relative">
               {user ? (
-                <div className="w-full h-full bg-primary/20 flex items-center justify-center">
+                <button 
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="w-full h-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
+                >
                   <User className="h-5 w-5 text-primary" />
-                </div>
+                </button>
               ) : (
                 <button onClick={() => setLoginModalOpen(true)} className="w-full h-full flex items-center justify-center text-primary font-bold">
                   +
                 </button>
+              )}
+              {userMenuOpen && user && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-surface-container-high rounded-xl shadow-lg border border-outline-variant/10 overflow-hidden z-50">
+                  <div className="p-3 border-b border-outline-variant/10">
+                    <p className="font-bold text-sm">{user.nome}</p>
+                    <p className="text-xs text-on-surface-variant">{user.email}</p>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full px-3 py-2 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Terminar Sessão
+                  </button>
+                </div>
               )}
             </div>
           </div>
