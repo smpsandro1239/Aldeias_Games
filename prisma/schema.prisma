@@ -294,9 +294,13 @@ model Jogo {
 
   // Informação financeira (para Poio da Vaca)
   custoQuadrado        Float?  // Preço por quadrado individual
-  valorPremioVaca     Float?  // Valor da vaca como prémio (em euros)
+  valorPremioVaca     Float?  // Valor de mercado da vaca (mostrado aos jogadores)
   custoPremioDinheiro Float?  // Alternativa: valor em cartão/dinheiro
-
+  
+  // Informação contabilística (para Poio da Vaca)
+  valorCompraVaca     Float?  // Valor real de compra da vaca (para contabilidade)
+  valorMercadoVaca    Float?  // Valor de mercado (mostrado aos jogadores)
+  
   // Rentabilidade (calculada automaticamente)
   rentabilidadePercentual Float? // Percentual de rentabilidade do jogo
 

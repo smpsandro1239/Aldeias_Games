@@ -31,6 +31,8 @@ interface Jogo {
   custoQuadrado: number | null;
   valorPremioVaca: number | null;
   custoPremioDinheiro: number | null;
+  valorCompraVaca: number | null;
+  valorMercadoVaca: number | null;
   rentabilidadePercentual: number | null;
   totalAngariado: number;
   totalParticipacoes: number;
@@ -44,14 +46,14 @@ interface Dimensoes {
 
 function calcularRentabilidade(
   custoQuadrado: number,
-  valorPremio: number,
-  totalQuadrados: number,
-  custoVacaFisica: number
+  valorMercadoVaca: number,
+  valorCompraVaca: number,
+  totalQuadrados: number
 ): number {
   if (custoQuadrado <= 0 || totalQuadrados <= 0) return 0;
   
   const receitaTotal = custoQuadrado * totalQuadrados;
-  const custoPremio = valorPremio > 0 ? valorPremio : custoVacaFisica;
+  const custoPremio = valorCompraVaca > 0 ? valorCompraVaca : valorMercadoVaca;
   
   if (receitaTotal === 0) return 0;
   
@@ -143,7 +145,7 @@ export default function PoioDaVacaPage() {
     const row = Math.floor(i / dimensoes.x);
     const col = i % dimensoes.x;
     const x = col + 1;
-    const y = dimensoes.y - row;
+    const y = row + 1;
     return { 
       id: i + 1, 
       x, 
@@ -184,9 +186,10 @@ export default function PoioDaVacaPage() {
   };
 
   const custoPorQuadrado = jogo?.custoQuadrado || jogo?.preco || 5;
-  const valorPremio = jogo?.valorPremioVaca || jogo?.custoPremioDinheiro || 1000;
-  const custoVacaFisica = 800;
-  const rentabilidade = calcularRentabilidade(custoPorQuadrado, valorPremio, totalCells, custoVacaFisica);
+  const valorMercado = jogo?.valorMercadoVaca || jogo?.valorPremioVaca || jogo?.custoPremioDinheiro || 1000;
+  const valorCompra = jogo?.valorCompraVaca || 800;
+  
+  const rentabilidade = calcularRentabilidade(custoPorQuadrado, valorMercado, valorCompra, totalCells);
   const statusRentabilidade = getRentabilidadeStatus(rentabilidade);
 
   if (loading) {
@@ -226,7 +229,7 @@ export default function PoioDaVacaPage() {
             <div className="flex flex-col gap-2 relative z-10">
               <span className="text-primary-container font-bold text-sm">GRANDE PRÉMIO</span>
               <p className="font-headline text-xl text-on-surface">
-                {valorPremio > 500 ? "Vaca de Raça" : `${valorPremio}€ em Cartão"}`}
+                {valorMercado > 500 ? "Vaca de Raça" : `${valorMercado}€ em Cartão`}
               </p>
               <div className="mt-3 flex items-center gap-2 text-on-surface-variant text-sm bg-surface-container-highest/50 self-start px-3 py-1 rounded-full">
                 <Star className="w-3 h-3 text-primary-container" />
@@ -246,12 +249,23 @@ export default function PoioDaVacaPage() {
             
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-surface-container-low p-3 rounded-xl">
-                <p className="text-[10px] text-on-surface-variant uppercase">Receita Total Esperada</p>
+                <p className="text-[10px] text-on-surface-variant uppercase">Receita Total</p>
                 <p className="font-headline text-xl text-primary">{custoPorQuadrado * totalCells}€</p>
               </div>
               <div className="bg-surface-container-low p-3 rounded-xl">
-                <p className="text-[10px] text-on-surface-variant uppercase">Custo do Prémio</p>
-                <p className="font-headline text-xl text-error">{valorPremio}€</p>
+                <p className="text-[10px] text-on-surface-variant uppercase">Custo Real (Compra)</p>
+                <p className="font-headline text-xl text-error">{valorCompra}€</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+              <div className="flex justify-between bg-surface-container-low p-2 rounded-lg">
+                <span className="text-on-surface-variant">Valor Mercado (Jogadores):</span>
+                <span className="font-bold">{valorMercado}€</span>
+              </div>
+              <div className="flex justify-between bg-surface-container-low p-2 rounded-lg">
+                <span className="text-on-surface-variant">Valor Compra (Contabilidade):</span>
+                <span className="font-bold">{valorCompra}€</span>
               </div>
             </div>
             
