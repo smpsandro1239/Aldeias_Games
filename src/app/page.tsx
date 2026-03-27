@@ -302,7 +302,7 @@ export default function Home() {
             <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border-2 border-primary/20 relative">
               {user ? (
                 <button 
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  onClick={() => setUserMenuOpen(true)}
                   className="w-full h-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
                 >
                   <User className="h-5 w-5 text-primary" />
@@ -311,21 +311,6 @@ export default function Home() {
                 <button onClick={() => setLoginModalOpen(true)} className="w-full h-full flex items-center justify-center text-primary font-bold">
                   +
                 </button>
-              )}
-              {userMenuOpen && user && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-surface-container-high rounded-xl shadow-lg border border-outline-variant/10 overflow-hidden z-50">
-                  <div className="p-3 border-b border-outline-variant/10">
-                    <p className="font-bold text-sm">{user.nome}</p>
-                    <p className="text-xs text-on-surface-variant">{user.email}</p>
-                  </div>
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full px-3 py-2 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Terminar Sessão
-                  </button>
-                </div>
               )}
             </div>
           </div>
@@ -599,9 +584,31 @@ export default function Home() {
         </button>
         <button onClick={() => user ? setUserMenuOpen(!userMenuOpen) : setLoginModalOpen(true)} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
           <Wallet className="h-6 w-6" />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">{user ? 'Conta' : 'Carteira'}</span>
+          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">{user ? 'Ver Saldo' : 'Carteira'}</span>
         </button>
       </div>
+
+      {/* User Menu Modal */}
+      <Dialog open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="font-headline text-xl">A minha Conta</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <div className="bg-surface-container-high rounded-xl p-4 text-center">
+              <p className="text-xs text-on-surface-variant mb-1">O meu Saldo Aldeias</p>
+              <p className="font-headline text-3xl text-primary">5,55 €</p>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="w-full py-3 text-center text-red-500 hover:bg-red-500/10 rounded-xl flex items-center justify-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Terminar Sessão
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
