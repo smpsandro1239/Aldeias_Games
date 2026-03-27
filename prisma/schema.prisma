@@ -282,11 +282,23 @@ model Jogo {
   // Configuração do jogo (JSON)
   configuracao String // JSON com configurações específicas
 
+  // Dimensões do campo (para Poio da Vaca - grid quadrado)
+  // Exemplo: campo 10x10 = 100 quadrados totais
+  dimensoesCampo String? // JSON: { "x": 10, "y": 10, "total": 100 }
+
   // Preço e stock
   preco            Float
   stockInicial     Int
   stockAtual       Int
   limitePorUsuario Int   @default(10)
+
+  // Informação financeira (para Poio da Vaca)
+  custoQuadrado        Float?  // Preço por quadrado individual
+  valorPremioVaca     Float?  // Valor da vaca como prémio (em euros)
+  custoPremioDinheiro Float?  // Alternativa: valor em cartão/dinheiro
+
+  // Rentabilidade (calculada automaticamente)
+  rentabilidadePercentual Float? // Percentual de rentabilidade do jogo
 
   // Estado
   estado       EstadoJogo @default(aberto)

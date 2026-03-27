@@ -13,9 +13,10 @@ import {
   Award,
   ArrowLeft,
   Home,
-  Shuffle,
-  Plus,
-  Minus
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Euro
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -26,6 +27,84 @@ interface Jogo {
   tipo: string;
   preco: number;
   configuracao: string;
+  dimensoesCampo: string | null;
+  custoQuadrado: number | null;
+  valorPremioVaca: number | null;
+  custoPremioDinheiro: number | null;
+  rentabilidadePercentual: number | null;
+  totalAngariado: number;
+  totalParticipacoes: number;
+}
+
+interface Dimensoes {
+  x: number;
+  y: number;
+  total: number;
+}
+
+function calcularRentabilidade(
+  custoQuadrado: number,
+  valorPremio: number,
+  totalQuadrados: number,
+  custoVacaFisica: number
+): number {
+  if (custoQuadrado <= 0 || totalQuadrados <= 0) return 0;
+  
+  const receitaTotal = custoQuadrado * totalQuadrados;
+  const custoPremio = valorPremio > 0 ? valorPremio : custoVacaFisica;
+  
+  if (receitaTotal === 0) return 0;
+  
+  const lucro = receitaTotal - custoPremio;
+  const rentabilidade = (lucro / receitaTotal) * 100;
+  
+  return Math.round(rentabilidade * 100) / 100;
+}
+
+function getRentabilidadeStatus(rentabilidade: number): {
+  label: string;
+  cor: string;
+  icon: typeof TrendingUp;
+  descricao: string;
+} {
+  if (rentabilidade >= 50) {
+    return {
+      label: "Excelente",
+      cor: "text-green-400",
+      icon: TrendingUp,
+      descricao: "Rentabilidade muito elevada - ótimo negócio!"
+    };
+  }
+  if (rentabilidade >= 30) {
+    return {
+      label: "Bom",
+      cor: "text-green-300",
+      icon: TrendingUp,
+      descricao: "Rentabilidade boa - negócio rentável"
+    };
+  }
+  if (rentabilidade >= 10) {
+    return {
+      label: "Aceitável",
+      cor: "text-yellow-400",
+      icon: TrendingUp,
+      descricao: "Rentabilidade moderada"
+    };
+  }
+  if (rentabilidade >= 0) {
+    return {
+      label: "Baixo",
+      cor: "text-orange-400",
+      icon: AlertTriangle,
+      descricao: "Rentabilidade baixa - margem reduzida"
+    };
+  }
+  return {
+    label: "Negativo",
+    cor: "text-red-400",
+    icon: TrendingDown,
+    descricao: "Prejuízo garantido - ajuste preços!"
+  };
 }
 
 export default function PoioDaVacaPage() {
@@ -54,14 +133,24 @@ export default function PoioDaVacaPage() {
     }
   };
 
-  const config = jogo?.configuracao ? JSON.parse(jogo.configuracao) : { letras: ["A", "B", "C", "D", "E"], numerosPorLetra: 20 };
-  const gridSize = config.numerosPorLetra || 20;
-  const totalCells = config.letras.length * gridSize;
+  const dimensoes: Dimensoes = jogo?.dimensoesCampo 
+    ? JSON.parse(jogo.dimensoesCampo)
+    : { x: 10, y: 10, total: 100 };
+  
+  const totalCells = dimensoes.x * dimensoes.y;
   
   const cells = Array.from({ length: totalCells }, (_, i) => {
-    const letraIndex = Math.floor(i / gridSize);
-    const numero = (i % gridSize) + 1;
-    return { id: i + 1, label: `${config.letras[letraIndex]}${numero}`, letra: config.letras[letraIndex], row: Math.floor(i / gridSize), col: i % gridSize };
+    const row = Math.floor(i / dimensoes.x);
+    const col = i % dimensoes.x;
+    const x = col + 1;
+    const y = dimensoes.y - row;
+    return { 
+      id: i + 1, 
+      x, 
+      y,
+      label: `${x}-${y}`,
+      display: `X${x}Y${y}`
+    };
   });
 
   const handleSquareClick = (id: number) => {
@@ -78,7 +167,7 @@ export default function PoioDaVacaPage() {
     const shuffled = available.sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, count).map(c => c.id);
     setSelectedSquares(prev => [...prev, ...selected]);
-    toast.success(`${count} квадрадо${count > 1 ? 's' : ''} selecionado${count > 1 ? 's' : ''}!`);
+    toast.success(`${count} quadrado${count > 1 ? 's' : ''} selecionado${count > 1 ? 's' : ''}!`);
   };
 
   const handleClearSelection = () => {
@@ -90,9 +179,15 @@ export default function PoioDaVacaPage() {
       toast.error("Selecione pelo menos um quadrado!");
       return;
     }
-    const labels = selectedSquares.map(id => cells[id - 1].label).join(", ");
+    const labels = selectedSquares.map(id => cells[id - 1].display).join(", ");
     toast.success(`Aposta em ${selectedSquares.length} quadrado${selectedSquares.length > 1 ? 's' : ''}: ${labels}`);
   };
+
+  const custoPorQuadrado = jogo?.custoQuadrado || jogo?.preco || 5;
+  const valorPremio = jogo?.valorPremioVaca || jogo?.custoPremioDinheiro || 1000;
+  const custoVacaFisica = 800;
+  const rentabilidade = calcularRentabilidade(custoPorQuadrado, valorPremio, totalCells, custoVacaFisica);
+  const statusRentabilidade = getRentabilidadeStatus(rentabilidade);
 
   if (loading) {
     return (
@@ -130,7 +225,9 @@ export default function PoioDaVacaPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary-container/10 blur-3xl -mr-8 -mt-8"></div>
             <div className="flex flex-col gap-2 relative z-10">
               <span className="text-primary-container font-bold text-sm">GRANDE PRÉMIO</span>
-              <p className="font-headline text-xl text-on-surface">Novilho de Raça ou 1000€ em Cartão</p>
+              <p className="font-headline text-xl text-on-surface">
+                {valorPremio > 500 ? "Vaca de Raça" : `${valorPremio}€ em Cartão"}`}
+              </p>
               <div className="mt-3 flex items-center gap-2 text-on-surface-variant text-sm bg-surface-container-highest/50 self-start px-3 py-1 rounded-full">
                 <Star className="w-3 h-3 text-primary-container" />
                 <span>Sorteio Local Certificado</span>
@@ -139,10 +236,45 @@ export default function PoioDaVacaPage() {
           </div>
         </section>
 
+        {/* Rentabilidade Info */}
+        <section className="px-2">
+          <div className="bg-surface-container rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-5 h-5 text-on-surface-variant" />
+              <h3 className="font-headline text-lg">Análise de Rentabilidade</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-surface-container-low p-3 rounded-xl">
+                <p className="text-[10px] text-on-surface-variant uppercase">Receita Total Esperada</p>
+                <p className="font-headline text-xl text-primary">{custoPorQuadrado * totalCells}€</p>
+              </div>
+              <div className="bg-surface-container-low p-3 rounded-xl">
+                <p className="text-[10px] text-on-surface-variant uppercase">Custo do Prémio</p>
+                <p className="font-headline text-xl text-error">{valorPremio}€</p>
+              </div>
+            </div>
+            
+            <div className={`p-3 rounded-xl ${rentabilidade >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-bold">Rentabilidade:</span>
+                <span className={`font-headline text-2xl ${statusRentabilidade.cor}`}>
+                  {rentabilidade}%
+                </span>
+              </div>
+              <p className="text-xs text-on-surface-variant">{statusRentabilidade.descricao}</p>
+            </div>
+            
+            <div className="mt-3 text-xs text-on-surface-variant/60">
+              Campo: {dimensoes.x}×{dimensoes.y} = {totalCells} quadrados • {custoPorQuadrado}€ cada
+            </div>
+          </div>
+        </section>
+
         {/* Quick Selection Buttons */}
         <section className="px-2 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-headline text-lg">快速选择 (Quick Select)</h3>
+            <h3 className="font-headline text-lg">Seleção Rápida</h3>
             <button 
               onClick={handleClearSelection}
               className="text-xs text-on-surface-variant hover:text-error transition-colors"
@@ -169,43 +301,52 @@ export default function PoioDaVacaPage() {
           </div>
         </section>
 
-        {/* The Field - Square Grid */}
+        {/* The Field - Square Grid with X/Y */}
         <section className="space-y-4 px-2">
           <div className="flex flex-col gap-1">
-            <h3 className="font-headline text-xl">O Campo (The Field)</h3>
-            <p className="text-on-surface-variant text-sm">Escolha os seus quadrados. A vaca será solta e o primeiro cocó determina o vencedor!</p>
+            <h3 className="font-headline text-xl">O Campo</h3>
+            <p className="text-on-surface-variant text-sm">Escolha os seus quadrados. A vaca é solta no campo e o primeiro "coco" determina o vencedor!</p>
+            <p className="text-xs text-on-surface-variant/60 mt-1">
+              Coordenadas: X (esquerda→direita) × Y (baixo→cima)
+            </p>
           </div>
 
           {/* Square Field Container */}
           <div className="bg-surface-container-low rounded-[2rem] p-3">
+            {/* Axis Labels */}
+            <div className="flex justify-between px-8 mb-1">
+              <span className="text-[10px] text-on-surface-variant">X →</span>
+            </div>
+            
             {/* Square Grid - maintains aspect ratio */}
-            <div className="relative w-full aspect-square mb-4">
+            <div className="relative w-full aspect-square mb-2">
               <div 
                 className="absolute inset-0 grid gap-0.5"
                 style={{ 
-                  gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
-                  gridTemplateRows: `repeat(${config.letras.length}, 1fr)`
+                  gridTemplateColumns: `repeat(${dimensoes.x}, 1fr)`,
+                  gridTemplateRows: `repeat(${dimensoes.y}, 1fr)`
                 }}
               >
                 {cells.map((cell) => {
                   const isSelected = selectedSquares.includes(cell.id);
-                  const isAvailable = true;
                   
                   return (
                     <button
                       key={cell.id}
                       onClick={() => handleSquareClick(cell.id)}
                       className={`
-                        relative flex items-center justify-center text-[10px] font-medium transition-all duration-150 rounded-sm
+                        relative flex items-center justify-center text-[8px] font-medium transition-all duration-150 rounded-sm
                         ${isSelected 
                           ? "bg-primary-container text-on-primary-container font-bold shadow-md z-10" 
                           : "bg-surface-container-highest/60 text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant"
                         }
                       `}
-                      title={cell.label}
+                      title={cell.display}
                     >
-                      {isSelected && (
-                        <CheckCircle2 className="w-3 h-3" />
+                      {isSelected ? (
+                        <CheckCircle2 className="w-2.5 h-2.5" />
+                      ) : (
+                        cell.id
                       )}
                     </button>
                   );
@@ -216,29 +357,17 @@ export default function PoioDaVacaPage() {
               <div className="absolute inset-0 pointer-events-none border border-outline-variant/20 rounded-lg"></div>
             </div>
 
-            {/* Letter labels at bottom */}
-            <div className="flex justify-between px-1 mb-3">
-              {config.letras.map((letra: string, i: number) => (
-                <span key={letra} className="text-[10px] font-bold text-on-surface-variant">{letra}</span>
-              ))}
+            {/* Y axis label */}
+            <div className="flex justify-between px-1">
+              <span className="text-[10px] text-on-surface-variant">↑ Y</span>
+              <span className="text-[10px] text-on-surface-variant">X →</span>
             </div>
-
-            {/* Event Details */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-surface-container-high/40 rounded-xl flex flex-col gap-1">
-                <span className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Data e Hora</span>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary-container" />
-                  <span className="text-xs font-semibold">16/08/2026, 17:00</span>
-                </div>
-              </div>
-              <div className="p-3 bg-surface-container-high/40 rounded-xl flex flex-col gap-1">
-                <span className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Localização</span>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary-container" />
-                  <span className="text-xs font-semibold">Campo da Feira</span>
-                </div>
-              </div>
+            
+            {/* Coordinate explanation */}
+            <div className="mt-3 p-2 bg-surface-container-high/40 rounded-lg">
+              <p className="text-[10px] text-on-surface-variant text-center">
+                O campo tem <strong>{dimensoes.x}×{dimensoes.y} = {totalCells}</strong> quadrados
+              </p>
             </div>
           </div>
         </section>
@@ -248,12 +377,12 @@ export default function PoioDaVacaPage() {
           <div className="bg-surface-container p-4 rounded-2xl flex items-center justify-between">
             <div>
               <p className="text-xs text-on-surface-variant">Preço por quadrado</p>
-              <p className="font-headline text-2xl text-primary">{jogo?.preco || 5}€</p>
+              <p className="font-headline text-2xl text-primary">{custoPorQuadrado}€</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-on-surface-variant">Total</p>
               <p className="font-headline text-2xl text-secondary">
-                {selectedSquares.length * (jogo?.preco || 5)}€
+                {selectedSquares.length * custoPorQuadrado}€
               </p>
             </div>
           </div>
@@ -288,7 +417,7 @@ export default function PoioDaVacaPage() {
             <div className="space-y-1">
               <h4 className="font-headline text-base">Como funciona?</h4>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                Uma vaca é solta no campo quadrado. Quando defecar pela primeira vez, verificamos as coordenadas (X,Y) do cocó e o quadrado correspondente é o vencedor!
+                Uma vaca é solta no campo quadrado. Quando defecar pela primeira vez, verificamos as coordenadas (X,Y) do "coco" e o quadrado correspondente é o vencedor!
               </p>
             </div>
           </div>
