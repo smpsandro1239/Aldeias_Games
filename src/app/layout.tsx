@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Serif, Plus_Jakarta_Sans, Chakra_Petch, Russo_One } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import dynamic from "next/dynamic";
 import { Toaster } from "@/components/ui/sonner";
+
+const ThemeProvider = dynamic(
+  () => import("@/components/theme-provider").then((mod) => mod.ThemeProvider),
+  { ssr: false }
+);
 
 const inter = Inter({ subsets: ["latin"] });
 const notoSerif = Noto_Serif({ 
