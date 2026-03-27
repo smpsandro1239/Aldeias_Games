@@ -3,16 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  Grid4X4, 
-  CheckCircle, 
-  CalendarToday, 
-  LocationOn, 
-  ConfirmationNumber,
-  Stars,
-  Home,
+  Grid2X2, 
+  CheckCircle2, 
+  Calendar, 
+  MapPin, 
+  Ticket,
+  Star,
   Map,
-  EmojiEvents,
-  ArrowBack
+  Award,
+  ArrowLeft,
+  Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -83,9 +83,9 @@ export default function PoioDaVacaPage() {
       <header className="sticky top-0 z-50 bg-surface-container-low transition-colors duration-300 shadow-lg flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-high rounded-full transition-colors">
-            <ArrowBack className="w-5 h-5 text-on-surface-variant" />
+            <ArrowLeft className="w-5 h-5 text-on-surface-variant" />
           </button>
-          <Grid4X4 className="w-6 h-6 text-primary-container" />
+          <Grid2X2 className="w-6 h-6 text-primary-container" />
           <h1 className="font-headline text-2xl tracking-wide text-primary-container font-bold italic">Poio da Vaca</h1>
         </div>
         <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30 bg-surface-container-high">
@@ -107,7 +107,7 @@ export default function PoioDaVacaPage() {
               <span className="text-primary-container font-bold text-sm">GRANDE PRÉMIO</span>
               <p className="font-headline text-2xl text-on-surface">Novilho de Raça ou 1000€ em Cartão</p>
               <div className="mt-4 flex items-center gap-2 text-on-surface-variant text-sm bg-surface-container-highest/50 self-start px-3 py-1 rounded-full">
-                <Stars className="w-3 h-3 text-primary-container" />
+                <Star className="w-3 h-3 text-primary-container" />
                 <span>Sorteio Local Certificado</span>
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function PoioDaVacaPage() {
                   `}
                 >
                   {selectedSquare === cell.id ? (
-                    <CheckCircle className="w-4 h-4" />
+                    <CheckCircle2 className="w-4 h-4" />
                   ) : (
                     cell.id
                   )}
@@ -150,14 +150,14 @@ export default function PoioDaVacaPage() {
               <div className="p-4 bg-surface-container-high/40 rounded-2xl flex flex-col gap-1">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Data e Hora</span>
                 <div className="flex items-center gap-2">
-                  <CalendarToday className="w-4 h-4 text-primary-container" />
+                  <Calendar className="w-4 h-4 text-primary-container" />
                   <span className="text-sm font-semibold">16/08/2026, 17:00</span>
                 </div>
               </div>
               <div className="p-4 bg-surface-container-high/40 rounded-2xl flex flex-col gap-1">
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Localização</span>
                 <div className="flex items-center gap-2">
-                  <LocationOn className="w-4 h-4 text-primary-container" />
+                  <MapPin className="w-4 h-4 text-primary-container" />
                   <span className="text-sm font-semibold">Campo da Feira</span>
                 </div>
               </div>
@@ -171,7 +171,7 @@ export default function PoioDaVacaPage() {
             onClick={handleBet}
             className="w-full bg-primary-container text-on-primary-container font-bold py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-transform shadow-xl shadow-primary-container/20"
           >
-            <ConfirmationNumber className="w-5 h-5" />
+            <Ticket className="w-5 h-5" />
             <span className="text-lg">Apostar no Quadrado {selectedSquare ? cells[selectedSquare - 1].label : ""}</span>
           </Button>
           <p className="text-center text-on-surface-variant/50 text-[10px] mt-4 px-10">
@@ -204,11 +204,11 @@ export default function PoioDaVacaPage() {
           <span className="font-sans text-[11px] font-medium tracking-tight">O Campo</span>
         </button>
         <button className="flex flex-col items-center justify-center text-primary-container bg-surface-container-high/60 rounded-xl p-2 scale-90 transition-transform">
-          <ConfirmationNumber className="w-6 h-6" style={{ fill: "currentColor" }} />
+          <Ticket className="w-6 h-6" style={{ fill: "currentColor" }} />
           <span className="font-sans text-[11px] font-medium tracking-tight">Apostas</span>
         </button>
         <button className="flex flex-col items-center justify-center text-on-surface-variant/60 p-2 hover:bg-surface-container-high transition-colors rounded-xl">
-          <EmojiEvents className="w-6 h-6" />
+          <Award className="w-6 h-6" />
           <span className="font-sans text-[11px] font-medium tracking-tight">Prémios</span>
         </button>
       </nav>
