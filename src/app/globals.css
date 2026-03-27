@@ -231,6 +231,12 @@ textarea:focus-visible {
   -webkit-backdrop-filter: blur(24px);
 }
 
+.glass-card {
+  background: rgba(46, 41, 40, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
 /* ===== SELECTION ===== */
 
 ::selection {

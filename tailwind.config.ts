@@ -69,11 +69,27 @@ const config: Config = {
           DEFAULT: "hsl(var(--outline))",
           variant: "hsl(var(--outline-variant))",
         },
+        brand: {
+          bg: "#110d0c",
+          card: "#1f1b19",
+          cardAlt: "#2e2928",
+          cardAlt2: "#393432",
+          primary: "#ff734b",
+          secondary: "#9cefff",
+          text: "#eae0de",
+          textMuted: "#e0bfb7",
+          textLight: "#ffb5a0",
+        },
       },
       fontFamily: {
         headline: ['"Noto Serif"', 'Georgia', 'serif'],
         body: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
         label: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+        serif: ['"Noto Serif"', 'Georgia', 'serif'],
+      },
+      boxShadow: {
+        'glow': '0 0 20px rgba(255, 115, 75, 0.3)',
+        'glow-sm': '0 0 10px rgba(255, 115, 75, 0.2)',
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -10,6 +10,7 @@ const publicRoutes = [
   '/api/aldeias',
   '/api/eventos',
   '/api/jogos',
+  '/api/apostas',
 ];
 
 // Rotas que precisam de rate limiting

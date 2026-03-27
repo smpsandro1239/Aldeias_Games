@@ -16,10 +16,15 @@ import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  Euro
+  Euro,
+  User,
+  Phone,
+  Mail,
+  UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Jogo {
   id: string;
@@ -36,6 +41,23 @@ interface Jogo {
   rentabilidadePercentual: number | null;
   totalAngariado: number;
   totalParticipacoes: number;
+}
+
+interface Jogador {
+  id?: string;
+  nome: string;
+  telefone?: string;
+  email?: string;
+}
+
+interface Aposta {
+  id?: string;
+  jogoId: string;
+  numeros: number[];
+  jogador: Jogador;
+  vendedorId?: string;
+  data: string;
+  pago: boolean;
 }
 
 interface Dimensoes {
@@ -114,11 +136,44 @@ export default function PoioDaVacaPage() {
   const [selectedSquares, setSelectedSquares] = useState<number[]>([]);
   const [jogo, setJogo] = useState<Jogo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [apostas, setApostas] = useState<Aposta[]>([]);
+  const [betModalOpen, setBetModalOpen] = useState(false);
+  const [jogadorForm, setJogadorForm] = useState({
+    nome: "",
+    telefone: "",
+    email: ""
+  });
+  const [vendedorId, setVendedorId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const randomOptions = [1, 3, 5, 10, 15, 20, 30];
 
+  const numerosOcupados = apostas.flatMap(a => a.numeros);
+  
+  const isAdmin = userRole === "super_admin" || userRole === "admin";
+
   useEffect(() => {
     fetchJogo();
+    fetchApostas();
+    
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.id) setVendedorId(user.id);
+        if (user.role) setUserRole(user.role);
+        
+        // Preencher dados do jogador se já logado
+        if (user.nome) {
+          setJogadorForm(prev => ({
+            ...prev,
+            nome: user.nome || "",
+            telefone: user.telefone || "",
+            email: user.email || ""
+          }));
+        }
+      } catch (e) {}
+    }
   }, []);
 
   const fetchJogo = async () => {
@@ -132,6 +187,22 @@ export default function PoioDaVacaPage() {
       console.error("Erro ao carregar jogo:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchApostas = async () => {
+    try {
+      const response = await fetch("/api/apostas?tipo=poio_da_vaca");
+      const data = await response.json();
+      if (data.data) {
+        const apostasConvertidas = data.data.map((a: any) => ({
+          ...a,
+          numeros: typeof a.numeros === 'string' ? JSON.parse(a.numeros) : a.numeros
+        }));
+        setApostas(apostasConvertidas);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar apostas:", error);
     }
   };
 
@@ -156,6 +227,10 @@ export default function PoioDaVacaPage() {
   });
 
   const handleSquareClick = (id: number) => {
+    if (numerosOcupados.includes(id)) {
+      toast.error("Este quadrado já foi escolhido por outro jogador!");
+      return;
+    }
     setSelectedSquares(prev => {
       if (prev.includes(id)) {
         return prev.filter(s => s !== id);
@@ -165,7 +240,11 @@ export default function PoioDaVacaPage() {
   };
 
   const handleRandomPlay = (count: number) => {
-    const available = cells.filter(c => !selectedSquares.includes(c.id));
+    const available = cells.filter(c => !selectedSquares.includes(c.id) && !numerosOcupados.includes(c.id));
+    if (available.length < count) {
+      toast.error(`Apenas ${available.length} quadrado${available.length !== 1 ? 's' : ''} disponível${available.length !== 1 ? 's' : ''}!`);
+      return;
+    }
     const shuffled = available.sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, count).map(c => c.id);
     setSelectedSquares(prev => [...prev, ...selected]);
@@ -181,8 +260,70 @@ export default function PoioDaVacaPage() {
       toast.error("Selecione pelo menos um quadrado!");
       return;
     }
-    const labels = selectedSquares.map(id => cells[id - 1].display).join(", ");
-    toast.success(`Aposta em ${selectedSquares.length} quadrado${selectedSquares.length > 1 ? 's' : ''}: ${labels}`);
+    
+    const numerosIndisponiveis = selectedSquares.filter(n => numerosOcupados.includes(n));
+    if (numerosIndisponiveis.length > 0) {
+      toast.error("Alguns quadrados selecionados já foram escolhidos por outro jogador!");
+      return;
+    }
+    
+    setBetModalOpen(true);
+  };
+
+  const handleSubmitBet = async () => {
+    if (!jogadorForm.nome.trim()) {
+      toast.error("Por favor, insira o nome do jogador!");
+      return;
+    }
+    
+    // Se não estiver logado, precisa de telemóvel ou email
+    if (!vendedorId && !jogadorForm.telefone.trim() && !jogadorForm.email.trim()) {
+      toast.error("Por favor, insira um telemóvel ou email do jogador!");
+      return;
+    }
+    
+    if (!jogo) {
+      toast.error("Erro: Jogo não encontrado!");
+      return;
+    }
+
+    try {
+      const aposta: Partial<Aposta> = {
+        jogoId: jogo.id,
+        numeros: selectedSquares,
+        jogador: {
+          nome: jogadorForm.nome,
+          telefone: jogadorForm.telefone || undefined,
+          email: jogadorForm.email || undefined
+        },
+        vendedorId: vendedorId || undefined,
+        data: new Date().toISOString(),
+        pago: false
+      };
+
+      const response = await fetch("/api/apostas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(aposta)
+      });
+
+      if (response.ok) {
+        const novaAposta = await response.json();
+        setApostas(prev => [...prev, novaAposta.data]);
+        setBetModalOpen(false);
+        setSelectedSquares([]);
+        setJogadorForm({ nome: "", telefone: "", email: "" });
+        
+        const labels = selectedSquares.map(id => cells[id - 1].display).join(", ");
+        toast.success(`Aposta registada para ${jogadorForm.nome}!`);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Erro ao registar aposta. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Erro ao submeter aposta:", error);
+      toast.error("Erro ao registar aposta. Tente novamente.");
+    }
   };
 
   const custoPorQuadrado = jogo?.custoQuadrado || jogo?.preco || 5;
@@ -194,26 +335,26 @@ export default function PoioDaVacaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center">
-        <div className="text-on-surface-variant">A carregar...</div>
+      <div className="min-h-screen bg-[#110d0c] flex items-center justify-center">
+        <div className="text-[#e0bfb7]">A carregar...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface-container-lowest text-on-surface font-body pb-32">
+    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
       {/* TopAppBar */}
-      <header className="sticky top-0 z-50 bg-surface-container-low transition-colors duration-300 shadow-lg flex items-center justify-between px-6 py-4">
+      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-high rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-on-surface-variant" />
+          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
           </button>
-          <Grid2X2 className="w-6 h-6 text-primary-container" />
-          <h1 className="font-headline text-2xl tracking-wide text-primary-container font-bold italic">Poio da Vaca</h1>
+          <Grid2X2 className="text-[#ff734b]" />
+          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Poio da Vaca</h1>
         </div>
-        <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30 bg-surface-container-high">
-          <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
-            <span className="text-xs">User</span>
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-[#ff734b]/30 bg-[#2e2928]">
+          <div className="w-full h-full flex items-center justify-center text-[#e0bfb7]">
+            <User className="text-sm" />
           </div>
         </div>
       </header>
@@ -221,69 +362,77 @@ export default function PoioDaVacaPage() {
       <main className="px-4 pt-6 space-y-6">
         {/* Hero Section & Prize */}
         <section className="relative space-y-4 px-2">
-          <div className="text-xs font-semibold tracking-widest text-secondary-container uppercase mb-2">Grande Evento</div>
-          <h2 className="font-headline text-3xl leading-tight text-on-surface max-w-[80%]">Onde a Sorte Encontra a Tradição</h2>
-          
-          <div className="glass-card rounded-3xl p-5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary-container/10 blur-3xl -mr-8 -mt-8"></div>
-            <div className="flex flex-col gap-2 relative z-10">
-              <span className="text-primary-container font-bold text-sm">GRANDE PRÉMIO</span>
-              <p className="font-headline text-xl text-on-surface">
-                {valorMercado > 500 ? "Vaca de Raça" : `${valorMercado}€ em Cartão`}
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-on-surface-variant text-sm bg-surface-container-highest/50 self-start px-3 py-1 rounded-full">
-                <Star className="w-3 h-3 text-primary-container" />
-                <span>Sorteio Local Certificado</span>
+          <div className="relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff734b]/10 blur-3xl -mr-10 -mt-10" />
+            <div className="relative glass-card rounded-3xl p-6 overflow-hidden">
+              <p className="text-xs font-semibold tracking-widest text-[#9cefff] uppercase mb-2">Grande Evento</p>
+              <h2 className="font-serif text-3xl leading-tight text-[#eae0de] max-w-[80%]">Onde a Sorte Encontra a Tradição</h2>
+              
+              <div className="flex flex-col gap-2 mt-4">
+                {isAdmin ? (
+                  <span className="text-[#ff734b] font-bold text-sm">GRANDE PRÉMIO</span>
+                ) : (
+                  <span className="text-[#ff734b] font-bold text-sm">VALOR EM JOGO</span>
+                )}
+                <p className="font-serif text-xl text-[#ffb5a0]">
+                  {valorMercado > 500 ? "Vaca de Raça" : `${valorMercado}€ em Cartão`}
+                </p>
+                <div className="mt-3 flex items-center gap-2 text-[#e0bfb7] text-sm bg-[#2e2928]/50 self-start px-3 py-1 rounded-full">
+                  <Star className="w-3 h-3 text-[#ff734b]" style={{ fontVariationSettings: "'FILL' 1" }} />
+                  <span>Sorteio Local Certificado</span>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Rentabilidade Info */}
-        <section className="px-2">
-          <div className="bg-surface-container rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-5 h-5 text-on-surface-variant" />
-              <h3 className="font-headline text-lg">Análise de Rentabilidade</h3>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-surface-container-low p-3 rounded-xl">
-                <p className="text-[10px] text-on-surface-variant uppercase">Receita Total</p>
-                <p className="font-headline text-xl text-primary">{custoPorQuadrado * totalCells}€</p>
+        {/* Rentabilidade Info - Only for Admins */}
+        {isAdmin && (
+          <section className="px-2">
+            <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-5 h-5 text-[#9cefff]" />
+                <h3 className="font-serif text-lg text-[#ffb5a0]">Análise de Rentabilidade</h3>
               </div>
-              <div className="bg-surface-container-low p-3 rounded-xl">
-                <p className="text-[10px] text-on-surface-variant uppercase">Custo Real (Compra)</p>
-                <p className="font-headline text-xl text-error">{valorCompra}€</p>
+              
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-[#2e2928] p-3 rounded-xl">
+                  <p className="text-[10px] text-[#e0bfb7] uppercase">Receita Total</p>
+                  <p className="font-serif text-xl text-[#ff734b]">{custoPorQuadrado * totalCells}€</p>
+                </div>
+                <div className="bg-[#2e2928] p-3 rounded-xl">
+                  <p className="text-[10px] text-[#e0bfb7] uppercase">Custo Real (Contabilidade)</p>
+                  <p className="font-serif text-xl text-red-400">{valorCompra}€</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                <div className="flex justify-between bg-surface-container-low p-2 rounded-lg">
+                  <span className="text-on-surface-variant">Valor Mercado (Jogadores):</span>
+                  <span className="font-bold">{valorMercado}€</span>
+                </div>
+                <div className="flex justify-between bg-surface-container-low p-2 rounded-lg">
+                  <span className="text-on-surface-variant">Valor Compra (Contabilidade):</span>
+                  <span className="font-bold">{valorCompra}€</span>
+                </div>
+              </div>
+              
+              <div className={`p-3 rounded-xl ${rentabilidade >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-bold">Rentabilidade:</span>
+                  <span className={`font-headline text-2xl ${statusRentabilidade.cor}`}>
+                    {rentabilidade}%
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant">{statusRentabilidade.descricao}</p>
+              </div>
+              
+              <div className="mt-3 text-xs text-on-surface-variant/60">
+                Campo: {dimensoes.x}×{dimensoes.y} = {totalCells} quadrados • {custoPorQuadrado}€ cada
               </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-              <div className="flex justify-between bg-surface-container-low p-2 rounded-lg">
-                <span className="text-on-surface-variant">Valor Mercado (Jogadores):</span>
-                <span className="font-bold">{valorMercado}€</span>
-              </div>
-              <div className="flex justify-between bg-surface-container-low p-2 rounded-lg">
-                <span className="text-on-surface-variant">Valor Compra (Contabilidade):</span>
-                <span className="font-bold">{valorCompra}€</span>
-              </div>
-            </div>
-            
-            <div className={`p-3 rounded-xl ${rentabilidade >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold">Rentabilidade:</span>
-                <span className={`font-headline text-2xl ${statusRentabilidade.cor}`}>
-                  {rentabilidade}%
-                </span>
-              </div>
-              <p className="text-xs text-on-surface-variant">{statusRentabilidade.descricao}</p>
-            </div>
-            
-            <div className="mt-3 text-xs text-on-surface-variant/60">
-              Campo: {dimensoes.x}×{dimensoes.y} = {totalCells} quadrados • {custoPorQuadrado}€ cada
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Quick Selection Buttons */}
         <section className="px-2 space-y-3">
@@ -343,22 +492,28 @@ export default function PoioDaVacaPage() {
               >
                 {cells.map((cell) => {
                   const isSelected = selectedSquares.includes(cell.id);
+                  const isOccupied = numerosOcupados.includes(cell.id);
                   
                   return (
                     <button
                       key={cell.id}
                       onClick={() => handleSquareClick(cell.id)}
+                      disabled={isOccupied}
                       className={`
                         relative flex items-center justify-center text-[8px] font-medium transition-all duration-150 rounded-sm
                         ${isSelected 
                           ? "bg-primary-container text-on-primary-container font-bold shadow-md z-10" 
+                          : isOccupied
+                          ? "bg-red-900/30 text-red-400/50 cursor-not-allowed border border-red-900/30"
                           : "bg-surface-container-highest/60 text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant"
                         }
                       `}
-                      title={cell.display}
+                      title={isOccupied ? `${cell.display} - Já escolhido` : cell.display}
                     >
                       {isSelected ? (
                         <CheckCircle2 className="w-2.5 h-2.5" />
+                      ) : isOccupied ? (
+                        <CheckCircle2 className="w-2 h-2" />
                       ) : (
                         cell.id
                       )}
@@ -465,6 +620,80 @@ export default function PoioDaVacaPage() {
           -webkit-backdrop-filter: blur(24px);
         }
       `}</style>
+
+      {/* Modal de Registo de Aposta */}
+      <Dialog open={betModalOpen} onOpenChange={setBetModalOpen}>
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="font-headline text-xl flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#ff734b]" />
+              Identificar Jogador
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <p className="text-xs text-on-surface-variant">
+              Registar aposta para: <strong>{selectedSquares.map(id => cells[id - 1].display).join(", ")}</strong>
+            </p>
+            
+            <div className="bg-surface-container-high rounded-xl p-4 space-y-3">
+              <div className="space-y-2">
+                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Nome do Jogador *</label>
+                <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+                  <User className="w-5 h-5 text-[#ff734b]" />
+                  <input
+                    type="text"
+                    value={jogadorForm.nome}
+                    onChange={(e) => setJogadorForm({ ...jogadorForm, nome: e.target.value })}
+                    className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                    placeholder="Nome completo"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Telemóvel</label>
+                <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+                  <Phone className="w-5 h-5 text-[#ff734b]" />
+                  <input
+                    type="tel"
+                    value={jogadorForm.telefone}
+                    onChange={(e) => setJogadorForm({ ...jogadorForm, telefone: e.target.value })}
+                    className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                    placeholder="912 345 678"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Ou Email</label>
+                <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+                  <Mail className="w-5 h-5 text-[#ff734b]" />
+                  <input
+                    type="email"
+                    value={jogadorForm.email}
+                    onChange={(e) => setJogadorForm({ ...jogadorForm, email: e.target.value })}
+                    className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface-container-high rounded-xl p-4">
+              <p className="text-xs text-on-surface-variant mb-1">Total a pagar</p>
+              <p className="font-headline text-2xl text-primary">{selectedSquares.length * custoPorQuadrado}€</p>
+            </div>
+
+            <button 
+              onClick={handleSubmitBet}
+              className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl flex items-center justify-center gap-2"
+            >
+              <Ticket className="w-5 h-5" />
+              Confirmar Aposta
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

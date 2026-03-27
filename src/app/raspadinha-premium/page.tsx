@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User } from "lucide-react";
+
+const iconMap: Record<string, LucideIcon> = {
+  military_tech: Trophy,
+  stars: Star,
+  diamond: Gem,
+  coin: Coins,
+  favorite: Heart,
+  home: Home,
+  sports_esports: Gamepad2,
+  person: User,
+};
 
 // Tipos
 interface Prize {
@@ -314,7 +326,7 @@ export default function RaspadinhaPremiumPage() {
               className="p-2 rounded-full text-[#ff734b] hover:bg-[#2e2928] active:scale-95 transition-all"
               aria-label="Voltar"
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <ArrowLeft className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -356,22 +368,22 @@ export default function RaspadinhaPremiumPage() {
                   {/* Prémio por baixo */}
                   <div className="absolute inset-0 flex items-center justify-center bg-[#393432]">
                     <div className="text-center">
-                      <span
-                        className="material-symbols-outlined text-4xl"
-                        style={{
-                          fontVariationSettings: slot.prize.fill
-                            ? "'FILL' 1"
-                            : "'FILL' 0",
-                          color:
-                            slot.prize.value >= 500
-                              ? "#ff734b"
-                              : slot.prize.value >= 50
-                              ? "#9cefff"
-                              : "#e0bfb7",
-                        }}
-                      >
-                        {slot.prize.icon}
-                      </span>
+                      {(() => {
+                        const IconComponent = iconMap[slot.prize.icon] || Star;
+                        return (
+                          <IconComponent
+                            className="text-4xl"
+                            style={{
+                              color:
+                                slot.prize.value >= 500
+                                  ? "#ff734b"
+                                  : slot.prize.value >= 50
+                                  ? "#9cefff"
+                                  : "#e0bfb7",
+                            }}
+                          />
+                        );
+                      })()}
                       <p className="text-[10px] font-bold text-[#e0bfb7] mt-0.5">
                         {slot.prize.value}€
                       </p>
@@ -412,9 +424,7 @@ export default function RaspadinhaPremiumPage() {
                 className="mt-4 flex justify-center"
               >
                 <div className="flex items-center gap-2 px-4 py-2 bg-[#2e2928] rounded-full">
-                  <span className="material-symbols-outlined text-[#9cefff] text-sm animate-pulse">
-                    gesture
-                  </span>
+                  <Sparkles className="text-[#9cefff] text-sm animate-pulse" />
                   <span className="text-[10px] uppercase font-bold tracking-tighter text-[#e0bfb7]">
                     Raspe para revelar
                   </span>
@@ -487,17 +497,14 @@ export default function RaspadinhaPremiumPage() {
                 className="flex items-center justify-between p-3 bg-[#393432]/40 rounded-xl"
               >
                 <div className="flex items-center gap-3">
-                  <span
-                    className="material-symbols-outlined"
-                    style={{
-                      fontVariationSettings: prize.fill
-                        ? "'FILL' 1"
-                        : "'FILL' 0",
-                      color: prize.color,
-                    }}
-                  >
-                    {prize.icon}
-                  </span>
+                  {(() => {
+                    const IconComponent = iconMap[prize.icon] || Star;
+                    return (
+                      <IconComponent
+                        style={{ color: prize.color }}
+                      />
+                    );
+                  })()}
                   <span className="text-sm font-medium text-[#e0bfb7]">
                     {prize.label}
                   </span>
@@ -531,16 +538,14 @@ export default function RaspadinhaPremiumPage() {
                 transition={{ duration: 0.5, repeat: 3 }}
                 className="text-6xl mb-4"
               >
-                <span
-                  className="material-symbols-outlined"
-                  style={{
-                    fontVariationSettings: "'FILL' 1",
-                    color: "#ff734b",
-                    fontSize: "64px",
-                  }}
-                >
-                  {winningPrize.icon}
-                </span>
+                {(() => {
+                  const IconComponent = iconMap[winningPrize.icon] || Trophy;
+                  return (
+                    <IconComponent
+                      style={{ color: "#ff734b" }}
+                    />
+                  );
+                })()}
               </motion.div>
 
               <h2 className="font-serif text-3xl font-bold text-[#ff734b] mb-2">
@@ -569,10 +574,10 @@ export default function RaspadinhaPremiumPage() {
         <div className="bg-[#110d0c]/90 backdrop-blur-xl border-t border-[#ff734b]/10 rounded-t-2xl shadow-[0_-8px_32px_rgba(17,13,12,0.5)]">
           <div className="flex justify-around items-center px-4 py-3">
             {[
-              { icon: "home", label: "Início", active: false, route: "/" },
-              { icon: "sports_esports", label: "Jogos", active: true, route: "/jogos" },
-              { icon: "military_tech", label: "Prémios", active: false, route: "/jogos" },
-              { icon: "person", label: "Perfil", active: false, route: "/" },
+              { icon: Home, label: "Início", active: false, route: "/" },
+              { icon: Gamepad2, label: "Jogos", active: true, route: "/jogos" },
+              { icon: Trophy, label: "Prémios", active: false, route: "/jogos" },
+              { icon: User, label: "Perfil", active: false, route: "/" },
             ].map((item) => (
               <button
                 key={item.label}
@@ -583,9 +588,7 @@ export default function RaspadinhaPremiumPage() {
                     : "text-[#ffb5a0]/70"
                 }`}
               >
-                <span className="material-symbols-outlined text-xl">
-                  {item.icon}
-                </span>
+                <item.icon className="text-xl" />
                 <span className="text-[10px] font-semibold uppercase tracking-wider">
                   {item.label}
                 </span>

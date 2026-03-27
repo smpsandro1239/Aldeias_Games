@@ -327,25 +327,56 @@ model Jogo {
   premios Premio[] @relation("JogoPremios")
   premioId String? // Mantido para retrocompatibilidade temporária ou como prémio principal
 
+  apostas Aposta[]
+
   participacoes Participacao[]
   sorteios      Sorteio[]
 
   // Sorteio
-  modoSorteio            ModoSorteio @default(app)
+  modoSorteio            String @default("app")
   detalhesSorteioExterno String?
 
   @@index([eventoId])
   @@index([tipo])
   @@index([estado])
   @@index([premioId])
-  @@map("jogos")
+@@map("jogos")
 }
 
-enum ModoSorteio {
-  app
-  externo
+// ============================================
+// MODELOS DE APOSTAS (Poio da Vaca, etc.)
+// ============================================
+
+model Aposta {
+  id String @id @default(cuid())
+  
+  // Jogo associated
+  jogo   Jogo @relation(fields: [jogoId], references: [id])
+  jogoId String
+  
+  // Números apostados (JSON string com array de inteiros)
+  numeros String // JSON: [1, 2, 3]
+  
+  // Dados do jogador
+  jogadorNome      String
+  jogadorTelefone String?
+  jogadorEmail     String?
+  
+  // Vendedor (se aplicável)
+  vendedorId String?
+  
+  // Estado do pagamento
+  pago Boolean @default(false)
+  
+  // Data
+  createdAt DateTime @default(now())
+  
+  @@index([jogoId])
+  @@map("apostas")
 }
 
+// ============================================
+// MODELOS DE PRÉMIO
 // ============================================
 // MODELOS DE PRÉMIO
 // ============================================

@@ -26,6 +26,7 @@ import {
   Loader2,
   QrCode
 } from "lucide-react";
+import { BottomNav } from "@/components/bottom-nav";
 
 interface Jogo {
   id: string;
@@ -378,6 +379,8 @@ function AldeiaPageContent() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <BottomNav />
     </div>
   );
 }

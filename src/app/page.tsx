@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,7 @@ import { toast } from "sonner";
 import { 
   Gamepad2, 
   Users, 
-  Building2, 
+  House,
   Trophy, 
   CreditCard, 
   Shield, 
@@ -36,7 +38,10 @@ import {
   Leaf,
   Wallet,
   Compass,
-  Flag
+  Flag,
+  Hand,
+  Award,
+  Warehouse
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminDashboard } from "@/features/admin/admin-dashboard";
@@ -87,8 +92,10 @@ interface Jogo {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
   
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -195,6 +202,16 @@ export default function Home() {
         localStorage.setItem("user", JSON.stringify(data.user));
         setLoginModalOpen(false);
         setLoginForm({ email: "", password: "" });
+        
+        // Redirect based on role
+        if (data.user.role === "super_admin" || data.user.role === "admin" || data.user.role === "aldeia_admin") {
+          router.push("/admin");
+        } else if (data.user.role === "vendedor") {
+          router.push("/jogos");
+        } else {
+          router.push("/jogos");
+        }
+        
         toast.success("Login bem-sucedido!");
       } else {
         toast.error(data.error || "Erro ao fazer login");
@@ -235,6 +252,7 @@ export default function Home() {
   const handleLogout = () => {
     setUser(null);
     setToken(null);
+    setUserMenuOpen(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     toast.success("Logout efetuado!");
@@ -265,36 +283,92 @@ export default function Home() {
     }
   };
 
-  if (!mounted || loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-container-lowest text-on-surface font-body selection:bg-secondary-container selection:text-on-secondary-container overflow-hidden">
-      {/* Grain Texture */}
-      <div className="fixed inset-0 grain-overlay z-10 pointer-events-none" />
+  if (!mounted) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden">
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="flex flex-col items-center z-20">
+        <House className="text-[#ff734b] text-5xl animate-pulse" />
+      </div>
+    </div>
+  );
+
+  if (!hasEntered) return (
+    <div 
+      className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden cursor-pointer"
+      onClick={() => setHasEntered(true)}
+    >
       {/* Background Glow */}
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-container/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary-container/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="flex flex-col items-center z-20">
-        <div className="relative mb-4">
-          <Building2 className="text-primary-container text-5xl" style={{ fontWeight: 200 }} />
-          <div className="absolute -top-1 -right-2 w-3 h-3 rounded-full bg-secondary-container shadow-[0_0_8px_#00daf3]"></div>
+        <div className="mb-4">
+          <House className="text-[#ff734b] text-5xl" style={{ fontWeight: 200 }} />
         </div>
-        <h1 className="font-headline text-5xl md:text-6xl font-bold text-primary-container tracking-tight italic">
+        <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#ff734b] tracking-tight italic">
           Aldeias Games
         </h1>
         
-        {/* Separator */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent my-6 max-w-lg"></div>
+        {/* Separator with moving light */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-[#ff734b]/30 to-transparent my-6 max-w-lg relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#ff734b] to-transparent opacity-50 animate-shimmer"></div>
+        </div>
         
-        <p className="font-body text-on-surface-variant text-sm md:text-base tracking-[0.15em] uppercase font-bold">
+        <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
+          Onde a Tradição, Forja o Presente
+        </p>
+        
+        {/* Tap to Enter */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12 flex flex-col items-center gap-4"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-[#ff734b]/20 rounded-full blur-xl animate-pulse"></div>
+            <button className="relative px-8 py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-full hover:scale-105 active:scale-95 transition-all">
+              ENTRAR
+            </button>
+          </div>
+          <span className="text-[10px] uppercase tracking-widest text-[#e0bfb7]/40 font-bold">
+            Toque para entrar
+          </span>
+        </motion.div>
+      </div>
+    </div>
+  );
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden">
+      {/* Background Glow */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="flex flex-col items-center z-20">
+        <div className="mb-4">
+          <House className="text-[#ff734b] text-5xl" style={{ fontWeight: 200 }} />
+        </div>
+        <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#ff734b] tracking-tight italic">
+          Aldeias Games
+        </h1>
+        
+        {/* Separator with moving light */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-[#ff734b]/30 to-transparent my-6 max-w-lg relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#ff734b] to-transparent opacity-50 animate-shimmer"></div>
+        </div>
+        
+        <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
           Onde a Tradição, Forja o Presente
         </p>
         
         {/* Loading Element */}
         <div className="mt-12 flex flex-col items-center gap-4">
-          <div className="relative w-32 h-1 bg-surface-variant/20 rounded-full overflow-hidden">
-            <div className="digital-loader absolute inset-0 rounded-full shadow-[0_0_15px_rgba(0,218,243,0.4)]" />
+          <div className="relative w-32 h-1 bg-[#2e2928]/20 rounded-full overflow-hidden">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#ff734b] to-[#9cefff] animate-pulse" />
           </div>
-          <span className="text-[10px] uppercase tracking-widest text-on-surface/40 font-bold">
+          <span className="text-[10px] uppercase tracking-widest text-[#e0bfb7]/40 font-bold">
             A Iniciar...
           </span>
         </div>
@@ -307,36 +381,36 @@ export default function Home() {
       case "raspadinha": return <Sparkles className="text-3xl" />;
       case "poio_da_vaca": return <Leaf className="text-3xl" />;
       case "rifa": return <Ticket className="text-3xl" />;
-      case "tombola": return <Trophy className="text-3xl" />;
+      case "tombola": return <Award className="text-3xl" />;
       default: return <Gamepad2 className="text-3xl" />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface font-body">
+    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/10">
-        <div className="flex justify-between items-center px-6 py-4">
+      <header className="fixed top-0 w-full z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
+        <div className="flex justify-between items-center px-4 py-3">
           <div className="flex items-center gap-4">
-            <Menu className="text-primary text-2xl cursor-pointer hover:opacity-80 transition-opacity" />
-            <h1 className="font-headline text-2xl font-black text-primary tracking-tight">Aldeias Games</h1>
+            <Menu className="text-[#ff734b] text-2xl cursor-pointer hover:opacity-80 transition-opacity" />
+            <h1 className="font-serif text-xl font-bold text-[#ff734b] tracking-tight italic">Aldeias Games</h1>
           </div>
-          <div className="flex items-center gap-6">
-            <nav className="hidden md:flex gap-8">
-              <button onClick={() => document.getElementById('eventos')?.scrollIntoView({ behavior: 'smooth' })} className="font-label text-sm font-bold tracking-widest uppercase text-on-surface-variant hover:text-secondary transition-colors">Eventos</button>
-              <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="font-label text-sm font-bold tracking-widest uppercase text-secondary transition-colors">Aldeias</button>
-              <button onClick={() => window.location.href = '/jogos'} className="font-label text-sm font-bold tracking-widest uppercase text-on-surface-variant hover:text-secondary transition-colors">Competir</button>
+          <div className="flex items-center gap-4">
+            <nav className="hidden md:flex gap-6">
+              <button onClick={() => document.getElementById('eventos')?.scrollIntoView({ behavior: 'smooth' })} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Eventos</button>
+              <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="font-label text-xs font-bold tracking-widest uppercase text-[#9cefff] transition-colors">Aldeias</button>
+              <button onClick={() => window.location.href = '/jogos'} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Competir</button>
             </nav>
-            <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border-2 border-primary/20 relative">
+            <div className="w-10 h-10 rounded-full bg-[#2e2928] overflow-hidden border-2 border-[#ff734b]/20 relative">
               {user ? (
                 <button 
                   onClick={() => setUserMenuOpen(true)}
-                  className="w-full h-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
+                  className="w-full h-full bg-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
                 >
-                  <User className="h-5 w-5 text-primary" />
+                  <User className="h-5 w-5 text-[#ff734b]" />
                 </button>
               ) : (
-                <button onClick={() => setLoginModalOpen(true)} className="w-full h-full flex items-center justify-center text-primary font-bold">
+                <button onClick={() => setLoginModalOpen(true)} className="w-full h-full flex items-center justify-center text-[#ff734b] font-bold text-lg">
                   +
                 </button>
               )}
@@ -387,7 +461,7 @@ export default function Home() {
             {/* Stats Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
               {[
-                { icon: Building2, label: "Aldeias", value: "50+", color: "text-primary" },
+                { icon: House, label: "Aldeias", value: "50+", color: "text-primary" },
                 { icon: Users, label: "Jogadores", value: "10K+", color: "text-secondary" },
                 { icon: CreditCard, label: "Angariado", value: "€500K+", color: "text-tertiary" },
                 { icon: Shield, label: "Transparente", value: "100%", color: "text-primary" },
@@ -522,7 +596,7 @@ export default function Home() {
                         <img src={aldeia.logoUrl} alt={aldeia.nome} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/30" />
                       ) : (
                         <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                          <Building2 className="h-5 w-5 text-primary" />
+                          <House className="h-5 w-5 text-primary" />
                         </div>
                       )}
                       <div>
@@ -603,7 +677,7 @@ export default function Home() {
           <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Explorar</span>
         </button>
         <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col items-center justify-center text-secondary bg-secondary/10 rounded-2xl px-4 py-2 scale-110 transition-all">
-          <Building2 className="h-6 w-6" style={{ fill: 'currentColor' }} />
+          <House className="h-6 w-6" style={{ fill: 'currentColor' }} />
           <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Aldeias</span>
         </button>
         <button onClick={() => window.location.href = '/jogos'} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
@@ -627,6 +701,16 @@ export default function Home() {
               <p className="text-xs text-on-surface-variant mb-1">O meu Saldo Aldeias</p>
               <p className="font-headline text-3xl text-primary">5,55 €</p>
             </div>
+            <button 
+              onClick={() => {
+                setUserMenuOpen(false);
+                router.push('/perfil');
+              }}
+              className="w-full py-3 text-center text-[#9cefff] hover:bg-[#9cefff]/10 rounded-xl flex items-center justify-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              Editar Perfil
+            </button>
             <button 
               onClick={handleLogout}
               className="w-full py-3 text-center text-red-500 hover:bg-red-500/10 rounded-xl flex items-center justify-center gap-2"
