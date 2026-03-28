@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -81,6 +81,18 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
               <User className="h-4 w-4" />
               Editar Perfil
             </button>
+            {(user?.role === "super_admin" || user?.role === "aldeia_admin") && (
+              <button 
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  router.push('/configuracoes');
+                }}
+                className="w-full py-3 text-center text-[#ff734b] hover:bg-[#ff734b]/10 rounded-xl flex items-center justify-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Configurações
+              </button>
+            )}
             <button 
               onClick={handleLogout}
               className="w-full py-3 text-center text-red-500 hover:bg-red-500/10 rounded-xl flex items-center justify-center gap-2"
