@@ -20,11 +20,14 @@ import {
   User,
   Phone,
   Mail,
-  UserPlus
+  UserPlus,
+  MessageCircle,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UserMenuButton } from "@/components/user-menu-button";
 
 interface Jogo {
   id: string;
@@ -54,10 +57,19 @@ interface Aposta {
   id?: string;
   jogoId: string;
   numeros: number[];
-  jogador: Jogador;
-  vendedorId?: string;
-  data: string;
+  jogadorNome?: string | null;
+  jogadorTelefone?: string | null;
+  jogadorEmail?: string | null;
+  jogador?: {
+    nome: string;
+    telefone?: string;
+    email?: string;
+  };
+  vendedorId?: string | null;
+  data?: string;
+  createdAt?: string;
   pago: boolean;
+  isPropria?: boolean;
 }
 
 interface Dimensoes {
@@ -138,19 +150,32 @@ export default function PoioDaVacaPage() {
   const [loading, setLoading] = useState(true);
   const [apostas, setApostas] = useState<Aposta[]>([]);
   const [betModalOpen, setBetModalOpen] = useState(false);
+  const [notificationSent, setNotificationSent] = useState(false);
   const [jogadorForm, setJogadorForm] = useState({
     nome: "",
     telefone: "",
-    email: ""
+    email: "",
+    notificacao: "whatsapp" as "whatsapp" | "email" | "nenhum"
   });
   const [vendedorId, setVendedorId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userAldeiaId, setUserAldeiaId] = useState<string | null>(null);
+  const [userNome, setUserNome] = useState<string | null>(null);
 
   const randomOptions = [1, 3, 5, 10, 15, 20, 30];
 
+  const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
+  const isVendedor = userRole === "vendedor";
+
   const numerosOcupados = apostas.flatMap(a => a.numeros);
   
-  const isAdmin = userRole === "super_admin" || userRole === "admin";
+  const apostasParaLista = isVendedor 
+    ? apostas.filter(a => a.vendedorId === vendedorId)
+    : isAdmin 
+    ? apostas 
+    : userNome 
+    ? apostas.filter(a => a.jogadorNome === userNome)
+    : [];
 
   useEffect(() => {
     fetchJogo();
@@ -162,9 +187,9 @@ export default function PoioDaVacaPage() {
         const user = JSON.parse(storedUser);
         if (user.id) setVendedorId(user.id);
         if (user.role) setUserRole(user.role);
-        
-        // Preencher dados do jogador se já logado
+        if (user.aldeiaId) setUserAldeiaId(user.aldeiaId);
         if (user.nome) {
+          setUserNome(user.nome);
           setJogadorForm(prev => ({
             ...prev,
             nome: user.nome || "",
@@ -192,7 +217,13 @@ export default function PoioDaVacaPage() {
 
   const fetchApostas = async () => {
     try {
-      const response = await fetch("/api/apostas?tipo=poio_da_vaca");
+      const storedUser = localStorage.getItem("user");
+      let userParam = "";
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        userParam = "?user=" + btoa(JSON.stringify(userData));
+      }
+      const response = await fetch(`/api/apostas?tipo=poio_da_vaca${userParam}`);
       const data = await response.json();
       if (data.data) {
         const apostasConvertidas = data.data.map((a: any) => ({
@@ -288,7 +319,7 @@ export default function PoioDaVacaPage() {
     }
 
     try {
-      const aposta: Partial<Aposta> = {
+      const aposta = {
         jogoId: jogo.id,
         numeros: selectedSquares,
         jogador: {
@@ -297,7 +328,6 @@ export default function PoioDaVacaPage() {
           email: jogadorForm.email || undefined
         },
         vendedorId: vendedorId || undefined,
-        data: new Date().toISOString(),
         pago: false
       };
 
@@ -311,11 +341,23 @@ export default function PoioDaVacaPage() {
         const novaAposta = await response.json();
         setApostas(prev => [...prev, novaAposta.data]);
         setBetModalOpen(false);
-        setSelectedSquares([]);
-        setJogadorForm({ nome: "", telefone: "", email: "" });
         
         const labels = selectedSquares.map(id => cells[id - 1].display).join(", ");
+        
+        if (jogadorForm.notificacao === "whatsapp" && jogadorForm.telefone) {
+          const telLimpo = jogadorForm.telefone.replace(/\D/g, "");
+          const msg = encodeURIComponent(`🎉 Aposta registada!\n\nJogo: Poio da Vaca\nNúmeros: ${labels}\nObrigado por participar!`);
+          const whatsappUrl = `https://wa.me/351${telLimpo}?text=${msg}`;
+          window.open(whatsappUrl, "_blank");
+        } else if (jogadorForm.notificacao === "email" && jogadorForm.email) {
+          const subject = encodeURIComponent("Aposta Registada - Poio da Vaca");
+          const body = encodeURIComponent(`🎉 Aposta registada!\n\nJogo: Poio da Vaca\nNúmeros: ${labels}\n\nObrigado por participar!\n\nAldeias Games`);
+          window.open(`mailto:${jogadorForm.email}?subject=${subject}&body=${body}`);
+        }
+        
         toast.success(`Aposta registada para ${jogadorForm.nome}!`);
+        setSelectedSquares([]);
+        setJogadorForm({ nome: "", telefone: "", email: "", notificacao: "whatsapp" });
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || "Erro ao registar aposta. Tente novamente.");
@@ -352,11 +394,7 @@ export default function PoioDaVacaPage() {
           <Grid2X2 className="text-[#ff734b]" />
           <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Poio da Vaca</h1>
         </div>
-        <div className="w-10 h-10 rounded-full overflow-hidden border border-[#ff734b]/30 bg-[#2e2928]">
-          <div className="w-full h-full flex items-center justify-center text-[#e0bfb7]">
-            <User className="text-sm" />
-          </div>
-        </div>
+        <UserMenuButton />
       </header>
 
       <main className="px-4 pt-6 space-y-6">
@@ -557,6 +595,77 @@ export default function PoioDaVacaPage() {
           </div>
         </section>
 
+        {/* Apostas Registadas - conforme permissões */}
+        {apostasParaLista.length > 0 && (isAdmin || isVendedor || userNome) && (
+          <section className="px-2">
+            <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
+              <div className="flex items-center gap-2 mb-3">
+                <Ticket className="w-5 h-5 text-[#ff734b]" />
+                <h3 className="font-serif text-lg text-[#ffb5a0]">
+                  {isAdmin ? "Todas as Apostas" : isVendedor ? "As Minhas Vendas" : "As Minhas Apostas"}
+                </h3>
+                <span className="text-xs bg-[#ff734b]/20 text-[#ff734b] px-2 py-0.5 rounded-full ml-auto">
+                  {apostasParaLista.length}
+                </span>
+              </div>
+              
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {apostasParaLista.map((aposta) => {
+                  const numerosFormatados = aposta.numeros.map((n: number) => cells[n - 1]?.display || `N${n}`).join(", ");
+                  const mostraDetalhes = isAdmin || (isVendedor && aposta.vendedorId === vendedorId);
+                  const isMinhaAposta = userNome && aposta.jogadorNome === userNome;
+                  
+                  return (
+                    <div 
+                      key={aposta.id} 
+                      className={`p-3 rounded-xl ${isMinhaAposta ? 'bg-[#9cefff]/10 border border-[#9cefff]/20' : 'bg-[#2e2928]'}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-[#ffb5a0] text-sm">{numerosFormatados}</p>
+                          {mostraDetalhes && (
+                            <>
+                              <p className="text-xs text-[#e0bfb7] mt-1">
+                                👤 {aposta.jogadorNome || "Anónimo"}
+                              </p>
+                              {aposta.jogadorTelefone && (
+                                <p className="text-xs text-[#e0bfb7]/60">
+                                  📞 {aposta.jogadorTelefone}
+                                </p>
+                              )}
+                              {aposta.jogadorEmail && (
+                                <p className="text-xs text-[#e0bfb7]/60">
+                                  ✉️ {aposta.jogadorEmail}
+                                </p>
+                              )}
+                            </>
+                          )}
+                          {isMinhaAposta && !mostraDetalhes && (
+                            <p className="text-xs text-[#9cefff] mt-1">✓ A tua aposta</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-[#e0bfb7]/60">
+                            {aposta.createdAt ? new Date(aposta.createdAt).toLocaleDateString("pt-PT") : '-'}
+                          </p>
+                          <p className="text-xs text-[#e0bfb7]/60">
+                            {aposta.createdAt ? new Date(aposta.createdAt).toLocaleTimeString("pt-PT", { hour: '2-digit', minute: '2-digit' }) : '-'}
+                          </p>
+                          {mostraDetalhes && aposta.vendedorId && (
+                            <p className="text-[10px] text-[#e0bfb7]/40 mt-1">
+                              Vendedor: {String(aposta.vendedorId).slice(0, 8)}...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* CTA Section */}
         <section className="pb-6 px-2">
           <Button 
@@ -676,6 +785,51 @@ export default function PoioDaVacaPage() {
                     placeholder="email@exemplo.com"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Receber Notificação</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setJogadorForm({ ...jogadorForm, notificacao: "whatsapp" })}
+                    className={`p-3 rounded-xl flex items-center gap-2 transition-all ${
+                      jogadorForm.notificacao === "whatsapp" 
+                        ? "bg-[#25D366] text-white" 
+                        : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                    }`}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="text-xs font-medium">WhatsApp</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJogadorForm({ ...jogadorForm, notificacao: "email" })}
+                    className={`p-3 rounded-xl flex items-center gap-2 transition-all ${
+                      jogadorForm.notificacao === "email" 
+                        ? "bg-[#ff734b] text-white" 
+                        : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                    }`}
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span className="text-xs font-medium">Email</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJogadorForm({ ...jogadorForm, notificacao: "nenhum" })}
+                    className={`p-3 rounded-xl flex items-center gap-2 transition-all ${
+                      jogadorForm.notificacao === "nenhum" 
+                        ? "bg-[#666] text-white" 
+                        : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                    }`}
+                  >
+                    <Bell className="w-4 h-4" />
+                    <span className="text-xs font-medium">Nenhum</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#e0bfb7]/60">
+                  Por predefinição, receberá notificação por WhatsApp
+                </p>
               </div>
             </div>
 
