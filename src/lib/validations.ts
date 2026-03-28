@@ -73,6 +73,13 @@ export const createAldeiaSchema = z.object({
   // Conformidade legal
   autorizacaoCM: z.boolean().default(false),
   numeroAlvara: z.string().optional(),
+  
+  // Configurações de Pagamento
+  permitirStripe: z.boolean().optional(),
+  permitirMBWay: z.boolean().optional(),
+  iban: z.string().optional(),
+  nomeTitularConta: z.string().optional(),
+  avisoPagamentosEnviado: z.boolean().optional(),
 });
 
 export const updateAldeiaSchema = createAldeiaSchema.partial();
