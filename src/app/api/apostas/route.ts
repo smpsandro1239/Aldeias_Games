@@ -3,11 +3,37 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+function getAuthUser(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader) {
+    try {
+      const token = authHeader.replace("Bearer ", "");
+      return JSON.parse(atob(token));
+    } catch (e) {
+      return null;
+    }
+  }
+  const userParam = request.nextUrl.searchParams.get("user");
+  if (userParam) {
+    try {
+      return JSON.parse(atob(userParam));
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get("tipo");
     const jogoId = searchParams.get("jogoId");
+
+    const user = getAuthUser(request);
+    const userRole = user?.role || null;
+    const userId = user?.id || null;
+    const userAldeiaId = user?.aldeiaId || null;
 
     const where: any = {};
     
@@ -22,14 +48,58 @@ export async function GET(request: NextRequest) {
     const apostass = await prisma.aposta.findMany({
       where,
       include: {
-        jogo: true,
+        jogo: {
+          include: {
+            evento: {
+              include: {
+                aldeia: true
+              }
+            }
+          }
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return NextResponse.json({ data: apostass });
+    const apostassNumeros = apostass.map((a: any) => ({
+      ...a,
+      numeros: JSON.parse(a.numeros || "[]"),
+    }));
+
+    let filteredApostas = apostassNumeros;
+    
+    if (userRole === "super_admin") {
+      filteredApostas = apostassNumeros;
+    } else if (userRole === "admin" || userRole === "aldeia_admin") {
+      if (userAldeiaId) {
+        filteredApostas = apostassNumeros.filter((a: any) => 
+          a.jogo.evento && a.jogo.evento.aldeiaId === userAldeiaId
+        );
+      } else {
+        filteredApostas = apostassNumeros;
+      }
+    } else if (userRole === "vendedor") {
+      filteredApostas = apostassNumeros;
+    } else {
+      filteredApostas = apostassNumeros.map((a: any) => ({
+        ...a,
+        jogadorNome: a.jogadorNome === user?.nome ? a.jogadorNome : null,
+        jogadorTelefone: undefined,
+        jogadorEmail: undefined,
+        vendedorId: undefined,
+      }));
+    }
+
+    const ApostasComNumeros = filteredApostas.map((a: any) => ({
+      ...a,
+      isPropria: userRole !== "super_admin" && userRole !== "admin" && userRole !== "aldeia_admin" && userRole !== "vendedor" 
+        ? a.jogadorNome === user?.nome 
+        : undefined,
+    }));
+
+    return NextResponse.json({ data: ApostasComNumeros });
   } catch (error) {
     console.error("Erro ao buscar apostas:", error);
     return NextResponse.json(
@@ -102,8 +172,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: aposta }, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar aposta:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
     return NextResponse.json(
-      { error: "Erro ao criar aposta" },
+      { error: "Erro ao criar aposta: " + errorMessage },
       { status: 500 }
     );
   }
