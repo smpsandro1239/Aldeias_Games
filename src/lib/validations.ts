@@ -108,7 +108,6 @@ export const createJogoSchema = z.object({
   stockInicial: z.number().int().min(1, 'Stock deve ser pelo menos 1'),
   limitePorUsuario: z.number().int().min(1).default(10),
   eventoId: z.string(),
-  // Novos campos para rifas e sorteio
   modoSorteio: z.enum(['app', 'externo']).default('app'),
   detalhesSorteioExterno: z.string().optional(),
   premios: z.array(z.object({
@@ -117,6 +116,13 @@ export const createJogoSchema = z.object({
     valorDinheiroAlternative: z.number().optional(),
     ordem: z.number().int().default(0),
   })).optional(),
+  custoQuadrado: z.number().optional(),
+  valorMercadoVaca: z.number().optional(),
+  valorCompraVaca: z.number().optional(),
+  dimensoesCampo: z.string().optional(),
+  valorPremioVaca: z.number().optional(),
+  custoPremioDinheiro: z.number().optional(),
+  premioId: z.string().optional(),
 });
 
 export const updateJogoSchema = createJogoSchema.partial().omit({ eventoId: true });
