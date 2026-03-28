@@ -39,6 +39,10 @@ interface JogoData {
     valorDinheiroAlternative?: number;
     ordem: number;
   }>;
+  custoQuadrado?: number;
+  valorMercadoVaca?: number;
+  valorCompraVaca?: number;
+  dimensoesCampo?: string;
 }
 
 interface CreateJogoModalProps {
@@ -66,6 +70,12 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
     raspadinhaTitulo: string;
     raspadinhaSubtitulo: string;
     raspadinhaOrganizacao: string;
+    // Poio da Vaca
+    dimensoesX: string;
+    dimensoesY: string;
+    custoQuadrado: string;
+    valorMercadoVaca: string;
+    valorCompraVaca: string;
   }>({
     nome: "",
     tipo: "rifa",
@@ -80,6 +90,11 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
     raspadinhaTitulo: "RASPADINHA DA SORTE",
     raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
     raspadinhaOrganizacao: "",
+    dimensoesX: "10",
+    dimensoesY: "10",
+    custoQuadrado: "5",
+    valorMercadoVaca: "1000",
+    valorCompraVaca: "800",
   });
 
   const [premios, setPremios] = useState<Array<{
@@ -103,9 +118,14 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
         numeroFinal: initialData.configuracao?.numeroFinal ? String(initialData.configuracao.numeroFinal) : "1000",
         modoSorteio: initialData.modoSorteio || "app",
         detalhesSorteioExterno: initialData.detalhesSorteioExterno || "",
-        raspadinhaTitulo: initialData.configuracao?.raspadinhaTitulo as string || "RASPADINHA DA SORTE",
-        raspadinhaSubtitulo: initialData.configuracao?.raspadinhaSubtitulo as string || "Raspe com o dedo para revelar o seu prémio!",
-        raspadinhaOrganizacao: initialData.configuracao?.raspadinhaOrganizacao as string || "",
+        raspadinhaTitulo: (initialData.configuracao?.raspadinhaTitulo as string) || "RASPADINHA DA SORTE",
+        raspadinhaSubtitulo: (initialData.configuracao?.raspadinhaSubtitulo as string) || "Raspe com o dedo para revelar o seu prémio!",
+        raspadinhaOrganizacao: (initialData.configuracao?.raspadinhaOrganizacao as string) || "",
+        dimensoesX: (initialData as any).dimensoesCampo ? JSON.parse((initialData as any).dimensoesCampo).x : "10",
+        dimensoesY: (initialData as any).dimensoesCampo ? JSON.parse((initialData as any).dimensoesCampo).y : "10",
+        custoQuadrado: (initialData as any).custoQuadrado ? String((initialData as any).custoQuadrado) : "5",
+        valorMercadoVaca: (initialData as any).valorMercadoVaca ? String((initialData as any).valorMercadoVaca) : "1000",
+        valorCompraVaca: (initialData as any).valorCompraVaca ? String((initialData as any).valorCompraVaca) : "800",
       });
       if (initialData.premios && initialData.premios.length > 0) {
         setPremios(initialData.premios.map(p => ({
@@ -132,6 +152,11 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
         raspadinhaTitulo: "RASPADINHA DA SORTE",
         raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
         raspadinhaOrganizacao: "",
+        dimensoesX: "10",
+        dimensoesY: "10",
+        custoQuadrado: "5",
+        valorMercadoVaca: "1000",
+        valorCompraVaca: "800",
       });
       setPremios([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
     }
@@ -176,7 +201,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
     }
 
     try {
-      await onSubmit({
+      const jogoData: JogoData = {
         id: initialData?.id,
         nome: formData.nome,
         tipo: formData.tipo,
@@ -194,7 +219,20 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
           valorDinheiroAlternative: p.valorDinheiroAlternative ? parseFloat(p.valorDinheiroAlternative) : undefined,
           ordem: p.ordem,
         })),
-      });
+      };
+
+      if (formData.tipo === "poio_da_vaca") {
+        jogoData.custoQuadrado = parseFloat(formData.custoQuadrado) || 5;
+        jogoData.valorMercadoVaca = parseFloat(formData.valorMercadoVaca) || 1000;
+        jogoData.valorCompraVaca = parseFloat(formData.valorCompraVaca) || 800;
+        jogoData.dimensoesCampo = JSON.stringify({
+          x: parseInt(formData.dimensoesX) || 10,
+          y: parseInt(formData.dimensoesY) || 10,
+          total: (parseInt(formData.dimensoesX) || 10) * (parseInt(formData.dimensoesY) || 10)
+        });
+      }
+
+      await onSubmit(jogoData);
 
       if (!initialData) {
         setFormData({
@@ -211,6 +249,11 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
           raspadinhaTitulo: "RASPADINHA DA SORTE",
           raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
           raspadinhaOrganizacao: "",
+          dimensoesX: "10",
+          dimensoesY: "10",
+          custoQuadrado: "5",
+          valorMercadoVaca: "1000",
+          valorCompraVaca: "800",
         });
         setPremios([{ nome: "", descricao: "", valorDinheiroAlternative: "", ordem: 0 }]);
       }
@@ -330,6 +373,67 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
                       onChange={(e) => setFormData({ ...formData, raspadinhaOrganizacao: e.target.value })}
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {formData.tipo === "poio_da_vaca" && (
+              <div className="border-t pt-4 mt-2 space-y-4">
+                <h3 className="text-sm font-semibold">Configuração do Poio da Vaca</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="dimensoesX">Largura (X)</Label>
+                    <Input
+                      id="dimensoesX"
+                      type="number"
+                      min="2"
+                      max="20"
+                      value={formData.dimensoesX}
+                      onChange={(e) => setFormData({ ...formData, dimensoesX: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="dimensoesY">Altura (Y)</Label>
+                    <Input
+                      id="dimensoesY"
+                      type="number"
+                      min="2"
+                      max="20"
+                      value={formData.dimensoesY}
+                      onChange={(e) => setFormData({ ...formData, dimensoesY: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="custoQuadrado">Custo por Quadrado (€)</Label>
+                  <Input
+                    id="custoQuadrado"
+                    type="number"
+                    min="1"
+                    step="0.5"
+                    value={formData.custoQuadrado}
+                    onChange={(e) => setFormData({ ...formData, custoQuadrado: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="valorMercadoVaca">Valor de Mercado da Vaca (€)</Label>
+                  <Input
+                    id="valorMercadoVaca"
+                    type="number"
+                    min="0"
+                    value={formData.valorMercadoVaca}
+                    onChange={(e) => setFormData({ ...formData, valorMercadoVaca: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="valorCompraVaca">Valor de Compra da Vaca (€)</Label>
+                  <Input
+                    id="valorCompraVaca"
+                    type="number"
+                    min="0"
+                    value={formData.valorCompraVaca}
+                    onChange={(e) => setFormData({ ...formData, valorCompraVaca: e.target.value })}
+                  />
                 </div>
               </div>
             )}
