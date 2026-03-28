@@ -22,7 +22,8 @@ import {
   Mail,
   UserPlus,
   MessageCircle,
-  Bell
+  Bell,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -150,7 +151,10 @@ export default function PoioDaVacaPage() {
   const [loading, setLoading] = useState(true);
   const [apostas, setApostas] = useState<Aposta[]>([]);
   const [betModalOpen, setBetModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [notificationSent, setNotificationSent] = useState(false);
+  const [saldo, setSaldo] = useState(0);
+  const [pagamentoPendente, setPagamentoPendente] = useState<any>(null);
   const [jogadorForm, setJogadorForm] = useState({
     nome: "",
     telefone: "",
@@ -180,6 +184,7 @@ export default function PoioDaVacaPage() {
   useEffect(() => {
     fetchJogo();
     fetchApostas();
+    fetchSaldo();
     
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -200,6 +205,22 @@ export default function PoioDaVacaPage() {
       } catch (e) {}
     }
   }, []);
+
+  const fetchSaldo = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/wallet", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.saldo !== undefined) {
+        setSaldo(data.saldo);
+      }
+    } catch (e) {
+      console.error("Erro ao buscar saldo:", e);
+    }
+  };
 
   const fetchJogo = async () => {
     try {
@@ -307,7 +328,6 @@ export default function PoioDaVacaPage() {
       return;
     }
     
-    // Se não estiver logado, precisa de telemóvel ou email
     if (!vendedorId && !jogadorForm.telefone.trim() && !jogadorForm.email.trim()) {
       toast.error("Por favor, insira um telemóvel ou email do jogador!");
       return;
@@ -318,17 +338,124 @@ export default function PoioDaVacaPage() {
       return;
     }
 
+    const custoTotal = selectedSquares.length * custoPorQuadrado;
+    
+    setPagamentoPendente({
+      jogoId: jogo.id,
+      numeros: selectedSquares,
+      jogador: {
+        nome: jogadorForm.nome,
+        telefone: jogadorForm.telefone || undefined,
+        email: jogadorForm.email || undefined
+      },
+      vendedorId: vendedorId || undefined,
+      custoTotal,
+    });
+
+    setBetModalOpen(false);
+    setPaymentModalOpen(true);
+  };
+
+  const processarPagamento = async (metodo: "dinheiro" | "mbway" | "stripe" | "saldo") => {
+    if (!pagamentoPendente) return;
+
+    try {
+      if (metodo === "dinheiro") {
+        await criarAposta(true);
+      } else if (metodo === "saldo") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Precisa de登录 para usar saldo");
+          return;
+        }
+        const res = await fetch("/api/wallet/adjust", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            valor: -pagamentoPendente.custoTotal,
+            tipo: "debito",
+            descricao: `Aposta Poio da Vaca - ${pagamentoPendente.numeros.length} números`
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "Erro ao processar pagamento");
+          return;
+        }
+        await criarAposta(true);
+      } else if (metodo === "mbway") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Precisa de登录 para usar MBWay");
+          return;
+        }
+        const tel = jogadorForm.telefone;
+        if (!tel) {
+          toast.error("Telefone obrigatório para MBWay");
+          return;
+        }
+        const res = await fetch("/api/pagamentos/mbway", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            telefone: tel,
+            valor: pagamentoPendente.custoTotal,
+            descricao: "Poio da Vaca"
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "Erro ao iniciar pagamento MBWay");
+          return;
+        }
+        toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
+        await criarAposta(false);
+      } else if (metodo === "stripe") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Precisa de登录 para usar Stripe");
+          return;
+        }
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            valor: pagamentoPendente.custoTotal,
+            descricao: "Poio da Vaca"
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "Erro ao processar pagamento");
+          return;
+        }
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Erro no pagamento:", error);
+      toast.error("Erro ao processar pagamento");
+    }
+  };
+
+  const criarAposta = async (pago: boolean) => {
+    if (!pagamentoPendente) return;
+
     try {
       const aposta = {
-        jogoId: jogo.id,
-        numeros: selectedSquares,
-        jogador: {
-          nome: jogadorForm.nome,
-          telefone: jogadorForm.telefone || undefined,
-          email: jogadorForm.email || undefined
-        },
-        vendedorId: vendedorId || undefined,
-        pago: false
+        ...pagamentoPendente,
+        pago
       };
 
       const response = await fetch("/api/apostas", {
@@ -340,31 +467,33 @@ export default function PoioDaVacaPage() {
       if (response.ok) {
         const novaAposta = await response.json();
         setApostas(prev => [...prev, novaAposta.data]);
-        setBetModalOpen(false);
+        setPaymentModalOpen(false);
         
-        const labels = selectedSquares.map(id => cells[id - 1].display).join(", ");
+        const labels = pagamentoPendente.numeros.map((id: number) => cells[id - 1]?.display || `N${id}`).join(", ");
         
         if (jogadorForm.notificacao === "whatsapp" && jogadorForm.telefone) {
           const telLimpo = jogadorForm.telefone.replace(/\D/g, "");
-          const msg = encodeURIComponent(`🎉 Aposta registada!\n\nJogo: Poio da Vaca\nNúmeros: ${labels}\nObrigado por participar!`);
+          const msg = encodeURIComponent(`🎉 Aposta registada!\n\nJogo: Poio da Vaca\nNúmeros: ${labels}\nPagamento: ${pago ? "Confirmado" : "Pendente"}\nObrigado por participar!`);
           const whatsappUrl = `https://wa.me/351${telLimpo}?text=${msg}`;
           window.open(whatsappUrl, "_blank");
         } else if (jogadorForm.notificacao === "email" && jogadorForm.email) {
           const subject = encodeURIComponent("Aposta Registada - Poio da Vaca");
-          const body = encodeURIComponent(`🎉 Aposta registada!\n\nJogo: Poio da Vaca\nNúmeros: ${labels}\n\nObrigado por participar!\n\nAldeias Games`);
+          const body = encodeURIComponent(`🎉 Aposta registada!\n\nJogo: Poio da Vaca\nNúmeros: ${labels}\nPagamento: ${pago ? "Confirmado" : "Pendente"}\n\nObrigado por participar!\n\nAldeias Games`);
           window.open(`mailto:${jogadorForm.email}?subject=${subject}&body=${body}`);
         }
         
-        toast.success(`Aposta registada para ${jogadorForm.nome}!`);
+        toast.success(`Aposta registada${pago ? " e paga" : ""} para ${jogadorForm.nome}!`);
         setSelectedSquares([]);
         setJogadorForm({ nome: "", telefone: "", email: "", notificacao: "whatsapp" });
+        setPagamentoPendente(null);
+        fetchSaldo();
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Erro ao registar aposta. Tente novamente.");
+        toast.error(errorData.error || "Erro ao registar aposta.");
       }
     } catch (error) {
       console.error("Erro ao submeter aposta:", error);
-      toast.error("Erro ao registar aposta. Tente novamente.");
+      toast.error("Erro ao registar aposta.");
     }
   };
 
@@ -845,6 +974,75 @@ export default function PoioDaVacaPage() {
               <Ticket className="w-5 h-5" />
               Confirmar Aposta
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Pagamento */}
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="font-headline text-xl flex items-center gap-2">
+              <Euro className="w-5 h-5 text-[#ff734b]" />
+              Pagamento
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <div className="bg-surface-container-high rounded-xl p-4 text-center">
+              <p className="text-xs text-on-surface-variant">Total a pagar</p>
+              <p className="font-headline text-3xl text-primary">{pagamentoPendente?.custoTotal || 0}€</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-[#e0bfb7] uppercase tracking-wider">Método de Pagamento</p>
+              
+              {isVendedor && (
+                <button
+                  onClick={() => processarPagamento("dinheiro")}
+                  className="w-full p-4 rounded-xl flex items-center gap-3 bg-green-600/20 text-green-400 hover:bg-green-600/30 transition-all"
+                >
+                  <Euro className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="font-medium">Dinheiro</p>
+                    <p className="text-xs opacity-60">Pago presencialmente</p>
+                  </div>
+                </button>
+              )}
+
+              <button
+                onClick={() => processarPagamento("saldo")}
+                className="w-full p-4 rounded-xl flex items-center gap-3 bg-[#ff734b]/20 text-[#ff734b] hover:bg-[#ff734b]/30 transition-all"
+                disabled={saldo < (pagamentoPendente?.custoTotal || 0)}
+              >
+                <Ticket className="w-5 h-5" />
+                <div className="text-left flex-1">
+                  <p className="font-medium">Saldo Aldeias</p>
+                  <p className="text-xs opacity-60">Saldo disponível: {saldo.toFixed(2)}€</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => processarPagamento("mbway")}
+                className="w-full p-4 rounded-xl flex items-center gap-3 bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 transition-all"
+              >
+                <Phone className="w-5 h-5" />
+                <div className="text-left">
+                  <p className="font-medium">MBWay</p>
+                  <p className="text-xs opacity-60">Pagamento via MBWay</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => processarPagamento("stripe")}
+                className="w-full p-4 rounded-xl flex items-center gap-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-all"
+              >
+                <Wallet className="w-5 h-5" />
+                <div className="text-left">
+                  <p className="font-medium">Cartão</p>
+                  <p className="text-xs opacity-60">Pagamento seguro com Stripe</p>
+                </div>
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
