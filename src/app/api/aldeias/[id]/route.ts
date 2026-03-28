@@ -30,6 +30,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 }
 
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  return PUT(request, context);
+}
+
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
