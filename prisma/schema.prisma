@@ -62,7 +62,10 @@ model Transacao {
   valor       Float
   tipo        TipoTransacao
   descricao   String?
-  referencia  String?          // ID da participação ou prémio associado
+  referencia  String?
+  metodoPagamento String?
+  estado      String?
+  dadosAdicionais Json?
   createdAt   DateTime         @default(now())
 
   // Relações
@@ -83,6 +86,7 @@ enum TipoTransacao {
   premio_dinheiro
   comissao
   bonus_meta
+  carregamento_saldo
 }
 
 model Comissao {
@@ -179,6 +183,17 @@ model Aldeia {
   descricao  String?
   logoUrl    String?
   logoBase64 String? // Para preview temporário
+
+  // Configurações de Pagamento
+  permitirStripe Boolean @default(false)
+  permitirMBWay  Boolean @default(false)
+  
+  // Dados bancários para transferências (opcional)
+  iban              String?
+  nomeTitularConta String?
+  
+  // Avisos
+  avisoPagamentosEnviado Boolean @default(false)
 
   // Campos específicos para escolas
   nomeEscola   String?
@@ -528,8 +543,10 @@ model Notificacao {
   tipo      TipoNotificacao
   titulo    String
   mensagem  String
-  dados     String? // JSON com dados adicionais
+  dados     String?
+  dadosAdicionais Json?
   lida      Boolean         @default(false)
+  estado    String?
   createdAt DateTime        @default(now())
 
   // Relações
