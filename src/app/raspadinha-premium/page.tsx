@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
 import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User } from "lucide-react";
+import { UserMenuButton } from "@/components/user-menu-button";
 
 const iconMap: Record<string, LucideIcon> = {
   military_tech: Trophy,
@@ -322,13 +323,14 @@ export default function RaspadinhaPremiumPage() {
               Raspadinha
             </h1>
             <button 
-              onClick={() => router.push("/")}
+              onClick={() => router.back()}
               className="p-2 rounded-full text-[#ff734b] hover:bg-[#2e2928] active:scale-95 transition-all"
               aria-label="Voltar"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           </div>
+          <UserMenuButton />
         </div>
       </header>
 
