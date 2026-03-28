@@ -1,0 +1,322 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Euro, Wallet, Phone, Building2, AlertTriangle, Check, Copy, Mail, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
+
+interface CarregarSaldoModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  aldeiaId?: string;
+  aldeiaNome?: string;
+  eventoId?: string;
+  eventoNome?: string;
+}
+
+interface DadosConta {
+  iban?: string;
+  nomeTitularConta?: string;
+  telefoneMBWay?: string;
+}
+
+export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, eventoId, eventoNome }: CarregarSaldoModalProps) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [saldo, setSaldo] = useState(0);
+  const [user, setUser] = useState<any>(null);
+  const [dadosConta, setDadosConta] = useState<DadosConta>({});
+  const [metodoCarregamento, setMetodoCarregamento] = useState<"dinheiro" | "mbway" | "transferencia">("dinheiro");
+  const [valor, setValor] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [comprovativo, setComprovativo] = useState<string | null>(null);
+  const [carregamentoResult, setCarregamentoResult] = useState<any>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      setUser(userData);
+      fetchSaldo(userData.id);
+      fetchDadosConta();
+    }
+  }, [aldeiaId]);
+
+  const fetchSaldo = async (userId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/wallet", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.saldo !== undefined) {
+        setSaldo(data.saldo);
+      }
+    } catch (e) {
+      console.error("Erro ao buscar saldo:", e);
+    }
+  };
+
+  const fetchDadosConta = async () => {
+    if (!aldeiaId) return;
+    try {
+      const res = await fetch(`/api/aldeias/${aldeiaId}`);
+      const data = await res.json();
+      if (data.data) {
+        setDadosConta({
+          iban: data.data.iban,
+          nomeTitularConta: data.data.nomeTitularConta,
+          telefoneMBWay: data.data.telefoneMBWay
+        });
+      }
+    } catch (e) {
+      console.error("Erro ao buscar dados da conta:", e);
+    }
+  };
+
+  const handleCarregar = async () => {
+    const valorNum = parseFloat(valor);
+    if (!valorNum || valorNum <= 0) {
+      toast.error("Insira um valor válido");
+      return;
+    }
+
+    if (valorNum < 1) {
+      toast.error("Valor mínimo é 1€");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/wallet/carregar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          valor: valorNum,
+          metodoCarregamento,
+          nomeTitularConta: dadosConta.nomeTitularConta,
+          iban: dadosConta.iban,
+          telefoneMBWay: dadosConta.telefoneMBWay,
+          descricao: descricao || `Carregamento para ${eventoNome || aldeiaNome}`,
+          eventoId,
+          aldeiaId
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Erro ao carregar saldo");
+        return;
+      }
+
+      setCarregamentoResult(data.data);
+      setSaldo(data.data.saldoAtual);
+      toast.success("Saldo carregado com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao carregar:", error);
+      toast.error("Erro ao carregar saldo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copiarIBAN = () => {
+    if (dadosConta.iban) {
+      navigator.clipboard.writeText(dadosConta.iban);
+      toast.success("IBAN copiado!");
+    }
+  };
+
+  if (carregamentoResult) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2 text-center">
+            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-green-500" />
+            </div>
+            <DialogTitle className="font-headline text-xl text-green-500">
+              Carregamento Registado!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <div className="bg-surface-container-high rounded-xl p-4 text-center">
+              <p className="text-xs text-on-surface-variant">Novo Saldo</p>
+              <p className="font-headline text-4xl text-primary">{carregamentoResult.saldoAtual?.toFixed(2) || saldo.toFixed(2)}€</p>
+            </div>
+
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
+              <p className="text-xs text-yellow-500 font-medium flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Importante
+              </p>
+              <p className="text-xs text-yellow-500/80 mt-1">
+                Todos os administradores foram notificados. O regis
+                to detalhado foi guardado no sistema.
+              </p>
+            </div>
+
+            <div className="text-xs text-on-surface-variant space-y-1">
+              <p><strong>Vendedor:</strong> {carregamentoResult.vendedor?.nome}</p>
+              <p><strong>Data:</strong> {new Date(carregamentoResult.dataHora).toLocaleString("pt-PT")}</p>
+              <p><strong>Método:</strong> {carregamentoResult.metodoPagamento}</p>
+            </div>
+
+            <Button 
+              onClick={() => {
+                setCarregamentoResult(null);
+                setValor("");
+                setDescricao("");
+                onOpenChange(false);
+              }}
+              className="w-full"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="font-headline text-xl flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-[#ff734b]" />
+            Carregar Saldo
+          </DialogTitle>
+        </DialogHeader>
+        <div className="px-6 pb-6 space-y-4">
+          <div className="bg-surface-container-high rounded-xl p-4 text-center">
+            <p className="text-xs text-on-surface-variant">Saldo Atual</p>
+            <p className="font-headline text-3xl text-primary">{saldo.toFixed(2)}€</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Valor a Carregar</Label>
+            <div className="relative">
+              <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ff734b]" />
+              <Input
+                type="number"
+                min="1"
+                step="0.50"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                placeholder="0.00"
+                className="pl-10 text-xl"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Método de Recebimento</Label>
+            <div className="grid gap-2">
+              <button
+                type="button"
+                onClick={() => setMetodoCarregamento("dinheiro")}
+                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                  metodoCarregamento === "dinheiro" 
+                    ? "bg-green-600/20 text-green-400 border border-green-600/30" 
+                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                }`}
+              >
+                <Euro className="w-5 h-5" />
+                <div className="text-left">
+                  <p className="font-medium">Dinheiro</p>
+                  <p className="text-xs opacity-60">Recebido presencialmente</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMetodoCarregamento("mbway")}
+                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                  metodoCarregamento === "mbway" 
+                    ? "bg-purple-600/20 text-purple-400 border border-purple-600/30" 
+                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                }`}
+              >
+                <Phone className="w-5 h-5" />
+                <div className="text-left">
+                  <p className="font-medium">MBWay</p>
+                  <p className="text-xs opacity-60">Recebido via MBWay</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMetodoCarregamento("transferencia")}
+                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                  metodoCarregamento === "transferencia" 
+                    ? "bg-blue-600/20 text-blue-400 border border-blue-600/30" 
+                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                }`}
+              >
+                <Building2 className="w-5 h-5" />
+                <div className="text-left">
+                  <p className="font-medium">Transferência</p>
+                  <p className="text-xs opacity-60">Transferência bancária</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {metodoCarregamento === "transferencia" && dadosConta.iban && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
+              <p className="text-xs text-blue-400 font-medium">Dados para Transferência:</p>
+              <div className="flex items-center justify-between bg-surface-container-low p-2 rounded-lg">
+                <span className="text-xs font-mono">{dadosConta.iban}</span>
+                <button onClick={copiarIBAN} className="p-1 hover:bg-surface-container-high rounded">
+                  <Copy className="w-4 h-4 text-blue-400" />
+                </button>
+              </div>
+              {dadosConta.nomeTitularConta && (
+                <p className="text-xs text-on-surface-variant">Titular: {dadosConta.nomeTitularConta}</p>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Descrição (opcional)</Label>
+            <Input
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Ex: Venda na festa de São João"
+            />
+          </div>
+
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+            <p className="text-xs text-red-400 font-medium flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Transparência Obrigatória
+            </p>
+            <p className="text-xs text-red-400/80 mt-1">
+              Ao confirmar, todos os administradores e super administradores serão notificados por email e WhatsApp com os detalhes deste carregamento.
+            </p>
+          </div>
+
+          <Button 
+            onClick={handleCarregar}
+            disabled={loading || !valor || parseFloat(valor) <= 0}
+            className="w-full py-6"
+          >
+            {loading ? "A processar..." : `Confirmar Carregamento de €${valor || "0"}`}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
