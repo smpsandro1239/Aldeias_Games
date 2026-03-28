@@ -177,6 +177,13 @@ export async function POST(request: NextRequest) {
         eventoId: data.eventoId,
         modoSorteio: data.modoSorteio,
         detalhesSorteioExterno: data.detalhesSorteioExterno,
+        custoQuadrado: data.custoQuadrado,
+        valorMercadoVaca: data.valorMercadoVaca,
+        valorCompraVaca: data.valorCompraVaca,
+        dimensoesCampo: data.dimensoesCampo,
+        premioId: data.premioId,
+        custoPremioDinheiro: data.custoPremioDinheiro,
+        valorPremioVaca: data.valorPremioVaca,
         // Se vierem prémios no createJogo, criá-los
         premios: data.premios ? {
           create: data.premios.map(p => ({
