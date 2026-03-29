@@ -1,52 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  Gamepad2, 
-  Users, 
-  House,
-  Trophy, 
-  CreditCard, 
-  Shield, 
-  Moon, 
-  Sun,
-  Menu,
-  X,
-  LogOut,
-  User,
-  Sparkles,
-  Rocket,
-  Zap,
-  Crown,
-  ArrowRight,
-  Star,
-  Gift,
-  Clock,
-  MapPin,
-  PartyPopper,
-  FileEdit,
-  Ticket,
-  Leaf,
-  Wallet,
-  Compass,
-  Flag,
-  Hand,
-  Award,
-  Warehouse
-} from "lucide-react";
 import { useTheme } from "next-themes";
-import { AdminDashboard } from "@/features/admin/admin-dashboard";
-import { ClienteDashboard } from "@/features/cliente/cliente-dashboard";
-import { VendedorDashboard } from "@/features/vendedor/vendedor-dashboard";
+import { Gamepad2, Users, House, Trophy, CreditCard, Shield, Menu, LogOut, User, Sparkles, Rocket, Zap, ArrowRight, Star, Clock, MapPin, PartyPopper, Ticket, Leaf, Wallet, Compass, Award } from "lucide-react";
+
+const AdminDashboard = dynamic(() => import("@/features/admin/admin-dashboard").then(mod => mod.AdminDashboard), { ssr: false });
+const ClienteDashboard = dynamic(() => import("@/features/cliente/cliente-dashboard").then(mod => mod.ClienteDashboard), { ssr: false });
+const VendedorDashboard = dynamic(() => import("@/features/vendedor/vendedor-dashboard").then(mod => mod.VendedorDashboard), { ssr: false });
 
 interface User {
   id: string;
@@ -131,9 +100,7 @@ export default function Home() {
     
     setLoading(false);
     
-    fetchEventos();
-    fetchJogos();
-    fetchAldeias();
+    Promise.all([fetchEventos(), fetchJogos(), fetchAldeias()]);
   }, []);
 
   useEffect(() => {
@@ -147,7 +114,7 @@ export default function Home() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const fetchEventos = async () => {
+  const fetchEventos = useCallback(async () => {
     try {
       const response = await fetch("/api/eventos?publico=true");
       const data = await response.json();
@@ -157,9 +124,9 @@ export default function Home() {
     } catch (error) {
       console.error("Erro ao carregar eventos:", error);
     }
-  };
+  }, []);
 
-  const fetchJogos = async () => {
+  const fetchJogos = useCallback(async () => {
     try {
       const response = await fetch("/api/jogos?ativos=true");
       const data = await response.json();
@@ -169,9 +136,9 @@ export default function Home() {
     } catch (error) {
       console.error("Erro ao carregar jogos:", error);
     }
-  };
+  }, []);
 
-  const fetchAldeias = async () => {
+  const fetchAldeias = useCallback(async () => {
     try {
       const response = await fetch("/api/aldeias");
       const data = await response.json();
@@ -181,7 +148,7 @@ export default function Home() {
     } catch (error) {
       console.error("Erro ao carregar aldeias:", error);
     }
-  };
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
