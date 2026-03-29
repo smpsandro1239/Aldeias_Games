@@ -242,7 +242,7 @@ export default function PoioDaVacaPage() {
       let userParam = "";
       if (storedUser) {
         const userData = JSON.parse(storedUser);
-        userParam = "?user=" + btoa(JSON.stringify(userData));
+        userParam = "&user=" + btoa(JSON.stringify(userData));
       }
       const response = await fetch(`/api/apostas?tipo=poio_da_vaca${userParam}`);
       const data = await response.json();
