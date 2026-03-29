@@ -16,7 +16,7 @@ const publicRoutes = [
 // Rotas que precisam de rate limiting
 const rateLimitedRoutes: { path: string; config: typeof rateLimitConfigs.api }[] = [];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rate limiting geral para API
@@ -73,9 +73,3 @@ export async function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
-
-export const config = {
-  matcher: [
-    '/api/:path*',
-  ],
-};
