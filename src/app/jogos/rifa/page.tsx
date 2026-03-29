@@ -93,6 +93,7 @@ export default function RifaPage() {
   const [user, setUser] = useState<any>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
 
   const randomOptions = [1, 2, 3, 5, 10, 20];
   const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
@@ -100,6 +101,7 @@ export default function RifaPage() {
   useEffect(() => {
     fetchJogo();
     fetchSaldo();
+    fetchNumerosOcupados();
     
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -114,6 +116,30 @@ export default function RifaPage() {
       });
     }
   }, []);
+
+  const fetchNumerosOcupados = async () => {
+    try {
+      const response = await fetch(`/api/participacoes?jogoId=${jogo?.id}`);
+      const data = await response.json();
+      if (data.data && Array.isArray(data.data)) {
+        const numeros = data.data
+          .flatMap((p: any) => {
+            if (p.dadosParticipacao) {
+              try {
+                return JSON.parse(p.dadosParticipacao);
+              } catch {
+                return [];
+              }
+            }
+            return [];
+          })
+          .filter((n: any): n is number => typeof n === "number");
+        setNumerosOcupados(numeros);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar números ocupados:", error);
+    }
+  };
 
   useEffect(() => {
     if (jogo && config.numeroInicial && config.numeroFinal && config.numeroBlocos) {
@@ -135,6 +161,8 @@ export default function RifaPage() {
       if (data.data && data.data.length > 0) {
         const jogoData = data.data[0];
         setJogo(jogoData);
+        
+        fetchNumerosOcupados();
         
         const configData = jogoData.configuracao ? JSON.parse(jogoData.configuracao) : { numeroInicial: 1, numeroFinal: 1000, numeroBlocos: 1, permitirStripe: false, valorPremios: null };
         const numeroBlocos = configData.numeroBlocos || 1;
@@ -194,13 +222,16 @@ export default function RifaPage() {
   };
 
   const selectRandomNumbers = (count: number) => {
-    const available = numerosDisponiveis.filter(n => !numerosSelecionados.includes(n));
+    const available = numerosDisponiveis.filter(n => !numerosSelecionados.includes(n) && !numerosOcupados.includes(n));
     if (available.length === 0) {
       toast.warning("Não há números disponíveis neste bloco");
       return;
     }
     const shuffled = available.sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, Math.min(count, 5 - numerosSelecionados.length));
+    if (selected.length < count) {
+      toast.warning(`Apenas ${selected.length} número(s) disponível(is)`);
+    }
     setNumerosSelecionados([...numerosSelecionados, ...selected]);
   };
 
@@ -581,20 +612,20 @@ export default function RifaPage() {
             <div className="grid grid-cols-5 md:grid-cols-10 gap-2 max-h-48 overflow-y-auto p-2 bg-surface-container-high rounded-xl">
               {numerosDisponiveis.map((num) => {
                 const isSelected = numerosSelecionados.includes(num);
-                const isAvailable = !numerosDisponiveis.includes(num) || true;
+                const isOcupado = numerosOcupados.includes(num);
                 
                 return (
                   <button
                     key={num}
                     onClick={() => toggleNumero(num)}
-                    disabled={!isAvailable}
+                    disabled={isOcupado}
                     className={`
                       py-2 px-1 rounded-lg text-xs font-bold transition-all
                       ${isSelected 
                         ? "bg-secondary text-[#110d0c]" 
-                        : isAvailable 
-                        ? "bg-surface-container-highest text-on-surface hover:bg-[#58413b]/30"
-                        : "bg-gray-700/30 text-gray-500 cursor-not-allowed"
+                        : isOcupado 
+                        ? "bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/30"
+                        : "bg-surface-container-highest text-on-surface hover:bg-[#58413b]/30"
                       }
                     `}
                   >
@@ -603,6 +634,14 @@ export default function RifaPage() {
                 );
               })}
             </div>
+            <p className="text-xs text-[#e0bfb7]/60 mt-2 flex justify-between">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded bg-surface-container-highest border border-gray-600/30"></span> Disponível
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded bg-gray-800/50 border border-gray-700/30"></span> Ocupado
+              </span>
+            </p>
           </div>
 
           {numerosSelecionados.length > 0 && (
