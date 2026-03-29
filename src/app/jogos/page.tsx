@@ -1,30 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import PoioDaVacaTicket from "@/components/games/poio-da-vaca-ticket";
-import UltimateRaffleTicket from "@/components/games/ultimate-raffle-ticket";
-import TombolaTicket from "@/components/games/tombola-ticket";
-import { ScratchCard } from "@/components/games/ScratchCard";
 import { BottomNav } from "@/components/bottom-nav";
-import { 
-  Ticket, 
-  Trophy, 
-  Sparkles, 
-  ArrowRight,
-  ArrowLeft,
-  Leaf,
-  Home,
-  Award,
-  User,
-  Gamepad2,
-  Wallet,
-  LogOut,
-  Menu
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Ticket, Trophy, Sparkles, ArrowRight, ArrowLeft, Leaf, User, LogOut, Menu } from "lucide-react";
+
+const PoioDaVacaTicket = dynamic(() => import("@/components/games/poio-da-vaca-ticket").then(m => m.default), { ssr: false });
+const UltimateRaffleTicket = dynamic(() => import("@/components/games/ultimate-raffle-ticket").then(m => m.default), { ssr: false });
+const TombolaTicket = dynamic(() => import("@/components/games/tombola-ticket").then(m => m.default), { ssr: false });
+const ScratchCard = dynamic(() => import("@/components/games/ScratchCard").then(m => m.ScratchCard), { ssr: false });
 
 interface User {
   id: string;
@@ -48,14 +35,14 @@ export default function JogosPage() {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setUser(null);
     setUserMenuOpen(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-  };
+  }, []);
 
-  const games = [
+  const games = useMemo(() => [
     { 
       id: "poio_da_vaca" as const, 
       label: "Poio da Vaca", 
@@ -70,7 +57,7 @@ export default function JogosPage() {
       icon: Ticket, 
       description: "Sorteie os seus números",
       color: "bg-secondary-container/20 text-secondary",
-      page: null
+      page: "/jogos/rifa"
     },
     { 
       id: "tombola" as const, 
@@ -88,15 +75,15 @@ export default function JogosPage() {
       color: "bg-primary/20 text-primary",
       page: "/raspadinha-premium"
     },
-  ];
+  ], []);
 
-  const handleGameSelect = (game: typeof games[0]) => {
+  const handleGameSelect = useCallback((game: typeof games[0]) => {
     if (game.page) {
       router.push(game.page);
     } else {
       setSelectedGame(game.id);
     }
-  };
+  }, []);
 
   // Dados de exemplo para a raspadinha
   const premioExemplo = {
