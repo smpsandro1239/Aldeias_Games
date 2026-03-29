@@ -233,7 +233,7 @@ export interface Premio {
 // TIPOS DE PARTICIPAÇÃO
 // ============================================
 
-export type MetodoPagamento = 'mbway' | 'dinheiro' | 'stripe' | 'transferencia';
+export type MetodoPagamento = 'mbway' | 'dinheiro' | 'stripe' | 'transferencia' | 'saldo';
 export type EstadoPagamento = 'pendente' | 'processando' | 'concluido' | 'falhou' | 'reembolsado';
 
 export interface Participacao {

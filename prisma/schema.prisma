@@ -656,6 +656,7 @@ enum MetodoPagamento {
   dinheiro
   stripe
   transferencia
+  saldo
 }
 
 enum EstadoPagamento {
