@@ -143,14 +143,21 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    if (!user) {
+    const body = await request.json();
+    
+    const hasDadosCliente = body.dadosCliente && body.dadosCliente.nome && (body.dadosCliente.telefone || body.dadosCliente.email);
+    
+    if (!user && !hasDadosCliente) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
+        { error: 'Não autorizado. Faça login ou forneça os seus dados de contacto.' },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
+    // Se não há utilizador autenticado, usamos os dados do cliente
+    const effectiveUser = user;
+    const isAnonymous = !user && hasDadosCliente;
+
     const validation = createParticipacaoSchema.safeParse(body);
 
     if (!validation.success) {
@@ -244,8 +251,8 @@ export async function POST(request: NextRequest) {
           metodoPagamento: data.metodoPagamento,
           estadoPagamento: data.metodoPagamento === 'dinheiro' ? 'concluido' : 'pendente',
           jogoId: data.jogoId,
-          userId: data.dadosCliente ? null : user.id,
-          vendedorId: hasRole(user.role, ['aldeia_admin', 'vendedor']) ? user.id : undefined,
+          userId: data.dadosCliente ? null : (effectiveUser?.id ?? null),
+          vendedorId: effectiveUser && hasRole(effectiveUser.role, ['aldeia_admin', 'vendedor']) ? effectiveUser.id : undefined,
           nomeCliente: data.dadosCliente?.nome,
           telefoneCliente: data.dadosCliente?.telefone,
           emailCliente: data.dadosCliente?.email,
@@ -291,20 +298,20 @@ export async function POST(request: NextRequest) {
       // --- LÓGICA DE CARTEIRA E CASHBACK ---
       // Apenas aplicar cashback se a participação for para o utilizador autenticado
       // (não para vendas externas anónimas)
-      const isVendaInterna = !data.dadosCliente && user.id;
+      const isVendaInterna = !data.dadosCliente && effectiveUser?.id;
       
       // Cashback só é dado quando pagamento é confirmado (dinheiro ou saldo)
       // Para MBWay/Stripe, o cashback será dado quando o webhook confirmar o pagamento
       const pagamentoConfirmado = data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo';
       
-      if (isVendaInterna && pagamentoConfirmado) {
+      if (isVendaInterna && pagamentoConfirmado && effectiveUser) {
         const cashbackPercent = 0.05;
         const cashbackValor = valorTotal * cashbackPercent;
 
         // Se pagou com saldo, descontar
         if (data.metodoPagamento === 'saldo') {
           await tx.user.update({
-            where: { id: user.id },
+            where: { id: effectiveUser.id },
             data: {
               saldo: { decrement: valorTotal },
             },
@@ -312,7 +319,7 @@ export async function POST(request: NextRequest) {
 
           await tx.transacao.create({
             data: {
-              userId: user.id,
+              userId: effectiveUser.id,
               valor: -valorTotal,
               tipo: 'pagamento_jogo',
               descricao: `Pagamento de ${data.quantidade}x ${jogo.nome}`,
@@ -323,7 +330,7 @@ export async function POST(request: NextRequest) {
 
         // Adicionar Cashback APENAS para pagamentos confirmados
         await tx.user.update({
-          where: { id: user.id },
+          where: { id: effectiveUser.id },
           data: {
             saldo: { increment: cashbackValor },
           },
@@ -331,17 +338,17 @@ export async function POST(request: NextRequest) {
 
         await tx.transacao.create({
           data: {
-            userId: user.id,
+            userId: effectiveUser.id,
             valor: cashbackValor,
             tipo: 'cashback',
             descricao: `Cashback de compra: ${jogo.nome}`,
             referencia: jogo.id,
           },
         });
-      } else if (data.metodoPagamento === 'saldo' && data.dadosCliente) {
+      } else if (data.metodoPagamento === 'saldo' && data.dadosCliente && effectiveUser) {
         // Venda externa com saldo - não há cashback mas desconta do vendedor/admin
         await tx.user.update({
-          where: { id: user.id },
+          where: { id: effectiveUser.id },
           data: {
             saldo: { decrement: valorTotal },
           },
@@ -349,7 +356,7 @@ export async function POST(request: NextRequest) {
 
         await tx.transacao.create({
           data: {
-            userId: user.id,
+            userId: effectiveUser.id,
             valor: -valorTotal,
             tipo: 'pagamento_jogo',
             descricao: `Pagamento de ${data.quantidade}x ${jogo.nome} (venda externa)`,
