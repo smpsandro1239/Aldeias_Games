@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -33,8 +32,6 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserMenuButton } from "@/components/user-menu-button";
 import { toast } from "sonner";
-
-const BottomNavLazy = dynamic(() => import("@/components/bottom-nav"), { ssr: false });
 
 interface Jogo {
   id: string;
@@ -314,6 +311,9 @@ export default function RifaPage() {
 
   if (participacaoConfirmada) {
     const numeroDisplay = numeroSorte || numerosSelecionados[0].toString().padStart(5, "0");
+    const numerosVendidos = (jogo?.stockInicial || 0) - (jogo?.stockAtual || 0);
+    const precoPorNumero = jogo?.preco || 5;
+    const totalGasto = numerosSelecionados.length * precoPorNumero;
     
     return (
       <div className="min-h-screen bg-[#110d0c] text-[#eae0de]">
@@ -338,11 +338,54 @@ export default function RifaPage() {
           <div className="bg-surface-container rounded-3xl overflow-hidden mb-6">
             <div className="p-6 md:p-8 space-y-6">
               <div className="text-center border-b border-[#58413b]/15 pb-6">
-                <p className="text-sm text-secondary font-semibold tracking-widest uppercase mb-2">Número da Sorte</p>
-                <p className="text-5xl md:text-7xl font-headline font-bold text-secondary">{numeroDisplay}</p>
+                <p className="text-sm text-secondary font-semibold tracking-widest uppercase mb-2">Seus Números</p>
+                <div className="flex flex-wrap justify-center gap-2 mt-4">
+                  {numerosSelecionados.map((num) => (
+                    <span key={num} className="bg-[#ff734b] text-[#110d0c] px-4 py-2 rounded-xl text-xl font-bold">
+                      {num.toString().padStart(3, "0")}
+                    </span>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-3 text-center">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-surface-container-high rounded-xl p-4 text-center">
+                  <p className="text-[10px] text-on-surface/50 uppercase">Total Gasto</p>
+                  <p className="text-xl font-bold text-green-400">{totalGasto.toFixed(2)}€</p>
+                </div>
+                <div className="bg-surface-container-high rounded-xl p-4 text-center">
+                  <p className="text-[10px] text-on-surface/50 uppercase">Números Jogados</p>
+                  <p className="text-xl font-bold text-[#ff734b]">{numerosSelecionados.length}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-surface-container-high rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-on-surface/50 uppercase">Total Números</p>
+                  <p className="text-lg font-bold">{jogo?.stockInicial || 0}</p>
+                </div>
+                <div className="bg-surface-container-high rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-on-surface/50 uppercase">Vendidos</p>
+                  <p className="text-lg font-bold text-yellow-400">{numerosVendidos}</p>
+                </div>
+                <div className="bg-surface-container-high rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-on-surface/50 uppercase">Disponíveis</p>
+                  <p className="text-lg font-bold text-green-400">{jogo?.stockAtual || 0}</p>
+                </div>
+              </div>
+
+              <div className="bg-surface-container-high rounded-xl p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-on-surface/60">Angariado até agora:</span>
+                  <span className="text-lg font-bold text-green-400">{jogo?.totalAngariado?.toFixed(2) || 0}€</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-on-surface/60">Participações:</span>
+                  <span className="text-lg font-bold text-[#ff734b]">{jogo?.totalParticipacoes || 0}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-center border-t border-[#58413b]/15 pt-6">
                 <p className="text-on-surface/60 text-sm flex items-center justify-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Sorteio: {config.dataSorteio ? `${config.dataSorteio}${config.horaSorteio ? ` às ${config.horaSorteio}` : ''}` : 'A definir'}
