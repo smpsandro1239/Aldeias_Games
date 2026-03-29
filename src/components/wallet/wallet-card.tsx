@@ -65,9 +65,12 @@ export function WalletCard({ token }: WalletCardProps) {
   return (
     <div className="space-y-0">
       {/* Saldo compacto - clicável */}
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 rounded-xl transition-all duration-300 border border-amber-500/20 group"
+        onKeyDown={(e) => e.key === 'Enter' && setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 rounded-xl transition-all duration-300 border border-amber-500/20 group cursor-pointer"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
@@ -105,7 +108,7 @@ export function WalletCard({ token }: WalletCardProps) {
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
-      </button>
+      </div>
 
       {/* Transações expandidas */}
       <AnimatePresence>
