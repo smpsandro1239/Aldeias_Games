@@ -20,6 +20,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
     "@aws-sdk/client-sns": "^3.1014.0",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^6.0.0",
@@ -82,7 +83,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@tailwindcss/postcss": "^4.2.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/canvas-confetti": "^1.9.0",
     "@types/jest": "^29.5.14",
