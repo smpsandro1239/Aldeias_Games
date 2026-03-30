@@ -2,9 +2,10 @@
   "framework": "nextjs",
   "buildCommand": "npx prisma generate && next build",
   "installCommand": "npm install",
-  "regions": ["fra1"],
+  "regions": [
+    "fra1"
+  ],
   "env": {
-    "NODE_VERSION": "20",
-    "DATABASE_URL": "postgresql://neondb_owner:npg_OY1W3DZkTUGH@ep-patient-haze-abnxdpma.eu-west-2.aws.neon.tech/neondb?sslmode=require"
+    "NODE_VERSION": "20"
   }
 }
