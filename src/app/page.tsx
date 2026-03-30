@@ -23,6 +23,7 @@ interface User {
   nome: string;
   role: string;
   aldeiaId?: string;
+  aldeia?: Aldeia;
 }
 
 interface Aldeia {
@@ -94,8 +95,24 @@ export default function Home() {
     const savedUser = localStorage.getItem("user");
     
     if (savedToken && savedUser) {
+      const parsedUser = JSON.parse(savedUser);
       setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      setUser(parsedUser);
+      
+      if (parsedUser.aldeiaId && !parsedUser.aldeia && (parsedUser.role === "aldeia_admin" || parsedUser.role === "super_admin")) {
+        fetch(`/api/aldeias/${parsedUser.aldeiaId}`, {
+          headers: { Authorization: `Bearer ${savedToken}` }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.data) {
+              const updatedUser = { ...parsedUser, aldeia: data.data };
+              setUser(updatedUser);
+              localStorage.setItem("user", JSON.stringify(updatedUser));
+            }
+          })
+          .catch(console.error);
+      }
     }
     
     setLoading(false);
@@ -170,14 +187,8 @@ export default function Home() {
         setLoginModalOpen(false);
         setLoginForm({ email: "", password: "" });
         
-        // Redirect based on role
-        if (data.user.role === "super_admin" || data.user.role === "admin" || data.user.role === "aldeia_admin") {
-          router.push("/admin");
-        } else if (data.user.role === "vendedor") {
-          router.push("/jogos");
-        } else {
-          router.push("/jogos");
-        }
+        // Show dashboard inline based on role
+        toast.success(`Bem-vindo, ${data.user.nome}!`);
         
         toast.success("Login bem-sucedido!");
       } else {
@@ -260,11 +271,20 @@ export default function Home() {
     </div>
   );
 
+  const handleIniciar = () => {
+    setHasEntered(true);
+    setTimeout(() => {
+      setLoginModalOpen(true);
+    }, 800);
+  };
+
   if (!hasEntered) return (
     <div 
-      className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden cursor-pointer"
-      onClick={() => setHasEntered(true)}
+      className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden"
     >
+      {/* Grain Overlay */}
+      <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }} />
+      
       {/* Background Glow */}
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
@@ -277,38 +297,82 @@ export default function Home() {
           Aldeias Games
         </h1>
         
-        {/* Separator with moving light */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-[#ff734b]/30 to-transparent my-6 max-w-lg relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#ff734b] to-transparent opacity-50 animate-shimmer"></div>
-        </div>
+        {/* Separator */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-[#58413b]/30 to-transparent my-6 max-w-lg"></div>
         
         <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
           Onde a Tradição, Forja o Presente
         </p>
         
-        {/* Tap to Enter */}
+        {/* Digital Loader Animation - Cyan */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="mt-12 flex flex-col items-center gap-4"
         >
-          <div className="relative">
-            <div className="absolute inset-0 bg-[#ff734b]/20 rounded-full blur-xl animate-pulse"></div>
-            <button className="relative px-8 py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-full hover:scale-105 active:scale-95 transition-all">
-              ENTRAR
-            </button>
+          <div className="relative w-32 h-1 bg-[#393432]/20 rounded-full overflow-hidden">
+            <div 
+              className="digital-loader absolute inset-0 rounded-full shadow-[0_0_15px_rgba(0,218,243,0.4)]"
+              style={{
+                height: '2px',
+                width: '140px',
+                background: 'linear-gradient(90deg, transparent, #00daf3, transparent)',
+                animation: 'pulse-cyan 3s infinite ease-in-out',
+              }}
+            />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-[#e0bfb7]/40 font-bold">
-            Toque para entrar
+            A Iniciar&nbsp;
           </span>
         </motion.div>
+
+        {/* Iniciar Button */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="mt-8"
+        >
+          <button 
+            onClick={handleIniciar}
+            className="relative px-8 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#ff734b]/20"
+          >
+            INICIAR
+          </button>
+        </motion.div>
       </div>
+
+      {/* Editorial Accents */}
+      <div className="absolute bottom-12 left-12 hidden md:block border-l border-[#ff734b]/20 pl-4 py-2">
+        <p className="text-[10px] text-[#eae0de]/30 uppercase tracking-[0.2em] leading-relaxed">
+          Legado Ancestral<br />Tecnologia Digital
+        </p>
+      </div>
+      <div className="absolute top-12 right-12 hidden md:block">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-[#9cefff] shadow-[0_0_8px_#00daf3]"></div>
+          <span className="text-[10px] text-[#eae0de]/50 uppercase tracking-[0.3em] font-bold">Sistema Ativo</span>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes pulse-cyan {
+          0%, 100% { transform: scaleX(0); opacity: 0.3; }
+          50% { transform: scaleX(1); opacity: 1; }
+        }
+        .digital-loader {
+          animation: pulse-cyan 3s infinite ease-in-out;
+        }
+      `}</style>
     </div>
   );
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden">
+      {/* Grain Overlay */}
+      <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }} />
+      
       {/* Background Glow */}
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
@@ -321,25 +385,55 @@ export default function Home() {
           Aldeias Games
         </h1>
         
-        {/* Separator with moving light */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-[#ff734b]/30 to-transparent my-6 max-w-lg relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#ff734b] to-transparent opacity-50 animate-shimmer"></div>
-        </div>
+        {/* Separator */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-[#58413b]/30 to-transparent my-6 max-w-lg"></div>
         
         <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
           Onde a Tradição, Forja o Presente
         </p>
         
-        {/* Loading Element */}
+        {/* Loading Element - Cyan Digital Loader */}
         <div className="mt-12 flex flex-col items-center gap-4">
-          <div className="relative w-32 h-1 bg-[#2e2928]/20 rounded-full overflow-hidden">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#ff734b] to-[#9cefff] animate-pulse" />
+          <div className="relative w-32 h-1 bg-[#393432]/20 rounded-full overflow-hidden">
+            <div 
+              className="digital-loader absolute inset-0 rounded-full"
+              style={{
+                height: '2px',
+                width: '140px',
+                background: 'linear-gradient(90deg, transparent, #00daf3, transparent)',
+                animation: 'pulse-cyan 3s infinite ease-in-out',
+                boxShadow: '0 0 15px rgba(0,218,243,0.4)',
+              }}
+            />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-[#e0bfb7]/40 font-bold">
             A Iniciar...
           </span>
         </div>
       </div>
+
+      {/* Editorial Accents */}
+      <div className="absolute bottom-12 left-12 hidden md:block border-l border-[#ff734b]/20 pl-4 py-2">
+        <p className="text-[10px] text-[#eae0de]/30 uppercase tracking-[0.2em] leading-relaxed">
+          Legado Ancestral<br />Tecnologia Digital
+        </p>
+      </div>
+      <div className="absolute top-12 right-12 hidden md:block">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-[#9cefff] shadow-[0_0_8px_#00daf3]"></div>
+          <span className="text-[10px] text-[#eae0de]/50 uppercase tracking-[0.3em] font-bold">Sistema Ativo</span>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes pulse-cyan {
+          0%, 100% { transform: scaleX(0); opacity: 0.3; }
+          50% { transform: scaleX(1); opacity: 1; }
+        }
+        .digital-loader {
+          animation: pulse-cyan 3s infinite ease-in-out;
+        }
+      `}</style>
     </div>
   );
 
@@ -393,7 +487,8 @@ export default function Home() {
               <AdminDashboard 
                 token={token || ""} 
                 aldeiaId={user.aldeiaId} 
-                userRole={user.role} 
+                userRole={user.role}
+                aldeia={user.aldeia}
               />
             )}
             {user.role === "vendedor" && (

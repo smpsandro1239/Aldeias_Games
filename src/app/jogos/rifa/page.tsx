@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserMenuButton } from "@/components/user-menu-button";
 import { toast } from "sonner";
+import { PaymentSelector } from "@/components/payment";
 
 interface Jogo {
   id: string;
@@ -767,44 +768,11 @@ export default function RifaPage() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-xs text-[#e0bfb7] uppercase tracking-wider">Método de Pagamento</p>
-              
-              <button
-                onClick={() => processarPagamento("dinheiro")}
-                className="w-full p-4 rounded-xl flex items-center gap-3 bg-green-600/20 text-green-400 hover:bg-green-600/30 transition-all"
-              >
-                <CreditCard className="w-5 h-5" />
-                <div className="text-left">
-                  <p className="font-medium">Dinheiro</p>
-                  <p className="text-xs opacity-60">Pago presencialmente</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => processarPagamento("saldo")}
-                className="w-full p-4 rounded-xl flex items-center gap-3 bg-[#ff734b]/20 text-[#ff734b] hover:bg-[#ff734b]/30 transition-all"
-                disabled={saldo < numerosSelecionados.length * (jogo?.preco || 5)}
-              >
-                <Wallet className="w-5 h-5" />
-                <div className="text-left flex-1">
-                  <p className="font-medium">Saldo Aldeias</p>
-                  <p className="text-xs opacity-60">Saldo: {saldo.toFixed(2)}€</p>
-                </div>
-              </button>
-
-              {config.permitirStripe && (
-                <button
-                  onClick={() => processarPagamento("stripe")}
-                  className="w-full p-4 rounded-xl flex items-center gap-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-all"
-                >
-                  <QrCode className="w-5 h-5" />
-                  <div className="text-left">
-                    <p className="font-medium">Cartão</p>
-                    <p className="text-xs opacity-60">Pagamento seguro com Stripe</p>
-                  </div>
-                </button>
-              )}
+            <div className="space-y-4">
+              <PaymentSelector
+                amount={numerosSelecionados.length * (jogo?.preco || 5)}
+                onSelect={processarPagamento}
+              />
             </div>
           </div>
         </DialogContent>

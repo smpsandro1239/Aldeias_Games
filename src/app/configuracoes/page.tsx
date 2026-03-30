@@ -224,10 +224,23 @@ export default function ConfiguracoesPage() {
           </div>
 
           {(formData.permitirStripe || formData.permitirMBWay) && (
-            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl space-y-2">
               <p className="text-xs text-yellow-500 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
-                <strong>Aviso:</strong> Ao ativar estes métodos,会有 custos por transação que serão deduzidos automaticamente.
+                <strong>Aviso:</strong> Ao ativar estes métodos, terão custos por transação.
+              </p>
+              {formData.permitirStripe && (
+                <p className="text-xs text-yellow-500/80 pl-6">
+                  • Stripe: ~2.9% + €0.30 por transação
+                </p>
+              )}
+              {formData.permitirMBWay && (
+                <p className="text-xs text-yellow-500/80 pl-6">
+                  • MBWay: ~1.5% + €0.25 por transação
+                </p>
+              )}
+              <p className="text-xs text-green-500 pl-6 pt-1">
+                💡 Recomendamos Dinheiro e Saldo Aldeias para maximizar receitas (sem comissões).
               </p>
             </div>
           )}

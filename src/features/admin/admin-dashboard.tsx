@@ -19,6 +19,13 @@ interface AdminDashboardProps {
   token: string;
   aldeiaId?: string;
   userRole?: string;
+  aldeia?: {
+    id: string;
+    nome: string;
+    slug: string;
+    tipoOrganizacao: string;
+    logoUrl?: string;
+  };
 }
 
 interface Stats {
@@ -30,7 +37,7 @@ interface Stats {
   totalAngariado: number;
 }
 
-export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: AdminDashboardProps) {
+export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", aldeia }: AdminDashboardProps) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [eventos, setEventos] = useState<any[]>([]);
   const [jogos, setJogos] = useState<any[]>([]);
@@ -305,8 +312,22 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin" }: A
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Gestão da sua organização</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">
+              {userRole === "super_admin" ? "Dashboard Global" : "Dashboard"}
+            </h1>
+            {userRole === "aldeia_admin" && aldeia && (
+              <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-medium rounded-full">
+                {aldeia.nome}
+              </span>
+            )}
+          </div>
+          <p className="text-muted-foreground">
+            {userRole === "super_admin" 
+              ? "Vista global de todas as aldeias" 
+              : `Gestão: ${aldeia?.nome || 'Aldeia'}`
+            }
+          </p>
         </div>
         <div className="flex gap-2">
           {userRole === "super_admin" && (

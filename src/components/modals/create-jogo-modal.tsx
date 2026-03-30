@@ -356,6 +356,14 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
                       />
                       Permitir Pagamento com Cartão
                     </Label>
+                    {formData.permitirStripe && (
+                      <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                        <p className="text-xs text-orange-400">
+                          ⚠️ <strong>Atenção:</strong> Pagamentos com cartão têm comissão de ~2.9% + €0.30. 
+                          Recomendamos Dinheiro ou Saldo Aldeias para maximizar receitas.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

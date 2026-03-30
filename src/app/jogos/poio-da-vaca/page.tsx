@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserMenuButton } from "@/components/user-menu-button";
+import { PaymentSelector } from "@/components/payment";
 
 interface Jogo {
   id: string;
@@ -993,55 +994,11 @@ export default function PoioDaVacaPage() {
               <p className="font-headline text-3xl text-primary">{pagamentoPendente?.custoTotal || 0}€</p>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-xs text-[#e0bfb7] uppercase tracking-wider">Método de Pagamento</p>
-              
-              {isVendedor && (
-                <button
-                  onClick={() => processarPagamento("dinheiro")}
-                  className="w-full p-4 rounded-xl flex items-center gap-3 bg-green-600/20 text-green-400 hover:bg-green-600/30 transition-all"
-                >
-                  <Euro className="w-5 h-5" />
-                  <div className="text-left">
-                    <p className="font-medium">Dinheiro</p>
-                    <p className="text-xs opacity-60">Pago presencialmente</p>
-                  </div>
-                </button>
-              )}
-
-              <button
-                onClick={() => processarPagamento("saldo")}
-                className="w-full p-4 rounded-xl flex items-center gap-3 bg-[#ff734b]/20 text-[#ff734b] hover:bg-[#ff734b]/30 transition-all"
-                disabled={saldo < (pagamentoPendente?.custoTotal || 0)}
-              >
-                <Ticket className="w-5 h-5" />
-                <div className="text-left flex-1">
-                  <p className="font-medium">Saldo Aldeias</p>
-                  <p className="text-xs opacity-60">Saldo disponível: {saldo.toFixed(2)}€</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => processarPagamento("mbway")}
-                className="w-full p-4 rounded-xl flex items-center gap-3 bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 transition-all"
-              >
-                <Phone className="w-5 h-5" />
-                <div className="text-left">
-                  <p className="font-medium">MBWay</p>
-                  <p className="text-xs opacity-60">Pagamento via MBWay</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => processarPagamento("stripe")}
-                className="w-full p-4 rounded-xl flex items-center gap-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-all"
-              >
-                <Wallet className="w-5 h-5" />
-                <div className="text-left">
-                  <p className="font-medium">Cartão</p>
-                  <p className="text-xs opacity-60">Pagamento seguro com Stripe</p>
-                </div>
-              </button>
+            <div className="space-y-4">
+              <PaymentSelector
+                amount={pagamentoPendente?.custoTotal || 0}
+                onSelect={processarPagamento}
+              />
             </div>
           </div>
         </DialogContent>
