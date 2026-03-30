@@ -14,3 +14,41 @@ export { ConfirmModal } from "./confirm-modal";
 export { AldeiaModal } from "./aldeia-modal";
 export { UserModal } from "./user-modal";
 export { ResultadosExternosModal } from "./resultados-externos-modal";
+export { PremioModal, PremioList } from "./premio-modal";
+
+// Export new components
+export { VictoryCelebration } from "@/components/victory-celebration";
+export { WalletBalance, AddBalanceModal, WalletHistory } from "@/components/wallet/wallet-balance";
+export { POSView } from "@/features/vendedor/pos-view";
+export { SetupWizard } from "@/components/setup-wizard";
+export { GameTutorial, useTutorialSeen, markTutorialSeen } from "@/components/game-tutorial";
+export { QRCodeGenerator, QuickShare } from "@/components/qr-code-generator";
+export { GamificationBadge, LevelProgress, GamificationDashboard, LEVELS, BADGES } from "@/components/gamification";
+export { 
+  Skeleton, 
+  SkeletonCard, 
+  SkeletonTable, 
+  SkeletonStats, 
+  SkeletonList, 
+  SkeletonProfile, 
+  SkeletonWallet,
+  SkeletonGameCard,
+  SkeletonGrid,
+  SkeletonButton,
+  SkeletonTabs
+} from "@/components/skeleton";
+export { 
+  EmptyState, 
+  EmptyJogos, 
+  EmptyParticipacoes, 
+  EmptyEventos, 
+  EmptyVendedores,
+  EmptyVendas,
+  EmptyNotificacoes,
+  EmptyTransacoes,
+  EmptyResultados,
+  EmptyAldeias,
+  EmptyPremios,
+  EmptyUsuarios,
+  EmptyComponents
+} from "@/components/empty-state";

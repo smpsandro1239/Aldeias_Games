@@ -15,7 +15,8 @@ import {
   Play,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal } from "@/components/modals";
+import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes } from "@/components/modals";
+import { SkeletonStats, SkeletonGrid, SkeletonList } from "@/components/modals";
 import { toast } from "sonner";
 import { WalletCard } from "@/components/wallet/wallet-card";
 
