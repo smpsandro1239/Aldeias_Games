@@ -357,7 +357,7 @@ export default function PoioDaVacaPage() {
     setPaymentModalOpen(true);
   };
 
-  const processarPagamento = async (metodo: "dinheiro" | "mbway" | "stripe" | "saldo") => {
+  const processarPagamento = async (metodo: "dinheiro" | "mbway" | "stripe" | "saldo" | "transferencia") => {
     if (!pagamentoPendente) return;
 
     try {

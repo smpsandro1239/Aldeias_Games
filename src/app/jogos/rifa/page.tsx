@@ -249,7 +249,7 @@ export default function RifaPage() {
     setCreditCardModalOpen(true);
   };
 
-  const processarPagamento = async (metodo: "dinheiro" | "saldo" | "stripe") => {
+  const processarPagamento = async (metodo: "dinheiro" | "saldo" | "stripe" | "mbway" | "transferencia") => {
     if (!jogo) return;
 
     const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
