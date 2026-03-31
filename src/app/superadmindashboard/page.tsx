@@ -20,7 +20,7 @@ interface User {
   };
 }
 
-export default function AdminDashboardPage() {
+export default function SuperAdminDashboardPage() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
@@ -48,9 +48,9 @@ export default function AdminDashboardPage() {
 
   return (
     <RoleGuard
-      allowedRoles={["aldeia_admin"]}
-      redirectPath="/clientedashboard"
-      panelName="AdminDashboard"
+      allowedRoles={["super_admin"]}
+      redirectPath="/admindashboard"
+      panelName="SuperAdminDashboard"
     >
       <AdminDashboard
         token={token}

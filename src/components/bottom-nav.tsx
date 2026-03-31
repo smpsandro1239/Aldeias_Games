@@ -45,9 +45,9 @@ const navItems = {
     { icon: Users, label: "Equipa", path: "/admindashboard" },
   ],
   super_admin: [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admindashboard" },
-    { icon: Building2, label: "Aldeias", path: "/admindashboard" },
-    { icon: BarChart3, label: "Analytics", path: "/admindashboard" },
+    { icon: LayoutDashboard, label: "Super Admin", path: "/superadmindashboard" },
+    { icon: Building2, label: "Aldeias", path: "/superadmindashboard" },
+    { icon: BarChart3, label: "Analytics", path: "/superadmindashboard" },
     { icon: Settings, label: "Config", path: "/configuracoes" },
   ],
   default: [

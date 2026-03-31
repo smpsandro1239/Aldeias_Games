@@ -19,9 +19,9 @@ interface QuickActionsProps {
 
 const actionConfigs = {
   super_admin: [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, color: "bg-primary/20 text-primary", path: "/admindashboard" },
-    { key: "criar_aldeia", label: "Criar Aldeia", icon: Building2, color: "bg-secondary/20 text-secondary", path: "/admindashboard" },
-    { key: "ver_aldeias", label: "Ver Aldeias", icon: Building2, color: "bg-tertiary/20 text-tertiary", path: "/admindashboard" },
+    { key: "dashboard", label: "Super Admin", icon: LayoutDashboard, color: "bg-primary/20 text-primary", path: "/superadmindashboard" },
+    { key: "criar_aldeia", label: "Criar Aldeia", icon: Building2, color: "bg-secondary/20 text-secondary", path: "/superadmindashboard" },
+    { key: "ver_aldeias", label: "Ver Aldeias", icon: Building2, color: "bg-tertiary/20 text-tertiary", path: "/superadmindashboard" },
     { key: "config", label: "Configurações", icon: Settings, color: "bg-surface-container-highest text-on-surface", path: "/configuracoes" },
   ],
   aldeia_admin: [

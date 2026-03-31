@@ -16,7 +16,7 @@ Este documento descreve a implementação do sistema de dashboards baseados em r
 
 | Role | Dashboard | URL |
 |------|-----------|-----|
-| super_admin | AdminDashboard | `/admindashboard` |
+| super_admin | SuperAdminDashboard | `/superadmindashboard` |
 | aldeia_admin | AdminDashboard | `/admindashboard` |
 | vendedor | VendedorDashboard | `/vendedordashboard` |
 | user | ClienteDashboard | `/clientedashboard` |
@@ -186,12 +186,14 @@ interface RoleGuardProps {
 ```
 src/
 ├── app/
+│   ├── superadmindashboard/
+│   │   └── page.tsx              # SuperAdminDashboard com RoleGuard (super_admin)
 │   ├── admindashboard/
-│   │   └── page.tsx              # AdminDashboard com RoleGuard
+│   │   └── page.tsx              # AdminDashboard com RoleGuard (aldeia_admin)
 │   ├── vendedordashboard/
-│   │   └── page.tsx              # VendedorDashboard com RoleGuard
+│   │   └── page.tsx              # VendedorDashboard com RoleGuard (vendedor)
 │   ├── clientedashboard/
-│   │   └── page.tsx              # ClienteDashboard com RoleGuard
+│   │   └── page.tsx              # ClienteDashboard com RoleGuard (user)
 │   └── page.tsx                  # Página principal (landing)
 ├── components/
 │   ├── auth/
@@ -200,7 +202,7 @@ src/
 │   └── quick-actions.tsx         # Ações rápidas
 └── features/
     ├── admin/
-    │   ├── admin-dashboard.tsx   # Dashboard admin
+    │   ├── admin-dashboard.tsx   # Dashboard admin (compartilhado)
     │   └── analytics-dashboard.tsx
     ├── vendedor/
     │   ├── vendedor-dashboard.tsx
@@ -244,7 +246,8 @@ hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor', 'user'])
 
 ### Ficheiros Criados
 - `src/components/auth/RoleGuard.tsx`
-- `src/app/admindashboard/page.tsx`
+- `src/app/superadmindashboard/page.tsx` - Super Admin Dashboard
+- `src/app/admindashboard/page.tsx` - Aldeia Admin Dashboard
 - `src/app/vendedordashboard/page.tsx`
 - `src/app/clientedashboard/page.tsx`
 
@@ -267,7 +270,7 @@ hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor', 'user'])
 ### Login → Redireccionamento
 | Role | Dashboard |
 |------|-----------|
-| super_admin | → `/admindashboard` |
+| super_admin | → `/superadmindashboard` |
 | aldeia_admin | → `/admindashboard` |
 | vendedor | → `/vendedordashboard` |
 | user | → `/clientedashboard` |
@@ -279,10 +282,11 @@ hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor', 'user'])
 ### Cenários a Testar
 
 1. **Super Admin**
-   - [ ] Acede a `/admindashboard` ✅
+   - [ ] Acede a `/superadmindashboard` ✅
    - [ ] Vê tab "Aldeias" ✅
    - [ ] Pode criar aldeia ✅
    - [ ] Vê todas as aldeias ✅
+   - [ ] Bloqueado em `/admindashboard` ✅
    - [ ] Bloqueado em `/vendedordashboard` ✅
    - [ ] Bloqueado em `/clientedashboard` ✅
 
@@ -293,6 +297,7 @@ hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor', 'user'])
    - [ ] Vê apenas dados da sua aldeia ✅
    - [ ] Pode criar vendedores ✅
    - [ ] NÃO pode criar aldeia_admin ✅
+   - [ ] Bloqueado em `/superadmindashboard` ✅
    - [ ] Bloqueado em `/vendedordashboard` ✅
    - [ ] Bloqueado em `/clientedashboard` ✅
 
@@ -302,6 +307,7 @@ hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor', 'user'])
    - [ ] Pode registar venda ✅
    - [ ] NÃO vê tab admin ✅
    - [ ] Bloqueado em `/admindashboard` ✅
+   - [ ] Bloqueado em `/superadmindashboard` ✅
    - [ ] Pode acceder a `/clientedashboard` ✅
 
 4. **User**
@@ -310,6 +316,7 @@ hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor', 'user'])
    - [ ] Pode participar em jogos ✅
    - [ ] NÃO vê tabs admin ✅
    - [ ] Bloqueado em `/admindashboard` ✅
+   - [ ] Bloqueado em `/superadmindashboard` ✅
    - [ ] Bloqueado em `/vendedordashboard` ✅
 
 ---
