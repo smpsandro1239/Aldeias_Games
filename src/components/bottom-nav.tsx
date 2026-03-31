@@ -27,27 +27,27 @@ interface BottomNavProps {
 
 const navItems = {
   user: [
-    { icon: Compass, label: "Explorar", path: "/" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/clientedashboard" },
     { icon: Ticket, label: "Jogos", path: "/jogos" },
     { icon: History, label: "Histórico", path: "/perfil" },
     { icon: User, label: "Perfil", path: "/perfil" },
   ],
   vendedor: [
-    { icon: DollarSign, label: "Vendas", path: "/" },
-    { icon: TrendingUp, label: "Histórico", path: "/perfil" },
-    { icon: Target, label: "Metas", path: "/perfil" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/vendedordashboard" },
+    { icon: DollarSign, label: "Vendas", path: "/vendedordashboard" },
+    { icon: TrendingUp, label: "Histórico", path: "/vendedordashboard" },
     { icon: User, label: "Perfil", path: "/perfil" },
   ],
   aldeia_admin: [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: Calendar, label: "Eventos", path: "/" },
-    { icon: Gamepad2, label: "Jogos", path: "/" },
-    { icon: Users, label: "Equipa", path: "/" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/admindashboard" },
+    { icon: Calendar, label: "Eventos", path: "/admindashboard" },
+    { icon: Gamepad2, label: "Jogos", path: "/admindashboard" },
+    { icon: Users, label: "Equipa", path: "/admindashboard" },
   ],
   super_admin: [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: Building2, label: "Aldeias", path: "/" },
-    { icon: BarChart3, label: "Analytics", path: "/" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/admindashboard" },
+    { icon: Building2, label: "Aldeias", path: "/admindashboard" },
+    { icon: BarChart3, label: "Analytics", path: "/admindashboard" },
     { icon: Settings, label: "Config", path: "/configuracoes" },
   ],
   default: [
