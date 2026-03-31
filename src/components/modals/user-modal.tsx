@@ -119,16 +119,21 @@ export function UserModal({ open, onOpenChange, onSubmit, initialData, aldeias =
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                    <SelectItem value="user">Utilizador Geral</SelectItem>
-                   <SelectItem value="vendedor">Vendedor</SelectItem>
-                   <SelectItem value="aldeia_admin">Admin da Aldeia</SelectItem>
                    {currentUserRole === 'super_admin' && (
-                     <SelectItem value="super_admin">Super Admin</SelectItem>
+                     <>
+                       <SelectItem value="vendedor">Vendedor</SelectItem>
+                       <SelectItem value="aldeia_admin">Admin da Aldeia</SelectItem>
+                       <SelectItem value="super_admin">Super Admin</SelectItem>
+                     </>
+                   )}
+                   {currentUserRole === 'aldeia_admin' && (
+                     <SelectItem value="vendedor">Vendedor</SelectItem>
                    )}
                 </SelectContent>
               </Select>
             </div>
 
-            {(currentUserRole === 'super_admin' && formData.role !== 'super_admin') && (
+            {(currentUserRole === 'super_admin' || (currentUserRole === 'aldeia_admin' && aldeias.length > 0)) && (
               <div className="grid gap-2">
                 <Label htmlFor="aldeiaId">Aldeia</Label>
                 <Select

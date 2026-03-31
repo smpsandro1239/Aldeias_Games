@@ -65,8 +65,8 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
   const items = role ? (navItems[role as keyof typeof navItems] || navItems.default) : navItems.default;
 
   const isActive = (path: string, index: number) => {
-    if (index === 0) return pathname === "/" || pathname === "/?tab=vendas" || pathname === "/?tab=overview";
-    return path === pathname || pathname.includes(path + "?");
+    if (index === 0) return pathname.startsWith(path);
+    return pathname.startsWith(path);
   };
 
   const getIconColor = (isActive: boolean, index: number) => {

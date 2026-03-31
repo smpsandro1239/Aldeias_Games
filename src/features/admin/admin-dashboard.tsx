@@ -230,11 +230,20 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
     const isEditing = !!data.id;
     const url = isEditing ? `/api/users/${data.id}` : `/api/users`;
     const method = isEditing ? "PUT" : "POST";
+    
+    let userData = { ...data };
+    
+    if (userRole === "aldeia_admin" && aldeiaId) {
+      userData.aldeiaId = aldeiaId;
+      if (data.role === "aldeia_admin") {
+        throw new Error("Não tem permissão para criar administradores de aldeia");
+      }
+    }
 
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
+      body: JSON.stringify(userData),
     });
 
     if (res.ok) {
@@ -669,7 +678,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
       />
       <CreateJogoModal open={jogoModalOpen} onOpenChange={setJogoModalOpen} onSubmit={handleSaveJogo} eventoId={selectedEventoIdParaJogo} initialData={selectedJogo} />
       <AldeiaModal open={aldeiaModalOpen} onOpenChange={setAldeiaModalOpen} onSubmit={handleSaveAldeia} initialData={selectedAldeia} />
-      <UserModal open={userModalOpen} onOpenChange={setUserModalOpen} onSubmit={handleSaveUser} initialData={selectedUser} aldeias={aldeias} currentUserRole={userRole} />
+      <UserModal open={userModalOpen} onOpenChange={setUserModalOpen} onSubmit={handleSaveUser} initialData={selectedUser} aldeias={aldeia ? [aldeia] : aldeias} currentUserRole={userRole} />
 
       <ConfirmModal
         open={confirmDeleteOpen}
