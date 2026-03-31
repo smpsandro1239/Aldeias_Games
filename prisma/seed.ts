@@ -179,7 +179,7 @@ async function main() {
         morada: 'Rua Principal',
         codigoPostal: '4000-000',
         // @ts-ignore
-        localidades: aldeiaData.locality,
+        localidade: aldeiaData.locality,
         autorizacaoCM: true,
         documentosVerificados: true,
         ativo: true,

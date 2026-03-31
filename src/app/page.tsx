@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { Gamepad2, Users, House, Trophy, CreditCard, Shield, Menu, LogOut, User, Sparkles, Rocket, Zap, ArrowRight, Star, Clock, MapPin, PartyPopper, Ticket, Leaf, Wallet, Compass, Award } from "lucide-react";
+import { BottomNav } from "@/components/bottom-nav";
+import { DashboardStats } from "@/components/dashboard-stats";
+import { QuickActions } from "@/components/quick-actions";
 
 const AdminDashboard = dynamic(() => import("@/features/admin/admin-dashboard").then(mod => mod.AdminDashboard), { ssr: false });
 const ClienteDashboard = dynamic(() => import("@/features/cliente/cliente-dashboard").then(mod => mod.ClienteDashboard), { ssr: false });
@@ -482,7 +485,16 @@ export default function Home() {
 
       <main className="pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto">
         {user ? (
-          <div className="space-y-8">
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <QuickActions role={user.role} />
+            
+            {/* Dashboard Stats - apenas para admins */}
+            {(user.role === "super_admin" || user.role === "aldeia_admin") && (
+              <DashboardStats role={user.role} stats={{}} />
+            )}
+            
+            {/* Dashboard */}
             {(user.role === "super_admin" || user.role === "aldeia_admin") && (
               <AdminDashboard 
                 token={token || ""} 
@@ -497,6 +509,9 @@ export default function Home() {
             {user.role === "user" && (
               <ClienteDashboard token={token || ""} />
             )}
+            
+            {/* Bottom Navigation */}
+            <BottomNav role={user.role} />
           </div>
         ) : (
           <>
@@ -732,25 +747,27 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Mobile Bottom Nav */}
-      <div className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container-high/80 backdrop-blur-2xl z-50 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.4)] md:hidden">
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
-          <Compass className="h-6 w-6" />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Explorar</span>
-        </button>
-        <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col items-center justify-center text-secondary bg-secondary/10 rounded-2xl px-4 py-2 scale-110 transition-all">
-          <House className="h-6 w-6" style={{ fill: 'currentColor' }} />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Aldeias</span>
-        </button>
-        <button onClick={() => window.location.href = '/jogos'} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
-          <Gamepad2 className="h-6 w-6" />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Competir</span>
-        </button>
-        <button onClick={() => user ? setUserMenuOpen(!userMenuOpen) : setLoginModalOpen(true)} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
-          <Wallet className="h-6 w-6" />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">{user ? 'Ver Saldo' : 'Carteira'}</span>
-        </button>
-      </div>
+      {/* Mobile Bottom Nav - Apenas para visitantes (não autenticados) */}
+      {!user && (
+        <div className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container-high/80 backdrop-blur-2xl z-50 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.4)] md:hidden">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
+            <Compass className="h-6 w-6" />
+            <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Explorar</span>
+          </button>
+          <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col items-center justify-center text-secondary bg-secondary/10 rounded-2xl px-4 py-2 scale-110 transition-all">
+            <House className="h-6 w-6" style={{ fill: 'currentColor' }} />
+            <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Aldeias</span>
+          </button>
+          <button onClick={() => window.location.href = '/jogos'} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
+            <Gamepad2 className="h-6 w-6" />
+            <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Competir</span>
+          </button>
+          <button onClick={() => user ? setUserMenuOpen(!userMenuOpen) : setLoginModalOpen(true)} className="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:opacity-100 transition-all">
+            <Wallet className="h-6 w-6" />
+            <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">{user ? 'Ver Saldo' : 'Carteira'}</span>
+          </button>
+        </div>
+      )}
 
       {/* User Menu Modal */}
       <Dialog open={userMenuOpen} onOpenChange={setUserMenuOpen}>

@@ -1,51 +1,120 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Home, Gamepad2, Award, User, Wallet } from "lucide-react";
+import { 
+  Compass, 
+  Gamepad2, 
+  Ticket, 
+  History, 
+  User, 
+  Wallet,
+  DollarSign,
+  TrendingUp,
+  Target,
+  BarChart3,
+  Calendar,
+  Users,
+  Settings,
+  Building2,
+  LayoutDashboard,
+  Sparkles
+} from "lucide-react";
 
 interface BottomNavProps {
+  role?: string;
   currentPath?: string;
 }
 
-export function BottomNav({ currentPath }: BottomNavProps) {
+const navItems = {
+  user: [
+    { icon: Compass, label: "Explorar", path: "/" },
+    { icon: Ticket, label: "Jogos", path: "/jogos" },
+    { icon: History, label: "Histórico", path: "/perfil" },
+    { icon: User, label: "Perfil", path: "/perfil" },
+  ],
+  vendedor: [
+    { icon: DollarSign, label: "Vendas", path: "/" },
+    { icon: TrendingUp, label: "Histórico", path: "/perfil" },
+    { icon: Target, label: "Metas", path: "/perfil" },
+    { icon: User, label: "Perfil", path: "/perfil" },
+  ],
+  aldeia_admin: [
+    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+    { icon: Calendar, label: "Eventos", path: "/" },
+    { icon: Gamepad2, label: "Jogos", path: "/" },
+    { icon: Users, label: "Equipa", path: "/" },
+  ],
+  super_admin: [
+    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+    { icon: Building2, label: "Aldeias", path: "/" },
+    { icon: BarChart3, label: "Analytics", path: "/" },
+    { icon: Settings, label: "Config", path: "/configuracoes" },
+  ],
+  default: [
+    { icon: Compass, label: "Explorar", path: "/" },
+    { icon: Gamepad2, label: "Jogos", path: "/jogos" },
+    { icon: Ticket, label: "Prémios", path: "/premios" },
+    { icon: User, label: "Perfil", path: "/perfil" },
+  ],
+};
+
+export function BottomNav({ role, currentPath }: BottomNavProps) {
   const router = useRouter();
   const pathname = currentPath || usePathname();
+  
+  const items = role ? (navItems[role as keyof typeof navItems] || navItems.default) : navItems.default;
 
-  const isActive = (path: string) => {
-    if (path === "/") return pathname === "/";
-    return pathname.startsWith(path);
+  const isActive = (path: string, index: number) => {
+    if (index === 0) return pathname === "/" || pathname === "/?tab=vendas" || pathname === "/?tab=overview";
+    return path === pathname || pathname.includes(path + "?");
   };
 
-  const navItems = [
-    { icon: Home, label: "Início", path: "/" },
-    { icon: Gamepad2, label: "Jogos", path: "/jogos" },
-    { icon: Award, label: "Prémios", path: "/premios" },
-    { icon: User, label: "Perfil", path: "/perfil" },
-  ];
+  const getIconColor = (isActive: boolean, index: number) => {
+    if (!isActive) return "text-[#e0bfb7]/60";
+    
+    if (index === 0) return "text-secondary drop-shadow-[0_0_8px_rgba(0,218,243,0.5)]";
+    
+    return "text-primary";
+  };
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full z-50 bg-surface-container-lowest/80 backdrop-blur-xl border-t border-outline-variant/15 shadow-2xl flex justify-around items-center px-4 pb-6 pt-2 rounded-t-3xl md:hidden">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.path);
-        
-        return (
-          <button
-            key={item.path}
-            onClick={() => router.push(item.path)}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-              active
-                ? "text-[#ff734b] bg-[#2e2928]/60"
-                : "text-[#e0bfb7]/60 hover:bg-[#2e2928]/40"
-            }`}
-          >
-            <Icon className="w-6 h-6" style={active ? { fill: "currentColor" } : {}} />
-            <span className="font-sans text-[11px] font-medium tracking-tight mt-1">
-              {item.label}
-            </span>
-          </button>
-        );
-      })}
-    </nav>
+    <>
+      {/* Spacer para evitar que conteúdo seja coberto */}
+      <div className="h-24 md:hidden" />
+      
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container-high/80 backdrop-blur-2xl border-t border-outline-variant/10 shadow-[0_-10px_40px_rgba(0,0,0,0.4)] md:hidden rounded-t-[2rem]">
+        {items.map((item, index) => {
+          const Icon = item.icon;
+          const active = isActive(item.path, index);
+          
+          return (
+            <button
+              key={item.label}
+              onClick={() => router.push(item.path)}
+              className={`
+                flex flex-col items-center justify-center transition-all duration-200
+                min-w-[64px] py-2 rounded-2xl
+                ${active 
+                  ? `bg-gradient-to-b ${index === 0 ? 'from-secondary/20 to-transparent' : 'from-primary/20 to-transparent'} scale-110` 
+                  : 'hover:bg-surface-container-high/50'
+                }
+              `}
+            >
+              <Icon 
+                className={`h-6 w-6 transition-all ${getIconColor(active, index)}`}
+                style={active && index === 0 ? { fill: "currentColor" } : {}}
+              />
+              <span className={`
+                font-sans text-[10px] font-bold tracking-widest uppercase mt-1
+                ${active ? 'text-primary' : 'text-on-surface-variant opacity-70'}
+              `}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </>
   );
 }

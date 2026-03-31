@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
+import { GameQuickActions } from "@/components/game-quick-actions";
 import { DashboardAnalytics } from "./analytics-dashboard";
 import { toast } from "sonner";
 
@@ -71,6 +72,19 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   const [selectedAldeia, setSelectedAldeia] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedEventoIdParaJogo, setSelectedEventoIdParaJogo] = useState<string>("");
+  const [tipoJogoSelecionado, setTipoJogoSelecionado] = useState<"poio_da_vaca" | "rifa" | "raspadinha">("rifa");
+
+  // Handler para abrir modal de criar jogo com tipo pré-selecionado
+  const handleOpenJogoModal = (tipo: "poio_da_vaca" | "rifa" | "raspadinha") => {
+    if (!eventos.length) {
+      toast.error("Crie um evento primeiro");
+      return;
+    }
+    setTipoJogoSelecionado(tipo);
+    setSelectedJogo(null);
+    setSelectedEventoIdParaJogo(eventos[0].id);
+    setJogoModalOpen(true);
+  };
 
   // Delete State
   const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
@@ -433,8 +447,11 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         </TabsContent>
 
         <TabsContent value="jogos" className="space-y-4">
+          {/* Quick Actions - Criar cada tipo de jogo */}
+          <GameQuickActions eventos={eventos} onOpenModal={handleOpenJogoModal} />
+
           <div className="flex justify-between">
-            <h2 className="text-xl font-semibold">Gestão de Jogos</h2>
+            <h2 className="text-xl font-semibold">Jogos Criados</h2>
             <Button onClick={() => { if(eventos.length) { setSelectedJogo(null); setSelectedEventoIdParaJogo(eventos[0].id); setJogoModalOpen(true); } else { toast.error("Crie um evento primeiro"); } }}>
               <Plus className="h-4 w-4 mr-2" /> Novo Jogo
             </Button>

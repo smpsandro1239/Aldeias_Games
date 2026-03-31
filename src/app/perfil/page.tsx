@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, User, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X } from "lucide-react";
+import { ArrowLeft, User as User, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { BottomNav } from "@/components/bottom-nav";
+import { UserMenuModal } from "@/components/user-menu-modal";
 
 interface Aldeia {
   id: string;
@@ -34,6 +35,7 @@ export default function PerfilPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -178,7 +180,17 @@ export default function PerfilPage() {
           </button>
           <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Editar Perfil</h1>
         </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setUserMenuOpen(true)}
+            className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
+          >
+            <User className="h-4 w-4 text-[#ff734b]" />
+          </button>
+        </div>
       </header>
+
+      <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
 
       <main className="px-4 pt-6 space-y-6">
         <div className="flex flex-col items-center">
