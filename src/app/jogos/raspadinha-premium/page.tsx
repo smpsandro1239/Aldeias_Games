@@ -1,91 +1,153 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, Loader2 } from "lucide-react";
 import { UserMenuButton } from "@/components/user-menu-button";
+import { toast } from "sonner";
 
 const iconMap: Record<string, LucideIcon> = {
   military_tech: Trophy,
   stars: Star,
   diamond: Gem,
-  coin: Coins,
+  coins: Coins,
   favorite: Heart,
   home: Home,
   sports_esports: Gamepad2,
   person: User,
+  trophy: Trophy,
+  star: Star,
+  coin: Coins,
+  heart: Heart,
 };
 
-// Tipos
 interface Prize {
-  icon: string;
-  label: string;
-  value: number;
-  fill: boolean;
+  id: string;
+  nome: string;
+  descricao?: string | null;
+  valorDinheiroAlternative?: number | null;
+  imagemUrl?: string | null;
+  icon?: string;
+}
+
+interface Jogo {
+  id: string;
+  nome: string;
+  tipo: string;
+  preco: number;
+  stockAtual: number;
+  estado: string;
+  descricao?: string;
+  configuracao: {
+    titulo?: string;
+    subtitulo?: string;
+    organizacao?: string;
+    premioMaximo?: number;
+    premios?: Prize[];
+  };
+  premios?: Prize[];
+  evento?: {
+    nome: string;
+    aldeia?: { nome: string };
+  };
 }
 
 interface SlotState {
   id: number;
   revealed: boolean;
-  prize: Prize;
+  prize: Prize | null;
   scratchPercent: number;
-}
-
-// Prémios possíveis
-const PRIZES: Prize[] = [
-  { icon: "military_tech", label: "Troféu", value: 5000, fill: true },
-  { icon: "stars", label: "Estrela", value: 500, fill: true },
-  { icon: "diamond", label: "Cristal", value: 50, fill: true },
-  { icon: "coin", label: "Moeda", value: 10, fill: false },
-  { icon: "favorite", label: "Coração", value: 5, fill: false },
-];
-
-// Gera prémios aleatórios para o grid
-function generatePrizes(): Prize[] {
-  const prizes: Prize[] = [];
-  const winningPrize = PRIZES[Math.floor(Math.random() * 3)]; // Top 3 prémios
-
-  // Garante 3 do mesmo prémio (vitória garantida)
-  for (let i = 0; i < 3; i++) {
-    prizes.push(winningPrize);
-  }
-
-  // Preenche o resto aleatoriamente
-  for (let i = 3; i < 9; i++) {
-    prizes.push(PRIZES[Math.floor(Math.random() * PRIZES.length)]);
-  }
-
-  // Baralha
-  return prizes.sort(() => Math.random() - 0.5);
 }
 
 export default function RaspadinhaPremiumPage() {
   const router = useRouter();
-  const [slots, setSlots] = useState<SlotState[]>(() =>
-    generatePrizes().map((prize, i) => ({
+  const searchParams = useSearchParams();
+  const jogoId = searchParams.get("id");
+  
+  const [jogo, setJogo] = useState<Jogo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [slots, setSlots] = useState<SlotState[]>([]);
+  const [showWin, setShowWin] = useState(false);
+  const [winningPrize, setWinningPrize] = useState<Prize | null>(null);
+  const [totalRevealed, setTotalRevealed] = useState(0);
+  const [participacaoId, setParticipacaoId] = useState<string | null>(null);
+  const { playScratch } = useScratchSound();
+
+  const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
+  const isDraggingRef = useRef<Map<number, boolean>>(new Map());
+  const soundThrottleRef = useRef(0);
+  const SLOT_SIZE = 100;
+
+  useEffect(() => {
+    if (jogoId) {
+      fetchJogo();
+    } else {
+      setLoading(false);
+    }
+  }, [jogoId]);
+
+  const fetchJogo = async () => {
+    if (!jogoId) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const headers: HeadersInit = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      
+      const res = await fetch(`/api/jogos/${jogoId}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data) {
+          setJogo(data.data);
+          initSlots(data.data.premios || []);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar jogo:", error);
+      toast.error("Erro ao carregar o jogo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initSlots = (premios: Prize[]) => {
+    const prizesList: Prize[] = [];
+    
+    if (premios.length > 0) {
+      const winningPrize = premios[0];
+      for (let i = 0; i < 3; i++) {
+        prizesList.push(winningPrize);
+      }
+      for (let i = 3; i < 9; i++) {
+        prizesList.push(premios[Math.floor(Math.random() * premios.length)]);
+      }
+    } else {
+      prizesList.push(
+        { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
+        { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
+        { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
+        { id: "2", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
+        { id: "3", nome: "3x Cristal", valorDinheiroAlternative: 10 },
+        { id: "4", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
+        { id: "5", nome: "3x Cristal", valorDinheiroAlternative: 10 },
+        { id: "6", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
+        { id: "7", nome: "3x Cristal", valorDinheiroAlternative: 10 },
+      );
+    }
+    
+    const shuffled = prizesList.sort(() => Math.random() - 0.5);
+    
+    setSlots(shuffled.map((prize, i) => ({
       id: i,
       revealed: false,
       prize,
       scratchPercent: 0,
-    }))
-  );
-  const [showWin, setShowWin] = useState(false);
-  const [winningPrize, setWinningPrize] = useState<Prize | null>(null);
-  const [totalRevealed, setTotalRevealed] = useState(0);
-  const { playScratch } = useScratchSound();
+    })));
+  };
 
-  // Canvas refs para cada slot
-  const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
-  const isDraggingRef = useRef<Map<number, boolean>>(new Map());
-  const lastPosRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const soundThrottleRef = useRef(0);
-
-  const SLOT_SIZE = 100;
-
-  // Inicializa canvas de cada slot
   const initSlotCanvas = useCallback((slotId: number) => {
     const canvas = canvasRefs.current.get(slotId);
     if (!canvas) return;
@@ -98,11 +160,9 @@ export default function RaspadinhaPremiumPage() {
     canvas.style.width = `${SLOT_SIZE}px`;
     canvas.style.height = `${SLOT_SIZE}px`;
 
-    // Textura metálica
     ctx.fillStyle = "#393432";
     ctx.fillRect(0, 0, SLOT_SIZE * 2, SLOT_SIZE * 2);
 
-    // Padrão de pontos
     ctx.fillStyle = "rgba(255, 115, 75, 0.15)";
     for (let i = 0; i < 200; i++) {
       ctx.beginPath();
@@ -116,7 +176,6 @@ export default function RaspadinhaPremiumPage() {
       ctx.fill();
     }
 
-    // Ícone central
     ctx.fillStyle = "#ff734b";
     ctx.font = "bold 48px Material Symbols Rounded";
     ctx.textAlign = "center";
@@ -126,9 +185,8 @@ export default function RaspadinhaPremiumPage() {
     ctx.globalAlpha = 1;
   }, []);
 
-  // Raspagem de um slot
   const scratchSlot = useCallback(
-    (slotId: number, x: number, y: number) => {
+    async (slotId: number, x: number, y: number) => {
       const slot = slots.find((s) => s.id === slotId);
       if (!slot || slot.revealed) return;
 
@@ -147,7 +205,6 @@ export default function RaspadinhaPremiumPage() {
       ctx.save();
       ctx.globalCompositeOperation = "destination-out";
 
-      // Efeito de spray
       ctx.beginPath();
       ctx.arc(canvasX, canvasY, 20, 0, Math.PI * 2);
       ctx.fill();
@@ -161,14 +218,12 @@ export default function RaspadinhaPremiumPage() {
       }
       ctx.restore();
 
-      // Som com throttle
       const now = Date.now();
       if (now - soundThrottleRef.current > 60) {
         playScratch(0.3);
         soundThrottleRef.current = now;
       }
 
-      // Calcula percentagem
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       let transparent = 0;
       for (let i = 3; i < imageData.data.length; i += 16) {
@@ -184,7 +239,6 @@ export default function RaspadinhaPremiumPage() {
         );
       }
 
-      // Revela aos 60%
       if (percent >= 60 && !slot.revealed) {
         ctx.save();
         ctx.globalCompositeOperation = "destination-out";
@@ -196,25 +250,24 @@ export default function RaspadinhaPremiumPage() {
             s.id === slotId ? { ...s, revealed: true, scratchPercent: 100 } : s
           );
 
-          // Verifica vitória
           const revealedSlots = newSlots.filter((s) => s.revealed);
           setTotalRevealed(revealedSlots.length);
 
-          // Conta prémios iguais
           const prizeCounts = new Map<string, { count: number; prize: Prize }>();
           revealedSlots.forEach((s) => {
-            const key = `${s.prize.icon}-${s.prize.value}`;
-            const existing = prizeCounts.get(key);
-            if (existing) {
-              existing.count++;
-            } else {
-              prizeCounts.set(key, { count: 1, prize: s.prize });
+            if (s.prize) {
+              const key = `${s.prize.id || s.prize.nome}`;
+              const existing = prizeCounts.get(key);
+              if (existing) {
+                existing.count++;
+              } else {
+                prizeCounts.set(key, { count: 1, prize: s.prize });
+              }
             }
           });
 
-          // Verifica se tem 3 iguais
           prizeCounts.forEach(({ count, prize }) => {
-            if (count >= 3 && prize.value > 0) {
+            if (count >= 3 && (prize.valorDinheiroAlternative || 0) > 0) {
               setWinningPrize(prize);
               setShowWin(true);
               confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
@@ -223,20 +276,44 @@ export default function RaspadinhaPremiumPage() {
 
           return newSlots;
         });
+
+        if (!participacaoId && jogoId) {
+          const token = localStorage.getItem("token");
+          if (token) {
+            try {
+              const res = await fetch("/api/participacoes", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  jogoId,
+                  dadosParticipacao: {},
+                  quantidade: 1,
+                  metodoPagamento: "dinheiro",
+                }),
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.participacao?.id) {
+                  setParticipacaoId(data.participacao.id);
+                }
+              }
+            } catch (error) {
+              console.error("Erro ao criar participação:", error);
+            }
+          }
+        }
       }
     },
-    [slots, playScratch]
+    [slots, playScratch, jogoId, participacaoId]
   );
 
-  // Event handlers para cada slot
   const handlePointerDown = useCallback(
     (slotId: number, e: React.PointerEvent) => {
       isDraggingRef.current.set(slotId, true);
       const rect = (e.target as HTMLElement).getBoundingClientRect();
-      lastPosRef.current.set(slotId, {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
       scratchSlot(slotId, e.clientX, e.clientY);
     },
     [scratchSlot]
@@ -254,7 +331,6 @@ export default function RaspadinhaPremiumPage() {
     isDraggingRef.current.set(slotId, false);
   }, []);
 
-  // Raspar tudo
   const scratchAll = useCallback(() => {
     slots.forEach((slot) => {
       if (!slot.revealed) {
@@ -274,20 +350,21 @@ export default function RaspadinhaPremiumPage() {
     setSlots((prev) => {
       const newSlots = prev.map((s) => ({ ...s, revealed: true, scratchPercent: 100 }));
 
-      // Verifica vitória
       const prizeCounts = new Map<string, { count: number; prize: Prize }>();
       newSlots.forEach((s) => {
-        const key = `${s.prize.icon}-${s.prize.value}`;
-        const existing = prizeCounts.get(key);
-        if (existing) {
-          existing.count++;
-        } else {
-          prizeCounts.set(key, { count: 1, prize: s.prize });
+        if (s.prize) {
+          const key = `${s.prize.id || s.prize.nome}`;
+          const existing = prizeCounts.get(key);
+          if (existing) {
+            existing.count++;
+          } else {
+            prizeCounts.set(key, { count: 1, prize: s.prize });
+          }
         }
       });
 
       prizeCounts.forEach(({ count, prize }) => {
-        if (count >= 3 && prize.value > 0) {
+        if (count >= 3 && (prize.valorDinheiroAlternative || 0) > 0) {
           setWinningPrize(prize);
           setShowWin(true);
           confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
@@ -299,28 +376,44 @@ export default function RaspadinhaPremiumPage() {
     });
   }, [slots]);
 
-  // Inicializa canvases
   useEffect(() => {
-    slots.forEach((slot) => {
-      if (!slot.revealed) {
-        initSlotCanvas(slot.id);
-      }
-    });
-  }, []);
+    if (slots.length > 0) {
+      slots.forEach((slot) => {
+        if (!slot.revealed) {
+          initSlotCanvas(slot.id);
+        }
+      });
+    }
+  }, [slots, initSlotCanvas]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-[#ff734b]" />
+          <p className="text-sm text-[#e0bfb7]">A carregar jogo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const titulo = jogo?.configuracao?.titulo || jogo?.nome || "RASPADINHA PREMIUM";
+  const subtitulo = jogo?.configuracao?.subtitulo || "Raspe com o dedo para revelar o seu prémio!";
+  const organizacao = jogo?.configuracao?.organizacao || jogo?.evento?.aldeia?.nome || "Aldeias Games";
+  const premioMaximo = jogo?.configuracao?.premioMaximo || 5000;
 
   return (
     <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="font-serif italic text-[#ff734b] text-lg font-bold">
-              Aldeias Games
+              {organizacao}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <h1 className="font-serif font-bold text-lg text-[#ffb5a0]">
-              Raspadinha
+              {titulo}
             </h1>
             <button 
               onClick={() => router.back()}
@@ -335,29 +428,26 @@ export default function RaspadinhaPremiumPage() {
       </header>
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
-        {/* Informação do Prémio */}
         <motion.section
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-1"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9cefff]">
-            Prémio Máximo
+            {subtitulo}
           </p>
           <h2 className="font-serif text-3xl font-bold tracking-tight">
             Ganha até{" "}
-            <span className="text-[#ff734b]">5.000€</span>
+            <span className="text-[#ff734b]">{premioMaximo.toLocaleString("pt-PT")}€</span>
           </h2>
         </motion.section>
 
-        {/* Grid da Raspadinha */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
           className="relative"
         >
-          {/* Efeito de brilho */}
           <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-[24px] blur-xl" />
 
           <div className="relative bg-[#1f1b19] rounded-[24px] p-4 shadow-2xl">
@@ -367,32 +457,17 @@ export default function RaspadinhaPremiumPage() {
                   key={slot.id}
                   className="relative aspect-square rounded-2xl overflow-hidden"
                 >
-                  {/* Prémio por baixo */}
                   <div className="absolute inset-0 flex items-center justify-center bg-[#393432]">
                     <div className="text-center">
-                      {(() => {
-                        const IconComponent = iconMap[slot.prize.icon] || Star;
-                        return (
-                          <IconComponent
-                            className="text-4xl"
-                            style={{
-                              color:
-                                slot.prize.value >= 500
-                                  ? "#ff734b"
-                                  : slot.prize.value >= 50
-                                  ? "#9cefff"
-                                  : "#e0bfb7",
-                            }}
-                          />
-                        );
-                      })()}
+                      <Trophy className="text-4xl text-[#ff734b]" />
                       <p className="text-[10px] font-bold text-[#e0bfb7] mt-0.5">
-                        {slot.prize.value}€
+                        {slot.prize?.valorDinheiroAlternative 
+                          ? `${slot.prize.valorDinheiroAlternative}€`
+                          : slot.prize?.nome || "?"}
                       </p>
                     </div>
                   </div>
 
-                  {/* Canvas por cima */}
                   {!slot.revealed && (
                     <canvas
                       ref={(el) => {
@@ -407,7 +482,6 @@ export default function RaspadinhaPremiumPage() {
                     />
                   )}
 
-                  {/* Indicador de percentagem */}
                   {slot.scratchPercent > 10 && !slot.revealed && (
                     <div className="absolute top-1 right-1 bg-black/60 text-[8px] text-white px-1.5 py-0.5 rounded-full font-mono">
                       {slot.scratchPercent}%
@@ -417,7 +491,6 @@ export default function RaspadinhaPremiumPage() {
               ))}
             </div>
 
-            {/* Indicador para raspar */}
             {totalRevealed < 9 && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -436,7 +509,6 @@ export default function RaspadinhaPremiumPage() {
           </div>
         </motion.div>
 
-        {/* Botões de Acção */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -446,7 +518,7 @@ export default function RaspadinhaPremiumPage() {
           <button className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
             <span className="text-lg">Comprar Nova</span>
             <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
-              2€
+              {jogo?.preco ? `${jogo.preco}€` : "2€"}
             </span>
           </button>
 
@@ -460,7 +532,6 @@ export default function RaspadinhaPremiumPage() {
           )}
         </motion.div>
 
-        {/* Tabela de Prémios */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -468,57 +539,54 @@ export default function RaspadinhaPremiumPage() {
           className="bg-[#2e2928]/60 backdrop-blur-xl rounded-3xl p-5 space-y-3 border border-[#58413b]/10"
         >
           <h3 className="font-serif text-lg text-[#ffb5a0]">
-            Tabela de Prémios
+            Prémios
           </h3>
           <div className="space-y-2">
-            {[
-              {
-                icon: "military_tech",
-                label: "3x Troféu de Ouro",
-                value: "5.000€",
-                fill: true,
-                color: "#ff734b",
-              },
-              {
-                icon: "stars",
-                label: "3x Estrela d'Aldeia",
-                value: "500€",
-                fill: true,
-                color: "#ffb5a0",
-              },
-              {
-                icon: "diamond",
-                label: "3x Cristal",
-                value: "50€",
-                fill: false,
-                color: "#e0bfb7",
-              },
-            ].map((prize, i) => (
+            {jogo?.premios?.map((premio, i) => (
               <div
-                key={i}
+                key={premio.id || i}
                 className="flex items-center justify-between p-3 bg-[#393432]/40 rounded-xl"
               >
                 <div className="flex items-center gap-3">
-                  {(() => {
-                    const IconComponent = iconMap[prize.icon] || Star;
-                    return (
-                      <IconComponent
-                        style={{ color: prize.color }}
-                      />
-                    );
-                  })()}
+                  <Trophy className="text-[#ff734b]" />
                   <span className="text-sm font-medium text-[#e0bfb7]">
-                    {prize.label}
+                    {premio.nome}
                   </span>
                 </div>
-                <span className="font-bold text-[#9cefff]">{prize.value}</span>
+                <span className="font-bold text-[#9cefff]">
+                  {premio.valorDinheiroAlternative ? `${premio.valorDinheiroAlternative}€` : "-"}
+                </span>
               </div>
             ))}
+            {!jogo?.premios?.length && (
+              <>
+                <div className="flex items-center justify-between p-3 bg-[#393432]/40 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Trophy className="text-[#ff734b]" />
+                    <span className="text-sm font-medium text-[#e0bfb7]">3x Troféu de Ouro</span>
+                  </div>
+                  <span className="font-bold text-[#9cefff]">5.000€</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#393432]/40 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Star className="text-[#ffb5a0]" />
+                    <span className="text-sm font-medium text-[#e0bfb7]">3x Estrela d'Aldeia</span>
+                  </div>
+                  <span className="font-bold text-[#9cefff]">100€</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#393432]/40 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Gem className="text-[#e0bfb7]" />
+                    <span className="text-sm font-medium text-[#e0bfb7]">3x Cristal</span>
+                  </div>
+                  <span className="font-bold text-[#9cefff]">10€</span>
+                </div>
+              </>
+            )}
           </div>
         </motion.section>
       </main>
 
-      {/* Modal de Vitória */}
       <AnimatePresence>
         {showWin && winningPrize && (
           <motion.div
@@ -540,24 +608,17 @@ export default function RaspadinhaPremiumPage() {
                 transition={{ duration: 0.5, repeat: 3 }}
                 className="text-6xl mb-4"
               >
-                {(() => {
-                  const IconComponent = iconMap[winningPrize.icon] || Trophy;
-                  return (
-                    <IconComponent
-                      style={{ color: "#ff734b" }}
-                    />
-                  );
-                })()}
+                <Trophy className="text-[#ff734b] w-16 h-16 mx-auto" />
               </motion.div>
 
               <h2 className="font-serif text-3xl font-bold text-[#ff734b] mb-2">
                 PARABÉNS!
               </h2>
               <p className="text-[#e0bfb7] mb-4">
-                Ganhou {winningPrize.label}!
+                Ganhou: {winningPrize.nome}!
               </p>
               <p className="text-5xl font-bold text-[#9cefff] mb-6">
-                {winningPrize.value}€
+                {winningPrize.valorDinheiroAlternative}€
               </p>
 
               <button
@@ -571,15 +632,14 @@ export default function RaspadinhaPremiumPage() {
         )}
       </AnimatePresence>
 
-      {/* Navegação Inferior */}
       <nav className="fixed bottom-0 left-0 w-full z-40">
         <div className="bg-[#110d0c]/90 backdrop-blur-xl border-t border-[#ff734b]/10 rounded-t-2xl shadow-[0_-8px_32px_rgba(17,13,12,0.5)]">
           <div className="flex justify-around items-center px-4 py-3">
             {[
               { icon: Home, label: "Início", active: false, route: "/" },
               { icon: Gamepad2, label: "Jogos", active: true, route: "/jogos" },
-              { icon: Trophy, label: "Prémios", active: false, route: "/jogos" },
-              { icon: User, label: "Perfil", active: false, route: "/" },
+              { icon: Trophy, label: "Prémios", active: false, route: "/premios" },
+              { icon: User, label: "Perfil", active: false, route: "/perfil" },
             ].map((item) => (
               <button
                 key={item.label}

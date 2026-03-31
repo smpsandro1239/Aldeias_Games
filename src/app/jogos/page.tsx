@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BottomNav } from "@/components/bottom-nav";
 import { UserMenuModal } from "@/components/user-menu-modal";
-import { Ticket, Trophy, Sparkles, ArrowRight, ArrowLeft, Leaf, User, LogOut, Menu } from "lucide-react";
-
-const PoioDaVacaTicket = dynamic(() => import("@/components/games/poio-da-vaca-ticket").then(m => m.default), { ssr: false });
-const UltimateRaffleTicket = dynamic(() => import("@/components/games/ultimate-raffle-ticket").then(m => m.default), { ssr: false });
-const TombolaTicket = dynamic(() => import("@/components/games/tombola-ticket").then(m => m.default), { ssr: false });
-const ScratchCard = dynamic(() => import("@/components/games/ScratchCard").then(m => m.ScratchCard), { ssr: false });
+import { Ticket, Trophy, Sparkles, ArrowRight, ArrowLeft, Leaf, User, Menu, Loader2, Gamepad2 } from "lucide-react";
 
 interface User {
   id: string;
@@ -22,19 +15,51 @@ interface User {
   aldeiaId?: string;
 }
 
+interface Jogo {
+  id: string;
+  nome: string;
+  tipo: string;
+  preco: number;
+  stockAtual: number;
+  estado: string;
+  evento?: {
+    nome: string;
+    aldeia?: { nome: string };
+  };
+}
+
 export default function JogosPage() {
   const router = useRouter();
-  const [selectedGame, setSelectedGame] = useState<"poio_da_vaca" | "rifa" | "tombola" | "raspadinha" | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [scratchCardResult, setScratchCardResult] = useState<{ ganhou: boolean; premio: { id: string; nome: string; descricao?: string | null; imagemUrl?: string | null; valorDinheiroAlternative?: number | null } } | null>(null);
+  const [jogos, setJogos] = useState<Jogo[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    fetchJogos();
   }, []);
+
+  const fetchJogos = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const headers: HeadersInit = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      
+      const res = await fetch("/api/jogos?ativos=true", { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setJogos(data.data || []);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar jogos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = useCallback(() => {
     setUser(null);
@@ -43,99 +68,40 @@ export default function JogosPage() {
     localStorage.removeItem("user");
   }, []);
 
-  const games = useMemo(() => [
-    { 
-      id: "poio_da_vaca" as const, 
-      label: "Poio da Vaca", 
-      icon: Leaf, 
-      description: "O jogo tradicional português",
-      color: "bg-primary-container/20 text-primary-container",
-      page: "/jogos/poio-da-vaca"
-    },
-    { 
-      id: "rifa" as const, 
-      label: "Rifa", 
-      icon: Ticket, 
-      description: "Sorteie os seus números",
-      color: "bg-secondary-container/20 text-secondary",
-      page: "/jogos/rifa"
-    },
-    { 
-      id: "tombola" as const, 
-      label: "Tombola", 
-      icon: Trophy, 
-      description: "A grande tombolada",
-      color: "bg-tertiary-container/20 text-tertiary",
-      page: null
-    },
-    { 
-      id: "raspadinha" as const, 
-      label: "Raspadinha", 
-      icon: Sparkles, 
-      description: "Raspe e ganhe",
-      color: "bg-primary/20 text-primary",
-      page: "/jogos/raspadinha-premium"
-    },
-  ], []);
-
-  const handleGameSelect = useCallback((game: typeof games[0]) => {
-    if (game.page) {
-      router.push(game.page);
-    } else {
-      setSelectedGame(game.id);
-    }
-  }, []);
-
-  // Dados de exemplo para a raspadinha
-  const premioExemplo = {
-    id: "premio-exemplo-1",
-    nome: "Prémio Especial",
-    descricao: "Vale de 50€ para gastar em lojas parceiras",
-    imagemUrl: null,
-    valorDinheiroAlternative: 50,
-  };
-
-  const handleScratchCardReveal = (ganhou: boolean, premio: { id: string; nome: string; descricao?: string | null; imagemUrl?: string | null; valorDinheiroAlternative?: number | null }) => {
-    setScratchCardResult({ ganhou, premio });
-    if (ganhou) {
-      // Mostrar notificação de vitória
-      alert(`🎉 Parabéns! Ganhou: ${premio.nome}`);
-    }
-  };
-
-  const renderTicket = () => {
-    switch (selectedGame) {
-      case "poio_da_vaca":
-        return <PoioDaVacaTicket />;
-      case "rifa":
-        return <UltimateRaffleTicket />;
-      case "tombola":
-        return <TombolaTicket />;
+  const handleJogoClick = (jogo: Jogo) => {
+    switch (jogo.tipo) {
       case "raspadinha":
-        return (
-          <div className="flex flex-col items-center gap-6">
-            <ScratchCard
-              key="raspadinha-demo"
-              premio={premioExemplo}
-              jogoId="raspadinha-demo"
-              onRevelado={handleScratchCardReveal}
-            />
-            {scratchCardResult && (
-              <div className="mt-4 p-4 bg-gray-100 rounded-lg text-center">
-                <p className="text-lg font-semibold">
-                  {scratchCardResult.ganhou ? "🎉 Parabéns!" : "😢 Não foi desta vez"}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {scratchCardResult.ganhou
-                    ? `Ganhou: ${scratchCardResult.premio.nome}`
-                    : "Tente novamente com outra raspadinha!"}
-                </p>
-              </div>
-            )}
-          </div>
-        );
+        router.push(`/jogos/raspadinha-premium?id=${jogo.id}`);
+        break;
+      case "poio_da_vaca":
+        router.push(`/jogos/poio-da-vaca?id=${jogo.id}`);
+        break;
+      case "rifa":
+      case "tombola":
+        router.push(`/jogos/rifa?id=${jogo.id}`);
+        break;
       default:
-        return null;
+        router.push(`/jogos/raspadinha-premium?id=${jogo.id}`);
+    }
+  };
+
+  const getGameIcon = (tipo: string) => {
+    switch (tipo) {
+      case "raspadinha": return Sparkles;
+      case "poio_da_vaca": return Leaf;
+      case "rifa": return Ticket;
+      case "tombola": return Trophy;
+      default: return Gamepad2;
+    }
+  };
+
+  const getGameLabel = (tipo: string) => {
+    switch (tipo) {
+      case "raspadinha": return "Raspadinha";
+      case "poio_da_vaca": return "Poio da Vaca";
+      case "rifa": return "Rifa";
+      case "tombola": return "Tombola";
+      default: return "Jogo";
     }
   };
 
@@ -189,37 +155,52 @@ export default function JogosPage() {
           </h2>
         </motion.section>
       
-        <div className="grid gap-4">
-          {games.map((game, index) => {
-            const Icon = game.icon;
-            return (
-              <motion.button
-                key={game.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                onClick={() => handleGameSelect(game)}
-                className="w-full text-left bg-[#1f1b19] rounded-2xl p-5 hover:scale-[1.02] transition-all border border-[#58413b]/20 shadow-lg"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-[#2e2928] flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-[#ff734b]" />
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[#ff734b]" />
+          </div>
+        ) : jogos.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-[#e0bfb7]">Nenhum jogo disponível no momento.</p>
+            <p className="text-sm text-[#e0bfb7]/60 mt-2">Volte mais tarde!</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {jogos.map((jogo, index) => {
+              const Icon = getGameIcon(jogo.tipo);
+              const label = getGameLabel(jogo.tipo);
+              return (
+                <motion.button
+                  key={jogo.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => handleJogoClick(jogo)}
+                  className="w-full text-left bg-[#1f1b19] rounded-2xl p-5 hover:scale-[1.02] transition-all border border-[#58413b]/20 shadow-lg"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-[#2e2928] flex items-center justify-center">
+                      <Icon className="w-7 h-7 text-[#ff734b]" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-serif text-xl font-bold text-[#ffb5a0]">{jogo.nome}</h3>
+                      <p className="text-sm text-[#e0bfb7] mt-1">
+                        {jogo.evento?.aldeia?.nome || "Aldeias Games"} • {jogo.preco}€
+                      </p>
+                      <p className="text-xs text-[#e0bfb7]/60 mt-1">
+                        {jogo.stockAtual} disponíveis
+                      </p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-[#ff734b]" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-serif text-xl font-bold text-[#ffb5a0]">{game.label}</h3>
-                    <p className="text-sm text-[#e0bfb7] mt-1">{game.description}</p>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-[#ff734b]" />
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
       </main>
 
-      {/* User Menu Modal */}
       <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
-
       <BottomNav />
     </div>
   );
