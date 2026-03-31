@@ -68,9 +68,14 @@ export async function sendWinnerSMS(
   telefone: string,
   nome: string,
   jogoNome: string,
-  premio: string
+  premio: string,
+  hash?: string
 ): Promise<boolean> {
-  const message = `Parabens ${nome}! Voce ganhou o sorteio ${jogoNome} - Premio: ${premio}. Contacte a organizacao para receber. - Aldeias Games`;
+  let message = `Parabens ${nome}! Voce ganhou o sorteio ${jogoNome} - Premio: ${premio}.`;
+  if (hash) {
+    message += ` Codigo de verificacao: ${hash}`;
+  }
+  message += ` Contacte a organizacao para receber. - Aldeias Games`;
   return sendSMS({ to: telefone, message: message });
 }
 
@@ -78,8 +83,44 @@ export async function sendTicketSMS(
   telefone: string,
   nome: string,
   jogoNome: string,
-  numeros: string[]
+  numeros: string[],
+  hash?: string
 ): Promise<boolean> {
-  const message = `Ola ${nome}! O seu bilhete para ${jogoNome}: ${numeros.join(', ')}. Boa sorte! - Aldeias Games`;
+  let message = `Ola ${nome}! O seu bilhete para ${jogoNome}: ${numeros.join(', ')}.`;
+  if (hash) {
+    message += ` Hash: ${hash}`;
+  }
+  message += ` Boa sorte! - Aldeias Games`;
+  return sendSMS({ to: telefone, message: message });
+}
+
+export async function sendRaspadinhaSMS(
+  telefone: string,
+  nome: string,
+  jogoNome: string,
+  resultado: string,
+  hash?: string
+): Promise<boolean> {
+  let message = `Ola ${nome}! Resultado da Raspadinha ${jogoNome}: ${resultado}.`;
+  if (hash) {
+    message += ` Codigo de verificacao: ${hash}`;
+  }
+  message += ` - Aldeias Games`;
+  return sendSMS({ to: telefone, message: message });
+}
+
+export async function sendPoioDaVacaSMS(
+  telefone: string,
+  nome: string,
+  jogoNome: string,
+  coordenadas: { letra: string; numero: number }[],
+  hash?: string
+): Promise<boolean> {
+  const coordsStr = coordenadas.map(c => `${c.letra}${c.numero}`).join(', ');
+  let message = `Ola ${nome}! Os seus numeros no ${jogoNome}: ${coordsStr}.`;
+  if (hash) {
+    message += ` Codigo de verificacao: ${hash}`;
+  }
+  message += ` Boa sorte! - Aldeias Games`;
   return sendSMS({ to: telefone, message: message });
 }

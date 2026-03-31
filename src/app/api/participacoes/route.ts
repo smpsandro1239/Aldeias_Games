@@ -258,14 +258,43 @@ export async function POST(request: NextRequest) {
           emailCliente: data.dadosCliente?.email,
         };
 
+        // Gerar hash para todos os tipos de jogo (segurança)
+        const seed = generateSeed();
+        const timestamp = new Date().toISOString();
+        
         if (jogo.tipo === 'raspadinha') {
-          const seed = generateSeed();
           const resultado = determineRaspadinhaResult(jogo.configuracao, jogo.stockInicial, jogo.stockAtual - i);
-          const hash = generateHash(seed, resultado, jogo.stockAtual - i);
+          const hash = generateHash(seed, resultado, jogo.stockAtual - i, timestamp);
           
           dados.seedRaspe = seed;
           dados.hashRaspe = hash;
           dados.resultadoRaspe = resultado;
+        } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
+          // Para rifas, usar os números selecionados como "resultado"
+          const numerosSelecionados = data.dadosParticipacao?.numeros || [];
+          const resultado = JSON.stringify(numerosSelecionados);
+          const hash = generateHash(seed, resultado, jogo.stockAtual - i, timestamp);
+          
+          dados.hashParticipacao = hash;
+          dados.dadosVerificacao = JSON.stringify({
+            seed,
+            timestamp,
+            numeros: numerosSelecionados,
+            hash
+          });
+        } else if (jogo.tipo === 'poio_da_vaca') {
+          // Para poio da vaca, usar as coordenadas como "resultado"
+          const coordenadas = data.dadosParticipacao?.coordenadas || [];
+          const resultado = JSON.stringify(coordenadas);
+          const hash = generateHash(seed, resultado, jogo.stockAtual - i, timestamp);
+          
+          dados.hashParticipacao = hash;
+          dados.dadosVerificacao = JSON.stringify({
+            seed,
+            timestamp,
+            coordenadas,
+            hash
+          });
         }
 
         const participacao = await tx.participacao.create({
@@ -393,10 +422,13 @@ function generateSeed(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function generateHash(seed: string, resultado: string, cardNumber: number): string {
+function generateHash(seed: string, resultado: string, cardNumber: number, timestamp?: string): string {
+  const data = timestamp 
+    ? `${seed}:${resultado}:${cardNumber}:${timestamp}`
+    : `${seed}:${resultado}:${cardNumber}`;
   return crypto
     .createHash('sha256')
-    .update(`${seed}:${resultado}:${cardNumber}`)
+    .update(data)
     .digest('hex');
 }
 

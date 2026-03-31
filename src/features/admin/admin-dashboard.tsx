@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
 import { GameQuickActions } from "@/components/game-quick-actions";
+import { VerificarHashModal } from "@/components/verificar-hash-modal";
 import { DashboardAnalytics } from "./analytics-dashboard";
 import { toast } from "sonner";
 
@@ -65,6 +66,9 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   
   // Modal de confirmar entrega
   const [confirmEntregaOpen, setConfirmEntregaOpen] = useState(false);
+
+  // Modal de verificar hash
+  const [verificarHashOpen, setVerificarHashOpen] = useState(false);
 
   // Selections
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
@@ -384,6 +388,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
           <TabsTrigger value="eventos"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
           <TabsTrigger value="jogos"><Gamepad2 className="h-4 w-4 mr-2" /> Jogos</TabsTrigger>
           <TabsTrigger value="vencedores"><Trophy className="h-4 w-4 mr-2" /> Vencedores</TabsTrigger>
+          <TabsTrigger value="verificar"><Hash className="h-4 w-4 mr-2" /> Verificar</TabsTrigger>
           <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" /> Utilizadores</TabsTrigger>
           {userRole === "super_admin" && (
             <TabsTrigger value="aldeias"><Building2 className="h-4 w-4 mr-2" /> Aldeias</TabsTrigger>
@@ -558,6 +563,27 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
           </div>
         </TabsContent>
 
+        <TabsContent value="verificar" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Hash className="h-5 w-5 text-primary" />
+                Verificar Participação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Introduza o hash de uma participação para verificar a sua autenticidade antes de entregar o prémio.
+                O sistema verificará se o hash corresponde aos registros e permitirá confirmar a entrega.
+              </p>
+              <Button onClick={() => setVerificarHashOpen(true)}>
+                <Hash className="h-4 w-4 mr-2" />
+                Verificar Hash
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="users" className="space-y-4">
           <div className="flex justify-between">
             <h2 className="text-xl font-semibold">Gestão de Utilizadores</h2>
@@ -699,6 +725,12 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
       <ResultadosExternosModal
         open={resultadosExternosOpen}
         onOpenChange={setResultadosExternosOpen}
+        token={token}
+      />
+
+      <VerificarHashModal
+        open={verificarHashOpen}
+        onOpenChange={setVerificarHashOpen}
         token={token}
       />
     </div>

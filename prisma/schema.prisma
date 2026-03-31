@@ -444,6 +444,10 @@ model Participacao {
   revelado       Boolean   @default(false)
   dataRevelacao  DateTime?
 
+  // Verificação de integridade (todos os jogos)
+  hashParticipacao String? // Hash único da participação
+  dadosVerificacao String? // JSON com seed, timestamp, dados para verificação
+
   // Vendedor (se aplicável)
   vendedorId String?
 
