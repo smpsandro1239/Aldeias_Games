@@ -24,7 +24,11 @@ interface NumberSelectorModalProps {
   numerosSelecionados: number[];
   onSelect: (numeros: number[]) => void;
   onConfirm: () => void;
+  onConfirmWithPayment?: () => void;
   preco: number;
+  saldoDisponivel?: number;
+  onMBWayPayment?: (telefone: string) => Promise<void>;
+  onSaldoPayment?: () => Promise<void>;
 }
 
 export function NumberSelectorModal({
@@ -37,6 +41,10 @@ export function NumberSelectorModal({
   onSelect,
   onConfirm,
   preco,
+  saldoDisponivel = 0,
+  onMBWayPayment,
+  onSaldoPayment,
+  onConfirmWithPayment,
 }: NumberSelectorModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -221,12 +229,12 @@ export function NumberSelectorModal({
               Cancelar
             </Button>
             <Button
-              onClick={onConfirm}
+              onClick={onConfirmWithPayment || onConfirm}
               disabled={numerosSelecionados.length === 0}
               className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Confirmar ({valorTotal.toFixed(2)}€)
+              {onConfirmWithPayment ? "Escolher Pagamento" : `Confirmar (${valorTotal.toFixed(2)}€)`}
             </Button>
           </div>
         </div>

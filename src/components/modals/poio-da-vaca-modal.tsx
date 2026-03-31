@@ -26,6 +26,10 @@ interface PoioDaVacaModalProps {
   precoCartao: number;
   onSelect: (selecao: { letra: string; numero: number }[]) => void;
   onConfirm: () => void;
+  onConfirmWithPayment?: () => void;
+  saldoDisponivel?: number;
+  onMBWayPayment?: (telefone: string) => Promise<void>;
+  onSaldoPayment?: () => Promise<void>;
 }
 
 export function PoioDaVacaModal({
@@ -39,6 +43,10 @@ export function PoioDaVacaModal({
   precoCartao,
   onSelect,
   onConfirm,
+  onConfirmWithPayment,
+  saldoDisponivel = 0,
+  onMBWayPayment,
+  onSaldoPayment,
 }: PoioDaVacaModalProps) {
   const [selecao, setSelecao] = useState<{ letra: string; numero: number }[]>([]);
   const [modo, setModo] = useState<"individual" | "cartao">("individual");
@@ -96,7 +104,11 @@ export function PoioDaVacaModal({
 
   const handleConfirm = () => {
     onSelect(selecao);
-    onConfirm();
+    if (onConfirmWithPayment) {
+      onConfirmWithPayment();
+    } else {
+      onConfirm();
+    }
     setSelecao([]);
   };
 

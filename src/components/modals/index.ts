@@ -5,6 +5,8 @@ export { ProfileModal } from "./profile-modal";
 export { CreateEventoModal } from "./create-evento-modal";
 export { CreateJogoModal } from "./create-jogo-modal";
 export { PaymentModal } from "./payment-modal";
+export { SelectPaymentModal } from "./select-payment-modal";
+export { PaymentMethodModal } from "./payment-method-modal";
 export { ScratchCardModal } from "./scratch-card-modal";
 export { NumberSelectorModal } from "./number-selector-modal";
 export { PoioDaVacaModal } from "./poio-da-vaca-modal";

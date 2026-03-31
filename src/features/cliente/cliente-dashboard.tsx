@@ -15,7 +15,7 @@ import {
   Play,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes } from "@/components/modals";
+import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes, SelectPaymentModal } from "@/components/modals";
 import { SkeletonStats, SkeletonGrid, SkeletonList } from "@/components/modals";
 import { toast } from "sonner";
 import { WalletCard } from "@/components/wallet/wallet-card";
@@ -554,11 +554,9 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           valor={selectedJogo.preco}
           descricao={selectedJogo.nome}
           saldoDisponivel={saldo}
+          userRole="stripe_blocked"
           onMBWayPayment={async () => {
             await handleConfirmarPagamento("mbway");
-          }}
-          onStripePayment={async () => {
-            await handleConfirmarPagamento("stripe");
           }}
           onSaldoPayment={async () => {
             await handleConfirmarPagamento("saldo");

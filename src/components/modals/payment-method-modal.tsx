@@ -13,31 +13,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Smartphone, Wallet } from "lucide-react";
+import { Smartphone, Wallet } from "lucide-react";
 
-interface PaymentModalProps {
+interface PaymentMethodModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   valor: number;
   descricao: string;
-  saldoDisponivel?: number;
-  userRole?: string;
+  saldoDisponivel: number;
   onMBWayPayment: (telefone: string) => Promise<void>;
-  onStripePayment?: () => Promise<void>;
-  onSaldoPayment?: () => Promise<void>;
+  onSaldoPayment: () => Promise<void>;
 }
 
-export function PaymentModal({
+export function PaymentMethodModal({
   open,
   onOpenChange,
   valor,
   descricao,
-  saldoDisponivel = 0,
-  userRole = "user",
+  saldoDisponivel,
   onMBWayPayment,
-  onStripePayment,
   onSaldoPayment,
-}: PaymentModalProps) {
+}: PaymentMethodModalProps) {
   const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
   const [metodo, setMetodo] = useState(saldoDisponivel >= valor ? "saldo" : "mbway");
@@ -53,19 +49,7 @@ export function PaymentModal({
     }
   };
 
-  const handleStripeSubmit = async () => {
-    if (!onStripePayment) return;
-    setLoading(true);
-    try {
-      await onStripePayment();
-      onOpenChange(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSaldoSubmit = async () => {
-    if (!onSaldoPayment) return;
     setLoading(true);
     try {
       await onSaldoPayment();
@@ -75,55 +59,49 @@ export function PaymentModal({
     }
   };
 
+  const podeUsarSaldo = saldoDisponivel >= valor;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Pagamento</DialogTitle>
+          <DialogTitle>Escolher Método de Pagamento</DialogTitle>
           <DialogDescription>
             {descricao} - Total: <strong>{valor.toFixed(2)}€</strong>
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={metodo} onValueChange={setMetodo} className="w-full">
-          <TabsList className={`grid w-full ${onSaldoPayment && userRole !== 'stripe_blocked' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {onSaldoPayment && userRole !== 'stripe_blocked' && (
+          <TabsList className="grid w-full grid-cols-2">
+            {podeUsarSaldo && (
               <TabsTrigger value="saldo">
                 <Wallet className="h-4 w-4 mr-2" />
                 Saldo
               </TabsTrigger>
             )}
-            {userRole !== 'stripe_blocked' && (
-              <TabsTrigger value="mbway">
-                <Smartphone className="h-4 w-4 mr-2" />
-                MBWay
-              </TabsTrigger>
-            )}
-            {onStripePayment && userRole !== 'stripe_blocked' && (
-              <TabsTrigger value="stripe">
-                <CreditCard className="h-4 w-4 mr-2" />
-                Cartão
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="mbway">
+              <Smartphone className="h-4 w-4 mr-2" />
+              MBWay
+            </TabsTrigger>
           </TabsList>
 
-          {onSaldoPayment && userRole !== 'stripe_blocked' && (
+          {podeUsarSaldo && (
             <TabsContent value="saldo">
               <div className="py-6 text-center space-y-4">
                 <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-xl border border-primary/20">
                   <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Saldo Disponível</span>
-                  <span className={`text-3xl font-black ${saldoDisponivel >= valor ? 'text-primary' : 'text-destructive'}`}>
+                  <span className={`text-3xl font-black ${podeUsarSaldo ? 'text-primary' : 'text-destructive'}`}>
                     {saldoDisponivel.toFixed(2)}€
                   </span>
                 </div>
                 
-                {saldoDisponivel < valor ? (
-                  <p className="text-sm text-destructive font-medium">
-                    Saldo insuficiente para esta compra.
-                  </p>
-                ) : (
+                {podeUsarSaldo ? (
                   <p className="text-sm text-muted-foreground">
                     Ao confirmar, o valor será deduzido da sua carteira Aldeias.
+                  </p>
+                ) : (
+                  <p className="text-sm text-destructive font-medium">
+                    Saldo insuficiente. Use MBWay.
                   </p>
                 )}
               </div>
@@ -134,7 +112,7 @@ export function PaymentModal({
                 </Button>
                 <Button 
                   onClick={handleSaldoSubmit} 
-                  disabled={loading || saldoDisponivel < valor}
+                  disabled={loading || !podeUsarSaldo}
                 >
                   {loading ? "A processar..." : "Pagar com Saldo"}
                 </Button>
@@ -146,7 +124,7 @@ export function PaymentModal({
             <form onSubmit={handleMBWaySubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="telefone">Número de Telefone</Label>
+                  <Label htmlFor="telefone">Número de Telefone MBWay</Label>
                   <Input
                     id="telefone"
                     type="tel"
@@ -156,7 +134,7 @@ export function PaymentModal({
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Receberá uma notificação no seu telemóvel para aceitar o pagamento.
+                    Receberá uma notificação no telemóvel para aceitar o pagamento.
                   </p>
                 </div>
               </div>
@@ -170,23 +148,6 @@ export function PaymentModal({
                 </Button>
               </DialogFooter>
             </form>
-          </TabsContent>
-
-          <TabsContent value="stripe">
-            <div className="py-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Será redirecionado para o checkout seguro do Stripe para completar o pagamento.
-              </p>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleStripeSubmit} disabled={loading}>
-                {loading ? "A redirecionar..." : "Pagar com Cartão"}
-              </Button>
-            </DialogFooter>
           </TabsContent>
         </Tabs>
       </DialogContent>
