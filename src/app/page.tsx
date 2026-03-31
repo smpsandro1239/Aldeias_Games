@@ -190,10 +190,26 @@ export default function Home() {
         setLoginModalOpen(false);
         setLoginForm({ email: "", password: "" });
         
-        // Show dashboard inline based on role
+        // Redirect based on role
         toast.success(`Bem-vindo, ${data.user.nome}!`);
         
-        toast.success("Login bem-sucedido!");
+        setTimeout(() => {
+          switch (data.user.role) {
+            case "super_admin":
+              router.push("/superadmindashboard");
+              break;
+            case "aldeia_admin":
+              router.push("/admindashboard");
+              break;
+            case "vendedor":
+              router.push("/vendedordashboard");
+              break;
+            case "user":
+            default:
+              router.push("/clientedashboard");
+              break;
+          }
+        }, 100);
       } else {
         toast.error(data.error || "Erro ao fazer login");
       }
@@ -258,6 +274,24 @@ export default function Home() {
         localStorage.setItem("user", JSON.stringify(data.user));
         setLoginModalOpen(false);
         toast.success(`Bem-vindo, ${data.user.nome}!`);
+        
+        setTimeout(() => {
+          switch (data.user.role) {
+            case "super_admin":
+              router.push("/superadmindashboard");
+              break;
+            case "aldeia_admin":
+              router.push("/admindashboard");
+              break;
+            case "vendedor":
+              router.push("/vendedordashboard");
+              break;
+            case "user":
+            default:
+              router.push("/clientedashboard");
+              break;
+          }
+        }, 100);
       }
     } catch (error) {
       toast.error("Erro no quick login");

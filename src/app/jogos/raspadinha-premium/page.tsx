@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, Loader2 } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House } from "lucide-react";
 import { UserMenuButton } from "@/components/user-menu-button";
 import { toast } from "sonner";
 
@@ -390,7 +390,7 @@ export default function RaspadinhaPremiumPage() {
     return (
       <div className="min-h-screen bg-[#110d0c] text-[#eae0de] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[#ff734b]" />
+          <House className="h-8 w-8 text-[#ff734b] animate-pulse" />
           <p className="text-sm text-[#e0bfb7]">A carregar jogo...</p>
         </div>
       </div>
