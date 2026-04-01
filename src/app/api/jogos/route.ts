@@ -3,6 +3,70 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { createJogoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
+import { createHash } from 'crypto';
+
+function gerarHashVerificacao(dados: {
+  tipo: string;
+  nome: string;
+  preco: number;
+  stock: number;
+  premios: Array<{ nome?: string; valor?: number; percentagem?: number }>;
+  lucroMinimoPercent: number;
+  custoMedioPrevisto: number;
+  receitaEsperada: number;
+  lucroLiquidoPrevisto: number;
+}): string {
+  const texto = JSON.stringify({
+    ...dados,
+    timestamp: new Date().toISOString(),
+    versao: '1.0'
+  });
+  
+  const hash = createHash('sha256').update(texto).digest('hex');
+  return `AG-${hash.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+}
+
+function calcularRentabilidade(tipo: string, dados: any) {
+  const resultado = {
+    lucroMinimoPercent: 0,
+    custoMedioPrevisto: 0,
+    receitaEsperada: 0,
+    lucroLiquidoPrevisto: 0,
+    percentagemTotalPremios: 0
+  };
+  
+  const preco = dados.preco || 0;
+  const stock = dados.stockInicial || 0;
+  resultado.receitaEsperada = preco * stock;
+  
+  if (tipo === 'raspadinha') {
+    const premios = dados.premios || [];
+    resultado.percentagemTotalPremios = premios.reduce((acc: number, p: any) => acc + (p.percentagem || 0), 0);
+    resultado.lucroMinimoPercent = 100 - resultado.percentagemTotalPremios;
+    resultado.custoMedioPrevisto = premios.reduce((acc: number, p: any) => 
+      acc + ((p.valorDinheiroAlternative || 0) * (p.percentagem || 0) / 100), 0);
+    resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - (resultado.custoMedioPrevisto * stock);
+  } else if (tipo === 'rifa' || tipo === 'tombola') {
+    const premios = dados.premios || [];
+    const custoTotalPremios = premios.reduce((acc: number, p: any) => acc + (p.valorDinheiroAlternative || 0), 0);
+    resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - custoTotalPremios;
+    resultado.lucroMinimoPercent = resultado.receitaEsperada > 0 
+      ? (resultado.lucroLiquidoPrevisto / resultado.receitaEsperada) * 100 
+      : 0;
+  } else if (tipo === 'poio_da_vaca') {
+    const dimensoes = JSON.parse(dados.dimensoesCampo || '{}');
+    const totalQuadrados = (dimensoes.x || 10) * (dimensoes.y || 10);
+    const custoQuadrado = dados.custoQuadrado || 0;
+    const valorCompraVaca = dados.valorCompraVaca || 0;
+    resultado.receitaEsperada = totalQuadrados * custoQuadrado;
+    resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - valorCompraVaca;
+    resultado.lucroMinimoPercent = resultado.receitaEsperada > 0 
+      ? (resultado.lucroLiquidoPrevisto / resultado.receitaEsperada) * 100 
+      : 0;
+  }
+  
+  return resultado;
+}
 
 // GET - Listar jogos
 export async function GET(request: NextRequest) {
@@ -161,33 +225,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Calcular rentabilidade
+    const rentabilidade = calcularRentabilidade(data.tipo, data);
+    
+    // Gerar hash de verificação
+    const hashVerificacao = gerarHashVerificacao({
+      tipo: data.tipo,
+      nome: data.nome,
+      preco: data.preco,
+      stock: data.stockInicial,
+      premios: data.premios || [],
+      ...rentabilidade
+    });
+    
+    // Verificar lucro mínimo (50% mínimo)
+    if (rentabilidade.lucroMinimoPercent < 50 && data.tipo === 'raspadinha') {
+      return NextResponse.json(
+        { error: 'Jogo não cumpre requisito mínimo de 50% de lucro. Ajuste os valores.' },
+        { status: 400 }
+      );
+    }
+    
+    // Preparar dados para Prisma (sem os campos novos que ainda não existem na BD)
+    const jogoData: any = {
+      nome: data.nome,
+      tipo: data.tipo,
+      descricao: data.descricao,
+      configuracao: JSON.stringify(data.configuracao),
+      preco: data.preco,
+      stockInicial: data.stockInicial,
+      stockAtual: data.stockInicial,
+      limitePorUsuario: data.limitePorUsuario,
+      estado: 'aberto',
+      dataAbertura: new Date(),
+      eventoId: data.eventoId,
+      modoSorteio: data.modoSorteio,
+      detalhesSorteioExterno: data.detalhesSorteioExterno,
+      custoQuadrado: data.custoQuadrado,
+      valorMercadoVaca: data.valorMercadoVaca,
+      valorCompraVaca: data.valorCompraVaca,
+      dimensoesCampo: data.dimensoesCampo,
+      premioId: data.premioId,
+      custoPremioDinheiro: data.custoPremioDinheiro,
+      valorPremioVaca: data.valorPremioVaca,
+      hashVerificacao: hashVerificacao,
+    };
+    
     // Criar jogo
     const jogo = await prisma.jogo.create({
       data: {
-        nome: data.nome,
-        tipo: data.tipo,
-        descricao: data.descricao,
-        configuracao: JSON.stringify(data.configuracao),
-        preco: data.preco,
-        stockInicial: data.stockInicial,
-        stockAtual: data.stockInicial,
-        limitePorUsuario: data.limitePorUsuario,
-        estado: 'aberto',
-        dataAbertura: new Date(),
-        eventoId: data.eventoId,
-        modoSorteio: data.modoSorteio,
-        detalhesSorteioExterno: data.detalhesSorteioExterno,
-        custoQuadrado: data.custoQuadrado,
-        valorMercadoVaca: data.valorMercadoVaca,
-        valorCompraVaca: data.valorCompraVaca,
-        dimensoesCampo: data.dimensoesCampo,
-        premioId: data.premioId,
-        custoPremioDinheiro: data.custoPremioDinheiro,
-        valorPremioVaca: data.valorPremioVaca,
+        ...jogoData,
         // Se vierem prémios no createJogo, criá-los
         premios: data.premios ? {
-          create: data.premios.map(p => ({
-            ...p,
+          create: data.premios.map((p: any, idx: number) => ({
+            nome: p.nome,
+            descricao: p.descricao,
+            valorDinheiroAlternative: p.valorDinheiroAlternative,
+            percentagem: p.percentagem,
+            ordem: p.ordem ?? idx,
             aldeiaId: evento.aldeiaId,
           }))
         } : undefined,

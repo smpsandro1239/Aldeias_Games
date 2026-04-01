@@ -318,6 +318,12 @@ model Jogo {
   
   // Rentabilidade (calculada automaticamente)
   rentabilidadePercentual Float? // Percentual de rentabilidade do jogo
+  lucroMinimoPercent    Float?  // Lucro mínimo garantido (ex: 83%)
+  custoMedioPrevisto     Float?  // Custo médio por bilhete/unidade
+  receitaEsperada       Float?  // Receita total esperada
+  lucroLiquidoPrevisto  Float?  // Lucro líquido previsto
+  percentagemTotalPremios Float? // Percentagem total dos prémios (raspadinha)
+  hashVerificacao       String? // Hash SHA-256 para auditoria
 
   // Estado
   estado       EstadoJogo @default(aberto)
@@ -402,7 +408,8 @@ model Premio {
   descricao     String?
   imagemUrl     String?
   valorDinheiroAlternative Float?
-  ordem                    Int     @default(0)
+  percentagem   Float?      // Percentagem de saída (raspadinha)
+  ordem        Int         @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
