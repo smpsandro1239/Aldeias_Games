@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -8,6 +8,17 @@ import { useScratchSound } from "@/hooks/useScratchSound";
 import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House } from "lucide-react";
 import { UserMenuButton } from "@/components/user-menu-button";
 import { toast } from "sonner";
+
+function RaspadinhaLoading() {
+  return (
+    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <House className="h-8 w-8 text-[#ff734b] animate-pulse" />
+        <p className="text-sm text-[#e0bfb7]">A carregar jogo...</p>
+      </div>
+    </div>
+  );
+}
 
 const iconMap: Record<string, LucideIcon> = {
   military_tech: Trophy,
@@ -63,7 +74,7 @@ interface SlotState {
   scratchPercent: number;
 }
 
-export default function RaspadinhaPremiumPage() {
+function RaspadinhaPremiumContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const jogoId = searchParams.get("id");
@@ -411,14 +422,7 @@ export default function RaspadinhaPremiumPage() {
   }, [slots]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <House className="h-8 w-8 text-[#ff734b] animate-pulse" />
-          <p className="text-sm text-[#e0bfb7]">A carregar jogo...</p>
-        </div>
-      </div>
-    );
+    return <RaspadinhaLoading />;
   }
 
   const titulo = jogo?.configuracao?.titulo || jogo?.nome || "RASPADINHA PREMIUM";
@@ -687,5 +691,13 @@ export default function RaspadinhaPremiumPage() {
         </div>
       </nav>
     </div>
+  );
+}
+
+export default function RaspadinhaPremiumPage() {
+  return (
+    <Suspense fallback={<RaspadinhaLoading />}>
+      <RaspadinhaPremiumContent />
+    </Suspense>
   );
 }

@@ -366,7 +366,7 @@ export default function PoioDaVacaPage() {
       } else if (metodo === "saldo") {
         const token = localStorage.getItem("token");
         if (!token) {
-          toast.error("Precisa de登录 para usar saldo");
+          toast.error("Precisa de sessão para usar saldo");
           return;
         }
         const res = await fetch("/api/wallet/adjust", {
@@ -390,7 +390,7 @@ export default function PoioDaVacaPage() {
       } else if (metodo === "mbway") {
         const token = localStorage.getItem("token");
         if (!token) {
-          toast.error("Precisa de登录 para usar MBWay");
+          toast.error("Precisa de sessão para usar MBWay");
           return;
         }
         const tel = jogadorForm.telefone;
@@ -420,7 +420,7 @@ export default function PoioDaVacaPage() {
       } else if (metodo === "stripe") {
         const token = localStorage.getItem("token");
         if (!token) {
-          toast.error("Precisa de登录 para usar Stripe");
+          toast.error("Precisa de sessão para usar Stripe");
           return;
         }
         const res = await fetch("/api/stripe/checkout", {
