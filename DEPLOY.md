@@ -1,74 +1,53 @@
 # Deploy Guide - Aldeias Games
 
-## Vercel Deployment Guide
+## Visão Geral
 
-### Prerequisites
-- [Vercel Account](https://vercel.com)
-- [GitHub Repository](https://github.com/smpsandro1239/Aldeias_Games)
-- PostgreSQL Database
+Este guia explica como fazer deploy do projeto Aldeias Games para Vercel com PostgreSQL (Neon).
 
-### Step 1: Create Vercel Postgres
+---
 
-1. Go to [vercel.com/dashboard](https://vercel.com/dashboard)
-2. Click "Storage" → "Create Database"
-3. Select "Postgres" → "Create"
-4. Choose region closest to your users (Lisbon recommended for PT)
-5. Copy the `POSTGRES_URL` connection string
+## Step 1: Criar Base de Dados Neon
 
-### Step 2: Import Project to Vercel
+1. Vai a https://console.neon.tech
+2. Cria um novo projeto:
+   - **Name:** aldeias-games
+   - **Region:** EU West (London)
+   - **Version:** PostgreSQL 15
+3. Copia a connection string (vai ser algo como `postgresql://user:password@ep-xxx.eu-west-2.aws.neon.tech/neondb`)
 
-**Option A: Via GitHub Integration (Recommended)**
-1. Go to [vercel.com/new](https://vercel.com/new)
-2. Click "Import Project"
-3. Select your GitHub repository: `smpsandro1239/Aldeias_Games`
-4. Framework: Next.js (auto-detected)
-5. Build Command: `prisma generate && next build` (pre-filled)
-6. Click "Deploy"
-
-**Option B: Via Vercel CLI**
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Login
-vercel login
-
-# Link project
-vercel link
-
-# Add Postgres
-vercel env add POSTGRES_URL
-
-# Deploy
-vercel --prod
+**Importante:** Usa o **pooler endpoint** para evitar problemas de conexão:
+```
+postgresql://neondb_owner:password@ep-patient-haze-abnxdpma-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 ```
 
-### Step 3: Configure Environment Variables
+---
 
-In Vercel Dashboard → Project → Settings → Environment Variables:
+## Step 2: Configurar Variáveis de Ambiente na Vercel
 
-| Name | Value | Environments |
-|------|-------|--------------|
-| `DATABASE_URL` | (from Postgres) | Production, Preview, Development |
-| `JWT_SECRET` | Random 32+ char string | All |
-| `NEXT_PUBLIC_BASE_URL` | `https://your-project.vercel.app` | All |
-| `STRIPE_SECRET_KEY` | `sk_live_...` | Production |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` | All |
-| `STRIPE_WEBHOOK_SECRET` | `whsec_...` | Production |
-| `MBWAY_API_URL` | `https://api.mbway.pt` | Production |
-| `MBWAY_API_KEY` | Your API key | Production |
-| `MBWAY_ENTITY_PHONE` | Your phone | Production |
-| `MBWAY_ENTITY_CODE` | Your entity code | Production |
-| `MBWAY_SANDBOX` | `false` | Production |
+### Opção A: Via Dashboard
 
-**Generate JWT_SECRET:**
+1. Vai a https://vercel.com/smpsandro1239s-projects/aldeias-games/settings/environment-variables
+2. Adiciona cada variável:
+
+| Name | Value | Environment |
+|------|-------|-------------|
+| `DATABASE_URL` | `postgresql://neondb_owner:npg_xxx@ep-xxx-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require` | Production |
+| `JWT_SECRET` | String aleatória 32+ caracteres | Production |
+| `NEXT_PUBLIC_APP_URL` | `https://aldeias-games.vercel.app` | Production |
+| `NEXT_PUBLIC_BASE_URL` | `https://aldeias-games.vercel.app` | Production |
+
+### Opção B: Via CLI (Recomendado para automatização)
+
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Deploy com variável inline
+npx vercel --prod --yes --env DATABASE_URL="postgresql://neondb_owner:password@ep-xxx-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 ```
 
-### Step 4: Update Prisma Schema (Optional)
+---
 
-If using Vercel Postgres, update your `prisma/schema.prisma`:
+## Step 3: Configurar Prisma
+
+Verifica que `prisma/schema.prisma` está configurado para PostgreSQL:
 
 ```prisma
 datasource db {
@@ -77,71 +56,140 @@ datasource db {
 }
 ```
 
-### Step 5: Database Setup
+---
 
-After first deploy, run migrations:
+## Step 4: Deploy Automático (GitHub Actions)
 
-**Option A: Vercel CLI**
+O projeto já tem GitHub Actions configurado. Faz push para main e o deploy acontece automaticamente.
+
+### Deploy Manual (CLI)
+
 ```bash
-vercel env pull .env.local
-npx prisma db push
-npx prisma db seed
+# Install Vercel CLI
+npm i -g vercel
+
+# Login
+vercel login
+
+# Deploy produção
+npx vercel --prod --yes --token VERCEL_TOKEN
 ```
 
-**Option B: Prisma Studio**
+**Com token específico:**
 ```bash
+npx vercel --prod --yes --token SEU_VERCEL_TOKEN
+```
+
+---
+
+## Step 5: Verificar Deploy
+
+Após o deploy, verifica que tudo funciona:
+
+1. **Página principal:** https://aldeias-games.vercel.app
+2. **API Health:** https://aldeias-games.vercel.app/api/health
+
+---
+
+## Problemas Comuns e Soluções
+
+### ❌ Internal Server Error (500)
+
+**Causa:** DATABASE_URL não está configurada corretamente.
+
+**Solução:**
+1. Verifica que a variável `DATABASE_URL` está nas Environment Variables da Vercel
+2. Usa o **pooler endpoint** (termina em `-pooler.`)
+3. Adiciona `&channel_binding=require` à connection string
+
+### ❌ Build Failures
+
+**Soluções:**
+```bash
+# Regenera Prisma Client
+npx prisma generate
+
+# Verifica schema
+npx prisma validate
+```
+
+### ❌ Database Connection Errors
+
+**Verificar Neon:**
+1. Vai a https://console.neon.tech
+2. Verifica que o projeto está **ativo** (Estado: active)
+3. Usa o endpoint correto do pooler
+
+---
+
+## Variáveis de Ambiente Necessárias
+
+### Produção (Obrigatório)
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `DATABASE_URL` | Connection string Neon | `postgresql://...` |
+| `JWT_SECRET` | Chave JWT (32+ chars) | `random-string...` |
+
+### Produção (Opcional - Pagamentos)
+| Variável | Descrição |
+|----------|-----------|
+| `STRIPE_SECRET_KEY` | Chave Stripe |
+| `STRIPE_WEBHOOK_SECRET` | Webhook Stripe |
+| `MBWAY_API_KEY` | API Key MBWay |
+| `MBWAY_ENTITY_CODE` | Código entidade MBWay |
+| `MBWAY_ENTITY_PHONE` | Telefone entidade MBWay |
+
+### Desenvolvimento
+| Variável | Valor |
+|----------|-------|
+| `DATABASE_URL` | `file:./dev.db` (SQLite local) |
+| `NODE_ENV` | `development` |
+
+---
+
+## Comandos Úteis
+
+```bash
+# Desenvolvimento local
+npm run dev
+
+# Build local
+npm run build
+
+# Push schema para base de dados
+npx prisma db push
+
+# Gerar Prisma Client
+npx prisma generate
+
+# Abrir Prisma Studio
 npx prisma studio
 ```
 
-### Step 6: Custom Domain (Optional)
+---
 
-1. Go to Project Settings → Domains
-2. Add your domain (e.g., `jogos.minha-aldeia.pt`)
-3. Update `NEXT_PUBLIC_BASE_URL` with your domain
-4. Configure DNS records as instructed
+## Estrutura do Projeto
 
-### Troubleshooting
-
-**Build Failures:**
-- Ensure `DATABASE_URL` is set
-- Check Prisma client generates correctly
-- Verify Node.js version (20+)
-
-**Runtime Errors:**
-- Check Vercel Function logs
-- Verify environment variables match local .env
-- Ensure Stripe webhook URL is configured
-
-**Database Connection:**
-- Vercel Postgres requires connection via HTTP proxy
-- Connection string format: `postgres://default:...@.../verceldb?sslmode=require`
-
-## Useful Commands
-
-```bash
-# Local development
-npm run dev
-
-# Build locally
-npm run build
-
-# Database
-npm run db:push    # Push schema
-npm run db:seed    # Seed data
-npm run db:studio  # Open Prisma Studio
-
-# Tests
-npm run test
+```
+aldeias-games/
+├── prisma/
+│   └── schema.prisma    # Schema da base de dados
+├── src/
+│   ├── app/             # Next.js App Router
+│   │   ├── api/         # API routes
+│   │   └── jogos/       # Páginas de jogos
+│   ├── components/      # Componentes React
+│   └── lib/             # Utilitários (db, utils)
+├── vercel.json         # Configuração Vercel
+├── DEPLOY.md          # Este guia
+└── package.json
 ```
 
-## Quick Deploy (One-Liner)
+---
 
-```bash
-vercel --prod --yes --token YOUR_VERCEL_TOKEN
-```
+## Suporte
 
-## Support
-
-- Vercel Docs: https://vercel.com/docs
-- Prisma Docs: https://prisma.io/docs
-- Project Issues: https://github.com/smpsandro1239/Aldeias_Games/issues
+- **Vercel:** https://vercel.com/docs
+- **Neon:** https://neon.tech/docs
+- **Prisma:** https://prisma.io/docs
+- **Issues:** https://github.com/smpsandro1239/Aldeias_Games/issues
