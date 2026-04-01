@@ -272,17 +272,32 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
     };
   }, [formData.dimensoesX, formData.dimensoesY, formData.custoQuadrado, formData.valorCompraVaca]);
 
-  const getMetrics = () => {
+  const getMetrics = (): { isLucrativo: boolean; lucroEstimado: number; margemLucro: number; lucroMinimo: number } => {
     switch (formData.tipo) {
       case "raspadinha":
-        return metricsRaspadinha;
+        return { 
+          isLucrativo: metricsRaspadinha.isLucrativo, 
+          lucroEstimado: metricsRaspadinha.lucroEstimado, 
+          margemLucro: metricsRaspadinha.margemLucro,
+          lucroMinimo: metricsRaspadinha.lucroMinimo
+        };
       case "rifa":
       case "tombola":
-        return metricsRifa;
+        return { 
+          isLucrativo: metricsRifa.isLucrativo, 
+          lucroEstimado: metricsRifa.lucroEstimado, 
+          margemLucro: metricsRifa.margemLucro,
+          lucroMinimo: metricsRifa.margemLucro
+        };
       case "poio_da_vaca":
-        return metricsPoioDaVaca;
+        return { 
+          isLucrativo: metricsPoioDaVaca.isLucrativo, 
+          lucroEstimado: metricsPoioDaVaca.lucroEstimado, 
+          margemLucro: metricsPoioDaVaca.margemLucro,
+          lucroMinimo: metricsPoioDaVaca.margemLucro
+        };
       default:
-        return { isLucrativo: false };
+        return { isLucrativo: false, lucroEstimado: 0, margemLucro: 0, lucroMinimo: 0 };
     }
   };
 
@@ -366,7 +381,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
       config.premios = rashadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
     }
 
-    let premiosData = [];
+    let premiosData: Array<{ nome: string; valorDinheiroAlternative: number; percentagem?: number; ordem: number }> = [];
     let metrics = getMetrics();
 
     if (formData.tipo === "raspadinha") {
