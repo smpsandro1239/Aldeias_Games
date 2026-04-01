@@ -31,6 +31,7 @@ interface Prize {
   valorDinheiroAlternative?: number | null;
   imagemUrl?: string | null;
   icon?: string;
+  percentagem?: number;
 }
 
 interface Jogo {
@@ -74,17 +75,20 @@ export default function RaspadinhaPremiumPage() {
   const [winningPrize, setWinningPrize] = useState<Prize | null>(null);
   const [totalRevealed, setTotalRevealed] = useState(0);
   const [participacaoId, setParticipacaoId] = useState<string | null>(null);
+  const [canvasesInitialized, setCanvasesInitialized] = useState(false);
   const { playScratch } = useScratchSound();
 
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const isDraggingRef = useRef<Map<number, boolean>>(new Map());
   const soundThrottleRef = useRef(0);
-  const SLOT_SIZE = 100;
+  const SLOT_SIZE = 120;
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (jogoId) {
       fetchJogo();
     } else {
+      initDefaultSlots();
       setLoading(false);
     }
   }, [jogoId]);
@@ -108,9 +112,33 @@ export default function RaspadinhaPremiumPage() {
     } catch (error) {
       console.error("Erro ao carregar jogo:", error);
       toast.error("Erro ao carregar o jogo");
+      initDefaultSlots();
     } finally {
       setLoading(false);
     }
+  };
+
+  const initDefaultSlots = () => {
+    const defaultPrizes = [
+      { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
+      { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
+      { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
+      { id: "2", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
+      { id: "3", nome: "3x Cristal", valorDinheiroAlternative: 10 },
+      { id: "4", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
+      { id: "5", nome: "3x Cristal", valorDinheiroAlternative: 10 },
+      { id: "6", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
+      { id: "7", nome: "3x Cristal", valorDinheiroAlternative: 10 },
+    ];
+    
+    const shuffled = [...defaultPrizes].sort(() => Math.random() - 0.5);
+    
+    setSlots(shuffled.map((prize, i) => ({
+      id: i,
+      revealed: false,
+      prize,
+      scratchPercent: 0,
+    })));
   };
 
   const initSlots = (premios: Prize[]) => {
@@ -125,17 +153,8 @@ export default function RaspadinhaPremiumPage() {
         prizesList.push(premios[Math.floor(Math.random() * premios.length)]);
       }
     } else {
-      prizesList.push(
-        { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
-        { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
-        { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
-        { id: "2", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
-        { id: "3", nome: "3x Cristal", valorDinheiroAlternative: 10 },
-        { id: "4", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
-        { id: "5", nome: "3x Cristal", valorDinheiroAlternative: 10 },
-        { id: "6", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
-        { id: "7", nome: "3x Cristal", valorDinheiroAlternative: 10 },
-      );
+      initDefaultSlots();
+      return;
     }
     
     const shuffled = prizesList.sort(() => Math.random() - 0.5);
@@ -148,10 +167,11 @@ export default function RaspadinhaPremiumPage() {
     })));
   };
 
-  const initSlotCanvas = useCallback((slotId: number) => {
-    const canvas = canvasRefs.current.get(slotId);
+  const initSlotCanvas = useCallback((canvas: HTMLCanvasElement | null, slotId: number) => {
     if (!canvas) return;
-
+    
+    canvasRefs.current.set(slotId, canvas);
+    
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
@@ -181,9 +201,22 @@ export default function RaspadinhaPremiumPage() {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.globalAlpha = 0.4;
-    ctx.fillText("token", SLOT_SIZE, SLOT_SIZE);
+    ctx.fillText("star", SLOT_SIZE, SLOT_SIZE);
     ctx.globalAlpha = 1;
   }, []);
+
+  useEffect(() => {
+    if (slots.length > 0 && !initializedRef.current) {
+      const timer = setTimeout(() => {
+        canvasRefs.current.forEach((canvas, slotId) => {
+          initSlotCanvas(canvas, slotId);
+        });
+        setCanvasesInitialized(true);
+        initializedRef.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [slots, initSlotCanvas]);
 
   const scratchSlot = useCallback(
     async (slotId: number, x: number, y: number) => {
@@ -206,14 +239,14 @@ export default function RaspadinhaPremiumPage() {
       ctx.globalCompositeOperation = "destination-out";
 
       ctx.beginPath();
-      ctx.arc(canvasX, canvasY, 20, 0, Math.PI * 2);
+      ctx.arc(canvasX, canvasY, 25, 0, Math.PI * 2);
       ctx.fill();
 
-      for (let i = 0; i < 12; i++) {
-        const ox = (Math.random() - 0.5) * 35;
-        const oy = (Math.random() - 0.5) * 35;
+      for (let i = 0; i < 15; i++) {
+        const ox = (Math.random() - 0.5) * 40;
+        const oy = (Math.random() - 0.5) * 40;
         ctx.beginPath();
-        ctx.arc(canvasX + ox, canvasY + oy, Math.random() * 8 + 3, 0, Math.PI * 2);
+        ctx.arc(canvasX + ox, canvasY + oy, Math.random() * 10 + 4, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
@@ -226,10 +259,11 @@ export default function RaspadinhaPremiumPage() {
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       let transparent = 0;
-      for (let i = 3; i < imageData.data.length; i += 16) {
+      const totalPixels = imageData.data.length / 4;
+      for (let i = 3; i < imageData.data.length; i += 4) {
         if (imageData.data[i] === 0) transparent++;
       }
-      const percent = Math.round((transparent * 4 / (canvas.width * canvas.height)) * 100);
+      const percent = Math.round((transparent / totalPixels) * 100);
 
       if (percent > slot.scratchPercent) {
         setSlots((prev) =>
@@ -312,8 +346,8 @@ export default function RaspadinhaPremiumPage() {
 
   const handlePointerDown = useCallback(
     (slotId: number, e: React.PointerEvent) => {
+      e.preventDefault();
       isDraggingRef.current.set(slotId, true);
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
       scratchSlot(slotId, e.clientX, e.clientY);
     },
     [scratchSlot]
@@ -375,16 +409,6 @@ export default function RaspadinhaPremiumPage() {
       return newSlots;
     });
   }, [slots]);
-
-  useEffect(() => {
-    if (slots.length > 0) {
-      slots.forEach((slot) => {
-        if (!slot.revealed) {
-          initSlotCanvas(slot.id);
-        }
-      });
-    }
-  }, [slots, initSlotCanvas]);
 
   if (loading) {
     return (
@@ -455,9 +479,9 @@ export default function RaspadinhaPremiumPage() {
               {slots.map((slot) => (
                 <div
                   key={slot.id}
-                  className="relative aspect-square rounded-2xl overflow-hidden"
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-[#393432]"
                 >
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#393432]">
+                  <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
                       <Trophy className="text-4xl text-[#ff734b]" />
                       <p className="text-[10px] font-bold text-[#e0bfb7] mt-0.5">
@@ -471,7 +495,10 @@ export default function RaspadinhaPremiumPage() {
                   {!slot.revealed && (
                     <canvas
                       ref={(el) => {
-                        if (el) canvasRefs.current.set(slot.id, el);
+                        if (el) {
+                          canvasRefs.current.set(slot.id, el);
+                          setTimeout(() => initSlotCanvas(el, slot.id), 50);
+                        }
                       }}
                       className="absolute inset-0 w-full h-full touch-none cursor-crosshair"
                       style={{ touchAction: "none" }}
