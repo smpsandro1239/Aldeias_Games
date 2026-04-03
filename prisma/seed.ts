@@ -204,10 +204,10 @@ async function main() {
           emailVerificado: true,
         },
       });
-      await prisma.user.update({
-        where: { id: admin.id },
-        data: { aldeiaPrincipalId: aldeia.id },
-      });
+       await prisma.user.update({
+         where: { id: admin.id },
+         data: { aldeiaId: aldeia.id },
+       });
     }
 
     for (const vendData of aldeiaData.vendedores) {

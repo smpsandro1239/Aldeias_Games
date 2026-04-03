@@ -54,8 +54,8 @@ function AldeiasPermitidasSection({
       const data = await res.json();
       if (data.data) {
         const aldeiaIds = permittedAldeias.map((a) => a.id);
-        if (user.aldeiaPrincipal) {
-          aldeiaIds.push(user.aldeiaPrincipal.id);
+        if (user.aldeia) {
+          aldeiaIds.push(user.aldeia.id);
         }
         const filtered = (data.data as Aldeia[]).filter(
           (a) => !aldeiaIds.includes(a.id)
@@ -197,7 +197,7 @@ interface User {
   role: string;
   notificacoesEmail: boolean;
   ultimoLogin?: string;
-  aldeiaPrincipal?: {
+  aldeia?: {
     id: string;
     nome: string;
   };
@@ -220,7 +220,7 @@ interface ProfileModalProps {
   onOpenChange: (open: boolean) => void;
   user: User | null;
   token: string;
-  onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean; aldeiaPrincipalId?: string; aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
+  onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean; aldeiaId?: string; aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
 }
 
 export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: ProfileModalProps) {
@@ -369,12 +369,12 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
               />
             </div>
 
-            {/* Aldeia Principal */}
-            {user.aldeiaPrincipal && (
+            {/* Aldeia Atual */}
+            {user.aldeia && (
               <div className="rounded-lg border p-4 space-y-3">
-                <h4 className="font-medium">Aldeia de Registo</h4>
+                <h4 className="font-medium">A Minha Aldeia</h4>
                 <p className="text-sm text-muted-foreground">
-                  A sua aldeia principal onde se registou: <strong>{user.aldeiaPrincipal.nome}</strong>
+                  Aldeia associada: <strong>{user.aldeia.nome}</strong>
                 </p>
               </div>
             )}

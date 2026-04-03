@@ -7,14 +7,19 @@ import { checkRateLimit, rateLimitConfigs, createRateLimitResponse, getClientIde
 const publicRoutes = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/reset-password',
+  '/api/auth/verify-email',
   '/api/aldeias',
   '/api/eventos',
   '/api/jogos',
   '/api/apostas',
+  '/api/health',
+  '/api/stripe/webhook',
+  '/api/mbway/webhook',
 ];
 
-// Rotas que precisam de rate limiting
-const rateLimitedRoutes: { path: string; config: typeof rateLimitConfigs.api }[] = [];
+// Métodos que são considerados "seguros" (não modificam estado)
+const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,6 +31,27 @@ export async function proxy(request: NextRequest) {
 
     if (!rateLimit.allowed) {
       return createRateLimitResponse(rateLimit.resetTime);
+    }
+  }
+
+  // CSRF Protection: verificar Origin/Referer para rotas de escrita
+  if (pathname.startsWith('/api/') && !safeMethods.includes(request.method)) {
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    // Webhooks do Stripe e MBWay são excluídos (vêm de serviços externos)
+    if (!pathname.startsWith('/api/stripe/webhook') && !pathname.startsWith('/api/mbway/webhook')) {
+      // Verificar se Origin ou Referer corresponde à aplicação
+      const isValidOrigin = origin && (origin === appUrl || origin.startsWith('http://localhost:'));
+      const isValidReferer = referer && (referer.startsWith(appUrl) || referer.startsWith('http://localhost:'));
+
+      if (!isValidOrigin && !isValidReferer) {
+        return NextResponse.json(
+          { error: 'Origem não permitida' },
+          { status: 403 }
+        );
+      }
     }
   }
 
@@ -71,5 +97,12 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // Adicionar headers de segurança à resposta
+  const response = NextResponse.next();
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  return response;
 }

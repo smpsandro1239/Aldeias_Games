@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { UserMenuModal } from "@/components/user-menu-modal";
 import {
   Ticket,
   Calendar,
@@ -24,7 +25,8 @@ import {
   Sparkles,
   PartyPopper,
   Loader2,
-  QrCode
+  QrCode,
+  User
 } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 
@@ -68,6 +70,7 @@ function AldeiaPageContent() {
   const [participarOpen, setParticiparOpen] = useState(false);
   const [numerosSelecionados, setNumerosSelecionados] = useState<string[]>([]);
   const [dadosCliente, setDadosCliente] = useState({ nome: "", telefone: "", email: "" });
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/public/aldeia/${slug}`)
@@ -148,26 +151,40 @@ function AldeiaPageContent() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNC0xNHoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-30" />
         
-        <header className="relative z-10 px-4 py-6">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {data.logo ? (
-                <img src={data.logo} alt={data.nome} className="h-12 w-12 rounded-xl object-cover" />
-              ) : (
-                <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Gamepad2 className="h-6 w-6 text-white" />
-                </div>
-              )}
-              <div>
-                <h1 className="text-2xl font-black text-white tracking-tight">{data.nome}</h1>
-                <p className="text-white/70 text-sm">{data.eventos.length} evento(s) ativo(s)</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-              <Share2 className="h-5 w-5" />
-            </Button>
-          </div>
-        </header>
+<header className="relative z-10 px-4 py-6">
+  <div className="max-w-4xl mx-auto flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      {data.logo ? (
+        <img src={data.logo} alt={data.nome} className="h-12 w-12 rounded-xl object-cover" />
+      ) : (
+        <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <Gamepad2 className="h-6 w-6 text-white" />
+        </div>
+      )}
+      <div>
+        <h1 className="text-2xl font-black text-white tracking-tight">{data.nome}</h1>
+        <p className="text-white/70 text-sm">{data.eventos.length} evento(s) ativo(s)</p>
+      </div>
+    </div>
+    <div className="flex items-center gap-2">
+      <div className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 relative">
+        {/* User will be fetched from localStorage in the modal */}
+        <button 
+          onClick={() => {
+            // We'll handle opening the modal in the modal itself since it reads from localStorage
+            // For now, we'll just toggle a state that the modal will read
+          }}
+          className="w-full h-full bg-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
+        >
+          <User className="h-4 w-4 text-[#ff734b]" />
+        </button>
+      </div>
+      <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+        <Share2 className="h-5 w-5" />
+      </Button>
+    </div>
+  </div>
+</header>
 
         <main className="relative z-10 px-4 pb-12">
           <div className="max-w-4xl mx-auto space-y-6">
@@ -301,84 +318,85 @@ function AldeiaPageContent() {
         </main>
       </div>
 
-      <Dialog open={participarOpen} onOpenChange={setParticiparOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Ticket className="h-5 w-5" />
-              Participar - {selectedJogo?.nome}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="text-center p-4 bg-muted rounded-xl">
-              <p className="text-sm text-muted-foreground">Preço por participação</p>
-              <p className="text-2xl font-black text-violet-600">{selectedJogo?.preco}€</p>
-            </div>
-
-            {selectedJogo?.tipo !== 'raspadinha' && (
-              <div>
-                <Label>Selecione o(s) número(s)</Label>
-                <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto p-2">
-                  {Array.from({ length: Math.min(selectedJogo?.stock || 100, 50) }, (_, i) => i + 1).map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => toggleNumero(num.toString())}
-                      className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${
-                        numerosSelecionados.includes(num.toString())
-                          ? "bg-violet-600 text-white"
-                          : "bg-muted hover:bg-violet-100"
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Selecionados: {numerosSelecionados.length}/{selectedJogo?.tipo === 'poio_da_vaca' ? '1' : '5'}
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-3 pt-2">
-              <div>
-                <Label htmlFor="nome">Nome</Label>
-                <Input
-                  id="nome"
-                  placeholder="O seu nome"
-                  value={dadosCliente.nome}
-                  onChange={(e) => setDadosCliente({ ...dadosCliente, nome: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  placeholder="912 345 678"
-                  value={dadosCliente.telefone}
-                  onChange={(e) => setDadosCliente({ ...dadosCliente, telefone: e.target.value })}
-                />
-              </div>
-            </div>
+<Dialog open={participarOpen} onOpenChange={setParticiparOpen}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle className="flex items-center gap-2">
+        <Ticket className="h-5 w-5" />
+        Participar - {selectedJogo?.nome}
+      </DialogTitle>
+    </DialogHeader>
+    
+    <div className="space-y-4">
+      <div className="text-center p-4 bg-muted rounded-xl">
+        <p className="text-sm text-muted-foreground">Preço por participação</p>
+        <p className="text-2xl font-black text-violet-600">{selectedJogo?.preco}€</p>
+      </div>
+      
+      {selectedJogo?.tipo !== 'raspadinha' && (
+        <div>
+          <Label>Selecione o(s) número(s)</Label>
+          <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto p-2">
+            {Array.from({ length: Math.min(selectedJogo?.stock || 100, 50) }, (_, i) => i + 1).map((num) => (
+              <button
+                key={num}
+                onClick={() => toggleNumero(num.toString())}
+                className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${
+                  numerosSelecionados.includes(num.toString())
+                    ? "bg-violet-600 text-white"
+                    : "bg-muted hover:bg-violet-100"
+                }`}
+              >
+                {num}
+              </button>
+            ))}
           </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setParticiparOpen(false)} className="flex-1">
-              Cancelar
-            </Button>
-            <Button
-              className="flex-1 bg-violet-600 hover:bg-violet-700"
-              disabled={!dadosCliente.nome || !dadosCliente.telefone || numerosSelecionados.length === 0}
-              onClick={() => {
-                toast.success("Funcionalidade em desenvolvimento");
-                setParticiparOpen(false);
-              }}
-            >
-              Participar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          <p className="text-xs text-muted-foreground mt-2">
+            Selecionados: {numerosSelecionados.length}/{selectedJogo?.tipo === 'poio_da_vaca' ? '1' : '5'}
+          </p>
+        </div>
+      )}
+      
+      <div className="space-y-3 pt-2">
+        <div>
+          <Label htmlFor="nome">Nome</Label>
+          <Input
+            id="nome"
+            placeholder="O seu nome"
+            value={dadosCliente.nome}
+            onChange={(e) => setDadosCliente({ ...dadosCliente, nome: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="telefone">Telefone</Label>
+          <Input
+            id="telefone"
+            placeholder="912 345 678"
+            value={dadosCliente.telefone}
+            onChange={(e) => setDadosCliente({ ...dadosCliente, telefone: e.target.value })}
+          />
+        </div>
+      </div>
+    </div>
+    
+    <div className="flex gap-2">
+      <Button variant="outline" onClick={() => setParticiparOpen(false)} className="flex-1">
+        Cancelar
+      </Button>
+      <Button
+        className="flex-1 bg-violet-600 hover:bg-violet-700"
+        disabled={!dadosCliente.nome || !dadosCliente.telefone || numerosSelecionados.length === 0}
+        onClick={() => {
+          toast.success("Funcionalidade em desenvolvimento");
+          setParticiparOpen(false);
+        }}
+      >
+        Participar
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+<UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
 
       <BottomNav />
     </div>

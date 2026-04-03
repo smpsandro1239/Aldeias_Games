@@ -10,6 +10,9 @@ import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { getClientIdentifier } from '@/lib/rate-limit';
 
+const otplib = require('otplib');
+const authenticator = otplib.authenticator;
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password } = validation.data;
+    const { email, password, totpCode } = validation.data;
 
     // Buscar utilizador
     const user = await prisma.user.findUnique({
@@ -85,6 +88,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verificar se email está verificado
+    if (!user.emailVerificado) {
+      return NextResponse.json(
+        { error: 'Email não verificado. Por favor verifique o seu email antes de fazer login.' },
+        { status: 403 }
+      );
+    }
+
+    // Verificar 2FA para roles admin
+    const requiresTwoFactor = user.role === 'super_admin' || user.role === 'aldeia_admin';
+    
+    if (requiresTwoFactor) {
+      const tfa = await prisma.twoFactorAuth.findUnique({
+        where: { userId: user.id },
+      });
+
+      if (tfa?.enabled) {
+        if (!totpCode) {
+          // 2FA é necessário mas não foi fornecido
+          return NextResponse.json(
+            { requiresTwoFactor: true, message: 'Código 2FA necessário' },
+            { status: 200 }
+          );
+        }
+
+        // Verificar código 2FA
+        const isValidCode = authenticator.verify({
+          token: totpCode,
+          secret: tfa.secret,
+        });
+
+        if (!isValidCode) {
+          await logAccess(
+            email,
+            false,
+            clientId,
+            request.headers.get('user-agent') || 'unknown',
+            user.id,
+            'Código 2FA inválido'
+          );
+
+          return NextResponse.json(
+            { error: 'Código 2FA inválido' },
+            { status: 401 }
+          );
+        }
+      }
+    }
+
     // Gerar token JWT
     const token = await generateToken({
       userId: user.id,
@@ -115,10 +167,11 @@ export async function POST(request: NextRequest) {
         nome: user.nome,
         telefone: user.telefone,
         role: user.role,
-        aldeiaId: user.aldeiaId as string,
+        aldeiaId: user.aldeiaId as string | null,
         aldeia: user.aldeia,
         notificacoesEmail: user.notificacoesEmail,
       },
+      precisaAldeia: user.role !== 'super_admin' && !user.aldeiaId,
       token,
     });
   } catch (error) {

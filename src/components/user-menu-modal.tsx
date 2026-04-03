@@ -18,18 +18,53 @@ interface User {
 interface UserMenuModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  saldo?: number;
 }
 
-export function UserMenuModal({ open, onOpenChange, saldo = 0 }: UserMenuModalProps) {
+export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [saldo, setSaldo] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    const loadUserData = async () => {
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        
+        // Fetch real balance from API
+        try {
+          const token = localStorage.getItem("token");
+          if (token) {
+            const response = await fetch("/api/wallet", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              setSaldo(data.saldo || 0);
+            } else {
+              console.error("Failed to fetch balance");
+              setSaldo(0);
+            }
+          } else {
+            setSaldo(0);
+          }
+        } catch (error) {
+          console.error("Error fetching balance:", error);
+          setSaldo(0);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
   }, []);
 
   const handleLogout = () => {
@@ -40,6 +75,24 @@ export function UserMenuModal({ open, onOpenChange, saldo = 0 }: UserMenuModalPr
     toast.success("Logout efetuado!");
     router.push("/");
   };
+
+  if (loading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md bg-[#1f1b19] border border-[#ff734b]/10 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="font-serif text-xl text-[#ffb5a0]">A minha Conta</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4 text-center">
+            <div className="bg-[#2e2928] rounded-xl p-4">
+              <p className="text-xs text-[#e0bfb7] mb-1">O meu Saldo Aldeias</p>
+              <p className="font-serif text-3xl text-[#ff734b] animate-pulse">0.00 €</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -261,16 +261,33 @@ export async function refundPayment(
 
 /**
  * Validar callback de webhook MBWay
- * Verifica a assinatura do webhook
+ * Verifica a assinatura do webhook com HMAC-SHA256
  */
 export function validateWebhookSignature(
   payload: string,
   signature: string,
   secret: string
 ): boolean {
-  // Em produção, implementar validação HMAC
-  // Por enquanto, apenas verificar se a assinatura existe
-  return !!signature && signature.length > 0;
+  if (!signature || !secret) {
+    return false;
+  }
+
+  try {
+    const crypto = require('crypto');
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(payload)
+      .digest('hex');
+    
+    // Comparação timing-safe para prevenir timing attacks
+    return crypto.timingSafeEqual(
+      Buffer.from(signature, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
+    );
+  } catch (error) {
+    console.error('Erro ao validar assinatura MBWay:', error);
+    return false;
+  }
 }
 
 /**

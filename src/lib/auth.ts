@@ -6,13 +6,11 @@ import prisma from './db';
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
 
-if (!JWT_SECRET && process.env.NODE_ENV === 'production' && !process.env.NEXT_PHASE?.includes('build')) {
-  throw new Error('JWT_SECRET é obrigatório em produção');
+if (!JWT_SECRET && !process.env.NEXT_PHASE?.includes('build')) {
+  throw new Error('JWT_SECRET é obrigatório em todos os ambientes');
 }
 
-const secret = new TextEncoder().encode(
-  JWT_SECRET || 'dev-secret-key-insecure-only-for-local-development'
-);
+const secret = new TextEncoder().encode(JWT_SECRET!);
 
 export interface JWTPayload {
   userId: string;

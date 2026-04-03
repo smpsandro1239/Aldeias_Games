@@ -15,18 +15,7 @@ interface User {
   aldeiaId?: string;
 }
 
-interface Jogo {
-  id: string;
-  nome: string;
-  tipo: string;
-  preco: number;
-  stockAtual: number;
-  estado: string;
-  evento?: {
-    nome: string;
-    aldeia?: { nome: string };
-  };
-}
+import { GameList, Jogo } from "@/components/games/game-list";
 
 export default function JogosPage() {
   const router = useRouter();
@@ -85,25 +74,7 @@ export default function JogosPage() {
     }
   };
 
-  const getGameIcon = (tipo: string) => {
-    switch (tipo) {
-      case "raspadinha": return Sparkles;
-      case "poio_da_vaca": return Leaf;
-      case "rifa": return Ticket;
-      case "tombola": return Trophy;
-      default: return Gamepad2;
-    }
-  };
 
-  const getGameLabel = (tipo: string) => {
-    switch (tipo) {
-      case "raspadinha": return "Raspadinha";
-      case "poio_da_vaca": return "Poio da Vaca";
-      case "rifa": return "Rifa";
-      case "tombola": return "Tombola";
-      default: return "Jogo";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
@@ -142,62 +113,13 @@ export default function JogosPage() {
       </header>
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
-        <motion.section
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-1"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9cefff]">
-            Escolhe o Jogo
-          </p>
-          <h2 className="font-serif text-3xl font-bold tracking-tight">
-            Os Nossos <span className="text-[#ff734b]">Jogos</span>
-          </h2>
-        </motion.section>
-      
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#ff734b]" />
-          </div>
-        ) : jogos.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-[#e0bfb7]">Nenhum jogo disponível no momento.</p>
-            <p className="text-sm text-[#e0bfb7]/60 mt-2">Volte mais tarde!</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {jogos.map((jogo, index) => {
-              const Icon = getGameIcon(jogo.tipo);
-              const label = getGameLabel(jogo.tipo);
-              return (
-                <motion.button
-                  key={jogo.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => handleJogoClick(jogo)}
-                  className="w-full text-left bg-[#1f1b19] rounded-2xl p-5 hover:scale-[1.02] transition-all border border-[#58413b]/20 shadow-lg"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-[#2e2928] flex items-center justify-center">
-                      <Icon className="w-7 h-7 text-[#ff734b]" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-serif text-xl font-bold text-[#ffb5a0]">{jogo.nome}</h3>
-                      <p className="text-sm text-[#e0bfb7] mt-1">
-                        {jogo.evento?.aldeia?.nome || "Aldeias Games"} • {jogo.preco}€
-                      </p>
-                      <p className="text-xs text-[#e0bfb7]/60 mt-1">
-                        {jogo.stockAtual} disponíveis
-                      </p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-[#ff734b]" />
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
-        )}
+        <GameList
+          jogos={jogos}
+          onJogoClick={handleJogoClick}
+          loading={loading}
+          title="Os Nossos Jogos"
+          showAldeia={true}
+        />
       </main>
 
       <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />

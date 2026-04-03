@@ -13,12 +13,15 @@ import {
   Sparkles,
   Eye,
   Play,
+  MapPin,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes, SelectPaymentModal } from "@/components/modals";
 import { SkeletonStats, SkeletonGrid, SkeletonList } from "@/components/modals";
 import { toast } from "sonner";
 import { WalletCard } from "@/components/wallet/wallet-card";
+import { GameList } from "@/components/games/game-list";
+import { AldeiaWizardModal } from "@/components/modals/aldeia-wizard-modal";
 
 interface ClienteDashboardProps {
   token: string;
@@ -81,7 +84,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("jogos");
   const [saldo, setSaldo] = useState(0);
-  const [aldeiaPrincipal, setAldeiaPrincipal] = useState<{ id: string; nome: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ role: string; aldeiaId?: string; aldeia?: { nome: string } } | null>(null);
 
   // Modais
   const [scratchCardOpen, setScratchCardOpen] = useState(false);
@@ -96,6 +99,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [numerosOcupadosRifa, setNumerosOcupadosRifa] = useState<number[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAldeia, setConfirmAldeia] = useState<{ jogo: Jogo; nome: string } | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -133,14 +137,17 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         setSaldo(walletData.saldo);
       }
 
-      // Fetch perfil do utilizador para obter aldeia principal
+      // Fetch perfil do utilizador
       const perfilRes = await fetch("/api/users/perfil", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (perfilRes.ok) {
         const perfilData = await perfilRes.json();
-        if (perfilData.data?.aldeiaPrincipal) {
-          setAldeiaPrincipal(perfilData.data.aldeiaPrincipal);
+        const profile = perfilData.data;
+        setUserProfile(profile);
+        
+        if (profile?.role !== 'super_admin' && !profile?.aldeiaId) {
+          setWizardOpen(true);
         }
       }
     } catch (error) {
@@ -151,9 +158,10 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   };
 
   const handleJogar = async (jogo: Jogo) => {
-    // Verificar se está a jogar noutra aldeia
+    // Verificar se está a jogar noutra aldeia (apenas para não super_admins)
     const aldeiaDoJogo = jogo.evento?.aldeia?.nome;
-    if (aldeiaPrincipal && aldeiaDoJogo && aldeiaDoJogo !== aldeiaPrincipal.nome) {
+    const minhaAldeiaNome = userProfile?.aldeia?.nome;
+    if (userProfile?.role !== 'super_admin' && minhaAldeiaNome && aldeiaDoJogo && aldeiaDoJogo !== minhaAldeiaNome) {
       setConfirmAldeia({ jogo, nome: aldeiaDoJogo });
       setConfirmOpen(true);
       return;
@@ -369,64 +377,35 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         </TabsList>
 
         <TabsContent value="jogos" className="space-y-4">
-          {jogos.length === 0 ? (
+          {userProfile?.role !== 'super_admin' && !userProfile?.aldeiaId ? (
             <Card className="p-12 text-center bg-card/50 border-white/10 backdrop-blur-sm">
               <CardContent className="flex flex-col items-center justify-center space-y-4">
                 <div className="relative">
-                  <Gamepad2 className="h-16 w-16 text-muted-foreground" />
+                  <MapPin className="h-16 w-16 text-muted-foreground" />
                   <div className="absolute inset-0 bg-secondary/10 blur-xl rounded-full" />
                 </div>
                 <div>
-                  <p className="text-xl font-gaming font-bold text-white">Nenhum jogo disponível</p>
-                  <p className="text-sm text-muted-foreground mt-2">De momento não há jogos ativos. Volte mais tarde!</p>
+                  <p className="text-xl font-gaming font-bold text-white">Escolhe a tua Aldeia</p>
+                  <p className="text-sm text-muted-foreground mt-2">Precisas de selecionar uma aldeia para ver os jogos disponíveis.</p>
+                  <Button 
+                    onClick={() => setWizardOpen(true)}
+                    className="mt-6 bg-secondary hover:bg-secondary/90"
+                  >
+                    Escolher Aldeia
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {jogos.map((jogo) => (
-              <Card key={jogo.id} className="card-hover bg-card/50 border-white/10 backdrop-blur-sm overflow-hidden group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardHeader className="relative">
-                  <div className="flex items-center justify-between">
-                    <div className="p-2 rounded-lg bg-secondary/20">
-                      {getTipoIcon(jogo.tipo)}
-                    </div>
-                    <Badge variant="outline" className="border-secondary/30 text-secondary text-xs capitalize">
-                      {jogo.tipo.replace("_", " ")}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-lg font-gaming mt-3">{jogo.nome}</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    {jogo.evento?.aldeia?.nome} • {jogo.evento?.nome}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="relative">
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{jogo.descricao}</p>
-                  {jogo.premio && (
-                    <p className="text-sm mb-3">
-                      <span className="font-medium text-tertiary">Prémio:</span> {jogo.premio.nome}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
-                    <div>
-                      <p className="text-2xl font-gaming font-bold text-gradient">
-                        {formatCurrency(jogo.preco)}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">{jogo.stockAtual} disponíveis</p>
-                    </div>
-                    <Button 
-                      onClick={() => handleJogar(jogo)}
-                      className="bg-secondary hover:bg-secondary/90"
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      Jogar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            <GameList
+              jogos={jogos as any}
+              onJogoClick={(jogo) => handleJogar(jogo as any)}
+              loading={loading}
+              title={userProfile?.role === 'super_admin' ? "Todos os Jogos" : `Jogos de ${userProfile?.aldeia?.nome || "Carregando..."}`}
+              emptyMessage={userProfile?.role === 'super_admin' ? "Nenhum jogo disponível" : "Nenhum jogo disponível na tua aldeia"}
+              emptySubtext={userProfile?.role === 'super_admin' ? "Volte mais tarde!" : "Não há jogos ativos na tua aldeia de momento."}
+              showAldeia={userProfile?.role === 'super_admin'}
+            />
           )}
         </TabsContent>
 
@@ -444,71 +423,76 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           ) : (
           <div className="grid gap-4">
             {participacoes.map((participacao) => (
-              <Card key={participacao.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">{participacao.jogo?.nome}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {participacao.jogo?.evento?.aldeia?.nome} •{" "}
-                        {formatDate(participacao.createdAt)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatCurrency(participacao.valorPago)}
-                      </p>
-                      {/* Números jogados */}
-                      {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
-                        <div className="mt-2">
-                          <p className="text-xs text-muted-foreground">Números jogados:</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {(() => {
-                              const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
-                              const numeros = dados.numeros || [];
-                              return numeros.map((n: number) => (
-                                <span
-                                  key={n}
-                                  className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
-                                >
-                                  {n}
-                                </span>
-                              ));
-                            })()}
-                          </div>
-                        </div>
-                      ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
-                        <div className="mt-2">
-                          <p className="text-xs text-muted-foreground">Coordenadas:</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {(() => {
-                              const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
-                              const coordenadas = dados.coordenadas || dados.selecao || [];
-                              return coordenadas.map((c: { letra: string; numero: number }) => (
-                                <span
-                                  key={`${c.letra}${c.numero}`}
-                                  className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
-                                >
-                                  {c.letra}{c.numero}
-                                </span>
-                              ));
-                            })()}
-                          </div>
-                        </div>
-                      ) : null}
+              <Card key={participacao.id} className="bg-[#1f1b19] border-[#58413b]/20 rounded-2xl overflow-hidden card-hover">
+                <CardContent className="p-5">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-xl bg-[#ff734b]/10 border border-[#ff734b]/20">
+                        {getTipoIcon(participacao.jogo?.tipo || "")}
+                      </div>
+                      <div>
+                        <h3 className="font-gaming text-lg text-[#eae0de]">{participacao.jogo?.nome}</h3>
+                        <p className="text-sm text-[#e0bfb7]/60 flex items-center gap-1 mt-1">
+                          {participacao.jogo?.evento?.aldeia?.nome} • {formatDate(participacao.createdAt)}
+                        </p>
+                        <p className="text-sm font-bold text-[#ff734b] mt-1">
+                          {formatCurrency(participacao.valorPago)}
+                        </p>
 
-                      {/* Resultado do sorteio */}
-                      {participacao.jogo?.sorteado && (
-                        <div className="mt-2">
-                          {participacao.ganhador ? (
-                            <p className="text-sm text-green-600 font-medium">
-                              ✓ Ganhou!
-                            </p>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">
-                              Sorteio realizado: não foi sorteado
-                            </p>
-                          )}
-                        </div>
-                      )}
+                        {/* Números jogados */}
+                        {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
+                          <div className="mt-2">
+                            <p className="text-xs text-[#e0bfb7]/50">Números jogados:</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {(() => {
+                                const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                                const numeros = dados.numeros || [];
+                                return numeros.map((n: number) => (
+                                  <span
+                                    key={n}
+                                    className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
+                                  >
+                                    {n}
+                                  </span>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
+                          <div className="mt-2">
+                            <p className="text-xs text-[#e0bfb7]/50">Coordenadas:</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {(() => {
+                                const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                                const coordenadas = dados.coordenadas || dados.selecao || [];
+                                return coordenadas.map((c: { letra: string; numero: number }) => (
+                                  <span
+                                    key={`${c.letra}${c.numero}`}
+                                    className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
+                                  >
+                                    {c.letra}{c.numero}
+                                  </span>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Resultado do sorteio */}
+                        {participacao.jogo?.sorteado && (
+                          <div className="mt-2">
+                            {participacao.ganhador ? (
+                              <p className="text-sm text-green-500 font-medium">
+                                ✓ Ganhou!
+                              </p>
+                            ) : (
+                              <p className="text-sm text-[#e0bfb7]/40">
+                                Sorteio realizado: não foi sorteado
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {participacao.ganhador && (
@@ -631,7 +615,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         description={
           <div>
             <p className="mb-2">
-              Está a jogar na aldeia <strong>"{confirmAldeia?.nome}"</strong>, que não é a sua aldeia de registo <strong>"{aldeiaPrincipal?.nome}"</strong>.
+              Está a jogar na aldeia <strong>"{confirmAldeia?.nome}"</strong>, que não é a sua aldeia de registo <strong>"{userProfile?.aldeia?.nome}"</strong>.
             </p>
             <p>Deseja continuar?</p>
           </div>
@@ -642,6 +626,14 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           if (confirmAldeia?.jogo) {
             proceedToJogo(confirmAldeia.jogo);
           }
+        }}
+      />
+
+      <AldeiaWizardModal
+        open={wizardOpen}
+        onComplete={(id, nome) => {
+          setWizardOpen(false);
+          fetchData();
         }}
       />
     </div>

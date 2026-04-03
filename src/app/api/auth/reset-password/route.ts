@@ -18,20 +18,32 @@ export async function POST(request: NextRequest) {
       select: { id: true, nome: true, email: true },
     });
 
+    // Mensagem genérica - não revelar se email existe
+    const genericMessage = 'Se o email existir, receberá um link de recuperação';
+
     if (!user) {
       return NextResponse.json({
         success: true,
-        message: 'Se o email existir, receberá um link de recuperação',
+        message: genericMessage,
       });
     }
 
+    // Gerar token e hash
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 60 * 60 * 1000);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
+    // Invalidar tokens anteriores não utilizados
+    await prisma.passwordReset.updateMany({
+      where: { userId: user.id, used: false },
+      data: { used: true },
+    });
+
+    // Armazenar hash do token (não o token em si)
     await prisma.passwordReset.create({
       data: {
         userId: user.id,
-        token,
+        token: tokenHash,
         expires,
       },
     });
@@ -51,7 +63,7 @@ export async function POST(request: NextRequest) {
             <a href="${resetUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
               Recuperar Password
             </a>
-            <p>Este link expire em 1 hora.</p>
+            <p>Este link expira em 15 minutos.</p>
             <p>Se não pediu esta recuperação, ignore este email.</p>
           </div>
         `,
@@ -62,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Se o email existir, recibirá um link de recuperação',
+      message: genericMessage,
     });
   } catch (error) {
     console.error('Erro ao processar pedido de recuperação:', error);

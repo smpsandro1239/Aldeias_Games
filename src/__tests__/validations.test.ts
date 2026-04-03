@@ -5,6 +5,7 @@ import {
   createEventoSchema,
   createJogoSchema,
   mbwayPaymentSchema,
+  passwordSchema,
 } from "@/lib/validations";
 
 describe("Validations", () => {
@@ -25,21 +26,63 @@ describe("Validations", () => {
       expect(result.success).toBe(false);
     });
 
-    it("deve rejeitar password curta", () => {
+    it("deve aceitar código 2FA opcional", () => {
       const result = loginSchema.safeParse({
         email: "test@example.com",
-        password: "123",
+        password: "password123",
+        totpCode: "123456",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("deve rejeitar código 2FA com tamanho errado", () => {
+      const result = loginSchema.safeParse({
+        email: "test@example.com",
+        password: "password123",
+        totpCode: "123",
       });
       expect(result.success).toBe(false);
     });
   });
 
+  describe("passwordSchema", () => {
+    it("deve aceitar password forte (12+ chars, maiúscula, minúscula, número, especial)", () => {
+      const result = passwordSchema.safeParse("MinhaPass123!");
+      expect(result.success).toBe(true);
+    });
+
+    it("deve rejeitar password sem maiúscula", () => {
+      const result = passwordSchema.safeParse("minhapass123!");
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar password sem minúscula", () => {
+      const result = passwordSchema.safeParse("MINHAPASS123!");
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar password sem número", () => {
+      const result = passwordSchema.safeParse("MinhaPassWord!");
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar password sem carácter especial", () => {
+      const result = passwordSchema.safeParse("MinhaPass1234");
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar password com menos de 12 caracteres", () => {
+      const result = passwordSchema.safeParse("Min1!");
+      expect(result.success).toBe(false);
+    });
+  });
+
   describe("registerSchema", () => {
-    it("deve validar dados de registo corretos", () => {
+    it("deve validar dados de registo corretos com password forte", () => {
       const result = registerSchema.safeParse({
         nome: "João Silva",
         email: "joao@example.com",
-        password: "password123",
+        password: "MinhaPass123!",
         telefone: "+351912345678",
       });
       expect(result.success).toBe(true);
@@ -49,7 +92,16 @@ describe("Validations", () => {
       const result = registerSchema.safeParse({
         nome: "J",
         email: "joao@example.com",
-        password: "password123",
+        password: "MinhaPass123!",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("deve rejeitar password fraca no registo", () => {
+      const result = registerSchema.safeParse({
+        nome: "João Silva",
+        email: "joao@example.com",
+        password: "weakpass",
       });
       expect(result.success).toBe(false);
     });

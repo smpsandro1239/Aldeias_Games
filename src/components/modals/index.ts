@@ -17,6 +17,7 @@ export { AldeiaModal } from "./aldeia-modal";
 export { UserModal } from "./user-modal";
 export { ResultadosExternosModal } from "./resultados-externos-modal";
 export { PremioModal, PremioList } from "./premio-modal";
+export { AldeiaWizardModal } from "./aldeia-wizard-modal";
 
 // Export new components
 export { VictoryCelebration } from "@/components/victory-celebration";

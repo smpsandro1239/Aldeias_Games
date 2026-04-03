@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Gift, Trophy, Star, Clock, Award, Wallet, User, LogOut } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UserMenuModal } from "@/components/user-menu-modal";
 import { toast } from "sonner";
 
 interface User {
@@ -203,42 +203,8 @@ export default function PremiosPage() {
         </div>
       </main>
 
-      {/* User Menu Modal */}
-      <Dialog open={userMenuOpen} onOpenChange={setUserMenuOpen}>
-        <DialogContent className="sm:max-w-md bg-[#1f1b19] border border-[#ff734b]/10 p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="font-serif text-xl text-[#ffb5a0]">A minha Conta</DialogTitle>
-          </DialogHeader>
-          <div className="px-6 pb-6 space-y-4">
-            <div className="bg-[#2e2928] rounded-xl p-4 text-center">
-              <p className="text-xs text-[#e0bfb7] mb-1">Bem-vindo</p>
-              <p className="font-serif text-lg text-[#ffb5a0]">{user?.nome}</p>
-              <p className="text-xs text-[#e0bfb7]/60 mt-1">{user?.email}</p>
-            </div>
-            <div className="bg-[#2e2928] rounded-xl p-4 text-center">
-              <p className="text-xs text-[#e0bfb7] mb-1">O meu Saldo Aldeias</p>
-              <p className="font-serif text-3xl text-[#ff734b]">75,00 €</p>
-            </div>
-            <button 
-              onClick={() => {
-                setUserMenuOpen(false);
-                router.push('/perfil');
-              }}
-              className="w-full py-3 text-center text-[#9cefff] hover:bg-[#9cefff]/10 rounded-xl flex items-center justify-center gap-2"
-            >
-              <User className="h-4 w-4" />
-              Editar Perfil
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="w-full py-3 text-center text-red-500 hover:bg-red-500/10 rounded-xl flex items-center justify-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Terminar Sessão
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+       {/* User Menu Modal */}
+       <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
 
       <BottomNav />
     </div>

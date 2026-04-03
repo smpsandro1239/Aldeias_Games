@@ -67,6 +67,14 @@ export async function POST(request: NextRequest) {
       data.aldeiaId = adminUser.aldeiaId as string;
     }
 
+    // Validação de aldeia obrigatória para certos papéis
+    if ((data.role === 'vendedor' || data.role === 'aldeia_admin') && !data.aldeiaId) {
+      return NextResponse.json(
+        { error: 'Vendedores e administradores de aldeia devem estar vinculados a uma aldeia' },
+        { status: 400 }
+      );
+    }
+
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) {
       return NextResponse.json({ error: 'Email já registado' }, { status: 400 });

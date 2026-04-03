@@ -128,24 +128,47 @@ export default function PerfilPage() {
   const handleSave = async () => {
     if (!user) return;
     
-    setSaving(true);
-    
     const selectedAldeia = aldeias.find(a => a.id === formData.aldeiaId) || undefined;
     
-    const updatedUser: UserProfile = {
-      ...user,
-      nome: formData.nome,
-      telefone: formData.telefone,
-      aldeiaId: formData.aldeiaId,
-      aldeia: selectedAldeia,
-      fotoPerfil: profileImage || undefined,
-    };
-    
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setUser(updatedUser);
-    
-    toast.success("Perfil atualizado com sucesso!");
-    setSaving(false);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/users/perfil", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nome: formData.nome,
+          telefone: formData.telefone,
+          aldeiaId: formData.aldeiaId,
+          fotoPerfil: profileImage || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const updatedUser: UserProfile = {
+          ...user,
+          nome: formData.nome,
+          telefone: formData.telefone,
+          aldeiaId: formData.aldeiaId,
+          aldeia: selectedAldeia,
+          fotoPerfil: profileImage || undefined,
+        };
+        
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        toast.success("Perfil atualizado com sucesso!");
+      } else {
+        toast.error("Erro ao atualizar perfil na API");
+      }
+    } catch (error) {
+      console.error("Erro ao guardar perfil:", error);
+      toast.error("Ocorreu um erro ao guardar as alterações");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {

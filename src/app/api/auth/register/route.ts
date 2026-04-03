@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { getClientIdentifier } from '@/lib/rate-limit';
 import { generateSlug } from '@/lib/utils';
+import { sendEmail } from '@/lib/email';
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,74 +31,39 @@ export async function POST(request: NextRequest) {
 
     const { nome, email, password, telefone, role, tipoOrganizacao, aldeiaId: aldeiaIdFromBody } = validation.data;
 
-    // Verificar se email já existe
+    // Verificar se email já existe - mensagem genérica (não revelar se existe)
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'Este email já está registado' },
-        { status: 409 }
-      );
+      // Mensagem genérica para prevenir enumeração de emails
+      return NextResponse.json({
+        success: true,
+        message: 'Se o email existir e não estiver verificado, receberá instruções de verificação',
+      });
     }
 
     // Hash da password
     const hashedPassword = await hashPassword(password);
 
-    // Criar utilizador (e aldeia se for admin)
-    let aldeiaId: string | undefined;
-    let aldeiaPrincipalId: string | undefined;
-    let isNewOrganization = false;
+    // Criar utilizador (sempre com papel 'user')
+    let aldeiaId = aldeiaIdFromBody || undefined;
+    const isNewOrganization = false;
 
-    if (role === 'aldeia_admin' && tipoOrganizacao) {
-      // Criar aldeia/organização automaticamente
-      const nomeAldeia = nome.replace('Administrador ', '').replace('Admin ', '');
-      const slug = generateSlug(nomeAldeia);
-      
-      // Verificar se slug já existe
-      const existingSlug = await prisma.aldeia.findUnique({
-        where: { slug },
-      });
+    // Gerar token de verificação de email
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
-      const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
-
-      const planoGratuito = await prisma.plano.findFirst({
-        where: { nome: 'Gratuito' },
-      });
-
-      const aldeia = await prisma.aldeia.create({
-        data: {
-          nome: nomeAldeia,
-          slug: finalSlug,
-          tipoOrganizacao,
-          email: email.toLowerCase(),
-          telefone,
-          ativo: true,
-          verificado: false,
-          planoId: planoGratuito?.id,
-        },
-      });
-
-      aldeiaId = aldeia.id;
-      aldeiaPrincipalId = aldeia.id;
-      isNewOrganization = true;
-    } else if (aldeiaIdFromBody) {
-      // Utilizador normal pode selecionar uma aldeia principal
-      aldeiaId = aldeiaIdFromBody;
-      aldeiaPrincipalId = aldeiaIdFromBody;
-    }
-
-    // Criar utilizador
+    // Criar utilizador (email não verificado)
     const user = await prisma.user.create({
       data: {
         nome,
         email: email.toLowerCase(),
         password: hashedPassword,
         telefone,
-        role: role || 'user',
+        role: 'user',
         aldeiaId,
-        aldeiaPrincipalId,
         emailVerificado: false,
         notificacoesEmail: true,
       },
@@ -105,27 +72,54 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Gerar token JWT
-    const token = await generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      aldeiaId: user.aldeiaId as string,
-    });
-
     // Criar notificação de boas-vindas
     await prisma.notificacao.create({
       data: {
         tipo: 'sistema',
         titulo: 'Bem-vindo ao Aldeias Games!',
-        mensagem: 'A sua conta foi criada com sucesso. Explore os jogos disponíveis!',
+        mensagem: 'A sua conta foi criada com sucesso. Por favor verifique o seu email para ativar a conta.',
         userId: user.id,
+      },
+    });
+
+    // Enviar email de verificação
+    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${emailVerificationToken}`;
+    
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Verificação de Email - Aldeias Games',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Verificação de Email</h2>
+            <p>Olá ${user.nome},</p>
+            <p>Obrigado por se registar no Aldeias Games!</p>
+            <p>Clique no botão abaixo para verificar o seu email:</p>
+            <a href="${verifyUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+              Verificar Email
+            </a>
+            <p>Este link expira em 24 horas.</p>
+            <p>Se não se registou, ignore este email.</p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.error('Erro ao enviar email de verificação:', emailError);
+    }
+
+    // Armazenar token de verificação na DB (usando passwordResets temporariamente)
+    // TODO: Criar modelo EmailVerification dedicado no schema
+    await prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        token: emailVerificationToken,
+        expires: emailVerificationExpires,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Registo bem-sucedido',
+      message: 'Registo efetuado com sucesso. Por favor verifique o seu email para ativar a conta.',
       user: {
         id: user.id,
         email: user.email,
@@ -134,9 +128,8 @@ export async function POST(request: NextRequest) {
         role: user.role,
         aldeiaId: user.aldeiaId as string,
         aldeia: user.aldeia,
-        notificacoesEmail: user.notificacoesEmail,
+        emailVerificado: false,
       },
-      token,
       isNewOrganization,
     }, { status: 201 });
   } catch (error) {

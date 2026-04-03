@@ -1,5 +1,5 @@
 // Setup para testes Jest
-import "@testing-library/jest-dom";
+require("@testing-library/jest-dom");
 
 // Mock do localStorage
 global.localStorage = {

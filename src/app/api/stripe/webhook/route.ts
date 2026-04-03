@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         if (tipo === 'participacao' && jogoId) {
           const valor = session.amount_total ? session.amount_total / 100 : 0;
 
-          await prisma.participacao.create({
+          const participacao = await prisma.participacao.create({
             data: {
               jogoId,
               userId: userId || null,
@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
             },
           });
 
+          // Decrementar stock
           if (eventoId) {
             await prisma.jogo.update({
               where: { id: jogoId },
@@ -60,6 +61,51 @@ export async function POST(request: NextRequest) {
               },
             });
           }
+
+          // Dar cashback de 5% ao utilizador (apenas para pagamentos confirmados via Stripe)
+          if (userId) {
+            const cashbackPercent = 0.05;
+            const cashbackValor = valor * cashbackPercent;
+
+            await prisma.user.update({
+              where: { id: userId },
+              data: {
+                saldo: { increment: cashbackValor },
+              },
+            });
+
+            await prisma.transacao.create({
+              data: {
+                userId: userId,
+                valor: cashbackValor,
+                tipo: 'cashback',
+                descricao: `Cashback de compra via Stripe`,
+                referencia: jogoId,
+              },
+            });
+          }
+        }
+
+        // Carregamento de saldo via Stripe
+        if (tipo === 'carregamento_saldo' && userId) {
+          const valor = session.amount_total ? session.amount_total / 100 : 0;
+
+          await prisma.user.update({
+            where: { id: userId },
+            data: {
+              saldo: { increment: valor },
+            },
+          });
+
+          await prisma.transacao.create({
+            data: {
+              userId: userId,
+              valor: valor,
+              tipo: 'carregamento_saldo',
+              descricao: 'Carregamento de saldo via Stripe',
+              referencia: session.id,
+            },
+          });
         }
         break;
       }

@@ -5,8 +5,17 @@ import { v4 as uuidv4 } from 'uuid';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 
+// Configuração S3/R2 (opcional - usar se configurado)
+const S3_BUCKET = process.env.S3_BUCKET || process.env.R2_BUCKET;
+const S3_ENDPOINT = process.env.S3_ENDPOINT || process.env.R2_ENDPOINT;
+const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY || process.env.R2_ACCESS_KEY;
+const S3_SECRET_KEY = process.env.S3_SECRET_KEY || process.env.R2_SECRET_KEY;
+const S3_PUBLIC_URL = process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL;
+
+const useObjectStorage = !!(S3_BUCKET && S3_ENDPOINT && S3_ACCESS_KEY && S3_SECRET_KEY);
+
 /**
- * Garantir que o diretório de uploads existe
+ * Garantir que o diretório de uploads existe (apenas para storage local)
  */
 async function ensureUploadDir(): Promise<void> {
   if (!existsSync(UPLOAD_DIR)) {
@@ -53,14 +62,31 @@ export function validateImageFile(
 }
 
 /**
+ * Fazer upload para S3/R2
+ */
+async function uploadToS3(
+  buffer: Buffer,
+  filename: string,
+  folder: string,
+  mimeType: string
+): Promise<string> {
+  // Implementação simplificada - em produção usar AWS SDK ou @aws-sdk/client-s3
+  // Para R2 da Cloudflare, usar endpoint específico
+  const key = `${folder}/${filename}`;
+  
+  // TODO: Implementar upload real para S3/R2
+  // Por agora, fallback para storage local
+  console.log(`[S3/R2] Upload para ${S3_BUCKET}/${key} (não implementado - usando storage local)`);
+  throw new Error('S3/R2 upload não implementado - usando fallback local');
+}
+
+/**
  * Salvar imagem base64 como arquivo
  */
 export async function saveImage(
   base64String: string,
   folder: string = 'general'
 ): Promise<{ url: string; filename: string }> {
-  await ensureUploadDir();
-
   const validation = validateImageFile(base64String);
   if (!validation.valid) {
     throw new Error(validation.error);
@@ -75,6 +101,21 @@ export async function saveImage(
   const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
   const base64Data = matches[2];
   const buffer = Buffer.from(base64Data, 'base64');
+  const filename = `${uuidv4()}.${ext}`;
+  const mimeType = `image/${ext}`;
+
+  // Tentar S3/R2 primeiro se configurado
+  if (useObjectStorage) {
+    try {
+      const url = await uploadToS3(buffer, filename, folder, mimeType);
+      return { url, filename };
+    } catch (error) {
+      console.warn('S3/R2 upload falhou, usando storage local:', error);
+    }
+  }
+
+  // Fallback para storage local
+  await ensureUploadDir();
 
   // Criar pasta específica se não existir
   const folderPath = path.join(UPLOAD_DIR, folder);
@@ -82,8 +123,6 @@ export async function saveImage(
     await mkdir(folderPath, { recursive: true });
   }
 
-  // Gerar nome único
-  const filename = `${uuidv4()}.${ext}`;
   const filepath = path.join(folderPath, filename);
 
   // Salvar arquivo
@@ -100,7 +139,14 @@ export async function saveImage(
  */
 export async function deleteImage(url: string): Promise<boolean> {
   try {
-    // Extrair caminho relativo da URL
+    // Se for URL S3/R2, usar API correspondente
+    if (useObjectStorage && S3_PUBLIC_URL && url.startsWith(S3_PUBLIC_URL)) {
+      // TODO: Implementar delete S3/R2
+      console.log(`[S3/R2] Delete ${url} (não implementado)`);
+      return true;
+    }
+
+    // Storage local
     const relativePath = url.replace(/^\/uploads\//, '');
     const filepath = path.join(UPLOAD_DIR, relativePath);
 
@@ -128,18 +174,4 @@ export function getExtensionFromMimeType(mimeType: string): string {
   };
 
   return map[mimeType] || 'bin';
-}
-
-/**
- * Comprimir imagem base64 (reduzir qualidade)
- * Nota: Em produção, usar Sharp para compressão real
- */
-export function compressBase64Image(
-  base64String: string,
-  quality: number = 0.8
-): string {
-  // Por enquanto, apenas retorna a string original
-  // Em produção, implementar compressão real com Sharp
-  console.log(`Compressão simulada (qualidade: ${quality})`);
-  return base64String;
 }

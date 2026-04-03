@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { UserMenuModal } from "@/components/user-menu-modal";
 import { Gamepad2, Users, House, Trophy, CreditCard, Shield, Menu, LogOut, User, Sparkles, Rocket, Zap, ArrowRight, Star, Clock, MapPin, PartyPopper, Ticket, Leaf, Wallet, Compass, Award } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { DashboardStats } from "@/components/dashboard-stats";
@@ -803,37 +804,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* User Menu Modal */}
-      <Dialog open={userMenuOpen} onOpenChange={setUserMenuOpen}>
-        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="font-headline text-xl">A minha Conta</DialogTitle>
-          </DialogHeader>
-          <div className="px-6 pb-6 space-y-4">
-            <div className="bg-surface-container-high rounded-xl p-4 text-center">
-              <p className="text-xs text-on-surface-variant mb-1">O meu Saldo Aldeias</p>
-              <p className="font-headline text-3xl text-primary">5,55 €</p>
-            </div>
-            <button 
-              onClick={() => {
-                setUserMenuOpen(false);
-                router.push('/perfil');
-              }}
-              className="w-full py-3 text-center text-[#9cefff] hover:bg-[#9cefff]/10 rounded-xl flex items-center justify-center gap-2"
-            >
-              <User className="h-4 w-4" />
-              Editar Perfil
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="w-full py-3 text-center text-red-500 hover:bg-red-500/10 rounded-xl flex items-center justify-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Terminar Sessão
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+       {/* User Menu Modal */}
+       <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
 
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>

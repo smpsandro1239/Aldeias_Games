@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Regex para números de telefone portugueses (9 dígitos starting with 9 or mobile, or landline)
+// Validação de telefone português com regex E.164
 const telefoneRegex = /^(?:(?:\+|00)351)?[2-9][0-9]{8}$/;
 
 export const telefoneSchema = z.string()
@@ -8,19 +8,27 @@ export const telefoneSchema = z.string()
   .optional()
   .or(z.literal(''));
 
+// Validação de password forte: min 12 chars, 1 maiúscula, 1 minúscula, 1 número, 1 especial
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{12,}$/;
+
+export const passwordSchema = z.string()
+  .min(12, 'Password deve ter pelo menos 12 caracteres')
+  .regex(passwordRegex, 'Password deve conter pelo menos: 1 maiúscula, 1 minúscula, 1 número e 1 carácter especial');
+
 // ============================================
 // VALIDAÇÕES DE UTILIZADOR
 // ============================================
 
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Password deve ter pelo menos 6 caracteres'),
+  password: z.string().min(1, 'Password é obrigatória'),
+  totpCode: z.string().length(6, 'Código 2FA deve ter 6 dígitos').optional(),
 });
 
 export const registerSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  password: passwordSchema,
   telefone: telefoneSchema,
   role: z.enum(['user', 'vendedor', 'aldeia_admin']).default('user'),
   tipoOrganizacao: z.enum(['aldeia', 'escola', 'associacao_pais', 'clube']).optional(),
@@ -31,7 +39,7 @@ export const updateProfileSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
   telefone: telefoneSchema,
   notificacoesEmail: z.boolean().optional(),
-  aldeiaPrincipalId: z.string().optional(),
+  aldeiaId: z.string().optional(),
   aldeiasPermitidas: z.array(z.object({
     id: z.string(),
     nome: z.string(),
@@ -41,7 +49,7 @@ export const updateProfileSchema = z.object({
 export const createUserSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Password deve ter pelo menos 8 caracteres'),
+  password: passwordSchema,
   telefone: telefoneSchema,
   role: z.enum(['super_admin', 'aldeia_admin', 'vendedor', 'user']),
   aldeiaId: z.string().optional(),

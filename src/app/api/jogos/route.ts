@@ -102,20 +102,17 @@ export async function GET(request: NextRequest) {
 
     // Filtrar por permissões
     if (user) {
-      if (user.role === 'aldeia_admin') {
-        const eventos = await prisma.evento.findMany({
-          where: { aldeiaId: user.aldeiaId as string },
-          select: { id: true },
-        });
-        const eventoIds = eventos.map(e => e.id);
-        where.eventoId = { in: eventoIds };
-      } else if (user.role === 'vendedor') {
-        const eventos = await prisma.evento.findMany({
-          where: { aldeiaId: user.aldeiaId as string },
-          select: { id: true },
-        });
-        const eventoIds = eventos.map(e => e.id);
-        where.eventoId = { in: eventoIds };
+      if (user.role === 'super_admin') {
+        // Super admin vê tudo, sem filtro adicional
+      } else if (user.role === 'aldeia_admin' || user.role === 'vendedor' || user.role === 'user') {
+        if (user.aldeiaId) {
+          where.evento = { aldeiaId: user.aldeiaId };
+        } else {
+          // Sem aldeia = sem jogos
+          return NextResponse.json(
+            createPaginatedResponse([], 0, page, limit)
+          );
+        }
       }
     } else {
       // Não autenticado só vê jogos abertos de eventos públicos

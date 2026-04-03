@@ -26,14 +26,6 @@ export async function GET(request: NextRequest) {
             tipoOrganizacao: true,
           },
         },
-        aldeiaPrincipal: {
-          select: {
-            id: true,
-            nome: true,
-            slug: true,
-            tipoOrganizacao: true,
-          },
-        },
         _count: {
           select: {
             participacoes: true,
@@ -61,28 +53,28 @@ export async function GET(request: NextRequest) {
     const totalGasto = participacoes.reduce((sum, p) => sum + p.valorPago, 0);
     const totalVitorias = participacoes.filter(p => p.ganhador).length;
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: perfil.id,
-        email: perfil.email,
-        nome: perfil.nome,
-        telefone: perfil.telefone,
-        role: perfil.role,
-        emailVerificado: perfil.emailVerificado,
-        notificacoesEmail: perfil.notificacoesEmail,
-        ultimoLogin: perfil.ultimoLogin,
-        aldeia: perfil.aldeia,
-        aldeiaPrincipal: perfil.aldeiaPrincipal,
-        aldeiasPermitidas: perfil.aldeiasPermitidas ? JSON.parse(perfil.aldeiasPermitidas) : null,
-        estatisticas: {
-          totalParticipacoes: perfil._count.participacoes,
-          totalGasto,
-          totalVitorias,
-        },
-        createdAt: perfil.createdAt,
-      },
-    });
+     return NextResponse.json({
+       success: true,
+       data: {
+         id: perfil.id,
+         email: perfil.email,
+         nome: perfil.nome,
+         telefone: perfil.telefone,
+         role: perfil.role,
+         emailVerificado: perfil.emailVerificado,
+         notificacoesEmail: perfil.notificacoesEmail,
+         ultimoLogin: perfil.ultimoLogin,
+         aldeiaId: perfil.aldeiaId,
+         aldeia: perfil.aldeia,
+         aldeiasPermitidas: perfil.aldeiasPermitidas ? JSON.parse(perfil.aldeiasPermitidas) : null,
+         estatisticas: {
+           totalParticipacoes: perfil._count.participacoes,
+           totalGasto,
+           totalVitorias,
+         },
+         createdAt: perfil.createdAt,
+       },
+     });
   } catch (error) {
     console.error('Erro ao obter perfil:', error);
     return NextResponse.json(
@@ -123,9 +115,8 @@ export async function PATCH(request: NextRequest) {
       notificacoesEmail: data.notificacoesEmail,
     };
 
-    if (data.aldeiaPrincipalId) {
-      updateData.aldeiaPrincipalId = data.aldeiaPrincipalId;
-      updateData.aldeiaId = data.aldeiaPrincipalId;
+    if (data.aldeiaId) {
+      updateData.aldeiaId = data.aldeiaId;
     }
 
     if (data.aldeiasPermitidas) {
@@ -148,6 +139,7 @@ export async function PATCH(request: NextRequest) {
         role: true,
         notificacoesEmail: true,
         ultimoLogin: true,
+        aldeiaId: true,
       },
     });
 

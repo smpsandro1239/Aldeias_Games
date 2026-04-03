@@ -59,7 +59,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        updateData.role = body.role;
     }
     if (body.aldeiaId !== undefined && adminUser.role === 'super_admin') {
-       updateData.aldeiaId = body.aldeiaId === "" ? null : body.aldeiaId;
+       const newAldeiaId = body.aldeiaId === "" ? null : body.aldeiaId;
+       const finalRole = body.role || targetUser.role;
+       
+       if (finalRole !== 'super_admin' && !newAldeiaId) {
+         return NextResponse.json(
+           { error: 'Utilizadores não-super_admin devem ter uma aldeia vinculada' },
+           { status: 400 }
+         );
+       }
+       updateData.aldeiaId = newAldeiaId;
     }
 
     const updated = await prisma.user.update({
