@@ -4,6 +4,9 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Next.js](https://img.shields.io/badge/Framework-Next.js%2016-black)
 ![Tailwind](https://img.shields.io/badge/CSS-Tailwind%204-blue)
+![Status](https://img.shields.io/badge/status-online-brightgreen)
+
+**🌐 Ver Online:** [aldeiasgame.vercel.app](https://aldeiasgame.vercel.app)
 
 **Aldeias Games** é uma plataforma SaaS (Software as a Service) multi-tenant de alto desempenho, focada na dinamização de comunidades locais portuguesas através de jogos tradicionais digitalizados para angariação de fundos.
 
