@@ -1,6 +1,6 @@
 # 🎮 Aldeias Games 2026 - Digital Fundraising Platform
 
-![Version](https://img.shields.io/badge/version-3.11.0-indigo)
+![Version](https://img.shields.io/badge/version-3.12.0-indigo)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Next.js](https://img.shields.io/badge/Framework-Next.js%2016-black)
 ![Tailwind](https://img.shields.io/badge/CSS-Tailwind%204-blue)
@@ -17,24 +17,41 @@
 - **Experiência Imersiva**: Efeitos sonoros processuais e visuais (confetti) via Web Audio API.
 - **Pagamentos Seguros**: Integração com Stripe e **MBWay real**.
 - **App PWA**: Instalável em qualquer smartphone com suporte offline.
+- **Carteira Digital**: Saldo, extrato de movimentos e carregamentos.
+- **Celebração de Vitória**: Modal animado com confetti ao ganhar um prémio.
 
 ### Para Organizações (Aldeias/Escolas/Clubes)
 - **Gestão de Campanhas**: Criação e monitorização de eventos de angariação.
 - **CRM e Analytics**: Acompanhamento de vendas, participantes e metas financeiras.
 - **Wizard de Configuração**: Configuração guiada e conformidade legal integrada.
 
+### Para Vendedores
+- **POS Mobile**: Interface otimizado para registo de vendas em 3 passos.
+- **Modo Offline**: Vendas guardadas localmente com sincronização automática.
+- **Gestão de Comissões**: Acompanhamento de comissão e saldo a entregar.
+- **Recibo de Venda**: Comprovativo detalhado para o cliente.
+
+### Para Super Admin
+- **Seletor de Organização**: Dropdown pesquisável com Aldeias, Escolas, Clubes e Associações de Pais.
+- **Testar Jogo**: Modo fictício para verificar configurações sem alterar dados.
+- **Gestão Global**: Visão completa de todas as organizações, eventos e jogos.
+- **Analytics em Tempo Real**: Gráficos de evolução, top vendedores e métodos de pagamento.
+- **Logs de Auditoria**: Registo de acessos com IP e User Agent.
+
 ### Segurança e Transparência
 - **Auditoria de Sorteios**: Algoritmos baseados em SHA-256 (Seed/Hash) para garantir justiça.
 - **Proteção de Dados**: Conformidade total com RGPD (EU/PT 2026).
 - **Rate Limiting**: Defesa nativa contra bots e ataques DDoS.
+- **2FA**: Autenticação de dois fatores para admins (configurável).
+- **RBAC**: Controlo de acesso baseado em roles em todas as rotas API.
 
 ## 🏗️ Stack Tecnológica
 
 - **Frontend**: React 19, Next.js 16, TypeScript, Tailwind CSS 4, Framer Motion.
 - **Backend**: Next.js API Routes, Prisma ORM.
-- **Base de Dados**: SQLite (Dev) / PostgreSQL (Prod).
+- **Base de Dados**: SQLite (Dev) / PostgreSQL (Prod - Neon).
 - **Pagamentos**: Stripe API + MBWay (integração real).
-- **Infra**: Docker, Caddy Server.
+- **Infra**: Docker, Caddy Server, Vercel.
 
 ## 📂 Estrutura de Pastas
 
@@ -58,8 +75,8 @@ src/
 ### Passos
 1. **Clonar o repositório**
    ```bash
-   git clone https://github.com/your-repo/aldeias-games.git
-   cd aldeias-games
+   git clone https://github.com/smpsandro1239/Aldeias_Games.git
+   cd Aldeias_Games
    ```
 
 2. **Instalar dependências**
@@ -92,6 +109,51 @@ src/
 | Admin Aldeia | aldeia@gmail.com | 123456 |
 | Vendedor | vendedor@gmail.com | 123456 |
 | Jogador | smpsandro1239@gmail.com | 123456 |
+
+## 🛡️ Controlo de Acesso por Role (RBAC)
+
+### Super Admin (`super_admin`)
+- ✅ Gestão completa de todas as organizações (Aldeias/Escolas/Clubes)
+- ✅ Gestão de todos os eventos e jogos (todas as organizações)
+- ✅ Gestão de todos os utilizadores
+- ✅ Visualização de transações globais
+- ✅ Logs de auditoria completos
+- ✅ Seletor de organização pesquisável ao criar jogos
+- ✅ Testar jogos em modo fictício
+- ✅ Executar sorteios e gerir prémios
+- ✅ Carregar saldo na carteira
+
+### Admin Aldeia (`aldeia_admin`)
+- ✅ Gestão de eventos da sua organização
+- ✅ Gestão de jogos da sua organização
+- ✅ Gestão de utilizadores da sua organização (não pode criar outros admins)
+- ✅ Executar sorteios e gerir prémios
+- ✅ Verificar hash de participações
+- ✅ Converter prémios em saldo
+- ✅ Confirmar entrega de prémios
+- ❌ Não acede a transações globais
+- ❌ Não acede a logs de auditoria
+- ❌ Não acede a gestão de outras organizações
+
+### Vendedor (`vendedor`)
+- ✅ POS Mobile para registo de vendas
+- ✅ Modo offline com sincronização
+- ✅ Acompanhamento de comissão pessoal
+- ✅ Histórico de vendas
+- ✅ Recibo de venda
+- ❌ Não pode criar/editar/eliminar eventos ou jogos
+- ❌ Não pode gerir utilizadores
+- ❌ Não acede a dados financeiros globais
+
+### Jogador (`user`)
+- ✅ Carteira digital com saldo e extrato
+- ✅ Participar em jogos (Raspadinha, Rifa, Poio da Vaca)
+- ✅ Revelar raspadinhas interativas
+- ✅ Ver participações e resultados
+- ✅ Celebração de vitória com confetti
+- ✅ Carregar saldo na carteira
+- ✅ Aviso ao jogar fora da sua aldeia
+- ❌ Não acede a funcionalidades administrativas
 
 ## 💳 MBWay - Integração Real
 
