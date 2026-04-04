@@ -14,6 +14,11 @@ import {
   Eye,
   Play,
   MapPin,
+  Gift,
+  Banknote,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Receipt,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes, SelectPaymentModal } from "@/components/modals";
@@ -84,6 +89,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("jogos");
   const [saldo, setSaldo] = useState(0);
+  const [walletStats, setWalletStats] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<{ role: string; aldeiaId?: string; aldeia?: { nome: string } } | null>(null);
 
   // Modais
@@ -100,6 +106,10 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAldeia, setConfirmAldeia] = useState<{ jogo: Jogo; nome: string } | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Celebração de vitória
+  const [victoryOpen, setVictoryOpen] = useState(false);
+  const [victoryPremio, setVictoryPremio] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -135,6 +145,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       if (walletRes.ok) {
         const walletData = await walletRes.json();
         setSaldo(walletData.saldo);
+        setWalletStats(walletData);
       }
 
       // Fetch perfil do utilizador
@@ -217,6 +228,17 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const handleRevelarRaspadinha = (participacao: Participacao) => {
     setSelectedParticipacao(participacao);
     setScratchCardOpen(true);
+  };
+
+  const handleVerVitoria = (participacao: Participacao) => {
+    if (participacao.ganhador && participacao.jogo?.premios && participacao.jogo.premios.length > 0) {
+      setVictoryPremio({
+        premio: participacao.jogo.premios[0],
+        jogoNome: participacao.jogo.nome,
+        tipoJogo: participacao.jogo.tipo,
+      });
+      setVictoryOpen(true);
+    }
   };
 
   const handleConfirmarPagamento = async (metodo: string = "mbway") => {
@@ -334,11 +356,12 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         {[
           { icon: Ticket, label: "Participações", value: participacoes.length, color: "secondary" },
-          { icon: CreditCard, label: "Total Gasto", value: formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0)), color: "primary" },
-          { icon: Trophy, label: "Vitórias", value: participacoes.filter((p) => p.ganhador).length, color: "tertiary" },
+          { icon: CreditCard, label: "Total Investido", value: formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0)), color: "primary" },
+          { icon: Trophy, label: "Prémios Ganhos", value: formatCurrency(walletStats?.historicoPremios?.total || 0), color: "tertiary" },
+          { icon: Gift, label: "Cashback Recebido", value: formatCurrency(walletStats?.transacoes?.filter((t: any) => t.tipo === 'cashback').reduce((acc: number, t: any) => acc + t.valor, 0) || 0), color: "green-500" },
         ].map((stat, i) => (
           <Card 
             key={i} 
@@ -359,7 +382,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-card/50 border border-white/10 backdrop-blur-sm p-1">
+        <TabsList className="bg-card/50 border border-white/10 backdrop-blur-sm p-1 grid grid-cols-3">
           <TabsTrigger 
             value="jogos" 
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
@@ -372,7 +395,14 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
           >
             <Ticket className="h-4 w-4 mr-2" />
-            As Minhas Participações
+            Os Meus Bilhetes
+          </TabsTrigger>
+          <TabsTrigger 
+            value="extrato"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
+          >
+            <Receipt className="h-4 w-4 mr-2" />
+            Movimentos & Conta
           </TabsTrigger>
         </TabsList>
 
@@ -496,7 +526,10 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       {participacao.ganhador && (
-                        <Badge className="bg-yellow-500">
+                        <Badge 
+                          className="bg-yellow-500 cursor-pointer hover:bg-yellow-600"
+                          onClick={() => handleVerVitoria(participacao)}
+                        >
                           <Trophy className="h-3 w-3 mr-1" />
                           Vencedor
                         </Badge>
@@ -527,6 +560,66 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
             ))}
           </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="extrato" className="space-y-4">
+          <Card className="bg-[#1f1b19] border-[#58413b]/20">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-secondary" />
+                Extrato de Movimentos
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Consulte o histórico de carregamentos, prémios convertidos e cashbacks recebidos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!walletStats?.transacoes || walletStats.transacoes.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground flex flex-col items-center gap-2">
+                  <Banknote className="h-10 w-10 opacity-20" />
+                  <p>Sem movimentos recentes</p>
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  {walletStats.transacoes.map((t: any) => (
+                    <div 
+                      key={t.id} 
+                      className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        {t.tipo === "cashback" ? (
+                          <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <Gift className="h-5 w-5 text-green-500" />
+                          </div>
+                        ) : t.valor > 0 ? (
+                          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                            <ArrowUpRight className="h-5 w-5 text-blue-500" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                            <ArrowDownLeft className="h-5 w-5 text-red-500" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-[#eae0de]">
+                            {t.descricao || "Transação"}
+                          </p>
+                          <p className="text-xs text-[#e0bfb7]/50 mt-1">
+                            {formatDate(t.createdAt)} • Tipo: {t.tipo?.replace('_', ' ')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`font-bold text-lg ${t.valor > 0 ? "text-green-500" : "text-white"}`}>
+                          {t.valor > 0 ? "+" : ""}{formatCurrency(t.valor)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -636,6 +729,16 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           fetchData();
         }}
       />
+
+      {victoryPremio && (
+        <VictoryCelebration
+          open={victoryOpen}
+          onOpenChange={setVictoryOpen}
+          premio={victoryPremio.premio}
+          jogoNome={victoryPremio.jogoNome}
+          tipoJogo={victoryPremio.tipoJogo}
+        />
+      )}
     </div>
   );
 }

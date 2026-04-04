@@ -256,6 +256,7 @@ export async function POST(request: NextRequest) {
       estado: 'aberto',
       dataAbertura: new Date(),
       eventoId: data.eventoId,
+      aldeiaId: evento.aldeiaId,
       modoSorteio: data.modoSorteio,
       detalhesSorteioExterno: data.detalhesSorteioExterno,
       custoQuadrado: data.custoQuadrado,

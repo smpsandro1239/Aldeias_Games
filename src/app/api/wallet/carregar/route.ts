@@ -5,7 +5,14 @@ import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request) as any;
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
+    if (!user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    // Permitir que todos os roles carreguem o seu próprio saldo
+    // Mas apenas admins/vendedores podem carregar saldo para eventos/aldeias específicas
+    const isUserLoadingOwnBalance = user.role === 'user';
+    if (!isUserLoadingOwnBalance && !hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 

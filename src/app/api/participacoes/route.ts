@@ -158,6 +158,10 @@ export async function POST(request: NextRequest) {
     const effectiveUser = user;
     const isAnonymous = !user && hasDadosCliente;
 
+    // VALIDAÇÃO DE VENDEDOR: Se o utilizador é vendedor, o vendedorId é sempre o seu próprio ID
+    // Se é admin, também pode ser vendedor da transação
+    const isVendedorOrAdmin = user && hasRole(user.role, ['aldeia_admin', 'vendedor']);
+
     const validation = createParticipacaoSchema.safeParse(body);
 
     if (!validation.success) {
@@ -210,6 +214,22 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Verificar isolamento de aldeia para vendedores
+    if (user && user.role === 'vendedor' && jogo.evento.aldeiaId !== user.aldeiaId) {
+      return NextResponse.json(
+        { error: 'Não pode vender jogos de outra aldeia' },
+        { status: 403 }
+      );
+    }
+
+    // Verificar isolamento de aldeia para admins
+    if (user && user.role === 'aldeia_admin' && jogo.evento.aldeiaId !== user.aldeiaId) {
+      return NextResponse.json(
+        { error: 'Não pode criar participações para outra aldeia' },
+        { status: 403 }
+      );
     }
 
     // Usar transação atómica para evitar race conditions

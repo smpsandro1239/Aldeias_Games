@@ -172,6 +172,7 @@ model Aldeia {
   users                  User[]          @relation("AldeiaUsers")
   admins                 User[]          @relation("AldeiaAdmins")
   vendedores             User[]          @relation("AldeiaVendedores")
+  jogos                  Jogo[]
 
   @@index([slug])
   @@index([tipoOrganizacao])
@@ -239,11 +240,13 @@ model Jogo {
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
   eventoId                String
+  aldeiaId                String?
   premioId                String?
   modoSorteio             String         @default("app")
   detalhesSorteioExterno  String?
   apostas                 Aposta[]
   evento                  Evento         @relation(fields: [eventoId], references: [id])
+  aldeia                  Aldeia?        @relation(fields: [aldeiaId], references: [id])
   participacoes           Participacao[]
   premios                 Premio[]       @relation("JogoPremios")
   sorteios                Sorteio[]

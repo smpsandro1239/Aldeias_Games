@@ -85,6 +85,15 @@ async function main() {
     },
   });
 
+  // Criar 2FA para Super Admin
+  await prisma.twoFactorAuth.create({
+    data: {
+      userId: superAdmin.id,
+      secret: 'JBSWY3DPEHPK3PXP', // Secret base32 para testes (deve ser gerado dinamicamente em produção)
+      enabled: false, // Desativado por defeito, admin pode ativar depois
+    },
+  });
+
   const aldeiasData = [
     {
       nome: 'Aldeia de Vale de Azinha',
@@ -208,6 +217,15 @@ async function main() {
          where: { id: admin.id },
          data: { aldeiaId: aldeia.id },
        });
+
+      // Criar 2FA para Admin de Aldeia (desativado por defeito)
+      await prisma.twoFactorAuth.create({
+        data: {
+          userId: admin.id,
+          secret: 'JBSWY3DPEHPK3PXP',
+          enabled: false,
+        },
+      });
     }
 
     for (const vendData of aldeiaData.vendedores) {
@@ -342,6 +360,9 @@ async function main() {
 
   console.log('\n👥 Criando jogadores...');
 
+  // Atribuir jogadores às aldeias (distribuição round-robin)
+  const aldeiaIds = aldeias.map(a => a.id);
+
   const jogadorNames = [
     'Pedro Santos', 'Ana Costa', 'Miguel Rodrigues', 'Sofia Almeida', 'João Ferreira',
     'Isabel Martins', 'Carlos Lima', 'Francisca Sousa', 'Antonio Pereira', 'Maria Gomes',
@@ -352,6 +373,7 @@ async function main() {
     const nome = jogadorNames[i % jogadorNames.length];
     const count = Math.floor(i / jogadorNames.length) + 1;
     const nomeFinal = count > 1 ? `${nome} ${count}` : nome;
+    const aldeiaId = aldeiaIds[i % aldeiaIds.length];
 
     const jogador = await prisma.user.create({
       data: {
@@ -362,6 +384,7 @@ async function main() {
         role: UserRole.user,
         emailVerificado: true,
         saldo: Math.floor(Math.random() * 50) + 10,
+        aldeiaId: aldeiaId,
       },
     });
     jogadores.push(jogador);

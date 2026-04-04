@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
@@ -49,6 +49,9 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   const [activeTab, setActiveTab] = useState("overview");
   const [participacoes, setParticipacoes] = useState<any[]>([]);
   const [vencedores, setVencedores] = useState<any[]>([]);
+  const [transacoes, setTransacoes] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [vendedoresStats, setVendedoresStats] = useState<any[]>([]);
 
   // Modals state
   const [eventoModalOpen, setEventoModalOpen] = useState(false);
@@ -135,6 +138,18 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
       const part = await getApi(`/api/participacoes${q}${q ? '&' : '?'}ganhador=true`);
       if (part) setVencedores(part);
 
+      if (userRole === "super_admin") {
+        const tr = await getApi(`/api/admin/transacoes`);
+        if (tr) setTransacoes(tr);
+
+        const lg = await getApi(`/api/admin/logs`);
+        if (lg) setLogs(lg);
+      }
+
+      if (userRole === "aldeia_admin") {
+        const vs = await getApi(`/api/admin/vendedores-stats`);
+        if (vs) setVendedoresStats(vs);
+      }
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -399,8 +414,15 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
           <TabsTrigger value="vencedores"><Trophy className="h-4 w-4 mr-2" /> Vencedores</TabsTrigger>
           <TabsTrigger value="verificar"><Hash className="h-4 w-4 mr-2" /> Verificar</TabsTrigger>
           <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" /> Utilizadores</TabsTrigger>
+          {userRole === "aldeia_admin" && (
+            <TabsTrigger value="comissoes"><DollarSign className="h-4 w-4 mr-2" /> Comissões & POS</TabsTrigger>
+          )}
           {userRole === "super_admin" && (
-            <TabsTrigger value="aldeias"><Building2 className="h-4 w-4 mr-2" /> Aldeias</TabsTrigger>
+            <>
+              <TabsTrigger value="aldeias"><Building2 className="h-4 w-4 mr-2" /> Aldeias</TabsTrigger>
+              <TabsTrigger value="transacoes"><CreditCard className="h-4 w-4 mr-2" /> Transações</TabsTrigger>
+              <TabsTrigger value="auditoria"><Shield className="h-4 w-4 mr-2" /> Auditoria</TabsTrigger>
+            </>
           )}
         </TabsList>
 
@@ -631,6 +653,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         </TabsContent>
 
         {userRole === "super_admin" && (
+          <>
           <TabsContent value="aldeias" className="space-y-4">
              <div className="flex justify-between">
                <h2 className="text-xl font-semibold">Gestão de Aldeias/Organizações</h2>
@@ -647,16 +670,135 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                </Card>
              ) : (
              <div className="grid gap-4">
-               {aldeias.map((al) => (
-                <Card key={al.id}>
+                {aldeias.map((al) => (
+                 <Card key={al.id}>
+                   <CardContent className="p-4 flex items-center justify-between">
+                     <div>
+                       <h3 className="font-semibold">{al.nome}</h3>
+                       <p className="text-sm text-muted-foreground">{al.tipoOrganizacao} • {al.email}</p>
+                     </div>
+                     <div className="flex gap-2 items-center">
+                       <Button variant="ghost" size="icon" onClick={() => { setSelectedAldeia(al); setAldeiaModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                       <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("aldeia", al.id)}><Trash2 className="h-4 w-4" /></Button>
+                     </div>
+                   </CardContent>
+                 </Card>
+               ))}
+             </div>
+             )}
+           </TabsContent>
+           
+           <TabsContent value="transacoes" className="space-y-4">
+             <div className="flex justify-between">
+               <h2 className="text-xl font-semibold">Transações da Plataforma</h2>
+             </div>
+             {transacoes.length === 0 ? (
+               <Card className="p-8 text-center">
+                 <CardContent className="flex flex-col items-center justify-center space-y-4">
+                   <CreditCard className="h-12 w-12 text-muted-foreground" />
+                   <p className="text-lg font-medium">Nenhuma transação encontrada</p>
+                 </CardContent>
+               </Card>
+             ) : (
+             <div className="grid gap-4">
+                {transacoes.map((t) => (
+                 <Card key={t.id}>
+                   <CardContent className="p-4 flex items-center justify-between">
+                     <div>
+                       <div className="flex gap-2 items-center">
+                         <h3 className="font-semibold">{t.tipo}</h3>
+                         <Badge variant="outline">{t.estado || "concluido"}</Badge>
+                       </div>
+                       <p className="text-sm text-muted-foreground">{t.descricao || "-"} • User: {t.user?.nome || t.user?.email || t.userId}</p>
+                       <p className="text-xs text-muted-foreground">{formatDate(t.createdAt)}</p>
+                     </div>
+                     <div className="text-right">
+                       <div className="text-lg font-bold">{formatCurrency(t.valor)}</div>
+                       <p className="text-xs text-muted-foreground">{t.metodoPagamento || "saldo"}</p>
+                     </div>
+                   </CardContent>
+                 </Card>
+               ))}
+             </div>
+             )}
+           </TabsContent>
+
+           <TabsContent value="auditoria" className="space-y-4">
+             <div className="flex justify-between">
+               <h2 className="text-xl font-semibold">Auditoria e Logs de Acesso</h2>
+             </div>
+             {logs.length === 0 ? (
+               <Card className="p-8 text-center">
+                 <CardContent className="flex flex-col items-center justify-center space-y-4">
+                   <Shield className="h-12 w-12 text-muted-foreground" />
+                   <p className="text-lg font-medium">Nenhum registo de acesso encontrado</p>
+                 </CardContent>
+               </Card>
+             ) : (
+             <div className="grid gap-4">
+                {logs.map((log) => (
+                 <Card key={log.id}>
+                   <CardContent className="p-4 flex items-center justify-between">
+                     <div>
+                       <div className="flex gap-2 items-center">
+                         <Badge variant={log.sucesso ? "default" : "destructive"}>
+                           {log.sucesso ? "Sucesso" : "Falha"}
+                         </Badge>
+                         <h3 className="font-semibold">{log.email}</h3>
+                       </div>
+                       <p className="text-sm text-muted-foreground">IP: {log.ip} • User Agent: {log.userAgent}</p>
+                       <p className="text-xs text-muted-foreground">{log.motivo || ""}</p>
+                       <p className="text-xs text-muted-foreground">{formatDate(log.createdAt)}</p>
+                     </div>
+                   </CardContent>
+                 </Card>
+               ))}
+             </div>
+             )}
+           </TabsContent>
+          </>
+        )}
+
+        {userRole === "aldeia_admin" && (
+          <TabsContent value="comissoes" className="space-y-4">
+            <div className="flex justify-between">
+              <h2 className="text-xl font-semibold">Comissões & Desempenho de Vendedores (POS)</h2>
+            </div>
+            {vendedoresStats.length === 0 ? (
+              <Card className="p-8 text-center">
+                <CardContent className="flex flex-col items-center justify-center space-y-4">
+                  <DollarSign className="h-12 w-12 text-muted-foreground" />
+                  <p className="text-lg font-medium">Nenhum vendedor encontrado ou dados insuficientes</p>
+                </CardContent>
+              </Card>
+            ) : (
+            <div className="grid gap-4">
+               {vendedoresStats.map((vs) => (
+                <Card key={vs.id}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold">{al.nome}</h3>
-                      <p className="text-sm text-muted-foreground">{al.tipoOrganizacao} • {al.email}</p>
+                      <div className="flex gap-2 items-center">
+                        <h3 className="font-semibold text-lg">{vs.nome}</h3>
+                        <Badge variant="outline">{vs.totalVendas} vendas globais</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{vs.email} • {vs.telefone || "Sem telefone"}</p>
+                      <div className="flex items-center gap-4 mt-2">
+                         <div>
+                            <p className="text-xs text-muted-foreground">Volume Faturado</p>
+                            <p className="font-semibold text-green-600">{formatCurrency(vs.volumeTotal)}</p>
+                         </div>
+                         <div>
+                            <p className="text-xs text-muted-foreground">Comissão ({vs.comissaoPercentual}%)</p>
+                            <p className="font-semibold text-blue-600">{formatCurrency(vs.comissaoGanhas)}</p>
+                         </div>
+                         <div>
+                            <p className="text-xs text-muted-foreground">Saldo Aberto (A Pagar)</p>
+                            <p className="font-semibold text-orange-600">{formatCurrency(vs.saldoAberto)}</p>
+                         </div>
+                      </div>
                     </div>
                     <div className="flex gap-2 items-center">
-                      <Button variant="ghost" size="icon" onClick={() => { setSelectedAldeia(al); setAldeiaModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("aldeia", al.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="outline" size="sm" onClick={() => { setSelectedUser(vs); setUserModalOpen(true); }}><Edit className="h-4 w-4 mr-2" /> Editar Perfil</Button>
                     </div>
                   </CardContent>
                 </Card>

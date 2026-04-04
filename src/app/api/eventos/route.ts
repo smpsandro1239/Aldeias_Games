@@ -31,8 +31,13 @@ export async function GET(request: NextRequest) {
 
     if (user) {
       if (user.role === 'aldeia_admin' && !aldeiaId) {
+        // Admin só vê eventos da sua aldeia
         where.aldeiaId = user.aldeiaId;
       } else if (user.role === 'vendedor' && !aldeiaId) {
+        // Vendedor só vê eventos da sua aldeia
+        where.aldeiaId = user.aldeiaId;
+      } else if (user.role === 'user' && !aldeiaId) {
+        // User normal só vê eventos da sua aldeia
         where.aldeiaId = user.aldeiaId;
       }
       // Super admin vê todos

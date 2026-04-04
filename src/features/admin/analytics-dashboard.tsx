@@ -123,6 +123,19 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
     valorFormatado: formatCurrency(item.valor),
   }));
 
+  // Calcular tendência real baseada nos últimos 2 meses
+  const calcTrend = () => {
+    const data = stats.evolucaoMensal;
+    if (data.length < 2) return { trend: 0, label: 'Sem dados suficientes' };
+    const current = data[data.length - 1]?.valor || 0;
+    const previous = data[data.length - 2]?.valor || 0;
+    if (previous === 0) return { trend: current > 0 ? 100 : 0, label: current > 0 ? 'Novo este mês' : 'Sem atividade' };
+    const trend = ((current - previous) / previous) * 100;
+    return { trend: Math.round(trend * 10) / 10, label: trend >= 0 ? `+${trend.toFixed(1)}% vs mês anterior` : `${trend.toFixed(1)}% vs mês anterior` };
+  };
+
+  const trend = calcTrend();
+
   const jogosPorTipo = Object.entries(stats.jogosPorTipo || {}).map(([name, value]) => ({
     name,
     value,
@@ -177,9 +190,9 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
                   <DollarSign className="h-6 w-6 text-violet-600" />
                 </div>
               </div>
-              <div className="flex items-center gap-1 mt-2 text-xs text-green-600">
-                <TrendingUp className="h-3 w-3" />
-                <span>+12% este mês</span>
+              <div className={`flex items-center gap-1 mt-2 text-xs ${trend.trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {trend.trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                <span>{trend.label}</span>
               </div>
             </CardContent>
           </Card>
