@@ -820,13 +820,14 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="raspadinhaOrganizacao">Organização</Label>
+                        <Label htmlFor="raspadinhaOrganizacao">Nome na Raspadinha</Label>
                         <Input
                           id="raspadinhaOrganizacao"
                           placeholder="Ex: Junta de Freguesia"
                           value={formData.raspadinhaOrganizacao}
                           onChange={(e) => setFormData({ ...formData, raspadinhaOrganizacao: e.target.value })}
                         />
+                        <p className="text-xs text-muted-foreground">Nome que aparecerá impresso na raspadinha.</p>
                       </div>
                     </div>
 

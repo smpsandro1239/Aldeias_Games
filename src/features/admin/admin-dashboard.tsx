@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
@@ -203,19 +204,31 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   // --- TOGGLE JOGO ESTADO ---
   const handleToggleJogoEstado = async (jogo: any) => {
     const novoEstado = jogo.estado === 'aberto' ? 'fechado' : 'aberto';
-    const res = await fetch(`/api/jogos/${jogo.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ estado: novoEstado }),
-      cache: 'no-store',
-    });
-    if (res.ok) {
-      toast.success(`Jogo ${novoEstado === 'aberto' ? 'ativado' : 'desativado'} com sucesso!`);
-      fetchData();
-    } else {
-      const err = await res.json();
-      toast.error(err.error || "Erro ao alterar estado do jogo");
+    try {
+      const res = await fetch(`/api/jogos/${jogo.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ estado: novoEstado }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Jogo ${novoEstado === 'aberto' ? 'ativado' : 'desativado'} com sucesso!`);
+        fetchData();
+      } else {
+        toast.error(data.error || "Erro ao alterar estado do jogo");
+      }
+    } catch (error) {
+      toast.error("Erro de conexão ao alterar estado do jogo");
     }
+  };
+
+  // --- TESTAR JOGO (Super Admin) ---
+  const [testJogoOpen, setTestJogoOpen] = useState(false);
+  const [testJogo, setTestJogo] = useState<any>(null);
+
+  const handleTestarJogo = (jogo: any) => {
+    setTestJogo(jogo);
+    setTestJogoOpen(true);
   };
 
   // --- ALDEIAS ---
@@ -511,26 +524,37 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                     <h3 className="font-semibold">{jg.nome}</h3>
                     <p className="text-sm text-muted-foreground">{jg.tipo} • {jg.evento?.nome} • {formatCurrency(jg.preco)}</p>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    {jg.estado === 'aberto' && (
-                      <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                        Ativo
-                      </span>
-                    )}
-                    {getEstadoBadge(jg.estado)}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={jg.estado === 'aberto' ? 'Desativar jogo' : 'Ativar jogo'}
-                      className={jg.estado === 'aberto' ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}
-                      onClick={() => handleToggleJogoEstado(jg)}
-                    >
-                      {jg.estado === 'aberto' ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedJogo(jg); setSelectedEventoIdParaJogo(jg.eventoId); setJogoModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("jogo", jg.id)}><Trash2 className="h-4 w-4" /></Button>
-                  </div>
+                    <div className="flex gap-2 items-center">
+                      {jg.estado === 'aberto' && (
+                        <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                          Ativo
+                        </span>
+                      )}
+                      {getEstadoBadge(jg.estado)}
+                      {userRole === "super_admin" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Testar jogo (modo fictício)"
+                          className="text-blue-500 hover:text-blue-400"
+                          onClick={() => handleTestarJogo(jg)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={jg.estado === 'aberto' ? 'Desativar jogo' : 'Ativar jogo'}
+                        className={jg.estado === 'aberto' ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}
+                        onClick={() => handleToggleJogoEstado(jg)}
+                      >
+                        {jg.estado === 'aberto' ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => { setSelectedJogo(jg); setSelectedEventoIdParaJogo(jg.eventoId); setJogoModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("jogo", jg.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
                 </CardContent>
               </Card>
             ))}
@@ -884,6 +908,179 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         onOpenChange={setVerificarHashOpen}
         token={token}
       />
+
+      {/* Modal Testar Jogo (Super Admin) */}
+      <Dialog open={testJogoOpen} onOpenChange={setTestJogoOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-blue-500" />
+              Testar Jogo — Modo Fictício
+            </DialogTitle>
+            <DialogDescription>
+              Simule uma participação neste jogo para verificar se está configurado corretamente. Nenhuma alteração é guardada.
+            </DialogDescription>
+          </DialogHeader>
+          {testJogo && <JogoTestView jogo={testJogo} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Componente de teste fictício de jogos
+function JogoTestView({ jogo }: { jogo: any }) {
+  const [step, setStep] = useState<"info" | "simulate">("info");
+  const config = jogo.configuracao ? (typeof jogo.configuracao === "string" ? JSON.parse(jogo.configuracao) : jogo.configuracao) : {};
+
+  const tipoLabel = (tipo: string) => {
+    const labels: Record<string, string> = {
+      raspadinha: "Raspadinha",
+      rifa: "Rifa",
+      tombola: "Tombola",
+      poio_da_vaca: "Poio da Vaca",
+    };
+    return labels[tipo] || tipo;
+  };
+
+  if (step === "info") {
+    return (
+      <div className="space-y-6">
+        <div className="bg-muted/50 rounded-xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            {jogo.tipo === "raspadinha" && <Sparkles className="h-6 w-6 text-yellow-500" />}
+            {jogo.tipo === "rifa" && <Ticket className="h-6 w-6 text-blue-500" />}
+            {jogo.tipo === "tombola" && <Ticket className="h-6 w-6 text-purple-500" />}
+            {jogo.tipo === "poio_da_vaca" && <Grid3X3 className="h-6 w-6 text-green-500" />}
+            <div>
+              <h3 className="text-lg font-bold">{jogo.nome}</h3>
+              <Badge variant="secondary">{tipoLabel(jogo.tipo)}</Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Preço</p>
+              <p className="font-bold text-lg">{formatCurrency(jogo.preco)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Stock</p>
+              <p className="font-bold text-lg">{jogo.stockAtual} / {jogo.stockInicial}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Estado</p>
+              <Badge variant={jogo.estado === "aberto" ? "default" : "secondary"}>{jogo.estado}</Badge>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Evento</p>
+              <p className="font-medium">{jogo.evento?.nome || "—"}</p>
+            </div>
+          </div>
+
+          {jogo.tipo === "raspadinha" && config.premios && config.premios.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Prémios Configurados</h4>
+              <div className="space-y-1">
+                {config.premios.map((p: any, i: number) => (
+                  <div key={i} className="flex justify-between text-sm p-2 bg-background rounded">
+                    <span>{p.nome}</span>
+                    <span className="font-medium">{p.valorDinheiroAlternative}€ ({p.percentagem}%)</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {jogo.tipo === "poio_da_vaca" && (
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Configuração do Campo</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Dimensões:</span> {config.dimensoesX || 10}x{config.dimensoesY || 10}
+                </div>
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Custo/quadrado:</span> {config.custoQuadrado || jogo.preco}€
+                </div>
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Valor da Vaca:</span> {formatCurrency(config.valorCompraVaca || 0)}
+                </div>
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Total quadrados:</span> {(config.dimensoesX || 10) * (config.dimensoesY || 10)}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(jogo.tipo === "rifa" || jogo.tipo === "tombola") && (
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Configuração</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Números:</span> {config.numeroInicial || 1} – {config.numeroFinal || 1000}
+                </div>
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Modo sorteio:</span> {jogo.modoSorteio === "externo" ? "Externo" : "App"}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={() => setStep("simulate")}>
+            <Play className="h-4 w-4 mr-2" />
+            Simular Participação
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Simulate step
+  return (
+    <div className="space-y-6">
+      <div className="bg-muted/50 rounded-xl p-6 space-y-4">
+        <h3 className="font-bold text-lg">Simulação de Participação</h3>
+        <p className="text-sm text-muted-foreground">
+          Se um jogador participasse neste jogo agora, eis o que aconteceria:
+        </p>
+
+        <div className="space-y-3">
+          <div className="p-3 bg-background rounded-lg space-y-2">
+            <p className="text-sm font-medium">1. Jogador seleciona {jogo.tipo === "poio_da_vaca" ? "coordenadas no campo" : jogo.tipo === "raspadinha" ? "uma raspadinha" : "número(s) da rifa"}</p>
+            <p className="text-xs text-muted-foreground">
+              {jogo.tipo === "poio_da_vaca" && `Campo de ${config.dimensoesX || 10}x${config.dimensoesY || 10} = ${(config.dimensoesX || 10) * (config.dimensoesY || 10)} quadrados disponíveis`}
+              {jogo.tipo === "raspadinha" && `${jogo.stockAtual} raspadinhas disponíveis com ${config.premios?.length || 0} tipos de prémio`}
+              {(jogo.tipo === "rifa" || jogo.tipo === "tombola") && `Números de ${config.numeroInicial || 1} a ${config.numeroFinal || 1000}`}
+            </p>
+          </div>
+
+          <div className="p-3 bg-background rounded-lg space-y-2">
+            <p className="text-sm font-medium">2. Pagamento de {formatCurrency(jogo.preco)}</p>
+            <p className="text-xs text-muted-foreground">Métodos disponíveis: Saldo, MBWay, Dinheiro</p>
+          </div>
+
+          <div className="p-3 bg-background rounded-lg space-y-2">
+            <p className="text-sm font-medium">3. Participação registada com hash de verificação</p>
+            <p className="text-xs text-muted-foreground">SHA-256 seed gerado — auditável e transparente</p>
+          </div>
+
+          {jogo.tipo === "raspadinha" && (
+            <div className="p-3 bg-background rounded-lg space-y-2">
+              <p className="text-sm font-medium">4. Jogador raspa e revela o prémio</p>
+              <p className="text-xs text-muted-foreground">
+                Prémio determinado pelo número do cartão ({jogo.stockInicial - jogo.stockAtual + 1}º cartão vendido)
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <Button variant="outline" className="flex-1" onClick={() => setStep("info")}>
+          Voltar
+        </Button>
+      </div>
     </div>
   );
 }
