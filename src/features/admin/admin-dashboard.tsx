@@ -818,7 +818,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         initialData={selectedEvento}
         aldeias={aldeias}
       />
-      <CreateJogoModal open={jogoModalOpen} onOpenChange={setJogoModalOpen} onSubmit={handleSaveJogo} eventoId={selectedEventoIdParaJogo} initialData={selectedJogo} />
+      <CreateJogoModal open={jogoModalOpen} onOpenChange={setJogoModalOpen} onSubmit={handleSaveJogo} eventoId={selectedEventoIdParaJogo} initialData={selectedJogo} userRole={userRole} token={token} />
       <AldeiaModal open={aldeiaModalOpen} onOpenChange={setAldeiaModalOpen} onSubmit={handleSaveAldeia} initialData={selectedAldeia} />
       <UserModal open={userModalOpen} onOpenChange={setUserModalOpen} onSubmit={handleSaveUser} initialData={selectedUser} aldeias={aldeia ? [aldeia] : aldeias} currentUserRole={userRole} />
 

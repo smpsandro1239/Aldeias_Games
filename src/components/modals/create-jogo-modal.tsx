@@ -30,7 +30,12 @@ import {
   Euro, 
   Info,
   TrendingUp,
-  Calculator
+  Calculator,
+  Building2,
+  Calendar,
+  Check,
+  ChevronsUpDown,
+  Search
 } from "lucide-react";
 
 interface Premio {
@@ -38,6 +43,20 @@ interface Premio {
   nome: string;
   valorDinheiroAlternative: number;
   percentagem: number;
+}
+
+interface AldeiaOption {
+  id: string;
+  nome: string;
+  tipoOrganizacao: string;
+  slug: string;
+}
+
+interface EventoOption {
+  id: string;
+  nome: string;
+  aldeiaId: string;
+  aldeiaNome?: string;
 }
 
 interface JogoData {
@@ -74,14 +93,28 @@ interface CreateJogoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: JogoData) => Promise<void>;
-  eventoId: string;
+  eventoId?: string;
   initialData?: JogoData;
+  userRole?: string;
+  token?: string;
 }
 
-export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initialData }: CreateJogoModalProps) {
+export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEventoId, initialData, userRole, token }: CreateJogoModalProps) {
   const [loading, setLoading] = useState(false);
   const [showTransparency, setShowTransparency] = useState(false);
   const [submittedData, setSubmittedData] = useState<JogoData | null>(null);
+  
+  // Organization/Event selectors (for super_admin)
+  const [aldeias, setAldeias] = useState<AldeiaOption[]>([]);
+  const [eventos, setEventos] = useState<EventoOption[]>([]);
+  const [selectedAldeiaId, setSelectedAldeiaId] = useState<string>("");
+  const [selectedEventoId, setSelectedEventoId] = useState<string>(propEventoId || "");
+  const [aldeiaOpen, setAldeiaOpen] = useState(false);
+  const [eventoOpen, setEventoOpen] = useState(false);
+  const [isLoadingAldeias, setIsLoadingAldeias] = useState(false);
+  const [isLoadingEventos, setIsLoadingEventos] = useState(false);
+
+  const isSuperAdmin = userRole === "super_admin";
   
   const [formData, setFormData] = useState({
     nome: "",
@@ -170,6 +203,71 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
       resetForm();
     }
   }, [initialData, open]);
+
+  // Fetch aldeias for super admin
+  useEffect(() => {
+    if (open && isSuperAdmin && token) {
+      fetchAldeias();
+    }
+  }, [open, isSuperAdmin, token]);
+
+  // Fetch eventos when aldeia changes
+  useEffect(() => {
+    if (open && isSuperAdmin && token && selectedAldeiaId) {
+      fetchEventos(selectedAldeiaId);
+    } else if (open && isSuperAdmin) {
+      setEventos([]);
+      setSelectedEventoId("");
+    }
+  }, [selectedAldeiaId, open, isSuperAdmin, token]);
+
+  const fetchAldeias = async () => {
+    setIsLoadingAldeias(true);
+    try {
+      const res = await fetch("/api/aldeias", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAldeias(data.data || data.aldeias || []);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar aldeias:", error);
+    } finally {
+      setIsLoadingAldeias(false);
+    }
+  };
+
+  const fetchEventos = async (aldeiaId: string) => {
+    setIsLoadingEventos(true);
+    try {
+      const res = await fetch(`/api/eventos?aldeiaId=${aldeiaId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const eventosWithAldeia = (data.data || []).map((e: any) => ({
+          ...e,
+          aldeiaNome: aldeias.find((a) => a.id === e.aldeiaId)?.nome,
+        }));
+        setEventos(eventosWithAldeia);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar eventos:", error);
+    } finally {
+      setIsLoadingEventos(false);
+    }
+  };
+
+  const tipoOrganizacaoLabel = (tipo: string) => {
+    const labels: Record<string, string> = {
+      aldeia: "Aldeia",
+      escola: "Escola",
+      associacao_pais: "Associação de Pais",
+      clube: "Clube",
+    };
+    return labels[tipo] || tipo;
+  };
 
   const resetForm = () => {
     setFormData({
@@ -413,7 +511,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
       preco: parseFloat(formData.preco) || 0,
       stockInicial: parseInt(formData.stockInicial) || 100,
       limitePorUsuario: parseInt(formData.limitePorUsuario) || 10,
-      eventoId,
+      eventoId: selectedEventoId,
       configuracao: config,
       modoSorteio: formData.modoSorteio,
       detalhesSorteioExterno: formData.detalhesSorteioExterno,
@@ -630,6 +728,37 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Organization & Event selectors for Super Admin */}
+              {isSuperAdmin && (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="aldeia">Organização / Aldeia / Escola / Clube *</Label>
+                    <AldeiaSelector
+                      aldeias={aldeias}
+                      selectedId={selectedAldeiaId}
+                      onSelect={(id) => {
+                        setSelectedAldeiaId(id);
+                        setSelectedEventoId("");
+                      }}
+                      loading={isLoadingAldeias}
+                      token={token}
+                    />
+                  </div>
+
+                  {selectedAldeiaId && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="evento">Evento *</Label>
+                      <EventoSelector
+                        eventos={eventos}
+                        selectedId={selectedEventoId}
+                        onSelect={setSelectedEventoId}
+                        loading={isLoadingEventos}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
 
               <div className="grid gap-2">
                 <Label htmlFor="nome">Nome do Jogo *</Label>
@@ -916,5 +1045,196 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId, initia
         loading={loading}
       />
     </>
+  );
+}
+
+// Searchable Aldeia Selector Component
+function AldeiaSelector({ aldeias, selectedId, onSelect, loading, token }: {
+  aldeias: AldeiaOption[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+  loading: boolean;
+  token?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = aldeias.filter((a) =>
+    a.nome.toLowerCase().includes(search.toLowerCase()) ||
+    a.tipoOrganizacao.toLowerCase().includes(search.toLowerCase()) ||
+    a.slug.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selected = aldeias.find((a) => a.id === selectedId);
+
+  const tipoLabel = (tipo: string) => {
+    const labels: Record<string, string> = {
+      aldeia: "Aldeia",
+      escola: "Escola",
+      associacao_pais: "Associação de Pais",
+      clube: "Clube",
+    };
+    return labels[tipo] || tipo;
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {selected ? (
+          <span className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span>{selected.nome}</span>
+            <Badge variant="secondary" className="text-xs">{tipoLabel(selected.tipoOrganizacao)}</Badge>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Selecionar organização...</span>
+        )}
+        <ChevronsUpDown className="h-4 w-4 opacity-50 ml-auto" />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md animate-in fade-in-0 zoom-in-95">
+          <div className="p-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Pesquisar..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-8 pl-8 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="max-h-60 overflow-y-auto">
+            {loading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">A carregar...</div>
+            ) : filtered.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma organização encontrada</div>
+            ) : (
+              filtered.map((aldeia) => (
+                <button
+                  key={aldeia.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(aldeia.id);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors ${
+                    selectedId === aldeia.id ? "bg-accent text-accent-foreground" : ""
+                  }`}
+                >
+                  <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="flex-1 text-left">{aldeia.nome}</span>
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">{tipoLabel(aldeia.tipoOrganizacao)}</Badge>
+                  {selectedId === aldeia.id && <Check className="h-4 w-4 text-primary flex-shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {open && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Searchable Evento Selector Component
+function EventoSelector({ eventos, selectedId, onSelect, loading }: {
+  eventos: EventoOption[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+  loading: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = eventos.filter((e) =>
+    e.nome.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selected = eventos.find((e) => e.id === selectedId);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {selected ? (
+          <span className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>{selected.nome}</span>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Selecionar evento...</span>
+        )}
+        <ChevronsUpDown className="h-4 w-4 opacity-50 ml-auto" />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md animate-in fade-in-0 zoom-in-95">
+          <div className="p-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Pesquisar eventos..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-8 pl-8 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="max-h-60 overflow-y-auto">
+            {loading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">A carregar...</div>
+            ) : filtered.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">Nenhum evento encontrado</div>
+            ) : (
+              filtered.map((evento) => (
+                <button
+                  key={evento.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(evento.id);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors ${
+                    selectedId === evento.id ? "bg-accent text-accent-foreground" : ""
+                  }`}
+                >
+                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="flex-1 text-left">{evento.nome}</span>
+                  {selectedId === evento.id && <Check className="h-4 w-4 text-primary flex-shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {open && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+        />
+      )}
+    </div>
   );
 }
