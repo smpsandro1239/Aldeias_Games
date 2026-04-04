@@ -451,6 +451,7 @@ async function main() {
       telefone: '+351900000002',
       role: UserRole.aldeia_admin,
       emailVerificado: true,
+      aldeiaId: aldeias[0].id,
     },
   });
 
@@ -462,6 +463,7 @@ async function main() {
       telefone: '+351900000003',
       role: UserRole.vendedor,
       emailVerificado: true,
+      aldeiaId: aldeias[0].id,
     },
   });
 
@@ -476,6 +478,22 @@ async function main() {
       saldo: 50,
     },
   });
+
+  // Criar algumas participações para o jogador principal
+  const someJogos = await prisma.jogo.findMany({ take: 3 });
+  for (const jogo of someJogos) {
+    await prisma.participacao.create({
+      data: {
+        jogoId: jogo.id,
+        userId: jogadorPrincipal.id,
+        dadosParticipacao: JSON.stringify({ numero: Math.floor(Math.random() * 100) }),
+        valorPago: jogo.preco,
+        metodoPagamento: MetodoPagamento.saldo,
+        estadoPagamento: EstadoPagamento.concluido,
+        dataPagamento: new Date(),
+      },
+    });
+  }
 
   console.log('\n🎉 Seed concluído com sucesso!');
   console.log('\n📊 Resumo:');

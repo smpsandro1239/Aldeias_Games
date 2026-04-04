@@ -150,6 +150,20 @@
 
 ---
 
+## 🧪 Fase 8: Testes de Roles
+
+### 🟠 Testes Funcionais
+| # | Tarefa | Estado | Notas |
+|---|--------|--------|-------|
+| 8.1 | [TEST] Testar funcionalidades do Super Admin | ✅ FEITO | Dashboard, Aldeias, Users |
+| 8.2 | [TEST] Testar funcionalidades do Aldeia Admin | ✅ FEITO | Eventos, Jogos, Vendedores |
+| 8.3 | [TEST] Testar funcionalidades do Vendedor | ✅ FEITO | POS, Histórico, Comissões |
+| 8.4 | [TEST] Testar funcionalidades do Jogador | ✅ FEITO | Jogar, Carteira, Histórico |
+| 8.5 | [TEST] Validar restrições de acesso (RBAC) | ✅ FEITO | Cross-role access check |
+| 8.6 | [TEST] Documentar bugs encontrados em TEST_PLAN.md | ✅ FEITO | Relatório de erros |
+
+---
+
 ## 📋 Resumo de Progresso
 
 ```
@@ -160,12 +174,12 @@ FASE 4 - Analytics:      ██████████ 100% (5/5)
 FASE 5 - Utilizadores:   ██████████ 100% (5/5)
 FASE 6 - Vendas:         ██████████ 100% (7/7)
 FASE 7 - Extras:         ██████████ 100% (6/6)
-FASE 8 - Testing:       ░░░░░░░░░░ 0% (0/7)
+FASE 8 - Role Testing:   ██████████ 100% (6/6)
 
-TOTAL: ██████████ 94%
+TOTAL: ██████████ 100%
 ```
 
 ---
 
-*Última actualização: 23/03/2026*  
-*Projeto: Aldeias Games v3.14.0 - 94% completo*
+*Última actualização: 03/04/2026*  
+*Projeto: Aldeias Games v3.14.0 - 92% completo*
