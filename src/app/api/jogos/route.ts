@@ -325,10 +325,13 @@ export async function POST(request: NextRequest) {
       { success: true, data: jogo },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao criar jogo:', error);
+    console.error('Stack trace:', error.stack);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: error.message || 'Erro interno do servidor', details: error.code || '' },
       { status: 500 }
     );
   }
