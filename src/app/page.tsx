@@ -583,7 +583,7 @@ export default function Home() {
                     <stat.icon className={`${stat.color} text-xl`} />
                     <span className="text-xs font-bold uppercase tracking-widest opacity-60">{stat.label}</span>
                   </div>
-                  <span className="font-headline text-3xl font-bold">{stat.value}</span>
+                  <p className="text-3xl font-bold">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -842,29 +842,6 @@ export default function Home() {
                   required
                   className="bg-surface-container-lowest border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50"
                 />
-              </div>
-              
-              <div className="pt-4 border-t border-outline-variant/10">
-                <p className="text-sm text-on-surface-variant mb-3">Quick Login:</p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: "Admin", email: "admin@aldeias.pt" },
-                    { label: "Aldeia", email: "aldeia@gmail.com" },
-                    { label: "Vendedor", email: "vendedor@gmail.com" },
-                    { label: "Jogador", email: "smpsandro1239@gmail.com" },
-                  ].map((u) => (
-                    <Button
-                      key={u.label}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => quickLogin(u.email, "123456")}
-                      className="text-xs border-primary/30 text-primary hover:bg-primary/10"
-                    >
-                      {u.label}
-                    </Button>
-                  ))}
-                </div>
               </div>
             </div>
             

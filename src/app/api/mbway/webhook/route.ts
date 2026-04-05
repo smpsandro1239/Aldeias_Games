@@ -9,15 +9,26 @@ export async function POST(request: NextRequest) {
 
     const webhookSecret = process.env.MBWAY_WEBHOOK_SECRET;
 
-    if (webhookSecret && signature) {
+    // SIGNATURE OBRIGATÓRIA — se o secret estiver configurado, a signature é obrigatória
+    if (webhookSecret) {
+      if (!signature) {
+        return NextResponse.json({ error: 'Signature MBWay obrigatória' }, { status: 400 });
+      }
       const isValid = validateWebhookSignature(
         JSON.stringify(body),
         signature,
         webhookSecret
       );
       if (!isValid) {
-        return NextResponse.json({ error: 'Signature inválida' }, { status: 400 });
+        return NextResponse.json({ error: 'Signature MBWay inválida' }, { status: 400 });
       }
+    } else {
+      // Em produção, o secret DEVE estar configurado
+      if (process.env.NODE_ENV === 'production') {
+        console.error('MBWAY_WEBHOOK_SECRET não configurado em produção — webhook rejeitado');
+        return NextResponse.json({ error: 'Configuração MBWay em falta' }, { status: 500 });
+      }
+      console.warn('MBWAY_WEBHOOK_SECRET não configurado — a aceitar webhook sem verificação (apenas dev)');
     }
 
     const result = processWebhookCallback(body);

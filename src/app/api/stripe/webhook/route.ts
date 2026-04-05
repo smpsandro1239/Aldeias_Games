@@ -28,6 +28,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Signature inválida' }, { status: 400 });
     }
 
+    // IDEMPOTÊNCIA: Verificar se o evento já foi processado
+    const existingEvent = await prisma.transacao.findFirst({
+      where: { referencia: event.id },
+    });
+
+    if (existingEvent) {
+      console.log(`Evento Stripe já processado: ${event.id}`);
+      return NextResponse.json({ received: true });
+    }
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -35,6 +45,18 @@ export async function POST(request: NextRequest) {
 
         if (tipo === 'participacao' && jogoId) {
           const valor = session.amount_total ? session.amount_total / 100 : 0;
+
+          // Verificar se a participação já existe (dupla proteção)
+          const existingParticipacao = await prisma.participacao.findFirst({
+            where: {
+              dadosParticipacao: { contains: session.id },
+            },
+          });
+
+          if (existingParticipacao) {
+            console.log(`Participação já existe para Stripe session: ${session.id}`);
+            return NextResponse.json({ received: true });
+          }
 
           const participacao = await prisma.participacao.create({
             data: {
@@ -46,6 +68,7 @@ export async function POST(request: NextRequest) {
               dadosParticipacao: JSON.stringify({
                 stripeSessionId: session.id,
                 stripePaymentIntent: session.payment_intent,
+                stripeEventId: event.id,
               }),
             },
           });
@@ -62,27 +85,38 @@ export async function POST(request: NextRequest) {
             });
           }
 
-          // Dar cashback de 5% ao utilizador (apenas para pagamentos confirmados via Stripe)
+          // Dar cashback de 5% ao utilizador
           if (userId) {
             const cashbackPercent = 0.05;
             const cashbackValor = valor * cashbackPercent;
 
-            await prisma.user.update({
-              where: { id: userId },
-              data: {
-                saldo: { increment: cashbackValor },
+            // Verificar se cashback já foi dado (tripla proteção)
+            const existingCashback = await prisma.transacao.findFirst({
+              where: {
+                userId,
+                tipo: 'cashback',
+                referencia: session.id,
               },
             });
 
-            await prisma.transacao.create({
-              data: {
-                userId: userId,
-                valor: cashbackValor,
-                tipo: 'cashback',
-                descricao: `Cashback de compra via Stripe`,
-                referencia: jogoId,
-              },
-            });
+            if (!existingCashback) {
+              await prisma.user.update({
+                where: { id: userId },
+                data: {
+                  saldo: { increment: cashbackValor },
+                },
+              });
+
+              await prisma.transacao.create({
+                data: {
+                  userId: userId,
+                  valor: cashbackValor,
+                  tipo: 'cashback',
+                  descricao: `Cashback de compra via Stripe`,
+                  referencia: session.id,
+                },
+              });
+            }
           }
         }
 
@@ -90,22 +124,33 @@ export async function POST(request: NextRequest) {
         if (tipo === 'carregamento_saldo' && userId) {
           const valor = session.amount_total ? session.amount_total / 100 : 0;
 
-          await prisma.user.update({
-            where: { id: userId },
-            data: {
-              saldo: { increment: valor },
-            },
-          });
-
-          await prisma.transacao.create({
-            data: {
-              userId: userId,
-              valor: valor,
+          // Verificar se carregamento já existe
+          const existingTopup = await prisma.transacao.findFirst({
+            where: {
+              userId,
               tipo: 'carregamento_saldo',
-              descricao: 'Carregamento de saldo via Stripe',
               referencia: session.id,
             },
           });
+
+          if (!existingTopup) {
+            await prisma.user.update({
+              where: { id: userId },
+              data: {
+                saldo: { increment: valor },
+              },
+            });
+
+            await prisma.transacao.create({
+              data: {
+                userId: userId,
+                valor: valor,
+                tipo: 'carregamento_saldo',
+                descricao: 'Carregamento de saldo via Stripe',
+                referencia: session.id,
+              },
+            });
+          }
         }
         break;
       }

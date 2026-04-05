@@ -4,6 +4,17 @@ import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
+// Sanitizar filename para prevenir path traversal
+function sanitizeFilename(filename: string): string {
+  // Remover qualquer caractere que não seja alfanumérico, hífen, underscore ou ponto
+  const sanitized = filename.replace(/[^a-zA-Z0-9_\-\.]/g, '');
+  // Prevenir path traversal explícito
+  if (sanitized.includes('..') || sanitized.includes('/') || sanitized.includes('\\')) {
+    throw new Error('Nome de ficheiro inválido');
+  }
+  return sanitized;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
@@ -28,7 +39,8 @@ export async function POST(request: NextRequest) {
 
       const dados = await prisma.$transaction(async (tx) => {
         const aldeias = await tx.aldeia.findMany({ include: { users: true } });
-        const users = await tx.user.findMany();
+        // Remover passwords dos utilizadores no backup
+        const users = (await tx.user.findMany()).map(({ password, ...rest }) => rest);
         const eventos = await tx.evento.findMany();
         const jogos = await tx.jogo.findMany();
         const participacoes = await tx.participacao.findMany();
@@ -66,7 +78,21 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Nome do ficheiro é obrigatório' }, { status: 400 });
       }
 
-      const filepath = path.join(process.cwd(), 'backups', filename);
+      // Sanitizar filename para prevenir path traversal
+      let safeFilename: string;
+      try {
+        safeFilename = sanitizeFilename(filename);
+      } catch {
+        return NextResponse.json({ error: 'Nome de ficheiro inválido' }, { status: 400 });
+      }
+
+      const backupsDir = path.join(process.cwd(), 'backups');
+      const filepath = path.resolve(backupsDir, safeFilename);
+
+      // Verificar que o caminho final está dentro da pasta de backups
+      if (!filepath.startsWith(path.resolve(backupsDir))) {
+        return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+      }
 
       if (!fs.existsSync(filepath)) {
         return NextResponse.json({ error: 'Ficheiro de backup não encontrado' }, { status: 404 });
@@ -77,7 +103,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: 'Backup carregado - confirme os dados antes de restaurar',
+        message: 'Backup carregado — preview apenas. Restauro real não implementado.',
         dadosPreview: {
           aldeias: dados.aldeias?.length || 0,
           users: dados.users?.length || 0,
@@ -89,15 +115,15 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao processar backup:', error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Erro interno do servidor' }, { status: 500 });
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const user = await getFullUserFromRequest({} as NextRequest);
+    const user = await getFullUserFromRequest(request);
 
     if (!user || !hasRole(user.role, ['super_admin'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
@@ -109,7 +135,7 @@ export async function GET() {
     
     if (fs.existsSync(backupsDir)) {
       files = fs.readdirSync(backupsDir)
-        .filter(f => f.endsWith('.json'))
+        .filter(f => f.endsWith('.json') && !f.includes('..'))
         .sort()
         .reverse();
     }

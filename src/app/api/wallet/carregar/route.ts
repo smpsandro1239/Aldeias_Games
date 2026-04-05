@@ -9,11 +9,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Permitir que todos os roles carreguem o seu próprio saldo
-    // Mas apenas admins/vendedores podem carregar saldo para eventos/aldeias específicas
-    const isUserLoadingOwnBalance = user.role === 'user';
-    if (!isUserLoadingOwnBalance && !hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    // Apenas admins e vendedores podem registar carregamentos (para tracking)
+    // Utilizadores normais NÃO podem carregar saldo aqui — devem usar Stripe/MBWay
+    if (!hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
+      return NextResponse.json({ error: 'Não autorizado. Apenas admins e vendedores podem registar carregamentos.' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -33,11 +32,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Valor inválido' }, { status: 400 });
     }
 
+    // Limite máximo de carregamento por transação (prevenir abuso)
+    const MAX_CARREGAMENTO = 10000; // €10,000
+    if (valor > MAX_CARREGAMENTO) {
+      return NextResponse.json({ 
+        error: `Valor máximo de carregamento: €${MAX_CARREGAMENTO}` 
+      }, { status: 400 });
+    }
+
     if (!metodoCarregamento || !['dinheiro', 'mbway', 'transferencia'].includes(metodoCarregamento)) {
       return NextResponse.json({ error: 'Método de carregamento inválido' }, { status: 400 });
     }
 
+    // PROTEÇÃO CONTRA INFLAÇÃO: Apenas registar a transação, não incrementar saldo automaticamente
+    // O saldo só é incrementado quando o pagamento é confirmado via Stripe/MBWay webhook
+    // Para carregamentos em dinheiro, o admin deve confirmar manualmente
     const aldeiaTargetId = aldeiaId || user.aldeiaId;
+
+    // Verificar se já existe um carregamento idêntico nos últimos 5 minutos (proteção contra duplicados)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const existingCarregamento = await (prisma.transacao as any).findFirst({
+      where: {
+        userId: user.id,
+        tipo: 'carregamento_saldo',
+        valor: valor,
+        createdAt: { gte: fiveMinutesAgo },
+      },
+    });
+
+    if (existingCarregamento) {
+      return NextResponse.json({ 
+        error: 'Carregamento duplicado detectado. Aguarde antes de tentar novamente.' 
+      }, { status: 429 });
+    }
 
     const carregamento = await (prisma.transacao as any).create({
       data: {
@@ -47,7 +74,7 @@ export async function POST(request: NextRequest) {
         descricao: descricao || `Carregamento de saldo - ${metodoCarregamento}`,
         dadosAdicionais: {
           metodoPagamento: metodoCarregamento,
-          estado: 'concluido',
+          estado: metodoCarregamento === 'dinheiro' ? 'pendente_confirmacao' : 'concluido',
           nomeVendedor: user.nome,
           emailVendedor: user.email,
           telefoneVendedor: user.telefone,
@@ -61,12 +88,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        saldo: { increment: valor }
-      }
-    });
+    // Apenas incrementar saldo se for dinheiro (confirmado presencialmente pelo admin)
+    // Para MBWay/Transferência, o saldo é incrementado quando o webhook confirma o pagamento
+    if (metodoCarregamento === 'dinheiro') {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          saldo: { increment: valor }
+        }
+      });
+
+      // Atualizar estado para concluido
+      await (prisma.transacao as any).update({
+        where: { id: carregamento.id },
+        data: { dadosAdicionais: { ...carregamento.dadosAdicionais, estado: 'concluido' } }
+      });
+    }
 
     const adminsDaAldeia = await prisma.user.findMany({
       where: {
@@ -88,10 +125,10 @@ export async function POST(request: NextRequest) {
     for (const admin of adminsDaAldeia) {
       const notificacao = await (prisma.notificacao as any).create({
         data: {
-          userId: admin.email,
+          userId: admin.id,
           tipo: 'sistema',
           titulo: '💰 Carregamento de Saldo Registado',
-          mensagem: `Vendedor ${user.nome}.carregou €${valor.toFixed(2)} via ${metodoCarregamento}${eventoInfo ? ` para evento ${eventoInfo.nome}` : ''}`,
+          mensagem: `Vendedor ${user.nome} carregou €${valor.toFixed(2)} via ${metodoCarregamento}${eventoInfo ? ` para evento ${eventoInfo.nome}` : ''}`,
           estado: 'pendente',
           dadosAdicionais: {
             carregamentoId: carregamento.id,
@@ -118,7 +155,8 @@ export async function POST(request: NextRequest) {
         carregamentoId: carregamento.id,
         valor,
         metodoPagamento: metodoCarregamento,
-        saldoAtual: user.saldo + valor,
+        estado: metodoCarregamento === 'dinheiro' ? 'concluido' : 'pendente_confirmacao',
+        saldoAtual: user.saldo + (metodoCarregamento === 'dinheiro' ? valor : 0),
         vendedor: {
           nome: user.nome,
           email: user.email,
