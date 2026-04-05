@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -228,6 +228,7 @@ export function TransparencyModal({
       {open && (
         <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] overflow-y-auto p-0">
+            <DialogTitle className="sr-only">Resumo de Rentabilidade e Transparência</DialogTitle>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

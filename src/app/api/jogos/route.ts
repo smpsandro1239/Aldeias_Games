@@ -54,7 +54,14 @@ function calcularRentabilidade(tipo: string, dados: any) {
       ? (resultado.lucroLiquidoPrevisto / resultado.receitaEsperada) * 100 
       : 0;
   } else if (tipo === 'poio_da_vaca') {
-    const dimensoes = JSON.parse(dados.dimensoesCampo || '{}');
+    let dimensoes = { x: 10, y: 10 };
+    try {
+      if (dados.dimensoesCampo) {
+        dimensoes = JSON.parse(dados.dimensoesCampo);
+      }
+    } catch {
+      dimensoes = { x: 10, y: 10 };
+    }
     const totalQuadrados = (dimensoes.x || 10) * (dimensoes.y || 10);
     const custoQuadrado = dados.custoQuadrado || 0;
     const valorCompraVaca = dados.valorCompraVaca || 0;
@@ -222,8 +229,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calcular rentabilidade
-    const rentabilidade = calcularRentabilidade(data.tipo, data);
+    // Calcular rentabilidade com proteção contra erros
+    let rentabilidade = {
+      lucroMinimoPercent: 0,
+      custoMedioPrevisto: 0,
+      receitaEsperada: 0,
+      lucroLiquidoPrevisto: 0,
+      percentagemTotalPremios: 0
+    };
+    try {
+      rentabilidade = calcularRentabilidade(data.tipo, data);
+    } catch (calcError) {
+      console.warn('Erro ao calcular rentabilidade, usando valores padrão:', calcError);
+    }
     
     // Gerar hash de verificação
     const hashVerificacao = gerarHashVerificacao({

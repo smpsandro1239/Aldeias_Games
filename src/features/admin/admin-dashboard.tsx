@@ -185,19 +185,31 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
     const url = isEditing ? `/api/jogos/${data.id}` : `/api/jogos`;
     const method = isEditing ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
 
-    if (res.ok) {
-      toast.success(`Jogo ${isEditing ? "atualizado" : "criado"} com sucesso!`);
-      fetchData();
-      setJogoModalOpen(false);
-    } else {
-      const err = await res.json();
-      throw new Error(err.error || "Erro ao salvar jogo");
+      const result = await res.json();
+
+      if (res.ok) {
+        toast.success(`Jogo ${isEditing ? "atualizado" : "criado"} com sucesso!`);
+        fetchData();
+        setJogoModalOpen(false);
+      } else {
+        console.error('Erro ao criar jogo:', result);
+        const errorMsg = result.error || result.details?.map((d: any) => d.message).join(', ') || "Erro ao salvar jogo";
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      console.error('Exceção ao salvar jogo:', error);
+      if (!error.message) {
+        toast.error("Erro ao salvar jogo");
+      }
+      throw error;
     }
   };
 
