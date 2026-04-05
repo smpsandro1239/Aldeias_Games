@@ -448,6 +448,12 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
   };
 
   const construirDadosJogo = (): JogoData => {
+    // Validar eventoId
+    const finalEventoId = selectedEventoId || propEventoId;
+    if (!finalEventoId) {
+      throw new Error("Selecione um evento antes de criar o jogo");
+    }
+
     const config: Record<string, unknown> = {
       numeroInicial: parseInt(formData.numeroInicial) || 1,
       numeroFinal: parseInt(formData.numeroFinal) || 1000,
@@ -511,7 +517,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       preco: parseFloat(formData.preco) || 0,
       stockInicial: parseInt(formData.stockInicial) || 100,
       limitePorUsuario: parseInt(formData.limitePorUsuario) || 10,
-      eventoId: selectedEventoId,
+      eventoId: finalEventoId,
       configuracao: config,
       modoSorteio: formData.modoSorteio,
       detalhesSorteioExterno: formData.detalhesSorteioExterno,
@@ -536,6 +542,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       setShowTransparency(false);
       onOpenChange(false);
       resetForm();
+    } catch (error: any) {
+      console.error('Erro ao criar jogo:', error);
+      // Error is already shown by parent via toast
     } finally {
       setLoading(false);
     }
