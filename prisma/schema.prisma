@@ -17,6 +17,8 @@ model User {
   emailVerificado       Boolean                 @default(false)
   notificacoesEmail     Boolean                 @default(true)
   ultimoLogin           DateTime?
+  falhasLogin           Int                     @default(0)
+  ultimaFalhaLogin      DateTime?
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   aldeiaId              String?

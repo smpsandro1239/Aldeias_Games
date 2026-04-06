@@ -10,9 +10,14 @@ import {
 import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { getClientIdentifier } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const otplib = require('otplib');
 const authenticator = otplib.authenticator;
+
+// Account lockout: bloquear após 5 falhas consecutivas
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutos
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,29 +69,95 @@ export async function POST(request: NextRequest) {
         'Utilizador não encontrado'
       );
 
+      // Mensagem genérica para não revelar se o email existe
       return NextResponse.json(
         { error: 'Email ou password incorretos' },
         { status: 401 }
       );
     }
 
+    // ACCOUNT LOCKOUT: Verificar se a conta está bloqueada
+    const failedAttempts = user.falhasLogin || 0;
+    const lastFailedLogin = user.ultimaFalhaLogin;
+
+    if (failedAttempts >= MAX_FAILED_ATTEMPTS && lastFailedLogin) {
+      const timeSinceLastFail = Date.now() - lastFailedLogin.getTime();
+      if (timeSinceLastFail < LOCKOUT_DURATION_MS) {
+        const remainingMs = LOCKOUT_DURATION_MS - timeSinceLastFail;
+        const remainingMin = Math.ceil(remainingMs / 60000);
+
+        logger.warn('Account locked due to too many failed attempts', {
+          module: 'auth',
+          userId: user.id,
+          email: user.email,
+          failedAttempts,
+          lockoutRemaining: remainingMin,
+        });
+
+        return NextResponse.json(
+          { 
+            error: `Conta bloqueada. Tente novamente em ${remainingMin} minuto${remainingMin > 1 ? 's' : ''}.`,
+            lockedUntil: new Date(lastFailedLogin.getTime() + LOCKOUT_DURATION_MS).toISOString(),
+          },
+          { status: 429 }
+        );
+      } else {
+        // Lockout expired — reset counter
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { falhasLogin: 0, ultimaFalhaLogin: null },
+        });
+      }
+    }
+
     // Verificar password
     const passwordValid = await verifyPassword(password, user.password);
 
     if (!passwordValid) {
+      // Incrementar falhas de login
+      const newFailCount = failedAttempts + 1;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          falhasLogin: newFailCount, 
+          ultimaFalhaLogin: new Date(),
+        },
+      });
+
       await logAccess(
         email,
         false,
         clientId,
         request.headers.get('user-agent') || 'unknown',
         user.id,
-        'Password incorreta'
+        `Password incorreta (tentativa ${newFailCount}/${MAX_FAILED_ATTEMPTS})`
       );
 
+      logger.warn('Failed login attempt', {
+        module: 'auth',
+        userId: user.id,
+        email: user.email,
+        attempt: newFailCount,
+        maxAttempts: MAX_FAILED_ATTEMPTS,
+      });
+
+      const remaining = MAX_FAILED_ATTEMPTS - newFailCount;
+      const errorMsg = remaining > 0
+        ? `Email ou password incorretos. ${remaining} tentativa${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}.`
+        : 'Conta bloqueada. Contacte o suporte.';
+
       return NextResponse.json(
-        { error: 'Email ou password incorretos' },
+        { error: errorMsg },
         { status: 401 }
       );
+    }
+
+    // Login bem-sucedido — reset falhas
+    if (failedAttempts > 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { falhasLogin: 0, ultimaFalhaLogin: null },
+      });
     }
 
     // Verificar se email está verificado
@@ -156,6 +227,13 @@ export async function POST(request: NextRequest) {
       user.id
     );
 
+    logger.info('Login successful', {
+      module: 'auth',
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
     // Criar resposta com cookie httpOnly
     const response = NextResponse.json({
       success: true,
@@ -171,7 +249,7 @@ export async function POST(request: NextRequest) {
         notificacoesEmail: user.notificacoesEmail,
       },
       precisaAldeia: user.role !== 'super_admin' && !user.aldeiaId,
-      token, // Ainda enviamos o token para compatibilidade com clients existentes
+      token,
     });
 
     // Definir cookie httpOnly seguro
@@ -179,7 +257,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Erro no login:', error);
+    logger.error('Erro no login', { module: 'auth', error });
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
