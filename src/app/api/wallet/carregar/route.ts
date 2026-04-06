@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
           { role: 'aldeia_admin', aldeiaId: aldeiaTargetId }
         ]
       },
-      select: { email: true, nome: true, telefone: true }
+      select: { id: true, email: true, nome: true, telefone: true }
     });
 
     const eventoInfo = eventoId ? await prisma.evento.findUnique({

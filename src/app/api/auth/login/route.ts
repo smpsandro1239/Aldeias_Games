@@ -5,6 +5,7 @@ import {
   generateToken,
   updateLastLogin,
   logAccess,
+  setAuthCookie,
 } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
@@ -106,14 +107,12 @@ export async function POST(request: NextRequest) {
 
       if (tfa?.enabled) {
         if (!totpCode) {
-          // 2FA é necessário mas não foi fornecido
           return NextResponse.json(
             { requiresTwoFactor: true, message: 'Código 2FA necessário' },
             { status: 200 }
           );
         }
 
-        // Verificar código 2FA
         const isValidCode = authenticator.verify({
           token: totpCode,
           secret: tfa.secret,
@@ -157,8 +156,8 @@ export async function POST(request: NextRequest) {
       user.id
     );
 
-    // Resposta
-    return NextResponse.json({
+    // Criar resposta com cookie httpOnly
+    const response = NextResponse.json({
       success: true,
       message: 'Login bem-sucedido',
       user: {
@@ -172,8 +171,13 @@ export async function POST(request: NextRequest) {
         notificacoesEmail: user.notificacoesEmail,
       },
       precisaAldeia: user.role !== 'super_admin' && !user.aldeiaId,
-      token,
+      token, // Ainda enviamos o token para compatibilidade com clients existentes
     });
+
+    // Definir cookie httpOnly seguro
+    setAuthCookie(response, token);
+
+    return response;
   } catch (error) {
     console.error('Erro no login:', error);
     return NextResponse.json(
