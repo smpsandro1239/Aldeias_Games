@@ -300,7 +300,8 @@ function RaspadinhaPremiumContent() {
         setCreditedAmount(data.creditedAmount);
         setPremioClaimed(true);
       } else {
-        console.error("Claim failed:", data.reason);
+        console.error("Claim failed:", data.error || data.reason);
+        toast.error(data.error || "Erro ao receber prémio");
       }
     } catch (error) {
       console.error("Erro ao reclamar prémio:", error);
