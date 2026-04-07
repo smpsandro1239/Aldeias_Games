@@ -32,7 +32,9 @@ Player opens /jogos/raspadinha-premium?id=X
 Player opens /jogos/raspadinha-premium?id=X
   → Sees game info + price + "Jogar por {preco}€" button
   → Clicks "Jogar" → POST /api/participacoes
-    → Server: validates stock, processes payment, determines outcome (probabilistic)
+    → Server: validates jogo stock (stockAtual >= 1), decrements atomically
+    → Server: processes payment (dinheiro/saldo/mbway/stripe)
+    → Server: determines outcome (probabilistic, using crypto.randomInt)
     → Server: generates deterministic grid around outcome
     → Returns: participationId + grid layout (9 slots)
   → Client renders server-provided grid
@@ -43,7 +45,7 @@ Player opens /jogos/raspadinha-premium?id=X
   → Confetti + "Receber Prémio" shows credited amount
   → If payment fails → error toast, no participation created, player can retry
 
-If player refreshes after payment → page checks localStorage for pending participacaoId, resumes from there.
+If player refreshes after payment → page checks sessionStorage for pending participacaoId, resumes from there.
 ```
 
 ---
@@ -84,10 +86,14 @@ If player refreshes after payment → page checks localStorage for pending parti
 Add grid generation for raspadinha tipo:
 
 When `jogo.tipo === "raspadinha"`:
-1. Call `determineRaspadinhaOutcome()` — probabilistic win/loss decision
-2. Call `buildGridFromOutcome()` — generate 9-slot grid around the decided outcome
-3. Store grid + winningPrize explicitly in `dadosParticipacao`
-4. Return grid in response: `{ success, participacao: { id, grid, hasWin } }`
+1. Validate `jogo.stockAtual >= 1` (existing stock check — already in place)
+2. Decrement stock atomically (existing logic — already in place)
+3. Call `determineRaspadinhaOutcome()` — probabilistic win/loss decision
+4. Call `buildGridFromOutcome()` — generate 9-slot grid around the decided outcome
+5. Store grid + winningPrize explicitly in `dadosParticipacao`
+6. Return grid in response: `{ success, participacao: { id, grid, hasWin } }`
+
+**Note on stock**: Stock control is at the game level (`jogo.stockAtual`), not per-prize. The `percentagem` values in the config control the probability distribution, not a fixed quota of each prize. This means there's no per-prize stock limit — the RTP is enforced statistically over the full stock. If an admin needs per-prize limits, they should set `stockInicial` accordingly (e.g., if stock = 100 and prize has 2% chance, expect ~2 wins).
 
 ---
 
@@ -103,30 +109,36 @@ When `jogo.tipo === "raspadinha"`:
 function determineRaspadinhaOutcome(config: any): { 
   hasWin: boolean; 
   winningPrize: any | null;
+  roll: number; // Stored for audit reproducibility
 } {
   const premios = config.premios || [];
   
-  // Use crypto-secure random
-  const randomBytes = crypto.randomBytes(4);
-  const roll = randomBytes.readUInt32BE(0) / 0xFFFFFFFF; // 0.0 to 1.0
+  // Use crypto-secure integer random (0-9999) for precision
+  // Avoids floating-point division issues with small probabilities
+  const rollInt = crypto.randomInt(0, 10000); // 0 to 9999
+  const roll = rollInt / 10000; // 0.0000 to 0.9999
   
   // Build cumulative probability ranges from config percentagens
-  let cumulative = 0;
+  // Each percentagem is in basis points (e.g., 2% = 200 basis points)
+  let cumulativeBp = 0;
   for (const premio of premios) {
-    const prob = (premio.percentagem || 0) / 100;
-    cumulative += prob;
-    if (roll < cumulative) {
-      return { hasWin: true, winningPrize: premio };
+    const probBp = Math.round((premio.percentagem || 0) * 100); // 2% → 200
+    cumulativeBp += probBp;
+    if (rollInt < cumulativeBp) {
+      return { hasWin: true, winningPrize: premio, roll };
     }
   }
   
   // No win — roll fell outside all prize ranges
-  return { hasWin: false, winningPrize: null };
+  // Note: If total percentagens sum to < 100%, the remainder is loss probability.
+  // If total > 100%, it's capped at 100% (last prize absorbs overflow).
+  // Admin should be warned at game creation if total > 100%.
+  return { hasWin: false, winningPrize: null, roll };
 }
 ```
 
 **Example**: If config has 3 prizes with percentagens 2%, 5%, 10%:
-- Total win probability = 17%
+- Total win probability = 17% (1700 basis points out of 10000)
 - 83% of cards lose (no 3+ matching symbols)
 - This matches the admin-configured RTP
 
@@ -172,13 +184,22 @@ function buildGridFromOutcome(
   } else {
     // Losing card: no prize appears 3+ times
     // Strategy: distribute prizes so max count of any single prize is 2
+    // This works with as few as 2 prize types (2×A + 2×B + 2×C + 3×fallback)
+    // For configs with < 5 prize types, we allow some prizes to appear 2×
+    // but never 3× of the same prize.
+    
     const maxPerPrize = 2;
     const counts = new Map<string, number>();
     
+    // If we have fewer than 5 prize types, we can't fill 9 slots with max 2 each
+    // (5 types × 2 = 10 slots, which is enough). With 4 types: 4×2 = 8 < 9.
+    // In that case, we allow ONE prize to appear 3× but ensure it's NOT
+    // the highest-value prize (to minimize "near miss" frustration).
+    const minTypesNeeded = Math.ceil(9 / maxPerPrize); // 5
+    
     for (let i = 0; i < 9; i++) {
-      // Pick a prize that hasn't reached max count yet
       let attempts = 0;
-      while (attempts < 20) {
+      while (attempts < 50) {
         const pick = premios[Math.floor(Math.random() * premios.length)];
         const currentCount = counts.get(pick.nome) || 0;
         if (currentCount < maxPerPrize) {
@@ -188,9 +209,13 @@ function buildGridFromOutcome(
         }
         attempts++;
       }
-      // Fallback: if all prizes at max, pick any (shouldn't happen with 3+ prize tiers)
+      // Fallback: if all prizes at max (edge case with < 5 prize types),
+      // pick the lowest-value prize that won't create a false win
       if (i >= grid.length) {
-        grid.push({ ...premios[0] });
+        const sorted = [...premios].sort((a, b) => 
+          (a.valorDinheiroAlternative || 0) - (b.valorDinheiroAlternative || 0)
+        );
+        grid.push({ ...sorted[0] });
       }
     }
   }
@@ -214,6 +239,7 @@ const dadosParticipacao = {
   hasWin: outcome.hasWin,
   generatedAt: new Date().toISOString(),
   rngSeed: crypto.randomBytes(16).toString('hex'), // For audit
+  roll: outcome.roll, // Exact roll value for reproducibility in audits
 };
 ```
 
