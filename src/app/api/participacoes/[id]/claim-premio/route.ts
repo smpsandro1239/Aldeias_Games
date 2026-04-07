@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_MAX = 10;
 const claimAttempts = new Map<string, number[]>();
 
 function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {

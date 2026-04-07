@@ -128,12 +128,16 @@ function RaspadinhaPremiumContent() {
   const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
 
   useEffect(() => {
+    // Always clear old session data - force fresh payment
     if (jogoId) {
+      sessionStorage.removeItem(`raspadinha_${jogoId}`);
       fetchJogo();
     } else {
       setLoading(false);
     }
-    
+  }, [jogoId]);
+
+  useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
@@ -149,23 +153,7 @@ function RaspadinhaPremiumContent() {
         }
       } catch {}
     }
-  }, [jogoId]);
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem(`raspadinha_${jogoId}`);
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        if (data.participacaoId && data.grid && data.jogoId === jogoId) {
-          setParticipacaoId(data.participacaoId);
-          initSlotsFromGrid(data.grid);
-          setGamePhase("paid");
-        }
-      } catch {
-        sessionStorage.removeItem(`raspadinha_${jogoId}`);
-      }
-    }
-  }, [jogoId]);
+  }, []);
 
   const fetchJogo = async () => {
     if (!jogoId) return;
@@ -649,9 +637,6 @@ function RaspadinhaPremiumContent() {
     scratchGridRef.current.clear();
     lastPosRef.current.clear();
     canvasRefs.current.clear();
-    if (jogoId) {
-      sessionStorage.removeItem(`raspadinha_${jogoId}`);
-    }
   };
 
   if (loading) {
