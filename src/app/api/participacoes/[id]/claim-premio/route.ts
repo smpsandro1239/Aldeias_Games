@@ -99,32 +99,35 @@ export async function POST(
     }
 
     const grid = dados?.grid;
-    if (!grid || !Array.isArray(grid) || grid.length !== 9) {
-      return NextResponse.json(
-        { error: 'Grid da raspadinha não encontrado' },
-        { status: 400 }
-      );
-    }
-
-    // Count prize occurrences
-    const counts = new Map<string, { count: number; prize: any }>();
-    for (const prize of grid) {
-      const key = prize.nome;
-      const existing = counts.get(key);
-      if (existing) {
-        existing.count++;
-      } else {
-        counts.set(key, { count: 1, prize });
-      }
-    }
-
-    // Find winning prize (3+ matches)
+    
     let winningPrize: any = null;
-    for (const [nome, data] of counts) {
-      if (data.count >= 3 && (data.prize.valorDinheiroAlternative || 0) > 0) {
-        winningPrize = data.prize;
-        break;
+
+    if (grid && Array.isArray(grid) && grid.length === 9) {
+      const counts = new Map<string, { count: number; prize: any }>();
+      for (const prize of grid) {
+        const key = prize.nome;
+        const existing = counts.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          counts.set(key, { count: 1, prize });
+        }
       }
+
+      for (const [nome, data] of counts) {
+        if (data.count >= 3 && (data.prize.valorDinheiroAlternative || 0) > 0) {
+          winningPrize = data.prize;
+          break;
+        }
+      }
+    } else if (dados?.hasWin && dados?.winningPrize) {
+      winningPrize = dados.winningPrize;
+    } else if (participacao.resultadoRaspe && participacao.resultadoRaspe !== 'sem_premio') {
+      const config = typeof participacao.jogo.configuracao === 'string'
+        ? JSON.parse(participacao.jogo.configuracao)
+        : participacao.jogo.configuracao;
+      const premios = config?.premios || [];
+      winningPrize = premios.find((p: any) => p.nome === participacao.resultadoRaspe);
     }
 
     if (!winningPrize) {
