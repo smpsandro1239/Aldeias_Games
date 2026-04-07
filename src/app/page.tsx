@@ -15,6 +15,7 @@ import { UserMenuModal } from "@/components/user-menu-modal";
 import { Gamepad2, Users, House, Trophy, CreditCard, Shield, Menu, LogOut, User, Sparkles, Rocket, Zap, ArrowRight, Star, Clock, MapPin, PartyPopper, Ticket, Leaf, Wallet, Compass, Award } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { DashboardStats } from "@/components/dashboard-stats";
+import { LoaderScreen } from "@/components/loader-screen";
 import { QuickActions } from "@/components/quick-actions";
 
 const AdminDashboard = dynamic(() => import("@/features/admin/admin-dashboard").then(mod => mod.AdminDashboard), { ssr: false });
@@ -70,77 +71,27 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  
+
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [registerForm, setRegisterForm] = useState({ 
-    nome: "", 
-    email: "", 
-    password: "", 
-    telefone: "" 
+  const [registerForm, setRegisterForm] = useState({
+    nome: "",
+    email: "",
+    password: "",
+    telefone: ""
   });
-  
+
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [aldeias, setAldeias] = useState<Aldeia[]>([]);
-
-  useEffect(() => {
-    setMounted(true);
-    
-    const checkAuth = () => {
-      const savedUser = localStorage.getItem("user");
-      const hasCookie = document.cookie.includes("auth-token");
-      
-      if (savedUser && hasCookie) {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        
-        if (parsedUser.aldeiaId && !parsedUser.aldeia && (parsedUser.role === "aldeia_admin" || parsedUser.role === "super_admin")) {
-          fetch(`/api/aldeias/${parsedUser.aldeiaId}`)
-            .then(res => res.json())
-            .then(data => {
-              if (data.data) {
-                const updatedUser = { ...parsedUser, aldeia: data.data };
-                setUser(updatedUser);
-                localStorage.setItem("user", JSON.stringify(updatedUser));
-              }
-            })
-            .catch(console.error);
-        }
-      } else if (savedUser && !hasCookie) {
-        localStorage.removeItem("user");
-      }
-    };
-    
-    checkAuth();
-    
-    const interval = setInterval(checkAuth, 2000);
-    
-    setLoading(false);
-    
-    Promise.all([fetchEventos(), fetchJogos(), fetchAldeias()]);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.user-menu')) {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
 
   const fetchEventos = useCallback(async () => {
     try {
@@ -178,18 +129,61 @@ export default function Home() {
     }
   }, []);
 
+  const checkAuth = useCallback(() => {
+    const savedUser = localStorage.getItem("user");
+    const hasCookie = document.cookie.includes("auth-token");
+    
+    if (savedUser && hasCookie) {
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      
+      if (parsedUser.aldeiaId && !parsedUser.aldeia && (parsedUser.role === "aldeia_admin" || parsedUser.role === "super_admin")) {
+        fetch(`/api/aldeias/${parsedUser.aldeiaId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.data) {
+              const updatedUser = { ...parsedUser, aldeia: data.data };
+              setUser(updatedUser);
+              localStorage.setItem("user", JSON.stringify(updatedUser));
+            }
+          })
+          .catch(console.error);
+      }
+    } else if (savedUser && !hasCookie) {
+      localStorage.removeItem("user");
+    }
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    checkAuth();
+    setLoading(false);
+    Promise.all([fetchEventos(), fetchJogos(), fetchAldeias()]);
+  }, [checkAuth, fetchEventos, fetchJogos, fetchAldeias]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.user-menu')) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginForm),
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         setUser(data.user);
         localStorage.setItem("user", JSON.stringify(data.user));
@@ -197,26 +191,16 @@ export default function Home() {
         setLoginModalOpen(false);
         setLoginForm({ email: "", password: "" });
         
-        // Redirect based on role
         toast.success(`Bem-vindo, ${data.user.nome}!`);
         
-        setTimeout(() => {
-          switch (data.user.role) {
-            case "super_admin":
-              router.push("/superadmindashboard");
-              break;
-            case "aldeia_admin":
-              router.push("/admindashboard");
-              break;
-            case "vendedor":
-              router.push("/vendedordashboard");
-              break;
-            case "user":
-            default:
-              router.push("/clientedashboard");
-              break;
-          }
-        }, 100);
+        const rolePaths: Record<string, string> = {
+          "super_admin": "/superadmindashboard",
+          "aldeia_admin": "/admindashboard",
+          "vendedor": "/vendedordashboard",
+          "user": "/clientedashboard"
+        };
+        
+        router.push(rolePaths[data.user.role] || "/clientedashboard");
       } else {
         toast.error(data.error || "Erro ao fazer login");
       }
@@ -227,16 +211,16 @@ export default function Home() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...registerForm, role: "user" }),
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         setUser(data.user);
         localStorage.setItem("user", JSON.stringify(data.user));
@@ -270,15 +254,7 @@ export default function Home() {
     return authCookie ? authCookie.split('=')[1] : "";
   };
 
-  if (!mounted) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden">
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="flex flex-col items-center z-20">
-        <House className="text-[#ff734b] text-5xl animate-pulse" />
-      </div>
-    </div>
-  );
+  if (!mounted) return <LoaderScreen />;
 
   const handleIniciar = () => {
     setHasEntered(true);
@@ -288,16 +264,16 @@ export default function Home() {
   };
 
   if (!hasEntered) return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden"
     >
       {/* Grain Overlay */}
       <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }} />
-      
+
       {/* Background Glow */}
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
-      
+
       <div className="flex flex-col items-center z-20">
         <div className="mb-4">
           <House className="text-[#ff734b] text-5xl" style={{ fontWeight: 200 }} />
@@ -305,23 +281,23 @@ export default function Home() {
         <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#ff734b] tracking-tight italic">
           Aldeias Games
         </h1>
-        
+
         {/* Separator */}
         <div className="w-full h-px bg-gradient-to-r from-transparent via-[#58413b]/30 to-transparent my-6 max-w-lg"></div>
-        
+
         <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
           Onde a Tradição, Forja o Presente
         </p>
-        
+
         {/* Digital Loader Animation - Cyan */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="mt-12 flex flex-col items-center gap-4"
         >
           <div className="relative w-32 h-1 bg-[#393432]/20 rounded-full overflow-hidden">
-            <div 
+            <div
               className="digital-loader absolute inset-0 rounded-full shadow-[0_0_15px_rgba(0,218,243,0.4)]"
               style={{
                 height: '2px',
@@ -337,13 +313,13 @@ export default function Home() {
         </motion.div>
 
         {/* Iniciar Button */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
           className="mt-8"
         >
-          <button 
+          <button
             onClick={handleIniciar}
             className="relative px-8 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#ff734b]/20"
           >
@@ -377,74 +353,7 @@ export default function Home() {
     </div>
   );
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden">
-      {/* Grain Overlay */}
-      <div className="fixed inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }} />
-      
-      {/* Background Glow */}
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ff734b]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
-      
-      <div className="flex flex-col items-center z-20">
-        <div className="mb-4">
-          <House className="text-[#ff734b] text-5xl" style={{ fontWeight: 200 }} />
-        </div>
-        <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#ff734b] tracking-tight italic">
-          Aldeias Games
-        </h1>
-        
-        {/* Separator */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-[#58413b]/30 to-transparent my-6 max-w-lg"></div>
-        
-        <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
-          Onde a Tradição, Forja o Presente
-        </p>
-        
-        {/* Loading Element - Cyan Digital Loader */}
-        <div className="mt-12 flex flex-col items-center gap-4">
-          <div className="relative w-32 h-1 bg-[#393432]/20 rounded-full overflow-hidden">
-            <div 
-              className="digital-loader absolute inset-0 rounded-full"
-              style={{
-                height: '2px',
-                width: '140px',
-                background: 'linear-gradient(90deg, transparent, #00daf3, transparent)',
-                animation: 'pulse-cyan 3s infinite ease-in-out',
-                boxShadow: '0 0 15px rgba(0,218,243,0.4)',
-              }}
-            />
-          </div>
-          <span className="text-[10px] uppercase tracking-widest text-[#e0bfb7]/40 font-bold">
-            A Iniciar...
-          </span>
-        </div>
-      </div>
-
-      {/* Editorial Accents */}
-      <div className="absolute bottom-12 left-12 hidden md:block border-l border-[#ff734b]/20 pl-4 py-2">
-        <p className="text-[10px] text-[#eae0de]/30 uppercase tracking-[0.2em] leading-relaxed">
-          Legado Ancestral<br />Tecnologia Digital
-        </p>
-      </div>
-      <div className="absolute top-12 right-12 hidden md:block">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#9cefff] shadow-[0_0_8px_#00daf3]"></div>
-          <span className="text-[10px] text-[#eae0de]/50 uppercase tracking-[0.3em] font-bold">Sistema Ativo</span>
-        </div>
-      </div>
-
-      <style jsx>{`
-        @keyframes pulse-cyan {
-          0%, 100% { transform: scaleX(0); opacity: 0.3; }
-          50% { transform: scaleX(1); opacity: 1; }
-        }
-        .digital-loader {
-          animation: pulse-cyan 3s infinite ease-in-out;
-        }
-      `}</style>
-    </div>
-  );
+  if (loading) return <LoaderScreen message="A Carregar..." />;
 
   const getJogoIcon = (tipo: string) => {
     switch (tipo) {
@@ -473,7 +382,7 @@ export default function Home() {
             </nav>
             <div className="w-10 h-10 rounded-full bg-[#2e2928] overflow-hidden border-2 border-[#ff734b]/20 relative">
               {user ? (
-                <button 
+                <button
                   onClick={() => setUserMenuOpen(true)}
                   className="w-full h-full bg-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
                 >
@@ -494,17 +403,17 @@ export default function Home() {
           <div className="space-y-6">
             {/* Quick Actions */}
             <QuickActions role={user.role} />
-            
+
             {/* Dashboard Stats - apenas para admins */}
             {(user.role === "super_admin" || user.role === "aldeia_admin") && (
               <DashboardStats role={user.role} stats={{}} />
             )}
-            
+
             {/* Dashboard */}
             {(user.role === "super_admin" || user.role === "aldeia_admin") && (
-              <AdminDashboard 
-                token={getTokenFromCookie()} 
-                aldeiaId={user.aldeiaId} 
+              <AdminDashboard
+                token={getTokenFromCookie()}
+                aldeiaId={user.aldeiaId}
                 userRole={user.role}
                 aldeia={user.aldeia}
               />
@@ -515,7 +424,7 @@ export default function Home() {
             {user.role === "user" && (
               <ClienteDashboard token={getTokenFromCookie()} />
             )}
-            
+
             {/* Bottom Navigation */}
             <BottomNav role={user.role} />
           </div>
@@ -775,8 +684,8 @@ export default function Home() {
         </div>
       )}
 
-       {/* User Menu Modal */}
-       <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
+      {/* User Menu Modal */}
+      <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
 
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
@@ -787,7 +696,7 @@ export default function Home() {
               Acede à tua conta para jogar e ganhar prémios
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleLogin} className="px-8 pb-8">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -815,7 +724,7 @@ export default function Home() {
                 />
               </div>
             </div>
-            
+
             <DialogFooter className="mt-6 gap-2">
               <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1">
                 Cancelar
@@ -838,7 +747,7 @@ export default function Home() {
               Regista-te para participar nos jogos e campanhas
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleRegister} className="px-8 pb-8">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -889,7 +798,7 @@ export default function Home() {
                 />
               </div>
             </div>
-            
+
             <DialogFooter className="mt-6 gap-2">
               <Button type="button" variant="outline" onClick={() => setRegisterModalOpen(false)} className="flex-1">
                 Cancelar
