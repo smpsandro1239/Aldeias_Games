@@ -69,8 +69,9 @@ export async function POST(
       );
     }
 
-    // Owner check
-    if (participacao.userId !== user.id) {
+    // Owner check - by userId or by matching email
+    const emailMatch = participacao.emailCliente && participacao.emailCliente === user.email;
+    if (participacao.userId !== user.id && !emailMatch) {
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 403 }

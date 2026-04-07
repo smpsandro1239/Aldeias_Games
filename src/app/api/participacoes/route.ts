@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
           metodoPagamento: data.metodoPagamento,
           estadoPagamento: data.metodoPagamento === 'dinheiro' ? 'concluido' : 'pendente',
           jogoId: data.jogoId,
-          userId: data.dadosCliente ? null : (effectiveUser?.id ?? null),
+          userId: effectiveUser?.id ?? null,
           vendedorId: effectiveUser && hasRole(effectiveUser.role, ['aldeia_admin', 'vendedor']) ? effectiveUser.id : undefined,
           nomeCliente: data.dadosCliente?.nome,
           telefoneCliente: data.dadosCliente?.telefone,
