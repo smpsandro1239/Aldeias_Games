@@ -5,8 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House, Lock, Loader2, Ticket, Phone, Mail, MessageCircle, Bell, Euro } from "lucide-react";
 import { UserMenuButton } from "@/components/user-menu-button";
+import { BottomNav } from "@/components/bottom-nav";
+import { PaymentSelector } from "@/components/payment";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 function RaspadinhaLoading() {
@@ -51,6 +54,9 @@ interface Jogo {
   tipo: string;
   preco: number;
   stockAtual: number;
+  stockInicial: number;
+  totalAngariado: number;
+  totalParticipacoes: number;
   estado: string;
   descricao?: string;
   configuracao: {
@@ -59,6 +65,9 @@ interface Jogo {
     organizacao?: string;
     premioMaximo?: number;
     premios?: Prize[];
+    dataSorteio?: string;
+    horaSorteio?: string;
+    localSorteio?: string;
   };
   premios?: Prize[];
   evento?: {
@@ -93,7 +102,19 @@ function RaspadinhaPremiumContent() {
   const [premioClaimed, setPremioClaimed] = useState(false);
   const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
   const [showPurchaseAnimation, setShowPurchaseAnimation] = useState(false);
+  const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [saldo, setSaldo] = useState(0);
   const { playScratch } = useScratchSound();
+
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [pagamentoPendente, setPagamentoPendente] = useState<any>(null);
+  const [participante, setParticipante] = useState({
+    nome: "",
+    telefone: "",
+    email: "",
+    notificacao: "whatsapp" as "whatsapp" | "email" | "nenhum"
+  });
 
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const isDraggingRef = useRef<Map<number, boolean>>(new Map());
@@ -104,11 +125,29 @@ function RaspadinhaPremiumContent() {
   const CELL_SIZE = 6;
   const initializedRef = useRef(false);
 
+  const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
+
   useEffect(() => {
     if (jogoId) {
       fetchJogo();
     } else {
       setLoading(false);
+    }
+    
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        if (userData.role) setUserRole(userData.role);
+        if (userData.nome) {
+          setParticipante(prev => ({
+            ...prev,
+            nome: userData.nome,
+            telefone: userData.telefone || "",
+            email: userData.email || ""
+          }));
+        }
+      } catch {}
     }
   }, [jogoId]);
 
@@ -151,6 +190,26 @@ function RaspadinhaPremiumContent() {
     }
   };
 
+  const fetchSaldo = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/wallet", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.saldo !== undefined) {
+        setSaldo(data.saldo);
+      }
+    } catch (e) {
+      console.error("Erro ao buscar saldo:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchSaldo();
+  }, []);
+
   const initSlotsFromGrid = (grid: Prize[]) => {
     setSlots(grid.map((prize, i) => ({
       id: i,
@@ -162,66 +221,136 @@ function RaspadinhaPremiumContent() {
     setCanvasesInitialized(false);
   };
 
-  const handleJogar = async () => {
+  const handleJogar = () => {
     if (!jogoId) return;
-    
-    setGamePhase("payment_loading");
-    
+    setPaymentModalOpen(true);
+  };
+
+  const processarPagamento = async (metodo: "dinheiro" | "saldo" | "mbway" | "stripe" | "transferencia") => {
+    if (!jogo) return;
+
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Faça login para jogar");
-        setGamePhase("not_paid");
-        return;
-      }
-
-      const res = await fetch("/api/participacoes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          jogoId,
-          dadosParticipacao: {},
-          quantidade: 1,
-          metodoPagamento: "dinheiro",
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.error || "Erro ao processar pagamento");
-        setGamePhase("not_paid");
-        return;
-      }
-
-      const data = await res.json();
-      const participacao = data.participacao;
-      
-      if (participacao?.id && participacao?.grid) {
-        setParticipacaoId(participacao.id);
-        initSlotsFromGrid(participacao.grid);
-        
-        sessionStorage.setItem(`raspadinha_${jogoId}`, JSON.stringify({
-          participacaoId: participacao.id,
-          grid: participacao.grid,
-          jogoId,
-        }));
-
-        setShowPurchaseAnimation(true);
-        setTimeout(() => {
-          setShowPurchaseAnimation(false);
-          setGamePhase("paid");
-        }, 600);
-      } else {
-        toast.error("Erro ao iniciar jogo");
-        setGamePhase("not_paid");
+      if (metodo === "dinheiro") {
+        await criarParticipacao("dinheiro");
+      } else if (metodo === "saldo") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Precisa de login para usar saldo");
+          return;
+        }
+        await criarParticipacao("saldo");
+      } else if (metodo === "mbway") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Precisa de login para usar MBWay");
+          return;
+        }
+        if (!participante.telefone) {
+          toast.error("Telefone obrigatório para MBWay");
+          return;
+        }
+        const res = await fetch("/api/pagamentos/mbway", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            telefone: participante.telefone,
+            valor: jogo.preco,
+            descricao: `Raspadinha: ${jogo.nome}`
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "Erro ao iniciar pagamento MBWay");
+          return;
+        }
+        toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
+        await criarParticipacao("pendente");
+      } else if (metodo === "stripe") {
+        toast.info("Stripe em implementação");
       }
     } catch (error) {
-      console.error("Erro ao criar participação:", error);
-      toast.error("Erro ao conectar com o servidor");
-      setGamePhase("not_paid");
+      console.error("Erro no pagamento:", error);
+      toast.error("Erro ao processar pagamento");
+    }
+  };
+
+  const criarParticipacao = async (metodo: "dinheiro" | "saldo" | "pendente") => {
+    if (!jogo) return;
+
+    const token = localStorage.getItem("token");
+
+    const payload: Record<string, unknown> = {
+      jogoId: jogo.id,
+      dadosParticipacao: {},
+      quantidade: 1,
+      metodoPagamento: metodo === "pendente" ? "mbway" : metodo
+    };
+
+    if (participante.nome && (participante.telefone || participante.email)) {
+      payload.dadosCliente = {
+        nome: participante.nome,
+        telefone: participante.telefone || undefined,
+        email: participante.email || undefined
+      };
+    }
+
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch("/api/participacoes", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const participacao = data.participacao;
+
+        if (participacao?.id && participacao?.grid) {
+          setParticipacaoId(participacao.id);
+          initSlotsFromGrid(participacao.grid);
+          
+          sessionStorage.setItem(`raspadinha_${jogoId}`, JSON.stringify({
+            participacaoId: participacao.id,
+            grid: participacao.grid,
+            jogoId,
+          }));
+
+          setPaymentModalOpen(false);
+          setShowPurchaseAnimation(true);
+          setTimeout(() => {
+            setShowPurchaseAnimation(false);
+            setGamePhase("paid");
+          }, 600);
+
+          if (participante.notificacao === "whatsapp" && participante.telefone) {
+            const telLimpo = participante.telefone.replace(/\D/g, "");
+            const msg = encodeURIComponent(`🎉 Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\nObrigado por participar!`);
+            const whatsappUrl = `https://wa.me/351${telLimpo}?text=${msg}`;
+            window.open(whatsappUrl, "_blank");
+          } else if (participante.notificacao === "email" && participante.email) {
+            const subject = encodeURIComponent(`Raspadinha Registada - ${jogo.nome}`);
+            const body = encodeURIComponent(`🎉 Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nObrigado por participar!\n\nAldeias Games`);
+            window.open(`mailto:${participante.email}?subject=${subject}&body=${body}`);
+          }
+          
+          toast.success("Raspadinha registada com sucesso!");
+          fetchSaldo();
+        } else {
+          toast.error("Erro ao iniciar jogo");
+        }
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.error || "Erro ao participar");
+      }
+    } catch (error) {
+      console.error("Erro ao participar:", error);
+      toast.error("Erro ao participar");
     }
   };
 
@@ -529,6 +658,38 @@ function RaspadinhaPremiumContent() {
     return <RaspadinhaLoading />;
   }
 
+  if (participacaoConfirmada) {
+    return (
+      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
+        <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+            </button>
+            <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Confirmação</h1>
+          </div>
+        </header>
+        <main className="px-4 pt-6 text-center">
+          <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-10 h-10 text-green-500" />
+          </div>
+          <h2 className="font-serif text-2xl text-[#ffb5a0] font-bold">Raspadinha Registada!</h2>
+          <p className="text-[#e0bfb7] mt-2">Boa sorte!</p>
+          <button
+            onClick={() => {
+              setParticipacaoConfirmada(false);
+              handleJogar();
+            }}
+            className="mt-6 px-6 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
+          >
+            Jogar Novamente
+          </button>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
   const titulo = jogo?.configuracao?.titulo || jogo?.nome || "RASPADINHA PREMIUM";
   const subtitulo = jogo?.configuracao?.subtitulo || "Raspe com o dedo para revelar o seu prémio!";
   const organizacao = jogo?.configuracao?.organizacao || jogo?.evento?.aldeia?.nome || "Aldeias Games";
@@ -540,6 +701,9 @@ function RaspadinhaPremiumContent() {
       <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
+            <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+            </button>
             <span className="font-serif italic text-[#ff734b] text-lg font-bold">
               {organizacao}
             </span>
@@ -548,13 +712,6 @@ function RaspadinhaPremiumContent() {
             <h1 className="font-serif font-bold text-lg text-[#ffb5a0]">
               {titulo}
             </h1>
-            <button 
-              onClick={() => router.back()}
-              className="p-2 rounded-full text-[#ff734b] hover:bg-[#2e2928] active:scale-95 transition-all"
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
           </div>
           <UserMenuButton />
         </div>
@@ -713,6 +870,7 @@ function RaspadinhaPremiumContent() {
               onClick={handleJogar}
               className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
             >
+              <Ticket className="w-5 h-5" />
               <span className="text-lg">Jogar por</span>
               <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
                 {preco}€
@@ -744,6 +902,7 @@ function RaspadinhaPremiumContent() {
               onClick={handleComprarNova}
               className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
             >
+              <Ticket className="w-5 h-5" />
               <span className="text-lg">Comprar Nova</span>
               <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
                 {preco}€
@@ -805,6 +964,24 @@ function RaspadinhaPremiumContent() {
             )}
           </div>
         </motion.section>
+
+        <div className="bg-[#1f1b19] rounded-2xl p-6 border border-[#58413b]/10">
+          <h3 className="font-serif text-[#ffb5a0] font-bold mb-3">Como Funciona?</h3>
+          <ul className="space-y-3 text-sm text-[#e0bfb7]">
+            <li className="flex items-start gap-2">
+              <Ticket className="w-4 h-4 text-[#ff734b] mt-0.5" />
+              <span>Compre a sua raspadinha e escolha o método de pagamento</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Star className="w-4 h-4 text-[#ff734b] mt-0.5" />
+              <span>Raspe os 9 quadrados para revelar os seus prémios</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Trophy className="w-4 h-4 text-[#ff734b] mt-0.5" />
+              <span>Encontre 3 símbolos iguais para ganhar o prémio correspondente</span>
+            </li>
+          </ul>
+        </div>
       </main>
 
       <AnimatePresence>
@@ -868,33 +1045,99 @@ function RaspadinhaPremiumContent() {
         )}
       </AnimatePresence>
 
-      <nav className="fixed bottom-0 left-0 w-full z-40">
-        <div className="bg-[#110d0c]/90 backdrop-blur-xl border-t border-[#ff734b]/10 rounded-t-2xl shadow-[0_-8px_32px_rgba(17,13,12,0.5)]">
-          <div className="flex justify-around items-center px-4 py-3">
-            {[
-              { icon: Home, label: "Início", active: false, route: "/" },
-              { icon: Gamepad2, label: "Jogos", active: true, route: "/jogos" },
-              { icon: Trophy, label: "Prémios", active: false, route: "/premios" },
-              { icon: User, label: "Perfil", active: false, route: "/perfil" },
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={() => router.push(item.route)}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all active:scale-90 ${
-                  item.active
-                    ? "bg-[#ff734b] text-[#110d0c]"
-                    : "text-[#ffb5a0]/70"
-                }`}
-              >
-                <item.icon className="text-xl" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">
-                  {item.label}
-                </span>
-              </button>
-            ))}
+      <BottomNav />
+
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="font-headline text-xl flex items-center gap-2">
+              <Euro className="w-5 h-5 text-[#ff734b]" />
+              Pagamento - Raspadinha
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <div className="bg-surface-container-high rounded-xl p-4 text-center">
+              <p className="text-xs text-on-surface-variant">Total a pagar</p>
+              <p className="font-headline text-3xl text-primary">{preco}€</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Nome</label>
+              <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+                <User className="w-5 h-5 text-[#ff734b]" />
+                <input
+                  type="text"
+                  value={participante.nome}
+                  onChange={(e) => setParticipante({ ...participante, nome: e.target.value })}
+                  className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                  placeholder="O seu nome"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Telemóvel</label>
+              <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+                <Phone className="w-5 h-5 text-[#ff734b]" />
+                <input
+                  type="tel"
+                  value={participante.telefone}
+                  onChange={(e) => setParticipante({ ...participante, telefone: e.target.value })}
+                  className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                  placeholder="912 345 678"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Receber Notificação</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setParticipante({ ...participante, notificacao: "whatsapp" })}
+                  className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                    participante.notificacao === "whatsapp" 
+                      ? "bg-[#25D366] text-white" 
+                      : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                  }`}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span className="text-xs font-medium">WhatsApp</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setParticipante({ ...participante, notificacao: "email" })}
+                  className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                    participante.notificacao === "email" 
+                      ? "bg-[#ff734b] text-white" 
+                      : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                  }`}
+                >
+                  <Mail className="w-4 h-4" />
+                  <span className="text-xs font-medium">Email</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setParticipante({ ...participante, notificacao: "nenhum" })}
+                  className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                    participante.notificacao === "nenhum" 
+                      ? "bg-[#666] text-white" 
+                      : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                  }`}
+                >
+                  <Bell className="w-4 h-4" />
+                  <span className="text-xs font-medium">Nenhum</span>
+                </button>
+              </div>
+            </div>
+
+            <PaymentSelector
+              amount={preco}
+              onSelect={processarPagamento}
+            />
           </div>
-        </div>
-      </nav>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
