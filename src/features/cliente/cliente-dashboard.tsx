@@ -20,6 +20,7 @@ import {
   ArrowDownLeft,
   Receipt,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes, SelectPaymentModal } from "@/components/modals";
 import { SkeletonStats, SkeletonGrid, SkeletonList } from "@/components/modals";
@@ -84,6 +85,7 @@ interface Jogo {
 }
 
 export function ClienteDashboard({ token }: ClienteDashboardProps) {
+  const router = useRouter();
   const [participacoes, setParticipacoes] = useState<Participacao[]>([]);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,48 +183,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
     proceedToJogo(jogo);
   };
 
-  const proceedToJogo = async (jogo: Jogo) => {
-    setSelectedJogo(jogo);
-
-    // Buscar números ocupados para o jogo
-    try {
-      const res = await fetch(`/api/participacoes?jogoId=${jogo.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const participacoes = data.data || [];
-
-        if (jogo.tipo === "poio_da_vaca") {
-          const ocupdos = participacoes.map((p: any) => {
-            const dados = JSON.parse(p.dadosParticipacao || "{}");
-            return dados.selecao || [];
-          }).flat();
-          setNumerosOcupadosPoio(ocupdos);
-        } else if (jogo.tipo === "rifa" || jogo.tipo === "tombola") {
-          const ocupdos = participacoes.map((p: any) => {
-            const dados = JSON.parse(p.dadosParticipacao || "{}");
-            return dados.numero;
-          }).filter(Boolean);
-          setNumerosOcupadosRifa(ocupdos);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao buscar números ocupados:", error);
-    }
-
-    switch (jogo.tipo) {
-      case "raspadinha":
-        setPaymentOpen(true);
-        break;
-      case "rifa":
-      case "tombola":
-        setNumberSelectorOpen(true);
-        break;
-      case "poio_da_vaca":
-        setPoioDaVacaOpen(true);
-        break;
-    }
+  const proceedToJogo = (jogo: Jogo) => {
+    router.push(`/jogos`);
   };
 
   const handleRevelarRaspadinha = (participacao: Participacao) => {

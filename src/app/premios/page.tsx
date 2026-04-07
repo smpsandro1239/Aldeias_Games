@@ -13,6 +13,7 @@ interface User {
   nome: string;
   role: string;
   aldeiaId?: string;
+  saldo?: number;
 }
 
 interface Premio {
@@ -22,38 +23,94 @@ interface Premio {
   data: string;
   tipo: "raspadinha" | "poio_vaca" | "rifa" | "tombola";
   valor?: number;
+  premioEntregue?: boolean;
+  jogoNome?: string;
 }
 
 export default function PremiosPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  const premios: Premio[] = [
-    {
-      id: "1",
-      nome: "Vale de 25€",
-      descricao: "Raspadinha Premium - Sorteio de Natal",
-      data: "2024-12-20",
-      tipo: "raspadinha",
-      valor: 25,
-    },
-    {
-      id: "2",
-      nome: "2º Lugar - Poio da Vaca",
-      descricao: "Campanha Aldeia de São Brás",
-      data: "2024-11-15",
-      tipo: "poio_vaca",
-      valor: 50,
-    },
-  ];
+  const [premios, setPremios] = useState<Premio[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saldo, setSaldo] = useState(0);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    fetchPremios();
+    fetchSaldo();
   }, []);
+
+  const fetchSaldo = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      
+      const res = await fetch("/api/users/perfil", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data?.saldo !== undefined) {
+          setSaldo(data.data.saldo);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar saldo:", error);
+    }
+  };
+
+  const fetchPremios = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      
+      const res = await fetch("/api/participacoes?ganhador=true", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const participacoes = data.data || [];
+        
+        const premiosList: Premio[] = participacoes
+          .filter((p: any) => p.ganhador)
+          .map((p: any) => {
+            let valor = 0;
+            try {
+              const dados = typeof p.dadosParticipacao === 'string' 
+                ? JSON.parse(p.dadosParticipacao) 
+                : p.dadosParticipacao;
+              if (dados?.winningPrize?.valorDinheiroAlternative) {
+                valor = dados.winningPrize.valorDinheiroAlternative;
+              }
+            } catch {}
+
+            return {
+              id: p.id,
+              nome: p.resultadoRaspe || "Prémio",
+              descricao: p.jogo?.nome || "Jogo",
+              data: p.createdAt,
+              tipo: p.jogo?.tipo || "raspadinha",
+              valor,
+              premioEntregue: p.premioEntregue || false,
+              jogoNome: p.jogo?.nome,
+            };
+          });
+
+        setPremios(premiosList);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar prémios:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     setUser(null);
@@ -123,8 +180,8 @@ export default function PremiosPage() {
           <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#ff734b]/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-[#e0bfb7]">Saldo Total Ganho</p>
-                <p className="font-serif text-3xl text-[#ff734b] font-bold">75,00 €</p>
+                <p className="text-xs text-[#e0bfb7]">Saldo Atual</p>
+                <p className="font-serif text-3xl text-[#ff734b] font-bold">{saldo.toFixed(2)} €</p>
               </div>
               <div className="w-14 h-14 rounded-xl bg-[#ff734b]/20 flex items-center justify-center">
                 <Wallet className="w-7 h-7 text-[#ff734b]" />
@@ -136,7 +193,9 @@ export default function PremiosPage() {
         <div>
           <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">Histórico de Prémios</h2>
           
-          {premios.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-12 text-[#e0bfb7]">A carregar prémios...</div>
+          ) : premios.length > 0 ? (
             <div className="space-y-3">
               {premios.map((premio) => (
                 <div
@@ -154,8 +213,13 @@ export default function PremiosPage() {
                           +{premio.valor}€
                         </span>
                       )}
+                      {premio.premioEntregue && (
+                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                          Recebido
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-[#e0bfb7]">{premio.descricao}</p>
+                    <p className="text-sm text-[#e0bfb7]">{premio.jogoNome || premio.descricao}</p>
                     <div className="flex items-center gap-3 mt-2">
                       <span className="text-xs text-[#e0bfb7]/60 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -193,17 +257,16 @@ export default function PremiosPage() {
             </li>
             <li className="flex items-start gap-2">
               <Trophy className="w-4 h-4 text-[#ff734b] mt-0.5" />
-              <span>No Poio da Vaca, os primeiros a不全完成 podem ganhar prémios</span>
+              <span>No Poio da Vaca, os primeiros a completar podem ganhar prémios</span>
             </li>
             <li className="flex items-start gap-2">
               <Award className="w-4 h-4 text-[#ff734b] mt-0.5" />
-              <span>As Tombolas e Rifas sortearm prémios em dinheiro</span>
+              <span>As Tombolas e Rifas sorteiam prémios em dinheiro</span>
             </li>
           </ul>
         </div>
       </main>
 
-       {/* User Menu Modal */}
        <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
 
       <BottomNav />
