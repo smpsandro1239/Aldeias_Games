@@ -166,26 +166,8 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
       ctx.fillRect(0, 0, W, H);
       ctx.restore();
 
-      // Chama callback SÓ UMA VEZ
-      if (skipApiCall) {
-        onRevelado(true, finalPremio);
-      } else {
-        fetch("/api/jogos/revelar-raspadinha", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jogoId, premioId: finalPremio.id }),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            onRevelado(data.ganhou, finalPremio);
-            if (data.ganhou) {
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
-          })
-          .catch(() => {
-            onRevelado(false, finalPremio);
-          });
-      }
+      // Chama callback SÓ UMA VEZ — API handling is done by parent
+      onRevelado(true, finalPremio);
     }
   }, [revelado, jogoId, finalPremio, onRevelado, skipApiCall]);
 

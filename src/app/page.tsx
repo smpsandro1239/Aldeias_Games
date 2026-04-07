@@ -95,33 +95,40 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     
-    const savedToken = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
-    
-    if (savedToken && savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setToken(savedToken);
-      setUser(parsedUser);
+    const checkAuth = () => {
+      const savedUser = localStorage.getItem("user");
+      const hasCookie = document.cookie.includes("auth-token");
       
-      if (parsedUser.aldeiaId && !parsedUser.aldeia && (parsedUser.role === "aldeia_admin" || parsedUser.role === "super_admin")) {
-        fetch(`/api/aldeias/${parsedUser.aldeiaId}`, {
-          headers: { Authorization: `Bearer ${savedToken}` }
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.data) {
-              const updatedUser = { ...parsedUser, aldeia: data.data };
-              setUser(updatedUser);
-              localStorage.setItem("user", JSON.stringify(updatedUser));
-            }
-          })
-          .catch(console.error);
+      if (savedUser && hasCookie) {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        
+        if (parsedUser.aldeiaId && !parsedUser.aldeia && (parsedUser.role === "aldeia_admin" || parsedUser.role === "super_admin")) {
+          fetch(`/api/aldeias/${parsedUser.aldeiaId}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.data) {
+                const updatedUser = { ...parsedUser, aldeia: data.data };
+                setUser(updatedUser);
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+              }
+            })
+            .catch(console.error);
+        }
+      } else if (savedUser && !hasCookie) {
+        localStorage.removeItem("user");
       }
-    }
+    };
+    
+    checkAuth();
+    
+    const interval = setInterval(checkAuth, 2000);
     
     setLoading(false);
     
     Promise.all([fetchEventos(), fetchJogos(), fetchAldeias()]);
+    
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -185,9 +192,8 @@ export default function Home() {
       
       if (response.ok) {
         setUser(data.user);
-        setToken(data.token);
-        localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
         setLoginModalOpen(false);
         setLoginForm({ email: "", password: "" });
         
@@ -233,9 +239,8 @@ export default function Home() {
       
       if (response.ok) {
         setUser(data.user);
-        setToken(data.token);
-        localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
         setRegisterModalOpen(false);
         setRegisterForm({ nome: "", email: "", password: "", telefone: "" });
         toast.success("Registo bem-sucedido!");
@@ -247,56 +252,22 @@ export default function Home() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+    }
     setUser(null);
     setToken(null);
     setUserMenuOpen(false);
-    localStorage.removeItem("token");
     localStorage.removeItem("user");
     toast.success("Logout efetuado!");
   };
 
-  const quickLogin = async (email: string, password: string) => {
-    setLoginForm({ email, password });
-    
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setUser(data.user);
-        setToken(data.token);
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setLoginModalOpen(false);
-        toast.success(`Bem-vindo, ${data.user.nome}!`);
-        
-        setTimeout(() => {
-          switch (data.user.role) {
-            case "super_admin":
-              router.push("/superadmindashboard");
-              break;
-            case "aldeia_admin":
-              router.push("/admindashboard");
-              break;
-            case "vendedor":
-              router.push("/vendedordashboard");
-              break;
-            case "user":
-            default:
-              router.push("/clientedashboard");
-              break;
-          }
-        }, 100);
-      }
-    } catch (error) {
-      toast.error("Erro no quick login");
-    }
+  const getTokenFromCookie = (): string => {
+    const cookies = document.cookie.split(';');
+    const authCookie = cookies.find(c => c.trim().startsWith('auth-token='));
+    return authCookie ? authCookie.split('=')[1] : "";
   };
 
   if (!mounted) return (
@@ -532,17 +503,17 @@ export default function Home() {
             {/* Dashboard */}
             {(user.role === "super_admin" || user.role === "aldeia_admin") && (
               <AdminDashboard 
-                token={token || ""} 
+                token={getTokenFromCookie()} 
                 aldeiaId={user.aldeiaId} 
                 userRole={user.role}
                 aldeia={user.aldeia}
               />
             )}
             {user.role === "vendedor" && (
-              <VendedorDashboard token={token || ""} />
+              <VendedorDashboard token={getTokenFromCookie()} />
             )}
             {user.role === "user" && (
-              <ClienteDashboard token={token || ""} />
+              <ClienteDashboard token={getTokenFromCookie()} />
             )}
             
             {/* Bottom Navigation */}

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House, Lock, Loader2 } from "lucide-react";
 import { UserMenuButton } from "@/components/user-menu-button";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ function RaspadinhaLoading() {
   return (
     <div className="min-h-screen bg-[#110d0c] text-[#eae0de] flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <House className="h-8 w-8 text-[#ff734b] animate-pulse" />
+        <Loader2 className="h-8 w-8 text-[#ff734b] animate-spin" />
         <p className="text-sm text-[#e0bfb7]">A carregar jogo...</p>
       </div>
     </div>
@@ -74,6 +74,8 @@ interface SlotState {
   scratchPercent: number;
 }
 
+type GamePhase = "not_paid" | "payment_loading" | "paid" | "all_revealed";
+
 function RaspadinhaPremiumContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -87,20 +89,42 @@ function RaspadinhaPremiumContent() {
   const [totalRevealed, setTotalRevealed] = useState(0);
   const [participacaoId, setParticipacaoId] = useState<string | null>(null);
   const [canvasesInitialized, setCanvasesInitialized] = useState(false);
+  const [gamePhase, setGamePhase] = useState<GamePhase>("not_paid");
+  const [premioClaimed, setPremioClaimed] = useState(false);
+  const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
+  const [showPurchaseAnimation, setShowPurchaseAnimation] = useState(false);
   const { playScratch } = useScratchSound();
 
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const isDraggingRef = useRef<Map<number, boolean>>(new Map());
-  const soundThrottleRef = useRef(0);
+  const lastSoundTimeRef = useRef<Map<number, number>>(new Map());
+  const lastPosRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const scratchGridRef = useRef<Map<number, Set<string>>>(new Map());
   const SLOT_SIZE = 120;
+  const CELL_SIZE = 6;
   const initializedRef = useRef(false);
 
   useEffect(() => {
     if (jogoId) {
       fetchJogo();
     } else {
-      initDefaultSlots();
       setLoading(false);
+    }
+  }, [jogoId]);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(`raspadinha_${jogoId}`);
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        if (data.participacaoId && data.grid && data.jogoId === jogoId) {
+          setParticipacaoId(data.participacaoId);
+          initSlotsFromGrid(data.grid);
+          setGamePhase("paid");
+        }
+      } catch {
+        sessionStorage.removeItem(`raspadinha_${jogoId}`);
+      }
     }
   }, [jogoId]);
 
@@ -117,65 +141,88 @@ function RaspadinhaPremiumContent() {
         const data = await res.json();
         if (data.data) {
           setJogo(data.data);
-          initSlots(data.data.premios || []);
         }
       }
     } catch (error) {
       console.error("Erro ao carregar jogo:", error);
       toast.error("Erro ao carregar o jogo");
-      initDefaultSlots();
     } finally {
       setLoading(false);
     }
   };
 
-  const initDefaultSlots = () => {
-    const defaultPrizes = [
-      { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
-      { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
-      { id: "1", nome: "3x Troféu de Ouro", valorDinheiroAlternative: 5000 },
-      { id: "2", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
-      { id: "3", nome: "3x Cristal", valorDinheiroAlternative: 10 },
-      { id: "4", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
-      { id: "5", nome: "3x Cristal", valorDinheiroAlternative: 10 },
-      { id: "6", nome: "3x Estrela d'Aldeia", valorDinheiroAlternative: 100 },
-      { id: "7", nome: "3x Cristal", valorDinheiroAlternative: 10 },
-    ];
-    
-    const shuffled = [...defaultPrizes].sort(() => Math.random() - 0.5);
-    
-    setSlots(shuffled.map((prize, i) => ({
+  const initSlotsFromGrid = (grid: Prize[]) => {
+    setSlots(grid.map((prize, i) => ({
       id: i,
       revealed: false,
       prize,
       scratchPercent: 0,
     })));
+    initializedRef.current = false;
+    setCanvasesInitialized(false);
   };
 
-  const initSlots = (premios: Prize[]) => {
-    const prizesList: Prize[] = [];
+  const handleJogar = async () => {
+    if (!jogoId) return;
     
-    if (premios.length > 0) {
-      const winningPrize = premios[0];
-      for (let i = 0; i < 3; i++) {
-        prizesList.push(winningPrize);
+    setGamePhase("payment_loading");
+    
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Faça login para jogar");
+        setGamePhase("not_paid");
+        return;
       }
-      for (let i = 3; i < 9; i++) {
-        prizesList.push(premios[Math.floor(Math.random() * premios.length)]);
+
+      const res = await fetch("/api/participacoes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          jogoId,
+          dadosParticipacao: {},
+          quantidade: 1,
+          metodoPagamento: "dinheiro",
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "Erro ao processar pagamento");
+        setGamePhase("not_paid");
+        return;
       }
-    } else {
-      initDefaultSlots();
-      return;
+
+      const data = await res.json();
+      const participacao = data.participacao;
+      
+      if (participacao?.id && participacao?.grid) {
+        setParticipacaoId(participacao.id);
+        initSlotsFromGrid(participacao.grid);
+        
+        sessionStorage.setItem(`raspadinha_${jogoId}`, JSON.stringify({
+          participacaoId: participacao.id,
+          grid: participacao.grid,
+          jogoId,
+        }));
+
+        setShowPurchaseAnimation(true);
+        setTimeout(() => {
+          setShowPurchaseAnimation(false);
+          setGamePhase("paid");
+        }, 600);
+      } else {
+        toast.error("Erro ao iniciar jogo");
+        setGamePhase("not_paid");
+      }
+    } catch (error) {
+      console.error("Erro ao criar participação:", error);
+      toast.error("Erro ao conectar com o servidor");
+      setGamePhase("not_paid");
     }
-    
-    const shuffled = prizesList.sort(() => Math.random() - 0.5);
-    
-    setSlots(shuffled.map((prize, i) => ({
-      id: i,
-      revealed: false,
-      prize,
-      scratchPercent: 0,
-    })));
   };
 
   const initSlotCanvas = useCallback((canvas: HTMLCanvasElement | null, slotId: number) => {
@@ -217,7 +264,7 @@ function RaspadinhaPremiumContent() {
   }, []);
 
   useEffect(() => {
-    if (slots.length > 0 && !initializedRef.current) {
+    if (slots.length > 0 && !initializedRef.current && gamePhase === "paid") {
       const timer = setTimeout(() => {
         canvasRefs.current.forEach((canvas, slotId) => {
           initSlotCanvas(canvas, slotId);
@@ -227,7 +274,38 @@ function RaspadinhaPremiumContent() {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [slots, initSlotCanvas]);
+  }, [slots, initSlotCanvas, gamePhase]);
+
+  const claimPremio = useCallback(async (pId: string) => {
+    if (!pId || premioClaimed) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`/api/participacoes/${pId}/claim-premio`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      
+      if (data.success) {
+        setCreditedAmount(data.creditedAmount);
+        setPremioClaimed(true);
+      } else if (data.alreadyClaimed) {
+        setCreditedAmount(data.creditedAmount);
+        setPremioClaimed(true);
+      } else {
+        console.error("Claim failed:", data.reason);
+      }
+    } catch (error) {
+      console.error("Erro ao reclamar prémio:", error);
+    }
+  }, [premioClaimed]);
 
   const scratchSlot = useCallback(
     async (slotId: number, x: number, y: number) => {
@@ -246,43 +324,62 @@ function RaspadinhaPremiumContent() {
       const canvasX = (x - rect.left) * scaleX;
       const canvasY = (y - rect.top) * scaleY;
 
+      const lastPos = lastPosRef.current.get(slotId);
+      if (lastPos) {
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.beginPath();
+        ctx.moveTo(lastPos.x * scaleX, lastPos.y * scaleY);
+        ctx.lineTo(canvasX, canvasY);
+        ctx.lineWidth = 50;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "rgba(0,0,0,1)";
+        ctx.stroke();
+        ctx.restore();
+      }
+
       ctx.save();
       ctx.globalCompositeOperation = "destination-out";
-
       ctx.beginPath();
       ctx.arc(canvasX, canvasY, 25, 0, Math.PI * 2);
       ctx.fill();
 
-      for (let i = 0; i < 15; i++) {
-        const ox = (Math.random() - 0.5) * 40;
-        const oy = (Math.random() - 0.5) * 40;
+      for (let i = 0; i < 5; i++) {
+        const ox = (Math.random() - 0.5) * 20;
+        const oy = (Math.random() - 0.5) * 20;
         ctx.beginPath();
-        ctx.arc(canvasX + ox, canvasY + oy, Math.random() * 10 + 4, 0, Math.PI * 2);
+        ctx.arc(canvasX + ox, canvasY + oy, Math.random() * 6 + 3, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
 
-      const now = Date.now();
-      if (now - soundThrottleRef.current > 60) {
-        playScratch(0.3);
-        soundThrottleRef.current = now;
+      lastPosRef.current.set(slotId, { x: x - rect.left, y: y - rect.top });
+
+      if (!scratchGridRef.current.has(slotId)) {
+        scratchGridRef.current.set(slotId, new Set());
+      }
+      const grid = scratchGridRef.current.get(slotId)!;
+      const gridX = Math.floor((x - rect.left) / CELL_SIZE);
+      const gridY = Math.floor((y - rect.top) / CELL_SIZE);
+      const radius = Math.ceil(25 / CELL_SIZE);
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist <= radius) {
+            grid.add(`${gridX + dx},${gridY + dy}`);
+          }
+        }
       }
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      let transparent = 0;
-      const totalPixels = imageData.data.length / 4;
-      for (let i = 3; i < imageData.data.length; i += 4) {
-        if (imageData.data[i] === 0) transparent++;
-      }
-      const percent = Math.round((transparent / totalPixels) * 100);
+      const totalCells = Math.ceil(SLOT_SIZE / CELL_SIZE) * Math.ceil(SLOT_SIZE / CELL_SIZE);
+      const percent = Math.min(100, Math.round((grid.size / totalCells) * 100));
 
-      if (percent > slot.scratchPercent) {
-        setSlots((prev) =>
-          prev.map((s) =>
-            s.id === slotId ? { ...s, scratchPercent: percent } : s
-          )
-        );
-      }
+      setSlots((prev) =>
+        prev.map((s) =>
+          s.id === slotId ? { ...s, scratchPercent: Math.max(s.scratchPercent, percent) } : s
+        )
+      );
 
       if (percent >= 60 && !slot.revealed) {
         ctx.save();
@@ -316,49 +413,30 @@ function RaspadinhaPremiumContent() {
               setWinningPrize(prize);
               setShowWin(true);
               confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+              
+              if (participacaoId && !premioClaimed) {
+                claimPremio(participacaoId);
+              }
             }
           });
 
+          if (revealedSlots.length === 9) {
+            setGamePhase("all_revealed");
+          }
+
           return newSlots;
         });
-
-        if (!participacaoId && jogoId) {
-          const token = localStorage.getItem("token");
-          if (token) {
-            try {
-              const res = await fetch("/api/participacoes", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                  jogoId,
-                  dadosParticipacao: {},
-                  quantidade: 1,
-                  metodoPagamento: "dinheiro",
-                }),
-              });
-              if (res.ok) {
-                const data = await res.json();
-                if (data.participacao?.id) {
-                  setParticipacaoId(data.participacao.id);
-                }
-              }
-            } catch (error) {
-              console.error("Erro ao criar participação:", error);
-            }
-          }
-        }
       }
     },
-    [slots, playScratch, jogoId, participacaoId]
+    [slots, playScratch, jogoId, participacaoId, premioClaimed, claimPremio]
   );
 
   const handlePointerDown = useCallback(
     (slotId: number, e: React.PointerEvent) => {
       e.preventDefault();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
       isDraggingRef.current.set(slotId, true);
+      lastPosRef.current.delete(slotId);
       scratchSlot(slotId, e.clientX, e.clientY);
     },
     [scratchSlot]
@@ -372,8 +450,9 @@ function RaspadinhaPremiumContent() {
     [scratchSlot]
   );
 
-  const handlePointerUp = useCallback((slotId: number) => {
+  const handlePointerUp = useCallback((slotId: number, e: React.PointerEvent) => {
     isDraggingRef.current.set(slotId, false);
+    lastPosRef.current.delete(slotId);
   }, []);
 
   const scratchAll = useCallback(() => {
@@ -413,13 +492,37 @@ function RaspadinhaPremiumContent() {
           setWinningPrize(prize);
           setShowWin(true);
           confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+          
+          if (participacaoId && !premioClaimed) {
+            claimPremio(participacaoId);
+          }
         }
       });
 
       setTotalRevealed(9);
+      setGamePhase("all_revealed");
       return newSlots;
     });
-  }, [slots]);
+  }, [slots, participacaoId, premioClaimed, claimPremio]);
+
+  const handleComprarNova = () => {
+    setGamePhase("not_paid");
+    setSlots([]);
+    setTotalRevealed(0);
+    setParticipacaoId(null);
+    setWinningPrize(null);
+    setShowWin(false);
+    setPremioClaimed(false);
+    setCreditedAmount(null);
+    initializedRef.current = false;
+    setCanvasesInitialized(false);
+    scratchGridRef.current.clear();
+    lastPosRef.current.clear();
+    canvasRefs.current.clear();
+    if (jogoId) {
+      sessionStorage.removeItem(`raspadinha_${jogoId}`);
+    }
+  };
 
   if (loading) {
     return <RaspadinhaLoading />;
@@ -429,6 +532,7 @@ function RaspadinhaPremiumContent() {
   const subtitulo = jogo?.configuracao?.subtitulo || "Raspe com o dedo para revelar o seu prémio!";
   const organizacao = jogo?.configuracao?.organizacao || jogo?.evento?.aldeia?.nome || "Aldeias Games";
   const premioMaximo = jogo?.configuracao?.premioMaximo || 5000;
+  const preco = jogo?.preco || 2;
 
   return (
     <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
@@ -470,75 +574,132 @@ function RaspadinhaPremiumContent() {
           </h2>
         </motion.section>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="relative"
-        >
-          <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-[24px] blur-xl" />
-
-          <div className="relative bg-[#1f1b19] rounded-[24px] p-4 shadow-2xl">
-            <div className="grid grid-cols-3 gap-3">
-              {slots.map((slot) => (
-                <div
-                  key={slot.id}
-                  className="relative aspect-square rounded-2xl overflow-hidden bg-[#393432]"
-                >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <Trophy className="text-4xl text-[#ff734b]" />
-                      <p className="text-[10px] font-bold text-[#e0bfb7] mt-0.5">
-                        {slot.prize?.valorDinheiroAlternative 
-                          ? `${slot.prize.valorDinheiroAlternative}€`
-                          : slot.prize?.nome || "?"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {!slot.revealed && (
-                    <canvas
-                      ref={(el) => {
-                        if (el) {
-                          canvasRefs.current.set(slot.id, el);
-                          setTimeout(() => initSlotCanvas(el, slot.id), 50);
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full touch-none cursor-crosshair"
-                      style={{ touchAction: "none" }}
-                      onPointerDown={(e) => handlePointerDown(slot.id, e)}
-                      onPointerMove={(e) => handlePointerMove(slot.id, e)}
-                      onPointerUp={() => handlePointerUp(slot.id)}
-                      onPointerLeave={() => handlePointerUp(slot.id)}
-                    />
-                  )}
-
-                  {slot.scratchPercent > 10 && !slot.revealed && (
-                    <div className="absolute top-1 right-1 bg-black/60 text-[8px] text-white px-1.5 py-0.5 rounded-full font-mono">
-                      {slot.scratchPercent}%
-                    </div>
-                  )}
-                </div>
-              ))}
+        {gamePhase === "not_paid" && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-[24px] blur-xl" />
+            <div className="relative bg-[#1f1b19] rounded-[24px] p-8 shadow-2xl flex flex-col items-center gap-4">
+              <Lock className="w-12 h-12 text-[#ff734b]/60" />
+              <p className="text-center text-[#e0bfb7] text-sm">
+                Compre a sua raspadinha para começar a jogar
+              </p>
+              <p className="text-4xl font-bold text-[#9cefff]">
+                {preco}€
+              </p>
             </div>
+          </motion.div>
+        )}
 
-            {totalRevealed < 9 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="mt-4 flex justify-center"
-              >
-                <div className="flex items-center gap-2 px-4 py-2 bg-[#2e2928] rounded-full">
-                  <Sparkles className="text-[#9cefff] text-sm animate-pulse" />
-                  <span className="text-[10px] uppercase font-bold tracking-tighter text-[#e0bfb7]">
-                    Raspe para revelar
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
+        {gamePhase === "payment_loading" && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-[24px] blur-xl" />
+            <div className="relative bg-[#1f1b19] rounded-[24px] p-8 shadow-2xl flex flex-col items-center gap-4">
+              <Loader2 className="w-12 h-12 text-[#ff734b] animate-spin" />
+              <p className="text-center text-[#e0bfb7] text-sm">
+                A processar pagamento...
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {showPurchaseAnimation && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="relative"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/30 to-[#9cefff]/30 rounded-[24px] blur-xl" />
+            <div className="relative bg-[#1f1b19] rounded-[24px] p-8 shadow-2xl flex flex-col items-center gap-4">
+              <Sparkles className="w-12 h-12 text-[#9cefff] animate-pulse" />
+              <p className="text-center text-[#e0bfb7] text-lg font-bold">
+                Cartela comprada!
+              </p>
+              <p className="text-center text-[#e0bfb7]/60 text-xs">
+                Raspe para revelar o seu prémio
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {(gamePhase === "paid" || gamePhase === "all_revealed") && slots.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="relative"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-[24px] blur-xl" />
+
+            <div className="relative bg-[#1f1b19] rounded-[24px] p-4 shadow-2xl">
+              <div className="grid grid-cols-3 gap-3">
+                {slots.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className="relative aspect-square rounded-2xl overflow-hidden bg-[#393432]"
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <Trophy className="text-4xl text-[#ff734b]" />
+                        <p className="text-[10px] font-bold text-[#e0bfb7] mt-0.5">
+                          {slot.prize?.valorDinheiroAlternative 
+                            ? `${slot.prize.valorDinheiroAlternative}€`
+                            : slot.prize?.nome || "?"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!slot.revealed && (
+                      <canvas
+                        ref={(el) => {
+                          if (el) {
+                            canvasRefs.current.set(slot.id, el);
+                            setTimeout(() => initSlotCanvas(el, slot.id), 50);
+                          }
+                        }}
+                        className="absolute inset-0 w-full h-full touch-none cursor-crosshair"
+                        style={{ touchAction: "none" }}
+                        onPointerDown={(e) => handlePointerDown(slot.id, e)}
+                        onPointerMove={(e) => handlePointerMove(slot.id, e)}
+                        onPointerUp={(e) => handlePointerUp(slot.id, e)}
+                        onPointerLeave={(e) => handlePointerUp(slot.id, e)}
+                      />
+                    )}
+
+                    {slot.scratchPercent > 10 && !slot.revealed && (
+                      <div className="absolute top-1 right-1 bg-black/60 text-[8px] text-white px-1.5 py-0.5 rounded-full font-mono">
+                        {slot.scratchPercent}%
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {totalRevealed < 9 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-4 flex justify-center"
+                >
+                  <div className="flex items-center gap-2 px-4 py-2 bg-[#2e2928] rounded-full">
+                    <Sparkles className="text-[#9cefff] text-sm animate-pulse" />
+                    <span className="text-[10px] uppercase font-bold tracking-tighter text-[#e0bfb7]">
+                      Raspe para revelar
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -546,19 +707,46 @@ function RaspadinhaPremiumContent() {
           transition={{ delay: 0.2 }}
           className="flex flex-col gap-3"
         >
-          <button className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
-            <span className="text-lg">Comprar Nova</span>
-            <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
-              {jogo?.preco ? `${jogo.preco}€` : "2€"}
-            </span>
-          </button>
+          {gamePhase === "not_paid" && (
+            <button
+              onClick={handleJogar}
+              className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">Jogar por</span>
+              <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
+                {preco}€
+              </span>
+            </button>
+          )}
 
-          {totalRevealed < 9 && (
+          {gamePhase === "payment_loading" && (
+            <button
+              disabled
+              className="w-full py-4 bg-[#ff734b]/50 text-[#110d0c] font-bold rounded-2xl flex items-center justify-center gap-2"
+            >
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>A processar...</span>
+            </button>
+          )}
+
+          {(gamePhase === "paid" || gamePhase === "all_revealed") && totalRevealed < 9 && (
             <button
               onClick={scratchAll}
               className="w-full py-4 bg-[#2e2928] text-[#e0bfb7] font-semibold rounded-2xl border border-[#58413b]/20 active:scale-[0.98] transition-all duration-200"
             >
               Raspar Tudo
+            </button>
+          )}
+
+          {gamePhase === "all_revealed" && (
+            <button
+              onClick={handleComprarNova}
+              className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">Comprar Nova</span>
+              <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
+                {preco}€
+              </span>
             </button>
           )}
         </motion.div>
@@ -648,15 +836,31 @@ function RaspadinhaPremiumContent() {
               <p className="text-[#e0bfb7] mb-4">
                 Ganhou: {winningPrize.nome}!
               </p>
-              <p className="text-5xl font-bold text-[#9cefff] mb-6">
+              <p className="text-5xl font-bold text-[#9cefff] mb-2">
                 {winningPrize.valorDinheiroAlternative}€
               </p>
+              
+              {premioClaimed && creditedAmount !== null && (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm text-green-400 mb-6 font-medium"
+                >
+                  ✓ {creditedAmount}€ creditado na sua carteira!
+                </motion.p>
+              )}
+              
+              {!premioClaimed && (
+                <p className="text-sm text-[#e0bfb7]/60 mb-6">
+                  A processar o seu prémio...
+                </p>
+              )}
 
               <button
                 onClick={() => setShowWin(false)}
                 className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl active:scale-[0.98] transition-all"
               >
-                Receber Prémio
+                {premioClaimed ? "Fechar" : "Receber Prémio"}
               </button>
             </motion.div>
           </motion.div>

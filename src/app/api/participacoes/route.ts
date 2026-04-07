@@ -283,12 +283,26 @@ export async function POST(request: NextRequest) {
         const timestamp = new Date().toISOString();
         
         if (jogo.tipo === 'raspadinha') {
-          const resultado = determineRaspadinhaResult(jogo.configuracao, jogo.stockInicial, jogo.stockAtual - i);
-          const hash = generateHash(seed, resultado, jogo.stockAtual - i, timestamp);
+          const config = typeof jogo.configuracao === 'string' 
+            ? JSON.parse(jogo.configuracao) 
+            : jogo.configuracao;
+          const outcome = determineRaspadinhaOutcome(config);
+          const grid = buildGridFromOutcome(outcome, config);
+          const rngSeed = crypto.randomBytes(16).toString('hex');
           
-          dados.seedRaspe = seed;
+          const hash = generateHash(rngSeed, outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win', jogo.stockAtual - i, timestamp);
+          
+          dados.seedRaspe = rngSeed;
           dados.hashRaspe = hash;
-          dados.resultadoRaspe = resultado;
+          dados.resultadoRaspe = outcome.hasWin ? outcome.winningPrize?.nome : 'sem_premio';
+          dados.dadosParticipacao = JSON.stringify({
+            grid,
+            winningPrize: outcome.hasWin ? outcome.winningPrize : null,
+            hasWin: outcome.hasWin,
+            generatedAt: new Date().toISOString(),
+            rngSeed,
+            roll: outcome.roll,
+          });
         } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
           // Para rifas, usar os números selecionados como "resultado"
           const numerosSelecionados = data.dadosParticipacao?.numeros || [];
@@ -419,7 +433,22 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      participacao: data.quantidade === 1 ? result.participacoes[0] : result.participacoes,
+      participacao: data.quantidade === 1 ? (() => {
+        const p = result.participacoes[0];
+        // Parse dadosParticipacao to extract grid for client
+        try {
+          const dados = typeof p.dadosParticipacao === 'string' 
+            ? JSON.parse(p.dadosParticipacao) 
+            : p.dadosParticipacao;
+          return {
+            ...p,
+            grid: dados?.grid || null,
+            hasWin: dados?.hasWin || false,
+          };
+        } catch {
+          return p;
+        }
+      })() : result.participacoes,
       valorTotal: result.valorTotal,
     }, { status: 201 });
   } catch (error: any) {
@@ -480,4 +509,100 @@ function determineRaspadinhaResult(configJson: string, stockInicial: number, car
   }
   
   return 'sem_premio';
+}
+
+// ============================================================
+// NEW: Probabilistic outcome + grid generation for raspadinha
+// ============================================================
+
+interface RaspadinhaOutcome {
+  hasWin: boolean;
+  winningPrize: any | null;
+  roll: number;
+}
+
+function determineRaspadinhaOutcome(config: Record<string, any>): RaspadinhaOutcome {
+  const premios = (config.premios as any[]) || [];
+  
+  // Use crypto-secure integer random (0-9999) for precision
+  const rollInt = crypto.randomInt(0, 10000);
+  const roll = rollInt / 10000;
+  
+  // Build cumulative probability ranges from config percentagens
+  // Each percentagem is in basis points (e.g., 2% = 200 basis points)
+  let cumulativeBp = 0;
+  for (const premio of premios) {
+    const probBp = Math.round((premio.percentagem || 0) * 100);
+    cumulativeBp += probBp;
+    if (rollInt < cumulativeBp) {
+      return { hasWin: true, winningPrize: premio, roll };
+    }
+  }
+  
+  return { hasWin: false, winningPrize: null, roll };
+}
+
+function buildGridFromOutcome(
+  outcome: RaspadinhaOutcome,
+  config: Record<string, any>
+): any[] {
+  const premios = (config.premios as any[]) || [];
+  const grid: any[] = [];
+  
+  if (outcome.hasWin && outcome.winningPrize) {
+    const winningPrize = outcome.winningPrize;
+    
+    for (let i = 0; i < 3; i++) grid.push({ ...winningPrize });
+    
+    const otherPrizes = premios.filter((p: any) => p.nome !== winningPrize.nome);
+    const fillerPool = otherPrizes.length > 0 ? otherPrizes : premios;
+    
+    for (let i = 0; i < 6; i++) {
+      const pick = fillerPool[crypto.randomInt(0, fillerPool.length)];
+      grid.push({ ...pick });
+    }
+    
+    const counts = new Map<string, number>();
+    grid.forEach((p) => counts.set(p.nome, (counts.get(p.nome) || 0) + 1));
+    
+    for (const [nome, count] of counts) {
+      if (nome !== winningPrize.nome && count >= 3) {
+        const idx = grid.findIndex((p) => p.nome === nome);
+        if (idx !== -1) {
+          grid[idx] = { ...fillerPool[crypto.randomInt(0, fillerPool.length)] };
+        }
+      }
+    }
+  } else {
+    const maxPerPrize = 2;
+    const counts = new Map<string, number>();
+    
+    for (let i = 0; i < 9; i++) {
+      let attempts = 0;
+      while (attempts < 50) {
+        const pick = premios[crypto.randomInt(0, premios.length)];
+        const currentCount = counts.get(pick.nome) || 0;
+        if (currentCount < maxPerPrize) {
+          grid.push({ ...pick });
+          counts.set(pick.nome, currentCount + 1);
+          break;
+        }
+        attempts++;
+      }
+      if (i >= grid.length) {
+        const sorted = [...premios].sort((a, b) => 
+          (a.valorDinheiroAlternative || 0) - (b.valorDinheiroAlternative || 0)
+        );
+        grid.push({ ...sorted[0] });
+      }
+    }
+  }
+  
+  // Fisher-Yates shuffle
+  for (let i = grid.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [grid[i], grid[j]] = [grid[j], grid[i]];
+  }
+  
+  return grid;
 }
