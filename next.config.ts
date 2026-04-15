@@ -1,20 +1,16 @@
-// next.config.ts
 import type { NextConfig } from "next";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Função para obter __dirname de forma segura em ESM
-function getDirname() {
-  const __filename = fileURLToPath(import.meta.url);
-  return path.dirname(__filename);
-}
+// __dirname em ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
 
-  // Usa a função para evitar executar import.meta.url no topo
-  outputFileTracingRoot: getDirname(),
+  outputFileTracingRoot: __dirname,
 
   images: {
     unoptimized: true,
