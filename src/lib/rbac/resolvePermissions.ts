@@ -1,22 +1,51 @@
 // src/lib/rbac/resolvePermissions.ts
-import { PrismaClient, PermissionKey, RoleName } from "@prisma/client";
+import {
+  PrismaClient,
+  PermissionKey,
+  RoleName,
+  User,
+  UserGlobalRole,
+  UserAldeiaRole,
+  UserPermission,
+  Role,
+  RolePermission,
+  Permission,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Tipo completo do utilizador com includes
+type UserWithPermissions = User & {
+  userGlobalRoles: (UserGlobalRole & {
+    role: Role & {
+      rolePermissions: (RolePermission & {
+        permission: Permission;
+      })[];
+    };
+  })[];
+  userAldeiaRoles: (UserAldeiaRole & {
+    role: Role & {
+      rolePermissions: (RolePermission & {
+        permission: Permission;
+      })[];
+    };
+  })[];
+  userPermissions: (UserPermission & {
+    permission: Permission;
+  })[];
+};
+
 /**
- * Resolve todas as permissões efetivas de um utilizador,
- * combinando:
- *  - roles globais
- *  - roles por aldeia
- *  - permissões herdadas dos roles
- *  - overrides individuais (globais e por aldeia)
- *  - regra: deny > allow
+ * Resolve todas as permissões efetivas de um utilizador.
  */
-export async function resolvePermissions(userId: string, aldeiaId?: string) {
+export async function resolvePermissions(
+  userId: string,
+  aldeiaId?: string
+) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      globalRoles: {
+      userGlobalRoles: {
         include: {
           role: {
             include: {
@@ -27,7 +56,7 @@ export async function resolvePermissions(userId: string, aldeiaId?: string) {
           },
         },
       },
-      aldeiaRoles: {
+      userAldeiaRoles: {
         where: aldeiaId ? { aldeiaId } : undefined,
         include: {
           role: {
@@ -43,17 +72,15 @@ export async function resolvePermissions(userId: string, aldeiaId?: string) {
         where: aldeiaId
           ? {
               OR: [
-                { aldeiaId },      // overrides específicos da aldeia
-                { aldeiaId: null } // overrides globais
+                { aldeiaId },
+                { aldeiaId: null },
               ],
             }
-          : {
-              aldeiaId: null,      // só globais se não houver aldeia
-            },
+          : { aldeiaId: null },
         include: { permission: true },
       },
     },
-  });
+  }) as UserWithPermissions | null;
 
   if (!user) {
     throw new Error("Utilizador não encontrado");
@@ -61,51 +88,47 @@ export async function resolvePermissions(userId: string, aldeiaId?: string) {
 
   // 1. Roles efetivos
   const roles: RoleName[] = [
-    ...user.globalRoles.map((r) => r.role.name),
-    ...user.aldeiaRoles.map((r) => r.role.name),
+    ...user.userGlobalRoles.map((r) => r.role.name),
+    ...user.userAldeiaRoles.map((r) => r.role.name),
   ];
 
-  // 2. Permissões herdadas dos roles
+  // 2. Permissões herdadas
   const inheritedPermissions = new Set<PermissionKey>();
 
-  for (const gr of user.globalRoles) {
-    for (const rp of gr.role.rolePermissions) {
-      inheritedPermissions.add(rp.permission.key);
-    }
-  }
+  user.userGlobalRoles.forEach((gr) =>
+    gr.role.rolePermissions.forEach((rp) =>
+      inheritedPermissions.add(rp.permission.key)
+    )
+  );
 
-  for (const ar of user.aldeiaRoles) {
-    for (const rp of ar.role.rolePermissions) {
-      inheritedPermissions.add(rp.permission.key);
-    }
-  }
+  user.userAldeiaRoles.forEach((ar) =>
+    ar.role.rolePermissions.forEach((rp) =>
+      inheritedPermissions.add(rp.permission.key)
+    )
+  );
 
-  // 3. Overrides individuais (allow / deny)
+  // 3. Overrides
   const effectivePermissions = new Set<PermissionKey>(inheritedPermissions);
   const deniedPermissions = new Set<PermissionKey>();
 
-  for (const up of user.userPermissions) {
+  user.userPermissions.forEach((up) => {
     const key = up.permission.key;
 
     if (up.allow) {
-      // só aplica allow se ainda não tiver sido explicitamente negado
       if (!deniedPermissions.has(key)) {
         effectivePermissions.add(key);
       }
     } else {
-      // deny tem prioridade: remove de effective e marca como negado
       effectivePermissions.delete(key);
       deniedPermissions.add(key);
     }
-  }
-
-  const permissions = Array.from(effectivePermissions);
+  });
 
   return {
     userId,
     aldeiaId: aldeiaId ?? null,
     roles,
-    permissions,
+    permissions: Array.from(effectivePermissions),
     denied: Array.from(deniedPermissions),
     hasPermission: (key: PermissionKey) => effectivePermissions.has(key),
   };

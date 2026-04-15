@@ -43,7 +43,11 @@ model User {
   badges     Badge[]     @relation("userBadges")
   userBadges UserBadge[] // lado inverso de UserBadge
 
-  niveis UserLevel[] @relation("userLevels")
+  niveis          UserLevel[]      @relation("userLevels")
+  userGlobalRoles UserGlobalRole[]
+  userAldeiaRoles UserAldeiaRole[]
+  userPermissions UserPermission[]
+  auditLogs       AuditLog[]
 
   @@index([email])
   @@index([role])
@@ -194,18 +198,18 @@ model Plano {
 }
 
 model Aldeia {
-  id                     String          @id @default(cuid())
+  id                     String           @id @default(cuid())
   nome                   String
-  slug                   String          @unique
-  tipoOrganizacao        TipoOrganizacao @default(aldeia)
+  slug                   String           @unique
+  tipoOrganizacao        TipoOrganizacao  @default(aldeia)
   descricao              String?
   logoUrl                String?
   logoBase64             String?
-  permitirStripe         Boolean         @default(false)
-  permitirMBWay          Boolean         @default(false)
+  permitirStripe         Boolean          @default(false)
+  permitirMBWay          Boolean          @default(false)
   iban                   String?
   nomeTitularConta       String?
-  avisoPagamentosEnviado Boolean         @default(false)
+  avisoPagamentosEnviado Boolean          @default(false)
   nomeEscola             String?
   codigoEscola           String?
   nivelEnsino            NivelEnsino?
@@ -215,24 +219,27 @@ model Aldeia {
   morada                 String?
   codigoPostal           String?
   localidade             String?
-  autorizacaoCM          Boolean         @default(false)
+  autorizacaoCM          Boolean          @default(false)
   numeroAlvara           String?
-  documentosVerificados  Boolean         @default(false)
-  ativo                  Boolean         @default(true)
-  verificado             Boolean         @default(false)
+  documentosVerificados  Boolean          @default(false)
+  ativo                  Boolean          @default(true)
+  verificado             Boolean          @default(false)
   dataVerificacao        DateTime?
   planoId                String?
   dataInicioPlano        DateTime?
   dataFimPlano           DateTime?
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
-  plano                  Plano?          @relation(fields: [planoId], references: [id])
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  plano                  Plano?           @relation(fields: [planoId], references: [id])
   eventos                Evento[]
   premios                Premio[]
-  users                  User[]          @relation("AldeiaUsers")
-  admins                 User[]          @relation("AldeiaAdmins")
-  vendedores             User[]          @relation("AldeiaVendedores")
+  users                  User[]           @relation("AldeiaUsers")
+  admins                 User[]           @relation("AldeiaAdmins")
+  vendedores             User[]           @relation("AldeiaVendedores")
   jogos                  Jogo[]
+  userAldeiaRoles        UserAldeiaRole[]
+  userPermissions        UserPermission[]
+  auditLogs              AuditLog[]
 
   @@index([slug])
   @@index([tipoOrganizacao])
@@ -611,4 +618,137 @@ model GamificacaoEvento {
   criadoEm  DateTime @default(now())
 
   @@map("gamificacao_eventos")
+}
+
+enum RoleName {
+  SUPER_ADMIN
+  ALDEIA_ADMIN
+  GESTOR
+  COLABORADOR
+  VIEWER
+}
+
+enum PermissionKey {
+  MANAGE_ALDEIA
+  VIEW_ALDEIA
+
+  CREATE_EVENTO
+  EDIT_EVENTO
+  DELETE_EVENTO
+  VIEW_EVENTO
+
+  CREATE_JOGO
+  EDIT_JOGO
+  DELETE_JOGO
+  VIEW_JOGO
+
+  MANAGE_PREMIOS
+  VIEW_PREMIOS
+
+  MANAGE_VENDEDORES
+  VIEW_VENDEDORES
+
+  EXECUTE_VENDA
+  VIEW_VENDAS
+
+  VIEW_ANALYTICS_GLOBAL
+  VIEW_ANALYTICS_LOCAL
+
+  MANAGE_USERS
+  MANAGE_PLANOS
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        RoleName @unique
+  description String?
+
+  rolePermissions RolePermission[]
+  userGlobalRoles UserGlobalRole[]
+  userAldeiaRoles UserAldeiaRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Permission {
+  id          String        @id @default(cuid())
+  key         PermissionKey @unique
+  description String?
+
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserGlobalRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model UserAldeiaRole {
+  userId   String
+  aldeiaId String
+  roleId   String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aldeia Aldeia @relation(fields: [aldeiaId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, aldeiaId, roleId])
+}
+
+model UserPermission {
+  id           String  @id @default(cuid())
+  userId       String
+  permissionId String
+  aldeiaId     String? // null = permissão global
+
+  allow Boolean @default(true)
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  aldeia     Aldeia?    @relation(fields: [aldeiaId], references: [id])
+
+  @@index([userId])
+  @@index([permissionId])
+  @@index([aldeiaId])
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  aldeiaId String?
+  aldeia   Aldeia? @relation(fields: [aldeiaId], references: [id])
+
+  action     String
+  resource   String?
+  resourceId String?
+
+  ip        String?
+  userAgent String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
 }

@@ -108,16 +108,23 @@ async function handleApiRequest(request: NextRequest): Promise<NextResponse | nu
   );
 
   if (!isPublicRoute && !pathname.startsWith('/api/auth/')) {
+    // Tentar obter token do header Authorization primeiro
+    let token = null;
     const authHeader = request.headers.get('authorization');
 
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else {
+      // Fallback: tentar obter do cookie httpOnly
+      token = request.cookies.get('auth-token')?.value || null;
+    }
+
+    if (!token) {
       return NextResponse.json(
         { error: 'Token de autenticação não fornecido' },
         { status: 401 }
       );
     }
-
-    const token = authHeader.substring(7);
 
     try {
       const { payload } = await jwtVerify(token, JWT_SECRET);

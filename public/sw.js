@@ -8,8 +8,6 @@ const STATIC_ASSETS = [
   "/",
   "/manifest.json",
   "/favicon.svg",
-  "/icon-192x192.png",
-  "/icon-512x512.png",
 ];
 
 // Instalação - Cachear assets estáticos
@@ -99,7 +97,7 @@ self.addEventListener("fetch", (event) => {
           .catch(() => {
             // Retornar fallback offline se disponível
             if (request.destination === "image") {
-              return caches.match("/icon-192x192.png");
+              return caches.match("/favicon.svg");
             }
             return new Response("Offline", { status: 503 });
           });
@@ -151,8 +149,8 @@ self.addEventListener("push", (event) => {
   const data = event.data.json();
   const options = {
     body: data.message || "Nova notificação",
-    icon: "/icon-192x192.png",
-    badge: "/icon-192x192.png",
+    icon: "/favicon.svg",
+    badge: "/favicon.svg",
     tag: data.tag || "default",
     requireInteraction: data.requireInteraction || false,
     data: data.data || {},
