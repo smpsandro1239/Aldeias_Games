@@ -249,29 +249,41 @@ export default function RifaPage() {
     setCreditCardModalOpen(true);
   };
 
-  const processarPagamento = async (metodo: "dinheiro" | "saldo" | "stripe" | "mbway" | "transferencia") => {
-    if (!jogo) return;
+   const processarPagamento = async (metodo: "dinheiro" | "saldo" | "stripe" | "mbway" | "transferencia") => {
+     if (!jogo) return;
 
-    const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
+     // Check if user is allowed to use dinheiro method
+     const user = JSON.parse(localStorage.getItem("user") || "{}");
+     const userRole = user.role;
+     
+     // Only vendedor, aldeia_admin, and super_admin can use dinheiro
+     const canUseDinheiro = ['vendedor', 'aldeia_admin', 'super_admin'].includes(userRole);
+     
+     if (metodo === "dinheiro" && !canUseDinheiro) {
+       toast.error("Apenas vendedores e administradores podem pagar em dinheiro");
+       return;
+     }
 
-    try {
-      if (metodo === "dinheiro") {
-        await criarParticipacao("dinheiro");
-      } else if (metodo === "saldo") {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Precisa de login para usar saldo");
-          return;
-        }
-        await criarParticipacao("saldo");
-      } else if (metodo === "stripe") {
-        toast.info("Stripe em implementação");
-      }
-    } catch (error) {
-      console.error("Erro no pagamento:", error);
-      toast.error("Erro ao processar pagamento");
-    }
-  };
+     const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
+
+     try {
+       if (metodo === "dinheiro") {
+         await criarParticipacao("dinheiro");
+       } else if (metodo === "saldo") {
+         const token = localStorage.getItem("token");
+         if (!token) {
+           toast.error("Precisa de login para usar saldo");
+           return;
+         }
+         await criarParticipacao("saldo");
+       } else if (metodo === "stripe") {
+         toast.info("Stripe em implementação");
+       }
+     } catch (error) {
+       console.error("Erro no pagamento:", error);
+       toast.error("Erro ao processar pagamento");
+     }
+   };
 
   const criarParticipacao = async (metodo: "dinheiro" | "saldo") => {
     if (!jogo) return;
@@ -745,11 +757,9 @@ export default function RifaPage() {
         <p className="text-center text-on-surface/40 text-xs">
           Apoie a cultura local. Todos os lucros revertem para a associação.
         </p>
-      </main>
+        </main>
 
-      <BottomNav />
-
-      <Dialog open={paymentModalOpen} onOpenChange={setCreditCardModalOpen}>
+        <Dialog open={paymentModalOpen} onOpenChange={setCreditCardModalOpen}>
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="font-headline text-xl flex items-center gap-2">

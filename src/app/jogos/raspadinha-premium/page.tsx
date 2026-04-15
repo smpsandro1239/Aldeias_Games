@@ -214,56 +214,68 @@ function RaspadinhaPremiumContent() {
     setPaymentModalOpen(true);
   };
 
-  const processarPagamento = async (metodo: "dinheiro" | "saldo" | "mbway" | "stripe" | "transferencia") => {
-    if (!jogo) return;
+   const processarPagamento = async (metodo: "dinheiro" | "saldo" | "mbway" | "stripe" | "transferencia") => {
+     if (!jogo) return;
 
-    try {
-      if (metodo === "dinheiro") {
-        await criarParticipacao("dinheiro");
-      } else if (metodo === "saldo") {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Precisa de login para usar saldo");
-          return;
-        }
-        await criarParticipacao("saldo");
-      } else if (metodo === "mbway") {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Precisa de login para usar MBWay");
-          return;
-        }
-        if (!participante.telefone) {
-          toast.error("Telefone obrigatório para MBWay");
-          return;
-        }
-        const res = await fetch("/api/pagamentos/mbway", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            telefone: participante.telefone,
-            valor: jogo.preco,
-            descricao: `Raspadinha: ${jogo.nome}`
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error || "Erro ao iniciar pagamento MBWay");
-          return;
-        }
-        toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
-        await criarParticipacao("pendente");
-      } else if (metodo === "stripe") {
-        toast.info("Stripe em implementação");
-      }
-    } catch (error) {
-      console.error("Erro no pagamento:", error);
-      toast.error("Erro ao processar pagamento");
-    }
-  };
+     // Check if user is allowed to use dinheiro method
+     const user = JSON.parse(localStorage.getItem("user") || "{}");
+     const userRole = user.role;
+     
+     // Only vendedor, aldeia_admin, and super_admin can use dinheiro
+     const canUseDinheiro = ['vendedor', 'aldeia_admin', 'super_admin'].includes(userRole);
+     
+     if (metodo === "dinheiro" && !canUseDinheiro) {
+       toast.error("Apenas vendedores e administradores podem pagar em dinheiro");
+       return;
+     }
+
+     try {
+       if (metodo === "dinheiro") {
+         await criarParticipacao("dinheiro");
+       } else if (metodo === "saldo") {
+         const token = localStorage.getItem("token");
+         if (!token) {
+           toast.error("Precisa de login para usar saldo");
+           return;
+         }
+         await criarParticipacao("saldo");
+       } else if (metodo === "mbway") {
+         const token = localStorage.getItem("token");
+         if (!token) {
+           toast.error("Precisa de login para usar MBWay");
+           return;
+         }
+         if (!participante.telefone) {
+           toast.error("Telefone obrigatório para MBWay");
+           return;
+         }
+         const res = await fetch("/api/pagamentos/mbway", {
+           method: "POST",
+           headers: { 
+             "Content-Type": "application/json",
+             Authorization: `Bearer ${token}`
+           },
+           body: JSON.stringify({
+             telefone: participante.telefone,
+             valor: jogo.preco,
+             descricao: `Raspadinha: ${jogo.nome}`
+           })
+         });
+         const data = await res.json();
+         if (!res.ok) {
+           toast.error(data.error || "Erro ao iniciar pagamento MBWay");
+           return;
+         }
+         toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
+         await criarParticipacao("pendente");
+       } else if (metodo === "stripe") {
+         toast.info("Stripe em implementação");
+       }
+     } catch (error) {
+       console.error("Erro no pagamento:", error);
+       toast.error("Erro ao processar pagamento");
+     }
+   };
 
   const criarParticipacao = async (metodo: "dinheiro" | "saldo" | "pendente") => {
     if (!jogo) return;
@@ -1032,19 +1044,19 @@ function RaspadinhaPremiumContent() {
 
       <BottomNav />
 
-      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="font-headline text-xl flex items-center gap-2">
-              <Euro className="w-5 h-5 text-[#ff734b]" />
-              Pagamento - Raspadinha
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-6 pb-6 space-y-4">
-            <div className="bg-surface-container-high rounded-xl p-4 text-center">
-              <p className="text-xs text-on-surface-variant">Total a pagar</p>
-              <p className="font-headline text-3xl text-primary">{preco}€</p>
-            </div>
+       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+         <DialogContent className="max-w-[90vw] sm:max-w-md bg-surface-container border border-outline-variant/10 p-4 overflow-hidden">
+           <DialogHeader className="p-4 pb-2">
+             <DialogTitle className="font-headline text-xl flex items-center gap-2">
+               <Euro className="w-5 h-5 text-[#ff734b]" />
+               Pagamento - Raspadinha
+             </DialogTitle>
+           </DialogHeader>
+           <div className="px-4 pb-4 space-y-4">
+             <div className="bg-surface-container-high rounded-xl p-4 text-center">
+               <p className="text-xs text-on-surface-variant">Total a pagar</p>
+               <p className="font-headline text-3xl text-primary">{preco}€</p>
+             </div>
 
             <div className="space-y-2">
               <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Nome</label>

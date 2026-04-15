@@ -8,22 +8,23 @@ datasource db {
 }
 
 model User {
-  id                    String                  @id @default(cuid())
-  email                 String                  @unique
-  password              String
-  nome                  String
-  telefone              String?
-  role                  UserRole                @default(user)
-  emailVerificado       Boolean                 @default(false)
-  notificacoesEmail     Boolean                 @default(true)
-  ultimoLogin           DateTime?
-  falhasLogin           Int                     @default(0)
-  ultimaFalhaLogin      DateTime?
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  aldeiaId              String?
-  aldeiasPermitidas     String?
-  saldo                 Float                   @default(0)
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  nome              String
+  telefone          String?
+  role              UserRole  @default(user)
+  emailVerificado   Boolean   @default(false)
+  notificacoesEmail Boolean   @default(true)
+  ultimoLogin       DateTime?
+  falhasLogin       Int       @default(0)
+  ultimaFalhaLogin  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  aldeiaId          String?
+  aldeiasPermitidas String?
+  saldo             Float     @default(0)
+
   alteracoes            AlteracaoParticipacao[]
   logsAcesso            LogAcesso[]
   notificacoes          Notificacao[]
@@ -35,11 +36,68 @@ model User {
   vendas                Venda[]
   aldeiasAdmin          Aldeia[]                @relation("AldeiaAdmins")
   aldeiasVendedor       Aldeia[]                @relation("AldeiaVendedores")
+  consentimentos        Consentimento[]
+  direitosEsquecimento  DireitoEsquecimento[]
+
+  // Relações corrigidas
+  badges     Badge[]     @relation("userBadges")
+  userBadges UserBadge[] // lado inverso de UserBadge
+
+  niveis UserLevel[] @relation("userLevels")
 
   @@index([email])
   @@index([role])
   @@index([aldeiaId])
   @@map("users")
+}
+
+model Badge {
+  id           String   @id @default(cuid())
+  nome         String
+  descricao    String?
+  imagemUrl    String?
+  criterio     String
+  pontos       Int      @default(10)
+  raro         Boolean  @default(false)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  // Lado inverso da relação userBadges
+  users User[] @relation("userBadges")
+
+  // Lado inverso da tabela pivot UserBadge
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id            String   @id @default(cuid())
+  userId        String
+  badgeId       String
+  conquistadoEm DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@index([userId])
+  @@index([badgeId])
+  @@map("user_badges")
+}
+
+model UserLevel {
+  id                     String   @id @default(cuid())
+  userId                 String
+  nivel                  Int      @default(1)
+  pontos                 Int      @default(0)
+  pontosParaProximoNivel Int      @default(100)
+  atualizadoEm           DateTime @updatedAt
+
+  // Corrigido: lado inverso da relação userLevels
+  user User @relation("userLevels", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("user_levels")
 }
 
 model Transacao {
@@ -350,15 +408,19 @@ model AlteracaoParticipacao {
 }
 
 model Sorteio {
-  id          String            @id @default(cuid())
-  seed        String
-  hash        String
-  resultado   String
-  observacoes String?
-  createdAt   DateTime          @default(now())
-  jogoId      String
-  jogo        Jogo              @relation(fields: [jogoId], references: [id])
-  vencedores  VencedorSorteio[]
+  id            String            @id @default(cuid())
+  seed          String
+  hash          String
+  resultado     String
+  observacoes   String?
+  preCommitHash String?
+  commitSalt    String?
+  revealedAt    DateTime?
+  fase          String            @default("pendente")
+  createdAt     DateTime          @default(now())
+  jogoId        String
+  jogo          Jogo              @relation(fields: [jogoId], references: [id])
+  vencedores    VencedorSorteio[]
 
   @@index([jogoId])
   @@index([createdAt])
@@ -408,6 +470,34 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+model Consentimento {
+  id        String   @id @default(cuid())
+  tipo      String
+  concedeu  Boolean
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("consentimentos")
+}
+
+model DireitoEsquecimento {
+  id           String    @id @default(cuid())
+  userId       String
+  solicitadoEm DateTime  @default(now())
+  processadoEm DateTime?
+  estado       String    @default("pendente")
+  notas        String?
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([estado])
+  @@map("direito_esquecimento")
 }
 
 model Venda {
@@ -511,4 +601,14 @@ enum TipoNotificacao {
   premio
   campanha
   alerta
+}
+
+model GamificacaoEvento {
+  id        String   @id @default(cuid())
+  tipo      String // 'participacao', 'vitoria', 'compartilhamento', 'convite_vendedor', etc.
+  pontos    Int      @default(10)
+  descricao String?
+  criadoEm  DateTime @default(now())
+
+  @@map("gamificacao_eventos")
 }

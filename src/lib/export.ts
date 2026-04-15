@@ -1,5 +1,5 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface ParticipacaoData {
   id: string;
@@ -22,7 +22,7 @@ interface ParticipacaoData {
   };
 }
 
-interface ExportOptions {
+export interface ExportOptions {
   titulo: string;
   subtitulo?: string;
   aldeia?: string;
@@ -65,7 +65,7 @@ export function exportParticipacoesPDF(
     ];
   });
   
-  autoTable(doc, {
+  (doc as any).autoTable({
     head: [['#', 'Jogo', 'Número', 'Cliente', 'Valor', 'Data', 'Estado']],
     body: tableData,
     startY: options.aldeia ? 50 : 44,

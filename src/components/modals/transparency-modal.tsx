@@ -235,11 +235,9 @@ export function TransparencyModal({
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#1f1b19] rounded-2xl overflow-hidden"
             >
-              <div className="bg-gradient-to-r from-[#ff734b] to-[#9cefff] p-6 text-center">
+              <div className="bg-emerald-500 text-white shadow-md p-6 rounded-lg">
                 <Shield className="w-12 h-12 mx-auto mb-2 text-white" />
-                <h2 className="text-2xl font-serif font-bold text-white">
-                  Resumo de Rentabilidade e Transparência
-                </h2>
+                <h3 className="text-xl font-medium mb-4">Resumo de Rentabilidade e Transparência</h3>
               </div>
 
               <div className="p-6 space-y-6">

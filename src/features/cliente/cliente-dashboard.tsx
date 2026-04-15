@@ -158,7 +158,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         const perfilData = await perfilRes.json();
         const profile = perfilData.data;
         setUserProfile(profile);
-        
+
         if (profile?.role !== 'super_admin' && !profile?.aldeiaId) {
           setWizardOpen(true);
         }
@@ -233,18 +233,18 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
     if (response.ok) {
       const data = await response.json();
       toast.success("Participação registada!");
-      
+
       setPaymentOpen(false);
       setNumberSelectorOpen(false);
       setPoioDaVacaOpen(false);
       setNumerosSelecionados([]);
       setSelecaoPoioDaVaca([]);
-      
+
       if (selectedJogo.tipo === "raspadinha" && data.participacao) {
         setSelectedParticipacao(data.participacao);
         setScratchCardOpen(true);
       }
-      
+
       fetchData();
     } else {
       const error = await response.json();
@@ -303,7 +303,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       {/* Background Effects */}
       <div className="fixed inset-0 animated-gradient opacity-20 -z-10" />
       <div className="fixed inset-0 particle-bg opacity-10 -z-10" />
-      
+
       {/* Header e Wallet */}
       <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 items-start">
         <div className="md:col-span-2 lg:col-span-3">
@@ -325,8 +325,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           { icon: Trophy, label: "Prémios Ganhos", value: formatCurrency(walletStats?.historicoPremios?.total || 0), color: "tertiary" },
           { icon: Gift, label: "Cashback Recebido", value: formatCurrency(walletStats?.transacoes?.filter((t: any) => t.tipo === 'cashback').reduce((acc: number, t: any) => acc + t.valor, 0) || 0), color: "green-500" },
         ].map((stat, i) => (
-          <Card 
-            key={i} 
+          <Card
+            key={i}
             className="card-hover bg-card/50 border-white/10 backdrop-blur-sm"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -345,21 +345,21 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-card/50 border border-white/10 backdrop-blur-sm p-1 grid grid-cols-3">
-          <TabsTrigger 
-            value="jogos" 
+          <TabsTrigger
+            value="jogos"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
           >
             <Play className="h-4 w-4 mr-2" />
             Jogar
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="participacoes"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
           >
             <Ticket className="h-4 w-4 mr-2" />
             Os Meus Bilhetes
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="extrato"
             className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
           >
@@ -379,7 +379,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                 <div>
                   <p className="text-xl font-gaming font-bold text-white">Escolhe a tua Aldeia</p>
                   <p className="text-sm text-muted-foreground mt-2">Precisas de selecionar uma aldeia para ver os jogos disponíveis.</p>
-                  <Button 
+                  <Button
                     onClick={() => setWizardOpen(true)}
                     className="mt-6 bg-secondary hover:bg-secondary/90"
                   >
@@ -413,114 +413,114 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
               </CardContent>
             </Card>
           ) : (
-          <div className="grid gap-4">
-            {participacoes.map((participacao) => (
-              <Card key={participacao.id} className="bg-[#1f1b19] border-[#58413b]/20 rounded-2xl overflow-hidden card-hover">
-                <CardContent className="p-5">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-xl bg-[#ff734b]/10 border border-[#ff734b]/20">
-                        {getTipoIcon(participacao.jogo?.tipo || "")}
+            <div className="grid gap-4">
+              {participacoes.map((participacao) => (
+                <Card key={participacao.id} className="bg-[#1f1b19] border-[#58413b]/20 rounded-2xl overflow-hidden card-hover">
+                  <CardContent className="p-5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-[#ff734b]/10 border border-[#ff734b]/20">
+                          {getTipoIcon(participacao.jogo?.tipo || "")}
+                        </div>
+                        <div>
+                          <h3 className="font-gaming text-lg text-[#eae0de]">{participacao.jogo?.nome}</h3>
+                          <p className="text-sm text-[#e0bfb7]/60 flex items-center gap-1 mt-1">
+                            {participacao.jogo?.evento?.aldeia?.nome} • {formatDate(participacao.createdAt)}
+                          </p>
+                          <p className="text-sm font-bold text-[#ff734b] mt-1">
+                            {formatCurrency(participacao.valorPago)}
+                          </p>
+
+                          {/* Números jogados */}
+                          {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
+                            <div className="mt-2">
+                              <p className="text-xs text-[#e0bfb7]/50">Números jogados:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {(() => {
+                                  const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                                  const numeros = dados.numeros || [];
+                                  return numeros.map((n: number) => (
+                                    <span
+                                      key={n}
+                                      className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
+                                    >
+                                      {n}
+                                    </span>
+                                  ));
+                                })()}
+                              </div>
+                            </div>
+                          ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
+                            <div className="mt-2">
+                              <p className="text-xs text-[#e0bfb7]/50">Coordenadas:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {(() => {
+                                  const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                                  const coordenadas = dados.coordenadas || dados.selecao || [];
+                                  return coordenadas.map((c: { letra: string; numero: number }) => (
+                                    <span
+                                      key={`${c.letra}${c.numero}`}
+                                      className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
+                                    >
+                                      {c.letra}{c.numero}
+                                    </span>
+                                  ));
+                                })()}
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {/* Resultado do sorteio */}
+                          {participacao.jogo?.sorteado && (
+                            <div className="mt-2">
+                              {participacao.ganhador ? (
+                                <p className="text-sm text-green-500 font-medium">
+                                  ✓ Ganhou!
+                                </p>
+                              ) : (
+                                <p className="text-sm text-[#e0bfb7]/40">
+                                  Sorteio realizado: não foi sorteado
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-gaming text-lg text-[#eae0de]">{participacao.jogo?.nome}</h3>
-                        <p className="text-sm text-[#e0bfb7]/60 flex items-center gap-1 mt-1">
-                          {participacao.jogo?.evento?.aldeia?.nome} • {formatDate(participacao.createdAt)}
-                        </p>
-                        <p className="text-sm font-bold text-[#ff734b] mt-1">
-                          {formatCurrency(participacao.valorPago)}
-                        </p>
-
-                        {/* Números jogados */}
-                        {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
-                          <div className="mt-2">
-                            <p className="text-xs text-[#e0bfb7]/50">Números jogados:</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {(() => {
-                                const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
-                                const numeros = dados.numeros || [];
-                                return numeros.map((n: number) => (
-                                  <span
-                                    key={n}
-                                    className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
-                                  >
-                                    {n}
-                                  </span>
-                                ));
-                              })()}
-                            </div>
-                          </div>
-                        ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
-                          <div className="mt-2">
-                            <p className="text-xs text-[#e0bfb7]/50">Coordenadas:</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {(() => {
-                                const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
-                                const coordenadas = dados.coordenadas || dados.selecao || [];
-                                return coordenadas.map((c: { letra: string; numero: number }) => (
-                                  <span
-                                    key={`${c.letra}${c.numero}`}
-                                    className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
-                                  >
-                                    {c.letra}{c.numero}
-                                  </span>
-                                ));
-                              })()}
-                            </div>
-                          </div>
-                        ) : null}
-
-                        {/* Resultado do sorteio */}
-                        {participacao.jogo?.sorteado && (
-                          <div className="mt-2">
-                            {participacao.ganhador ? (
-                              <p className="text-sm text-green-500 font-medium">
-                                ✓ Ganhou!
-                              </p>
-                            ) : (
-                              <p className="text-sm text-[#e0bfb7]/40">
-                                Sorteio realizado: não foi sorteado
-                              </p>
-                            )}
-                          </div>
+                      <div className="flex items-center gap-2">
+                        {participacao.ganhador && (
+                          <Badge
+                            className="bg-yellow-500 cursor-pointer hover:bg-yellow-600"
+                            onClick={() => handleVerVitoria(participacao)}
+                          >
+                            <Trophy className="h-3 w-3 mr-1" />
+                            Vencedor
+                          </Badge>
                         )}
+                        {participacao.jogo?.tipo === "raspadinha" && !participacao.revelado && (
+                          <Button size="sm" onClick={() => handleRevelarRaspadinha(participacao)}>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Revelar
+                          </Button>
+                        )}
+                        {participacao.jogo?.tipo === "raspadinha" && participacao.revelado && (
+                          <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"}>
+                            {participacao.resultadoRaspe || "Sem prémio"}
+                          </Badge>
+                        )}
+                        {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
+                          <Button variant="outline" size="sm">
+                            Ver Prémios
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon">
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {participacao.ganhador && (
-                        <Badge 
-                          className="bg-yellow-500 cursor-pointer hover:bg-yellow-600"
-                          onClick={() => handleVerVitoria(participacao)}
-                        >
-                          <Trophy className="h-3 w-3 mr-1" />
-                          Vencedor
-                        </Badge>
-                      )}
-                      {participacao.jogo?.tipo === "raspadinha" && !participacao.revelado && (
-                        <Button size="sm" onClick={() => handleRevelarRaspadinha(participacao)}>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Revelar
-                        </Button>
-                      )}
-                      {participacao.jogo?.tipo === "raspadinha" && participacao.revelado && (
-                        <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"}>
-                          {participacao.resultadoRaspe || "Sem prémio"}
-                        </Badge>
-                      )}
-                      {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
-                        <Button variant="outline" size="sm">
-                          Ver Prémios
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </TabsContent>
 
@@ -544,8 +544,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
               ) : (
                 <div className="space-y-0">
                   {walletStats.transacoes.map((t: any) => (
-                    <div 
-                      key={t.id} 
+                    <div
+                      key={t.id}
                       className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
                     >
                       <div className="flex items-center gap-4">

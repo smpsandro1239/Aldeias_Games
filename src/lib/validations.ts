@@ -190,6 +190,15 @@ export const executarSorteioSchema = z.object({
   observacoes: z.string().optional(),
 });
 
+export const commitSorteioSchema = z.object({
+  jogoId: z.string(),
+});
+
+export const revealSorteioSchema = z.object({
+  jogoId: z.string(),
+  seedRevelada: z.string(), // A seed que o admin revelou
+});
+
 // ============================================
 // VALIDAÇÕES DE NOTIFICAÇÃO
 // ============================================

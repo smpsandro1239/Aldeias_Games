@@ -1,5 +1,6 @@
 "use client";
 
+import { StatCard } from "@/components/ui/StatCard";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
 import { GameQuickActions } from "@/components/game-quick-actions";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";
+import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { DashboardAnalytics } from "./analytics-dashboard";
 import { toast } from "sonner";
 
@@ -73,6 +75,10 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
 
   // Modal de verificar hash
   const [verificarHashOpen, setVerificarHashOpen] = useState(false);
+
+  // Modal de QR Code
+  const [qrCodeOpen, setQrCodeOpen] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState<{jogoId?: string; eventoId?: string; aldeiaSlug?: string; type: "jogo" | "evento" | "aldeia"} | null>(null);
 
   // Selections
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
@@ -369,8 +375,37 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-64 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-28 bg-muted animate-pulse rounded" />
+            <div className="h-10 w-24 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="h-32">
+              <CardContent className="p-6">
+                <div className="h-4 w-24 bg-muted animate-pulse rounded mb-4" />
+                <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="h-6 w-48 bg-muted animate-pulse rounded mb-4" />
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -411,23 +446,31 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Total Angariado</CardTitle><DollarSign className="h-4 w-4" /></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{formatCurrency(stats?.totalAngariado || 0)}</div></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Participações</CardTitle><Users className="h-4 w-4" /></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{stats?.totalParticipacoes || 0}</div></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Eventos Ativos</CardTitle><Calendar className="h-4 w-4" /></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{stats?.eventosAtivos || 0}</div></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Jogos Ativos</CardTitle><Gamepad2 className="h-4 w-4" /></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{stats?.jogosAtivos || 0}</div></CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Angariado"
+          value={formatCurrency(stats?.totalAngariado || 0)}
+          variant="emerald"
+          icon={DollarSign}
+        />
+        <StatCard
+          title="Participações"
+          value={stats?.totalParticipacoes?.toLocaleString() || 0}
+          variant="blue"
+          icon={Users}
+        />
+        <StatCard
+          title="Eventos Ativos"
+          value={stats?.eventosAtivos || 0}
+          variant="violet"
+          icon={Calendar}
+        />
+        <StatCard
+          title="Jogos Ativos"
+          value={stats?.jogosAtivos || 0}
+          variant="amber"
+          icon={Gamepad2}
+        />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -474,15 +517,17 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         <TabsContent value="eventos" className="space-y-4">
           <div className="flex justify-between"><h2 className="text-xl font-semibold">Gestão de Eventos</h2></div>
           {eventos.length === 0 ? (
-            <Card className="p-8 text-center">
-              <CardContent className="flex flex-col items-center justify-center space-y-4">
-                <Calendar className="h-12 w-12 text-muted-foreground" />
-                <div>
-                  <p className="text-lg font-medium">Nenhum evento encontrado</p>
-                  <p className="text-sm text-muted-foreground">Clique em "Novo Evento" para criar o primeiro evento.</p>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="rounded-full bg-primary/10 p-4 mb-4">
+                  <Calendar className="h-12 w-12 text-primary" />
                 </div>
+                <h3 className="text-xl font-semibold mb-2">Sem eventos</h3>
+                <p className="text-muted-foreground text-center max-w-sm mb-6">
+                  Comece por criar o seu primeiro evento para organizar jogos e angariações.
+                </p>
                 <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}>
-                  <Plus className="h-4 w-4 mr-2" /> Novo Evento
+                  <Plus className="h-4 w-4 mr-2" /> Criar Evento
                 </Button>
               </CardContent>
             </Card>
@@ -518,13 +563,15 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             </Button>
           </div>
           {jogos.length === 0 ? (
-            <Card className="p-8 text-center">
-              <CardContent className="flex flex-col items-center justify-center space-y-4">
-                <Gamepad2 className="h-12 w-12 text-muted-foreground" />
-                <div>
-                  <p className="text-lg font-medium">Nenhum jogo encontrado</p>
-                  <p className="text-sm text-muted-foreground">Clique em "Novo Jogo" para criar o primeiro jogo.</p>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="rounded-full bg-primary/10 p-4 mb-4">
+                  <Gamepad2 className="h-12 w-12 text-primary" />
                 </div>
+                <h3 className="text-xl font-semibold mb-2">Sem jogos</h3>
+                <p className="text-muted-foreground text-center max-w-sm mb-6">
+                  Crie jogos para os seus eventos e comece a angariar fundos.
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -555,6 +602,15 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                           <Eye className="h-4 w-4" />
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Gerar QR Code para partilha"
+                        className="text-purple-500 hover:text-purple-400"
+                        onClick={() => { setQrCodeData({ jogoId: jg.id, type: "jogo" }); setQrCodeOpen(true); }}
+                      >
+                        <QrCode className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -659,13 +715,18 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             </Button>
           </div>
           {users.length === 0 ? (
-            <Card className="p-8 text-center">
-              <CardContent className="flex flex-col items-center justify-center space-y-4">
-                <Users className="h-12 w-12 text-muted-foreground" />
-                <div>
-                  <p className="text-lg font-medium">Nenhum utilizador encontrado</p>
-                  <p className="text-sm text-muted-foreground">Clique em "Novo Utilizador" para adicionar.</p>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="rounded-full bg-primary/10 p-4 mb-4">
+                  <Users className="h-12 w-12 text-primary" />
                 </div>
+                <h3 className="text-xl font-semibold mb-2">Sem utilizadores</h3>
+                <p className="text-muted-foreground text-center max-w-sm mb-6">
+                  Adicione utilizadores à sua organização para gerir o sistema.
+                </p>
+                <Button onClick={() => { setSelectedUser(null); setUserModalOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-2" /> Adicionar Utilizador
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -695,13 +756,18 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                <h2 className="text-xl font-semibold">Gestão de Aldeias/Organizações</h2>
              </div>
              {aldeias.length === 0 ? (
-               <Card className="p-8 text-center">
-                 <CardContent className="flex flex-col items-center justify-center space-y-4">
-                   <Building2 className="h-12 w-12 text-muted-foreground" />
-                   <div>
-                     <p className="text-lg font-medium">Nenhuma organização encontrada</p>
-                     <p className="text-sm text-muted-foreground">Clique em "Nova Organização" para adicionar.</p>
+               <Card className="border-dashed">
+                 <CardContent className="flex flex-col items-center justify-center py-16">
+                   <div className="rounded-full bg-primary/10 p-4 mb-4">
+                     <Building2 className="h-12 w-12 text-primary" />
                    </div>
+                   <h3 className="text-xl font-semibold mb-2">Sem organizações</h3>
+                   <p className="text-muted-foreground text-center max-w-sm mb-6">
+                     Crie a primeira organização para começar a gerir aldeias, escolas e associações.
+                   </p>
+                   <Button onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
+                     <Plus className="h-4 w-4 mr-2" /> Nova Organização
+                   </Button>
                  </CardContent>
                </Card>
              ) : (
@@ -724,17 +790,22 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
              )}
            </TabsContent>
            
-           <TabsContent value="transacoes" className="space-y-4">
-             <div className="flex justify-between">
-               <h2 className="text-xl font-semibold">Transações da Plataforma</h2>
-             </div>
-             {transacoes.length === 0 ? (
-               <Card className="p-8 text-center">
-                 <CardContent className="flex flex-col items-center justify-center space-y-4">
-                   <CreditCard className="h-12 w-12 text-muted-foreground" />
-                   <p className="text-lg font-medium">Nenhuma transação encontrada</p>
-                 </CardContent>
-               </Card>
+            <TabsContent value="transacoes" className="space-y-4">
+              <div className="flex justify-between">
+                <h2 className="text-xl font-semibold">Transações da Plataforma</h2>
+              </div>
+              {transacoes.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-16">
+                    <div className="rounded-full bg-primary/10 p-4 mb-4">
+                      <CreditCard className="h-12 w-12 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Sem transações</h3>
+                    <p className="text-muted-foreground text-center max-w-sm">
+                      As transações aparecem aqui quando os utilizadores carregam saldo ou participam em jogos.
+                    </p>
+                  </CardContent>
+                </Card>
              ) : (
              <div className="grid gap-4">
                 {transacoes.map((t) => (
@@ -759,17 +830,22 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
              )}
            </TabsContent>
 
-           <TabsContent value="auditoria" className="space-y-4">
-             <div className="flex justify-between">
-               <h2 className="text-xl font-semibold">Auditoria e Logs de Acesso</h2>
-             </div>
-             {logs.length === 0 ? (
-               <Card className="p-8 text-center">
-                 <CardContent className="flex flex-col items-center justify-center space-y-4">
-                   <Shield className="h-12 w-12 text-muted-foreground" />
-                   <p className="text-lg font-medium">Nenhum registo de acesso encontrado</p>
-                 </CardContent>
-               </Card>
+            <TabsContent value="auditoria" className="space-y-4">
+              <div className="flex justify-between">
+                <h2 className="text-xl font-semibold">Auditoria e Logs de Acesso</h2>
+              </div>
+              {logs.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-16">
+                    <div className="rounded-full bg-primary/10 p-4 mb-4">
+                      <Shield className="h-12 w-12 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Sem registos</h3>
+                    <p className="text-muted-foreground text-center max-w-sm">
+                      Os logs de acesso aparecem aqui quando os utilizadores iniciam sessão.
+                    </p>
+                  </CardContent>
+                </Card>
              ) : (
              <div className="grid gap-4">
                 {logs.map((log) => (
@@ -801,10 +877,15 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
               <h2 className="text-xl font-semibold">Comissões & Desempenho de Vendedores (POS)</h2>
             </div>
             {vendedoresStats.length === 0 ? (
-              <Card className="p-8 text-center">
-                <CardContent className="flex flex-col items-center justify-center space-y-4">
-                  <DollarSign className="h-12 w-12 text-muted-foreground" />
-                  <p className="text-lg font-medium">Nenhum vendedor encontrado ou dados insuficientes</p>
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="rounded-full bg-primary/10 p-4 mb-4">
+                    <DollarSign className="h-12 w-12 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Sem vendedores</h3>
+                  <p className="text-muted-foreground text-center max-w-sm">
+                    Adicione vendedores à sua organização para ver as estatísticas de desempenho e comissões.
+                  </p>
                 </CardContent>
               </Card>
             ) : (
@@ -919,6 +1000,13 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         open={verificarHashOpen}
         onOpenChange={setVerificarHashOpen}
         token={token}
+      />
+
+      <QRCodeGenerator
+        open={qrCodeOpen}
+        onOpenChange={setQrCodeOpen}
+        data={qrCodeData || { type: "jogo" }}
+        title="Partilhar Jogo"
       />
 
       {/* Modal Testar Jogo (Super Admin) */}

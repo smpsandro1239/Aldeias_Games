@@ -48,24 +48,28 @@ export function useAuth() {
     isAuthenticated: false,
   });
 
-  // Inicializar a partir do localStorage
   useEffect(() => {
-    const initAuth = () => {
+    const initAuth = async () => {
       try {
-        const token = localStorage.getItem("token");
         const user = localStorage.getItem("user");
+        const hasCookie = document.cookie.includes("auth-token");
 
-        if (token && user) {
+        if (user && hasCookie) {
+          const parsedUser = JSON.parse(user);
           setState({
-            user: JSON.parse(user),
-            token,
+            user: parsedUser,
+            token: null,
             isLoading: false,
             isAuthenticated: true,
           });
+        } else if (user && !hasCookie) {
+          localStorage.removeItem("user");
+          setState((prev) => ({ ...prev, isLoading: false, isAuthenticated: false }));
         } else {
           setState((prev) => ({ ...prev, isLoading: false }));
         }
       } catch {
+        localStorage.removeItem("user");
         setState((prev) => ({ ...prev, isLoading: false }));
       }
     };
@@ -87,7 +91,6 @@ export function useAuth() {
         throw new Error(data.error || "Erro ao fazer login");
       }
 
-      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       setState({
@@ -120,7 +123,6 @@ export function useAuth() {
         throw new Error(responseData.error || "Erro ao registar");
       }
 
-      localStorage.setItem("token", responseData.token);
       localStorage.setItem("user", JSON.stringify(responseData.user));
 
       setState({
@@ -139,8 +141,12 @@ export function useAuth() {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("token");
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+    }
+
     localStorage.removeItem("user");
 
     setState({
@@ -168,10 +174,9 @@ export function useAuth() {
   }, []);
 
   const getAuthHeaders = useCallback(() => {
-    return state.token ? { Authorization: `Bearer ${state.token}` } : {};
-  }, [state.token]);
+    return {};
+  }, []);
 
-  // Helpers de role
   const isSuperAdmin = state.user?.role === "super_admin";
   const isAldeiaAdmin = state.user?.role === "aldeia_admin";
   const isVendedor = state.user?.role === "vendedor";

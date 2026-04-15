@@ -27,7 +27,7 @@ interface BottomNavProps {
 
 const navItems = {
   user: [
-    { icon: LayoutDashboard, label: "Início", path: "/clientedashboard" },
+    { icon: LayoutDashboard, label: "Início", path: "/" },
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },
     { icon: Ticket, label: "Prémios", path: "/premios" },
     { icon: User, label: "Perfil", path: "/perfil" },

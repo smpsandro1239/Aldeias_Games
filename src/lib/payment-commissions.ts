@@ -49,19 +49,28 @@ export function getAvailableMethods(
   userRole: string | null | undefined, 
   aldeiaSettings?: AldeiaSettings
 ): MetodoPagamento[] {
-  const baseMethods: MetodoPagamento[] = ['dinheiro', 'saldo'];
-  
+  // Regular users (players) can only use saldo, mbway, stripe - NOT dinheiro
+  // Only vendedor, aldeia_admin, and super_admin can use dinheiro (for door-to-door sales)
   if (userRole === 'super_admin') {
-    return [...baseMethods, 'mbway', 'stripe'];
+    return ['dinheiro', 'saldo', 'mbway', 'stripe'];
   }
   
   if (userRole === 'aldeia_admin' && aldeiaSettings) {
-    if (aldeiaSettings.permitirMBWay) baseMethods.push('mbway');
-    if (aldeiaSettings.permitirStripe) baseMethods.push('stripe');
-    return baseMethods;
+    const methods = ['dinheiro', 'saldo'];
+    if (aldeiaSettings.permitirMBWay) methods.push('mbway');
+    if (aldeiaSettings.permitirStripe) methods.push('stripe');
+    return methods;
   }
   
-  return baseMethods;
+  if (userRole === 'vendedor') {
+    return ['dinheiro', 'saldo', 'mbway', 'stripe'];
+  }
+  
+  // For regular users and any other roles: only saldo, mbway, stripe (NO dinheiro)
+  const methods = ['saldo'];
+  if (aldeiaSettings?.permitirMBWay !== false) methods.push('mbway'); // MBWay allowed by default unless explicitly disabled
+  if (aldeiaSettings?.permitirStripe !== false) methods.push('stripe'); // Stripe allowed by default unless explicitly disabled
+  return methods;
 }
 
 export function formatCommission(method: MetodoPagamento): string {

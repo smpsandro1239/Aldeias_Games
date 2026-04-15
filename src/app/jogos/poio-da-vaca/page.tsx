@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserMenuButton } from "@/components/user-menu-button";
 import { PaymentSelector } from "@/components/payment";
+import { BottomNav } from "@/components/bottom-nav";
 
 interface Jogo {
   id: string;
@@ -357,98 +358,86 @@ export default function PoioDaVacaPage() {
     setPaymentModalOpen(true);
   };
 
-  const processarPagamento = async (metodo: "dinheiro" | "mbway" | "stripe" | "saldo" | "transferencia") => {
-    if (!pagamentoPendente) return;
+   const processarPagamento = async (metodo: "dinheiro" | "mbway" | "stripe" | "saldo" | "transferencia") => {
+     if (!pagamentoPendente) return;
 
-    try {
-      if (metodo === "dinheiro") {
-        await criarAposta(true);
-      } else if (metodo === "saldo") {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Precisa de sessão para usar saldo");
-          return;
-        }
-        const res = await fetch("/api/wallet/adjust", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            valor: -pagamentoPendente.custoTotal,
-            tipo: "debito",
-            descricao: `Aposta Poio da Vaca - ${pagamentoPendente.numeros.length} números`
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error || "Erro ao processar pagamento");
-          return;
-        }
-        await criarAposta(true);
-      } else if (metodo === "mbway") {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Precisa de sessão para usar MBWay");
-          return;
-        }
-        const tel = jogadorForm.telefone;
-        if (!tel) {
-          toast.error("Telefone obrigatório para MBWay");
-          return;
-        }
-        const res = await fetch("/api/pagamentos/mbway", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            telefone: tel,
-            valor: pagamentoPendente.custoTotal,
-            descricao: "Poio da Vaca"
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error || "Erro ao iniciar pagamento MBWay");
-          return;
-        }
-        toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
-        await criarAposta(false);
-      } else if (metodo === "stripe") {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Precisa de sessão para usar Stripe");
-          return;
-        }
-        const res = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            valor: pagamentoPendente.custoTotal,
-            descricao: "Poio da Vaca"
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error || "Erro ao processar pagamento");
-          return;
-        }
-        if (data.url) {
-          window.location.href = data.url;
-          return;
-        }
-      }
-    } catch (error) {
-      console.error("Erro no pagamento:", error);
-      toast.error("Erro ao processar pagamento");
-    }
-  };
+     // Check if user is allowed to use dinheiro method
+     const user = JSON.parse(localStorage.getItem("user") || "{}");
+     const userRole = user.role;
+     
+     // Only vendedor, aldeia_admin, and super_admin can use dinheiro
+     const canUseDinheiro = ['vendedor', 'aldeia_admin', 'super_admin'].includes(userRole);
+     
+     if (metodo === "dinheiro" && !canUseDinheiro) {
+       toast.error("Apenas vendedores e administradores podem pagar em dinheiro");
+       return;
+     }
+
+     try {
+       if (metodo === "dinheiro") {
+         await criarAposta(true);
+       } else if (metodo === "saldo") {
+         const token = localStorage.getItem("token");
+         if (!token) {
+           toast.error("Precisa de sessão para usar saldo");
+           return;
+         }
+         const res = await fetch("/api/wallet/adjust", {
+           method: "POST",
+           headers: { 
+             "Content-Type": "application/json",
+             Authorization: `Bearer ${token}`
+           },
+           body: JSON.stringify({
+             valor: -pagamentoPendente.custoTotal,
+             tipo: "debito",
+             descricao: `Aposta Poio da Vaca - ${pagamentoPendente.numeros.length} números`
+           })
+         });
+         const data = await res.json();
+         if (!res.ok) {
+           toast.error(data.error || "Erro ao processar pagamento");
+           return;
+         }
+         await criarAposta(true);
+       } else if (metodo === "mbway") {
+         const token = localStorage.getItem("token");
+         if (!token) {
+           toast.error("Precisa de sessão para usar MBWay");
+           return;
+         }
+         const tel = jogadorForm.telefone;
+         if (!tel) {
+           toast.error("Telefone obrigatório para MBWay");
+           return;
+         }
+         const res = await fetch("/api/pagamentos/mbway", {
+           method: "POST",
+           headers: { 
+             "Content-Type": "application/json",
+             Authorization: `Bearer ${token}`
+           },
+           body: JSON.stringify({
+             telefone: tel,
+             valor: pagamentoPendente.custoTotal,
+             descricao: `Aposta Poio da Vaca - ${pagamentoPendente.numeros.length} números`
+           })
+         });
+         const data = await res.json();
+         if (!res.ok) {
+           toast.error(data.error || "Erro ao iniciar pagamento MBWay");
+           return;
+         }
+         toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
+         await criarAposta(true);
+       } else if (metodo === "stripe") {
+         toast.info("Stripe em implementação");
+       }
+     } catch (error) {
+       console.error("Erro no pagamento:", error);
+       toast.error("Erro ao processar pagamento");
+     }
+   };
 
   const criarAposta = async (pago: boolean) => {
     if (!pagamentoPendente) return;
@@ -830,27 +819,9 @@ export default function PoioDaVacaPage() {
             </div>
           </div>
         </section>
-      </main>
+       </main>
 
-      {/* BottomNavBar */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 bg-surface-container-lowest/80 backdrop-blur-xl border-t border-outline-variant/15 shadow-2xl flex justify-around items-center px-4 pb-6 pt-2 rounded-t-3xl md:hidden">
-        <button onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-on-surface-variant/60 p-2 hover:bg-surface-container-high transition-colors rounded-xl">
-          <Home className="w-6 h-6" />
-          <span className="font-sans text-[11px] font-medium tracking-tight">Início</span>
-        </button>
-        <button className="flex flex-col items-center justify-center text-on-surface-variant/60 p-2 hover:bg-surface-container-high transition-colors rounded-xl">
-          <Map className="w-6 h-6" />
-          <span className="font-sans text-[11px] font-medium tracking-tight">O Campo</span>
-        </button>
-        <button className="flex flex-col items-center justify-center text-primary-container bg-surface-container-high/60 rounded-xl p-2 scale-90 transition-transform">
-          <Ticket className="w-6 h-6" style={{ fill: "currentColor" }} />
-          <span className="font-sans text-[11px] font-medium tracking-tight">Apostas</span>
-        </button>
-        <button className="flex flex-col items-center justify-center text-on-surface-variant/60 p-2 hover:bg-surface-container-high transition-colors rounded-xl">
-          <Award className="w-6 h-6" />
-          <span className="font-sans text-[11px] font-medium tracking-tight">Prémios</span>
-        </button>
-      </nav>
+       <BottomNav />
 
       <style jsx global>{`
         .glass-card {
