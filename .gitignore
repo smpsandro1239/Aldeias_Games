@@ -46,6 +46,9 @@ next-env.d.ts
 # agent / opencode
 .agent/
 .opencode/
+.claude/
+.continue/
+.kiro/
 
 # IDE
 .idea/
