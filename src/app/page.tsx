@@ -184,10 +184,6 @@ export default function Home() {
 
       {/* Mobile Bottom Nav */}
       <div className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-[#1a1614]/80 backdrop-blur-2xl z-50 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.4)] md:hidden">
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex flex-col items-center justify-center text-[#e0bfb7] opacity-70 hover:opacity-100 transition-all">
-          <Compass className="h-6 w-6" />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Explorar</span>
-        </button>
         <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col items-center justify-center text-[#9cefff] bg-[#9cefff]/10 rounded-2xl px-4 py-2 scale-110 transition-all">
           <House className="h-6 w-6" style={{ fill: 'currentColor' }} />
           <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Aldeias</span>

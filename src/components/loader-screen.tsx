@@ -26,7 +26,7 @@ export function LoaderScreen({ message = "A Iniciar" }: LoaderScreenProps) {
         <div className="w-full h-px bg-gradient-to-r from-transparent via-[#58413b]/30 to-transparent my-6 max-w-lg"></div>
         
         <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
-          Onde a Tradição, Forja o Presente
+          Onde a Tradição, Forja o Futuro
         </p>
         
         <motion.div 
@@ -56,12 +56,6 @@ export function LoaderScreen({ message = "A Iniciar" }: LoaderScreenProps) {
         <p className="text-[10px] text-[#eae0de]/30 uppercase tracking-[0.2em] leading-relaxed">
           Legado Ancestral<br />Tecnologia Digital
         </p>
-      </div>
-      <div className="absolute top-12 right-12 hidden md:block">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#9cefff] shadow-[0_0_8px_#00daf3]"></div>
-          <span className="text-[10px] text-[#eae0de]/50 uppercase tracking-[0.3em] font-bold">Sistema Ativo</span>
-        </div>
       </div>
 
       <style jsx>{`
