@@ -51,9 +51,6 @@ export function SplashScreen({ onEnter, onLoginClick }: SplashScreenProps) {
               }}
             />
           </div>
-          <span className="text-[10px] uppercase tracking-widest text-[#e0bfb7]/40 font-bold">
-            A Iniciar&nbsp;
-          </span>
         </motion.div>
 
         {/* Botões de Ação */}
@@ -63,12 +60,6 @@ export function SplashScreen({ onEnter, onLoginClick }: SplashScreenProps) {
           transition={{ delay: 1 }}
           className="mt-8 flex flex-col md:flex-row gap-4"
         >
-          <button
-            onClick={onEnter}
-            className="relative px-12 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#ff734b]/20"
-          >
-            EXPLORAR
-          </button>
           <button
             onClick={onLoginClick}
             className="relative px-12 py-3 border-2 border-[#ff734b] text-[#ff734b] font-bold rounded-full hover:bg-[#ff734b]/10 active:scale-95 transition-all"
