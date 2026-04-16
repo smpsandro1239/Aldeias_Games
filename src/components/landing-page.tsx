@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Gamepad2, Users, CreditCard, Shield, Sparkles, 
-  Ticket, Leaf, Award, ArrowRight, Star, Clock, MapPin, PartyPopper, House 
+  Ticket, Leaf, Award, ArrowRight, Star, Clock, MapPin, PartyPopper, Heart, Flame, Home
 } from "lucide-react";
 
 interface Jogo {
@@ -57,19 +57,20 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Hero Section */}
       <section className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="max-w-2xl">
-          <span className="text-[#ff734b] font-label font-bold tracking-widest uppercase text-xs mb-4 block">Portal de Angariação</span>
+          <span className="text-[#ff734b] font-label font-bold tracking-widest uppercase text-xs mb-4 block">O Teu Legado</span>
           <h2 className="font-serif text-5xl md:text-7xl leading-tight">
-            Lança a tua <span className="text-[#ff734b] italic">Campanha Herança</span>
+            Traz a tua <span className="text-[#ff734b] italic">Aldeia para o Futuro</span>
           </h2>
           <p className="text-[#e0bfb7] text-lg mt-6 leading-relaxed">
-            Cria um evento de angariação de fundos único que combina tradição local com competição digital.
+            Mesmo longe, o teu coração nunca deixe de bater pela terra que te viu crescer. 
+           Aqui, a tradição encontra a tecnologia e tu podes ser o elo que une gerações.
           </p>
         </div>
         <div className="hidden lg:block w-48 h-48 bg-[#1a1614] rounded-2xl relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-tr from-[#ff734b]/20 to-transparent"></div>
           <div className="p-6 flex flex-col h-full justify-between">
-            <PartyPopper className="text-[#9cefff] text-4xl" />
-            <span className="font-label text-xs font-bold leading-tight uppercase opacity-60">Ready to boost your village?</span>
+            <Heart className="text-[#ff734b] text-4xl" />
+            <span className="font-label text-xs font-bold leading-tight uppercase opacity-60">Preserva as tuas raízes</span>
           </div>
         </div>
       </section>
@@ -77,10 +78,10 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
         {[
-          { icon: House, label: "Aldeias", value: "50+", color: "text-[#ff734b]" },
-          { icon: Users, label: "Jogadores", value: "10K+", color: "text-[#9cefff]" },
-          { icon: CreditCard, label: "Angariado", value: "€500K+", color: "text-[#ffc107]" },
-          { icon: Shield, label: "Transparente", value: "100%", color: "text-[#ff734b]" },
+          { icon: Home, label: "Aldeias", value: "50+", color: "text-[#ff734b]" },
+          { icon: Heart, label: " Corações", value: "10K+", color: "text-[#ff734b]" },
+          { icon: Flame, label: "Angariado", value: "€500K+", color: "text-[#ffc107]" },
+          { icon: Shield, label: "Transparente", value: "100%", color: "text-[#9cefff]" },
         ].map((stat, i) => (
           <div key={i} className="bg-[#1a1614] rounded-2xl p-6 border border-[#58413b]/10">
             <div className="flex items-center gap-3 mb-3">
@@ -95,13 +96,13 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Features Section */}
       <section className="mb-16">
         <h3 className="font-serif text-3xl mb-8 flex items-center gap-4">
-          <span className="text-[#9cefff]">Porquê escolher-nos?</span>
+          <span className="text-[#9cefff]">Por que razão isto é teu?</span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { icon: Gamepad2, title: "Jogos Imersivos", desc: "Poio da Vaca, Rifas, Tombolas e Raspadinhas com experiência única.", color: "[#ff734b]", tags: ["High Engagement", "Traditional"] },
-            { icon: Shield, title: "Sorteios Transparentes", desc: "Algoritmos SHA-256 auditáveis garantem justiça absoluta.", color: "[#9cefff]", tags: ["Blockchain", "Auditoria"] },
-            { icon: CreditCard, title: "Pagamentos Instant", desc: "Stripe + MBWay integrados para transações rápidas.", color: "[#ffc107]", tags: ["MBWay", "Stripe"] },
+            { icon: Gamepad2, title: "Jogos que são Memórias", desc: "O Poio da Vaca, as Rifas, Tombolas e Raspadinhas que conheces desde pequeno, agora na ponta dos teus dedos.", color: "[#ff734b]", tags: ["Tradição", "Nostalgia"] },
+            { icon: Shield, title: "Sorteio com Honra", desc: "Algoritmos SHA-256 auditáveis. Aqui, nada é manipulado. A sorte é tua, como sempre foi.", color: "[#9cefff]", tags:", ["Justo", "Auditado"] },
+            { icon: CreditCard, title: "Pagamentos que Chegam Longe", desc: "Stripe + MBWay. O dinheiro queangarias vai direto para a tua aldeia, esteja ela a 100km ou a 10.000km.", color: "[#ffc107]", tags: [" Rápido", "Seguro"] },
           ].map((feature, i) => (
             <div key={i} className="group bg-[#1a1614] rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-[#58413b]/10 hover:ring-[#ff734b]/50">
               <div className="flex justify-between items-start mb-6">
@@ -128,7 +129,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
         <section className="mb-16" id="eventos">
           <div className="flex justify-between items-center mb-8">
             <h3 className="font-serif text-3xl flex items-center gap-4">
-              <span className="text-[#9cefff]">Jogos em Destaque</span>
+              <span className="text-[#9cefff]">Os Teus Jogos</span>
             </h3>
             <Button variant="outline" className="border-[#58413b]/20">
               Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
@@ -156,7 +157,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
                     </p>
                   </div>
                   <Button size="sm" className="bg-[#ff734b] text-[#110d0c] font-bold">
-                    Jogar
+                    Participar
                   </Button>
                 </div>
               </div>
@@ -170,7 +171,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
         <section className="mb-16">
           <div className="flex justify-between items-center mb-8">
             <h3 className="font-serif text-3xl flex items-center gap-4">
-              <span className="text-[#ff734b]">Eventos Ativos</span>
+              <span className="text-[#ff734b]">Eventos em Destaque</span>
             </h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -183,7 +184,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
                 )}
                 <div className="p-6">
                   <div className="flex items-center gap-2 text-sm text-[#e0bfb7] mb-2">
-                    <MapPin className="h-4 w-4 text-[#ff734b]" />
+                    <Home className="h-4 w-4 text-[#ff734b]" />
                     <span>{evento.aldeia?.nome}</span>
                   </div>
                   <h4 className="font-serif text-xl mb-2 group-hover:text-[#ff734b] transition-colors">{evento.nome}</h4>
@@ -202,7 +203,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Aldeias Section */}
       <section className="mb-16" id="aldeias">
         <h3 className="font-serif text-3xl mb-8 flex items-center gap-4">
-          <span className="text-[#ffc107]">Nossas Aldeias</span>
+          <span className="text-[#ffc107]">A Tua Aldeia</span>
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {aldeias.slice(0, 8).map((aldeia) => (
@@ -212,7 +213,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
                   <img src={aldeia.logoUrl} alt={aldeia.nome} className="h-10 w-10 rounded-xl object-cover ring-2 ring-[#ff734b]/30" />
                 ) : (
                   <div className="h-10 w-10 rounded-xl bg-[#ff734b]/20 flex items-center justify-center">
-                    <House className="h-5 w-5 text-[#ff734b]" />
+                    <Home className="h-5 w-5 text-[#ff734b]" />
                   </div>
                 )}
                 <div>
@@ -230,8 +231,8 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
         <div className="bg-[#1a1614] rounded-3xl p-12 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#ff734b]/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
           <div className="relative z-10 text-center max-w-2xl mx-auto">
-            <h3 className="font-serif text-4xl mb-4">Pronto para transformar a tua aldeia?</h3>
-            <p className="text-[#e0bfb7] text-lg mb-8">Junta-te a dezenas de comunidades que já estão a angariar fundos de forma moderna e transparente.</p>
+            <h3 className="font-serif text-4xl mb-4">O teu lugar é aqui</h3>
+            <p className="text-[#e0bfb7] text-lg mb-8">Mesmo que estejas do outro lado do mundo, a tua aldeia precisa de ti. Une-te a milhares de Corações que mantêm a tradição viva.</p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button onClick={onRegisterClick} className="bg-gradient-to-r from-[#ff734b] to-[#ff734b]/80 text-[#110d0c] px-10 py-4 rounded-xl font-bold shadow-xl shadow-[#ff734b]/20 hover:scale-105 transition-transform flex items-center gap-3">
                 Criar Conta Grátis
