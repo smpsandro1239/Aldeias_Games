@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Zap, Rocket, Menu, User, Gamepad2, House, Compass, Wallet } from "lucide-react";
+import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
@@ -105,7 +106,10 @@ export default function Home() {
         <div className="flex justify-between items-center px-4 py-3">
           <div className="flex items-center gap-4">
             <Menu className="text-[#ff734b] text-2xl cursor-pointer hover:opacity-80 transition-opacity" />
-            <h1 className="font-serif text-xl font-bold text-[#ff734b] tracking-tight italic">Aldeias Games</h1>
+            <div className="flex items-center gap-2">
+              <Image src="/logo.svg" alt="Aldeias Games" width={32} height={32} className="h-8 w-8" />
+              <h1 className="font-serif text-xl font-bold text-[#ff734b] tracking-tight italic">Aldeias Games</h1>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <nav className="hidden md:flex gap-6">
@@ -147,8 +151,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <Gamepad2 className="h-8 w-8 text-[#ff734b]" />
-                <span className="font-serif text-xl font-bold">Aldeias Games</span>
+                <Image src="/logo.svg" alt="Aldeias Games" width={32} height={32} className="h-8 w-8" />
+                <span className="font-serif text-xl font-bold text-[#ff734b]">Aldeias Games</span>
               </div>
               <p className="text-sm text-[#e0bfb7]">A plataforma de angariação de fundos para comunidades locais portuguesas.</p>
             </div>

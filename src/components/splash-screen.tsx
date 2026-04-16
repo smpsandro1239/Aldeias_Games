@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { House } from "lucide-react";
+import Image from "next/image";
 
 interface SplashScreenProps {
   onEnter: () => void;
@@ -19,10 +20,10 @@ export function SplashScreen({ onEnter, onLoginClick }: SplashScreenProps) {
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9cefff]/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="flex flex-col items-center z-20">
-        <div className="mb-4">
-          <House className="text-[#ff734b] text-5xl" style={{ fontWeight: 200 }} />
+        <div className="mb-6">
+          <Image src="/logo.svg" alt="Aldeias Games" width={80} height={80} className="w-20 h-20" />
         </div>
-        <h1 className="font-serif text-5xl md:text-6xl font-bold text-[#ff734b] tracking-tight italic">
+        <h1 className="font-serif text-4xl md:text-5xl font-bold text-[#ff734b] tracking-tight italic">
           Aldeias Games
         </h1>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { User, LogOut, Settings, Wallet } from "lucide-react";
 import { toast } from "sonner";
@@ -73,12 +74,12 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
                 ☰
               </button>
             )}
-            <button onClick={() => router.push("/")} className="text-[#ff734b] text-xl font-bold">
-              ☰
+            <button onClick={() => router.push("/")} className="flex items-center gap-2">
+              <Image src="/logo.svg" alt="Aldeias Games" width={24} height={24} className="h-6 w-6" />
+              <span className="font-serif italic text-[#ff734b] text-lg font-bold">
+                {title}
+              </span>
             </button>
-            <span className="font-serif italic text-[#ff734b] text-lg font-bold">
-              {title}
-            </span>
           </div>
           <div className="flex items-center gap-2">
             {user && (

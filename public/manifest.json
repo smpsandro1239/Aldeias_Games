@@ -4,16 +4,17 @@
   "description": "Plataforma de angariação de fundos para comunidades locais portuguesas",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#110d0c",
+  "theme_color": "#ff734b",
   "orientation": "portrait",
   "scope": "/",
   "lang": "pt-PT",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/logo.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
