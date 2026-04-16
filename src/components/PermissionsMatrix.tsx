@@ -18,7 +18,6 @@ const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
   manage_tenants: 'Criar, atualizar e eliminar aldeias/tenants',
   manage_global_users: 'Gerir utilizadores de todas as aldeias',
   view_audit_logs: 'Ver registos de auditoria do sistema',
-  broadcast_notifications: 'Enviar notificações push para todos os utilizadores',
 
   // Tenant (Aldeia)
   view_tenant_dashboard: 'Ver dashboard da aldeia com estatísticas locais',
