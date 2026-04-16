@@ -124,7 +124,7 @@ export default function ConfiguracoesPage() {
           <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
           </button>
-          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Configurações</h1>
+          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">As Minhas Configurações</h1>
         </div>
         <UserMenuButton />
       </header>

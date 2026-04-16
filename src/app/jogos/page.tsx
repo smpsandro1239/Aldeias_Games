@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
 import { UserMenuModal } from "@/components/user-menu-modal";
-import { Ticket, Trophy, Sparkles, ArrowRight, ArrowLeft, Leaf, User, Menu, Loader2, Gamepad2 } from "lucide-react";
+import { Ticket, Trophy, Sparkles, ArrowRight, ArrowLeft, Leaf, User, Menu, Loader2, Gamepad2, Heart, Home } from "lucide-react";
 
 interface User {
   id: string;
@@ -81,10 +81,12 @@ export default function JogosPage() {
       <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Menu className="text-[#ff734b] text-xl cursor-pointer" onClick={() => router.push("/")} />
-            <span className="font-serif italic text-[#ff734b] text-lg font-bold">
-              Aldeias Games
-            </span>
+            <button onClick={() => router.push("/")} className="flex items-center gap-2">
+              <Home className="text-[#ff734b] text-xl" />
+              <span className="font-serif italic text-[#ff734b] text-lg font-bold">
+                Aldeias Games
+              </span>
+            </button>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 relative">
@@ -101,23 +103,20 @@ export default function JogosPage() {
                 </button>
               )}
             </div>
-            <button 
-              onClick={() => router.push("/")}
-              className="p-2 rounded-full text-[#ff734b] hover:bg-[#2e2928] active:scale-95 transition-all"
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </header>
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
+        <div className="text-center mb-8">
+          <h1 className="font-serif text-3xl text-[#ff734b] mb-2">Os Teus Jogos</h1>
+          <p className="text-[#e0bfb7] text-sm">Participa nos jogos da tua aldeia</p>
+        </div>
         <GameList
           jogos={jogos}
           onJogoClick={handleJogoClick}
           loading={loading}
-          title="Os Nossos Jogos"
+          title=""
           showAldeia={true}
         />
       </main>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Gift, Trophy, Star, Clock, Award, Wallet, User, LogOut } from "lucide-react";
+import { ArrowLeft, Gift, Trophy, Star, Clock, Award, Wallet, User, LogOut, Heart } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { UserMenuModal } from "@/components/user-menu-modal";
 import { toast } from "sonner";
@@ -157,7 +157,7 @@ export default function PremiosPage() {
           <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
           </button>
-          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Os Meus Prémios</h1>
+          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Os Teus Prémios</h1>
         </div>
         <div className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 relative">
           {user ? (
@@ -180,7 +180,7 @@ export default function PremiosPage() {
           <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#ff734b]/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-[#e0bfb7]">Saldo Atual</p>
+                <p className="text-xs text-[#e0bfb7]">O Teu Saldo</p>
                 <p className="font-serif text-3xl text-[#ff734b] font-bold">{saldo.toFixed(2)} €</p>
               </div>
               <div className="w-14 h-14 rounded-xl bg-[#ff734b]/20 flex items-center justify-center">
@@ -191,10 +191,10 @@ export default function PremiosPage() {
         )}
 
         <div>
-          <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">Histórico de Prémios</h2>
+          <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">A Tuas Vitórias</h2>
           
           {loading ? (
-            <div className="text-center py-12 text-[#e0bfb7]">A carregar prémios...</div>
+            <div className="text-center py-12 text-[#e0bfb7]">A carregar os teus prémios...</div>
           ) : premios.length > 0 ? (
             <div className="space-y-3">
               {premios.map((premio) => (
@@ -235,14 +235,14 @@ export default function PremiosPage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Gift className="w-16 h-16 text-[#ff734b]/30 mx-auto mb-4" />
+              <Heart className="w-16 h-16 text-[#ff734b]/30 mx-auto mb-4" />
               <p className="text-[#e0bfb7]">Ainda não ganhaste nenhum prémio</p>
-              <p className="text-sm text-[#e0bfb7]/60 mt-1">Participa nos jogos para teres a chance de ganhar!</p>
+              <p className="text-sm text-[#e0bfb7]/60 mt-1">A sorte ainda não te sorriu. Participa e tenta a tua sorte!</p>
               <button
                 onClick={() => router.push("/jogos")}
                 className="mt-4 px-6 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
               >
-                Jogar Agora
+                Participar Agora
               </button>
             </div>
           )}
@@ -253,15 +253,15 @@ export default function PremiosPage() {
           <ul className="space-y-3 text-sm text-[#e0bfb7]">
             <li className="flex items-start gap-2">
               <Star className="w-4 h-4 text-[#ff734b] mt-0.5" />
-              <span>Participa nas Raspadinhas e descobre prémios instantâneos</span>
+              <span>Participa nas Raspadinhas e descobre os teus prémios instantâneos</span>
             </li>
             <li className="flex items-start gap-2">
               <Trophy className="w-4 h-4 text-[#ff734b] mt-0.5" />
-              <span>No Poio da Vaca, os primeiros a completar podem ganhar prémios</span>
+              <span>No Poio da Vaca, os mais rápidos podem trazer prémios para casa</span>
             </li>
             <li className="flex items-start gap-2">
               <Award className="w-4 h-4 text-[#ff734b] mt-0.5" />
-              <span>As Tombolas e Rifas sorteiam prémios em dinheiro</span>
+              <span>As Tombolas e Rifas sorteiam prémios em dinheiro para a tua aldeia</span>
             </li>
           </ul>
         </div>
