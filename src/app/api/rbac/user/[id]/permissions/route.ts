@@ -11,17 +11,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  await prisma.userPermission.upsert({
+  const existing = await prisma.userPermission.findFirst({
     where: {
-      userId_permissionId_aldeiaId: {
-        userId,
-        permissionId,
-        aldeiaId: aldeiaId ?? null,
-      },
+      userId,
+      permissionId,
+      aldeiaId: aldeiaId ?? null,
     },
-    update: { allow },
-    create: { userId, permissionId, allow, aldeiaId },
   });
+
+  if (existing) {
+    await prisma.userPermission.update({
+      where: { id: existing.id },
+      data: { allow },
+    });
+  } else {
+    await prisma.userPermission.create({
+      data: { userId, permissionId, allow, aldeiaId },
+    });
+  }
 
   return NextResponse.json({ success: true });
 }
