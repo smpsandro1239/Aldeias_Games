@@ -27,19 +27,19 @@ interface BottomNavProps {
 
 const navItems = {
   user: [
-    { icon: LayoutDashboard, label: "INÍCIO", path: "/" },
+    { icon: LayoutDashboard, label: "INÍCIO", path: "/clientedashboard" },
     { icon: Gamepad2, label: "JOGOS", path: "/jogos" },
     { icon: Ticket, label: "PRÉMIOS", path: "/premios" },
     { icon: User, label: "PERFIL", path: "/perfil" },
   ],
   vendedor: [
-    { icon: LayoutDashboard, label: "INÍCIO", path: "/" },
+    { icon: LayoutDashboard, label: "INÍCIO", path: "/vendedordashboard" },
     { icon: DollarSign, label: "VENDAS", path: "/vendedordashboard" },
     { icon: TrendingUp, label: "HISTÓRICO", path: "/vendedordashboard" },
     { icon: User, label: "PERFIL", path: "/perfil" },
   ],
   aldeia_admin: [
-    { icon: LayoutDashboard, label: "INÍCIO", path: "/" },
+    { icon: LayoutDashboard, label: "INÍCIO", path: "/admindashboard" },
     { icon: Calendar, label: "EVENTOS", path: "/admindashboard" },
     { icon: Gamepad2, label: "JOGOS", path: "/admindashboard" },
     { icon: Users, label: "EQUIPA", path: "/admindashboard" },
@@ -47,7 +47,7 @@ const navItems = {
   super_admin: [
     { icon: LayoutDashboard, label: "ADMIN", path: "/superadmindashboard" },
     { icon: Building2, label: "ALDEIAS", path: "/superadmindashboard" },
-    { icon: BarChart3, label: "ANALYTICS", path: "/superadmindashboard" },
+    { icon: BarChart3, label: "ESTATS", path: "/superadmindashboard" },
     { icon: Settings, label: "CONFIG", path: "/configuracoes" },
   ],
   default: [

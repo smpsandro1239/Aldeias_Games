@@ -80,6 +80,14 @@ export default function Home() {
     if (result.success) {
       setLoginModalOpen(false);
       setLoginForm({ email: "", password: "" });
+      // Redirecionar para o dashboard correto após login
+      const rolePaths: Record<string, string> = {
+        "super_admin": "/superadmindashboard",
+        "aldeia_admin": "/admindashboard",
+        "vendedor": "/vendedordashboard",
+        "user": "/clientedashboard"
+      };
+      router.push(rolePaths[result.data?.user?.role] || "/clientedashboard");
     }
   };
 
@@ -89,6 +97,8 @@ export default function Home() {
     if (result.success) {
       setRegisterModalOpen(false);
       setRegisterForm({ nome: "", email: "", password: "", telefone: "" });
+      // Redirecionar para o dashboard correto após registo
+      router.push("/clientedashboard");
     }
   };
 
