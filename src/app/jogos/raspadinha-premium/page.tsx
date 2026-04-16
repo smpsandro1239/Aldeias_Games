@@ -679,7 +679,7 @@ function RaspadinhaPremiumContent() {
             }}
             className="mt-6 px-6 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
           >
-            Jogar Novamente
+            Tentar Novamente
           </button>
         </main>
         <BottomNav />
@@ -739,7 +739,7 @@ function RaspadinhaPremiumContent() {
             <div className="relative bg-[#1f1b19] rounded-[24px] p-8 shadow-2xl flex flex-col items-center gap-4">
               <Lock className="w-12 h-12 text-[#ff734b]/60" />
               <p className="text-center text-[#e0bfb7] text-sm">
-                Compre a sua raspadinha para começar a jogar
+                Adquire a tua raspadinha e tenta a tua sorte
               </p>
               <p className="text-4xl font-bold text-[#9cefff]">
                 {preco}€
@@ -868,7 +868,7 @@ function RaspadinhaPremiumContent() {
               className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
             >
               <Ticket className="w-5 h-5" />
-              <span className="text-lg">Jogar por</span>
+              <span className="text-lg">Participar por</span>
               <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
                 {preco}€
               </span>
