@@ -56,7 +56,7 @@ export function getAvailableMethods(
   }
   
   if (userRole === 'aldeia_admin' && aldeiaSettings) {
-    const methods = ['dinheiro', 'saldo'];
+    const methods: MetodoPagamento[] = ['dinheiro', 'saldo'];
     if (aldeiaSettings.permitirMBWay) methods.push('mbway');
     if (aldeiaSettings.permitirStripe) methods.push('stripe');
     return methods;
@@ -67,9 +67,9 @@ export function getAvailableMethods(
   }
   
   // For regular users and any other roles: only saldo, mbway, stripe (NO dinheiro)
-  const methods = ['saldo'];
-  if (aldeiaSettings?.permitirMBWay !== false) methods.push('mbway'); // MBWay allowed by default unless explicitly disabled
-  if (aldeiaSettings?.permitirStripe !== false) methods.push('stripe'); // Stripe allowed by default unless explicitly disabled
+  const methods: MetodoPagamento[] = ['saldo'];
+  if (aldeiaSettings?.permitirMBWay !== false) methods.push('mbway');
+  if (aldeiaSettings?.permitirStripe !== false) methods.push('stripe');
   return methods;
 }
 
