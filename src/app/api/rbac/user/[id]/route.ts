@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { resolvePermissions } from "@/lib/rbac/resolvePermissions";
 
-export async function GET(req, { params }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: userId } = await params;
 
   const user = await prisma.user.findUnique({
