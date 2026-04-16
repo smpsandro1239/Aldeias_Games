@@ -1,21 +1,30 @@
 'use client';
 
 import { PermissionsMatrix } from '@/components/PermissionsMatrix';
-import { getUserFromRequest } from '@/lib/auth';
-import { requireSuperAdmin } from '@/lib/require-role';
+import { Shield } from 'lucide-react';
 
-export default async function PermissionsPage() {
-  const user = await getUserFromRequest();
-  requireSuperAdmin(user);
-
+export default function PermissionsPage() {
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">Permissões do Sistema</h1>
-      <p className="text-gray-600 mb-4">
-        Visualize a matriz completa de permissões por papel. Esta página ajuda a entender
-        quais operações cada tipo de utilizador pode realizar no sistema.
-      </p>
-      <PermissionsMatrix />
+    <div className="min-h-screen bg-[var(--background)] p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="card-m3 mb-8 px-8 py-6">
+          <div className="flex items-center gap-4">
+            <div className="rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary)]/80 p-3">
+              <Shield className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-[var(--text)]">Permissões do Sistema</h1>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">
+                Visualize a matriz completa de permissões por papel. Esta página ajuda a entender
+                quais operações cada tipo de utilizador pode realizar no sistema.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="card-m3 p-6">
+          <PermissionsMatrix />
+        </div>
+      </div>
     </div>
   );
 }
