@@ -101,8 +101,8 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { icon: Gamepad2, title: "Jogos que são Memórias", desc: "O Poio da Vaca, as Rifas, Tombolas e Raspadinhas que conheces desde pequeno, agora na ponta dos teus dedos.", color: "[#ff734b]", tags: ["Tradição", "Nostalgia"] },
-            { icon: Shield, title: "Sorteio com Honra", desc: "Algoritmos SHA-256 auditáveis. Aqui, nada é manipulado. A sorte é tua, como sempre foi.", color: "[#9cefff]", tags:", ["Justo", "Auditado"] },
-            { icon: CreditCard, title: "Pagamentos que Chegam Longe", desc: "Stripe + MBWay. O dinheiro queangarias vai direto para a tua aldeia, esteja ela a 100km ou a 10.000km.", color: "[#ffc107]", tags: [" Rápido", "Seguro"] },
+            { icon: Shield, title: "Sorteio com Honra", desc: "Algoritmos SHA-256 auditáveis. Aqui, nada é manipulado. A sorte é tua, como sempre foi.", color: "[#9cefff]", tags: ["Justo", "Auditado"] },
+            { icon: CreditCard, title: "Pagamentos que Chegam Longe", desc: "Stripe + MBWay. O dinheiro que angarias vai direto para a tua aldeia, esteja ela a 100km ou a 10000km.", color: "[#ffc107]", tags: ["Rápido", "Seguro"] },
           ].map((feature, i) => (
             <div key={i} className="group bg-[#1a1614] rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-[#58413b]/10 hover:ring-[#ff734b]/50">
               <div className="flex justify-between items-start mb-6">
