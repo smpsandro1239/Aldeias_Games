@@ -177,8 +177,8 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Área do Vendedor</h1>
-        <p className="text-muted-foreground">Registe vendas e acompanhe o seu desempenho</p>
+        <h1 className="text-3xl font-bold">A Minha Área</h1>
+        <p className="text-muted-foreground">Regista as tuas vendas e acompanha o teu desempenho</p>
       </div>
 
       {/* Stats Cards */}

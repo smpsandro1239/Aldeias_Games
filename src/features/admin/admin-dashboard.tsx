@@ -416,7 +416,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold">
-              {userRole === "super_admin" ? "Dashboard Global" : "Dashboard"}
+              {userRole === "super_admin" ? "Painel Global" : "O Meu Painel"}
             </h1>
             {userRole === "aldeia_admin" && aldeia && (
               <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-medium rounded-full">
@@ -426,8 +426,8 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
           </div>
           <p className="text-muted-foreground">
             {userRole === "super_admin" 
-              ? "Vista global de todas as aldeias" 
-              : `Gestão: ${aldeia?.nome || 'Aldeia'}`
+              ? "Visão global de todas as aldeias" 
+              : `A gerir a tua aldeia: ${aldeia?.nome || 'Aldeia'}`
             }
           </p>
         </div>

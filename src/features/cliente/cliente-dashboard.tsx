@@ -310,7 +310,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           <h1 className="text-3xl md:text-4xl font-gaming font-bold">
             <span className="text-gradient">Os Meus Jogos</span>
           </h1>
-          <p className="text-muted-foreground mt-2">Participa em jogos e ganha prémios</p>
+          <p className="text-muted-foreground mt-2">Participa nos jogos e tenta a tua sorte</p>
         </div>
         <div className="md:col-span-1">
           <WalletCard token={token} />
