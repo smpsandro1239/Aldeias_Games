@@ -17,6 +17,8 @@ const publicRoutes = [
   '/api/stripe/webhook',
   '/api/mbway/webhook',
   '/api/participacoes/verificar',
+  '/api/rbac/roles',
+  '/api/rbac/user',
 ];
 
 // Rotas de página que são públicas (landing page, login, etc.)
