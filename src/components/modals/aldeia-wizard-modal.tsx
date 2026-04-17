@@ -33,7 +33,9 @@ export function AldeiaWizardModal({ open, onComplete }: AldeiaWizardModalProps) 
       const res = await fetch("/api/aldeias");
       if (res.ok) {
         const data = await res.json();
-        setAldeias(data.data || []);
+        // Handle both { data: [...] } and [...] response formats
+        const aldeiasList = data.data || data;
+        setAldeias(aldeiasList || []);
       }
     } catch (error) {
       console.error("Erro ao carregar aldeias:", error);
@@ -50,6 +52,12 @@ export function AldeiaWizardModal({ open, onComplete }: AldeiaWizardModalProps) 
     try {
       const token = localStorage.getItem("token");
       const savedUserStr = localStorage.getItem("user");
+      
+      if (!token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        window.location.href = "/";
+        return;
+      }
       
       const res = await fetch("/api/users/perfil", {
         method: "PATCH",

@@ -100,22 +100,22 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   onClick={() => quickLogin("admin@aldeias.pt", "123456")}
                   disabled={loading}
                 >
-                  Admin
+                  Super Admin
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => quickLogin("aldeia@gmail.com", "123456")}
+                  onClick={() => quickLogin("admin.valeazinha@aldeias.pt", "123456")}
                   disabled={loading}
                 >
-                  Aldeia
+                  Admin Aldeia
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => quickLogin("vendedor@gmail.com", "123456")}
+                  onClick={() => quickLogin("vendedor.valeazinha@aldeias.pt", "123456")}
                   disabled={loading}
                 >
                   Vendedor
@@ -124,7 +124,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => quickLogin("smpsandro1239@gmail.com", "123456")}
+                  onClick={() => quickLogin("jogador1@email.pt", "123456")}
                   disabled={loading}
                 >
                   Jogador

@@ -92,6 +92,9 @@ export function useAuth() {
       }
 
       localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
 
       setState({
         user: data.user,
@@ -124,6 +127,9 @@ export function useAuth() {
       }
 
       localStorage.setItem("user", JSON.stringify(responseData.user));
+      if (responseData.token) {
+        localStorage.setItem("token", responseData.token);
+      }
 
       setState({
         user: responseData.user,

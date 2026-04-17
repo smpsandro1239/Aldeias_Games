@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { RoleGuard } from "@/components/auth/RoleGuard";
+import { LoaderScreen } from "@/components/loader-screen";
 
 const AdminDashboard = dynamic(
   () => import("@/features/admin/admin-dashboard").then((mod) => mod.AdminDashboard),
@@ -23,25 +24,49 @@ interface User {
 export default function SuperAdminDashboardPage() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
-    
-    if (savedToken) setToken(savedToken);
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error("Erro ao parsing user:", e);
+    try {
+      const savedToken = localStorage.getItem("token");
+      const savedUser = localStorage.getItem("user");
+      
+      if (savedToken) {
+        setToken(savedToken);
+      } else {
+        setError("Token não encontrado. Faça login novamente.");
       }
+      
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      } else {
+        setError("Utilizador não encontrado. Faça login novamente.");
+      }
+    } catch (e) {
+      console.error("Erro ao carregar dados:", e);
+      setError("Erro ao carregar dados.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  if (!user || !token) {
+  if (loading) {
+    return <LoaderScreen message="A carregar" />;
+  }
+
+  if (error || !user || !token) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Carregando...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de]">
+        <div className="text-center p-8">
+          <p className="text-red-500 mb-4">{error || "Sessão inválida. Faça login novamente."}</p>
+          <button 
+            onClick={() => { localStorage.clear(); window.location.href = "/"; }}
+            className="px-4 py-2 bg-[#ff734b] text-[#110d0c] rounded"
+          >
+            Voltar ao início
+          </button>
+        </div>
       </div>
     );
   }

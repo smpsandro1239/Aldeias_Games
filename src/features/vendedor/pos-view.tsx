@@ -23,7 +23,8 @@ import {
   Receipt,
   Loader2,
   AlertCircle,
-  Ticket
+  Ticket,
+  Hash
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,6 +51,8 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
   const [selectedJogo, setSelectedJogo] = useState<any>(null);
   const [quantidade, setQuantidade] = useState(1);
   const [step, setStep] = useState(1);
+  const [numerosSelecionados, setNumerosSelecionados] = useState<number[]>([]);
+  const [numeroInput, setNumeroInput] = useState("");
   const [cliente, setCliente] = useState({ nome: "", telefone: "", email: "" });
   const [metodo, setMetodo] = useState<any>("dinheiro");
   const [isOnline, setIsOnline] = useState(true);
@@ -120,6 +123,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
     const saleData = {
       jogoId: selectedJogo.id,
       quantidade,
+      numeros: numerosSelecionados.length > 0 ? numerosSelecionados : undefined,
       metodoPagamento: metodo,
       dadosCliente: cliente.nome ? cliente : undefined,
     };
@@ -180,6 +184,8 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
     setStep(1);
     setSelectedJogo(null);
     setQuantidade(1);
+    setNumerosSelecionados([]);
+    setNumeroInput("");
     setCliente({ nome: "", telefone: "", email: "" });
     setSaleSuccess(false);
     setLastSale(null);
@@ -493,7 +499,103 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             </Button>
             <Button 
               className="flex-1 bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
-              onClick={() => setStep(3)}
+              onClick={() => {
+                // Show number selection for rifa/tombola
+                if (selectedJogo?.tipo === 'rifa' || selectedJogo?.tipo === 'tombola') {
+                  setStep(2.5);
+                } else {
+                  setStep(3);
+                }
+              }}
+            >
+              Próximo
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Step 2.5: Number Selection for Rifa/Tombola */}
+      {step === 2.5 && selectedJogo && (
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="space-y-4"
+        >
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Hash className="h-5 w-5 text-[#ff734b]" />
+            Escolher Número
+          </h3>
+
+          <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
+            <p className="text-xs text-[#e0bfb7] uppercase tracking-wider mb-3">
+              {selectedJogo.tipo === 'rifa' ? 'Número da Rifa' : 'Número da Tombola'}
+            </p>
+            
+            {/* Manual input */}
+            <div className="flex gap-2 mb-4">
+              <Input 
+                type="number"
+                placeholder="Número (1-100)"
+                value={numeroInput}
+                onChange={e => setNumeroInput(e.target.value)}
+                className="bg-[#2e2928] border-transparent text-white text-center text-lg"
+                min={1}
+                max={100}
+              />
+              <Button 
+                onClick={() => {
+                  const num = parseInt(numeroInput);
+                  if (num >= 1 && num <= 100 && !numerosSelecionados.includes(num)) {
+                    setNumerosSelecionados([...numerosSelecionados, num].sort((a, b) => a - b));
+                    setNumeroInput("");
+                  }
+                }}
+                className="bg-[#ff734b] text-[#110d0c]"
+                disabled={!numeroInput}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Selected numbers */}
+            {numerosSelecionados.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {numerosSelecionados.map(num => (
+                  <button
+                    key={num}
+                    onClick={() => setNumerosSelecionados(numerosSelecionados.filter(n => n !== num))}
+                    className="w-10 h-10 rounded-lg bg-[#ff734b] text-[#110d0c] font-bold flex items-center justify-center"
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <p className="text-xs text-[#e0bfb7]">
+              Selecionados: {numerosSelecionados.length} de {quantidade}
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1 border-[#ff734b]/30 text-[#ff734b]"
+              onClick={() => setStep(2)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <Button 
+              className="flex-1 bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
+              onClick={() => {
+                if (numerosSelecionados.length === quantidade) {
+                  setStep(3);
+                } else {
+                  toast.error(`Selecione exatamente ${quantidade} número(s)`);
+                }
+              }}
             >
               Próximo
               <ArrowRight className="h-4 w-4 ml-2" />

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BottomNav } from "@/components/bottom-nav";
 import { Badge } from "@/components/ui/badge";
 import {
   Gamepad2,
@@ -344,27 +345,27 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-card/50 border border-white/10 backdrop-blur-sm p-1 grid grid-cols-3">
+        <TabsList className="bg-[#2e2928] border border-[#58413b]/30 p-1 grid grid-cols-3 rounded-2xl">
           <TabsTrigger
             value="jogos"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
           >
-            <Play className="h-4 w-4 mr-2" />
+            <Play className="h-3 w-3 mr-1" />
             Jogar
           </TabsTrigger>
           <TabsTrigger
             value="participacoes"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
           >
-            <Ticket className="h-4 w-4 mr-2" />
-            Os Meus Bilhetes
+            <Ticket className="h-3 w-3 mr-1" />
+            Bilhetes
           </TabsTrigger>
           <TabsTrigger
             value="extrato"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-primary data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
           >
-            <Receipt className="h-4 w-4 mr-2" />
-            Movimentos & Conta
+            <Receipt className="h-3 w-3 mr-1" />
+            Extrato
           </TabsTrigger>
         </TabsList>
 
@@ -701,6 +702,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           tipoJogo={victoryPremio.tipoJogo}
         />
       )}
+
+      <BottomNav role="user" />
     </div>
   );
 }

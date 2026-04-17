@@ -3,28 +3,50 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { RoleGuard } from "@/components/auth/RoleGuard";
+import { LoaderScreen } from "@/components/loader-screen";
 
 const VendedorDashboard = dynamic(
   () => import("@/features/vendedor/vendedor-dashboard").then((mod) => mod.VendedorDashboard),
   { ssr: false }
 );
 
-interface User {
-  role: string;
-}
-
 export default function VendedorDashboardPage() {
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    if (savedToken) setToken(savedToken);
+    try {
+      const savedToken = localStorage.getItem("token");
+      if (savedToken) {
+        setToken(savedToken);
+      } else {
+        setError("Token não encontrado. Faça login novamente.");
+      }
+    } catch (e) {
+      console.error("Erro ao carregar dados:", e);
+      setError("Erro ao carregar dados.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (!token) {
+  if (loading) {
+    return <LoaderScreen message="A carregar" />;
+  }
+
+  if (error || !token) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Carregando...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de]">
+        <div className="text-center p-8">
+          <p className="text-red-500 mb-4">{error || "Sessão inválida. Faça login novamente."}</p>
+          <button 
+            onClick={() => { localStorage.clear(); window.location.href = "/"; }}
+            className="px-4 py-2 bg-[#ff734b] text-[#110d0c] rounded"
+          >
+            Voltar ao início
+          </button>
+        </div>
       </div>
     );
   }

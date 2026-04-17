@@ -32,11 +32,12 @@ export async function GET(req: Request) {
       select: {
         id: true,
         nome: true,
+        tipoOrganizacao: true,
       },
       orderBy: { nome: "asc" },
     });
 
-    return NextResponse.json(aldeias);
+    return NextResponse.json({ data: aldeias });
   } catch (error) {
     console.error("Error fetching aldeias:", error);
     return NextResponse.json(

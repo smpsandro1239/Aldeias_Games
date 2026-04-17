@@ -1,11 +1,77 @@
-import { PrismaClient, UserRole, TipoOrganizacao, TipoJogo, EstadoEvento, EstadoJogo, MetodoPagamento, EstadoPagamento } from '@prisma/client';
+import { PrismaClient, UserRole, TipoOrganizacao, TipoJogo, EstadoEvento, EstadoJogo, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+function getJogoConfig(tipo: TipoJogo, objetivo: number) {
+  switch (tipo) {
+    case TipoJogo.raspadinha:
+      return {
+        nome: 'Raspadinha da Sorte',
+        descricao: 'Raspe e ganhe!',
+        preco: 3,
+        stock: 200,
+        limite: 15,
+        config: {
+          premios: [
+            { nome: '€50', valor: 50, percentagem: 0.02 },
+            { nome: '€20', valor: 20, percentagem: 0.05 },
+            { nome: '€10', valor: 10, percentagem: 0.10 },
+            { nome: '€5', valor: 5, percentagem: 0.20 },
+          ],
+          semPremioPercentagem: 0.63,
+        },
+      };
+    case TipoJogo.tombola:
+      return {
+        nome: 'Tombola Millennium',
+        descricao: 'Sorteio tradicional português',
+        preco: 5,
+        stock: 100,
+        limite: 10,
+        config: {
+          numeros: Array.from({ length: 100 }, (_, i) => i + 1),
+          premios: [
+            { posicao: 1, nome: '1º Prémio', valor: objetivo * 0.40 },
+            { posicao: 2, nome: '2º Prémio', valor: objetivo * 0.25 },
+            { posicao: 3, nome: '3º Prémio', valor: objetivo * 0.15 },
+          ],
+        },
+      };
+    case TipoJogo.rifa:
+      return {
+        nome: 'Rifa Solidária',
+        descricao: 'Apoia a comunidade!',
+        preco: 2,
+        stock: 50,
+        limite: 5,
+        config: {
+          premios: [
+            { nome: 'Cesto de Páscoa', valor: 150, percentagem: 0.15 },
+            { nome: 'Bilhetes Festival', valor: 100, percentagem: 0.10 },
+            { nome: 'Jantar Grátis', valor: 50, percentagem: 0.25 },
+          ],
+          semPremioPercentagem: 0.50,
+        },
+      };
+    default:
+      return {
+        nome: 'Jogo Default',
+        descricao: 'Jogo de teste',
+        preco: 1,
+        stock: 50,
+        limite: 10,
+        config: {},
+      };
+  }
+}
+
 async function main() {
   console.log('🌱 Iniciando seed da base de dados...');
 
+  // Limpar dados existentes
+  await prisma.userPermission.deleteMany();
+  await prisma.rolePermission.deleteMany();
   await prisma.alteracaoParticipacao.deleteMany();
   await prisma.vencedorSorteio.deleteMany();
   await prisma.sorteio.deleteMany();
@@ -23,9 +89,144 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.aldeia.deleteMany();
   await prisma.plano.deleteMany();
+  await prisma.role.deleteMany();
+  await prisma.permission.deleteMany();
 
   console.log('✅ Dados anteriores removidos');
 
+  // ========== CRIAR PERMISSIONS ==========
+  console.log('🔐 Criando permissões...');
+  
+  const permissions = [
+    { key: PermissionKey.MANAGE_ALDEIA, description: 'Gerir aldeia' },
+    { key: PermissionKey.VIEW_ALDEIA, description: 'Ver aldeia' },
+    { key: PermissionKey.CREATE_EVENTO, description: 'Criar evento' },
+    { key: PermissionKey.EDIT_EVENTO, description: 'Editar evento' },
+    { key: PermissionKey.DELETE_EVENTO, description: 'Eliminar evento' },
+    { key: PermissionKey.VIEW_EVENTO, description: 'Ver evento' },
+    { key: PermissionKey.CREATE_JOGO, description: 'Criar jogo' },
+    { key: PermissionKey.EDIT_JOGO, description: 'Editar jogo' },
+    { key: PermissionKey.DELETE_JOGO, description: 'Eliminar jogo' },
+    { key: PermissionKey.VIEW_JOGO, description: 'Ver jogo' },
+    { key: PermissionKey.MANAGE_PREMIOS, description: 'Gerir prémios' },
+    { key: PermissionKey.VIEW_PREMIOS, description: 'Ver prémios' },
+    { key: PermissionKey.MANAGE_VENDEDORES, description: 'Gerir vendedores' },
+    { key: PermissionKey.VIEW_VENDEDORES, description: 'Ver vendedores' },
+    { key: PermissionKey.EXECUTE_VENDA, description: 'Executar venda' },
+    { key: PermissionKey.VIEW_VENDAS, description: 'Ver vendas' },
+    { key: PermissionKey.VIEW_ANALYTICS_GLOBAL, description: 'Ver analytics global' },
+    { key: PermissionKey.VIEW_ANALYTICS_LOCAL, description: 'Ver analytics local' },
+    { key: PermissionKey.MANAGE_USERS, description: 'Gerir utilizadores' },
+    { key: PermissionKey.MANAGE_PLANOS, description: 'Gerir planos' },
+  ];
+
+  const createdPermissions: Record<string, any> = {};
+  for (const perm of permissions) {
+    const p = await prisma.permission.create({ data: perm });
+    createdPermissions[perm.key] = p;
+  }
+  console.log(`✅ ${permissions.length} permissões criadas`);
+
+  // ========== CRIAR ROLES ==========
+  console.log('🎭 Criando roles...');
+
+  const superAdminRole = await prisma.role.create({
+    data: {
+      name: RoleName.SUPER_ADMIN,
+      description: 'Super Administrador do sistema',
+    },
+  });
+
+  const aldeiaAdminRole = await prisma.role.create({
+    data: {
+      name: RoleName.ALDEIA_ADMIN,
+      description: 'Administrador de aldeia',
+    },
+  });
+
+  const gestorRole = await prisma.role.create({
+    data: {
+      name: RoleName.GESTOR,
+      description: 'Gestor de vendas',
+    },
+  });
+
+  const colaboradorRole = await prisma.role.create({
+    data: {
+      name: RoleName.COLABORADOR,
+      description: 'Colaborador/Vendedor',
+    },
+  });
+
+  const viewerRole = await prisma.role.create({
+    data: {
+      name: RoleName.VIEWER,
+      description: 'Apenas visualização',
+    },
+  });
+
+  // Atribuir permissões às roles
+  const rolePermissions: Record<string, string[]> = {
+    SUPER_ADMIN: Object.values(PermissionKey),
+    ALDEIA_ADMIN: [
+      PermissionKey.VIEW_ALDEIA,
+      PermissionKey.CREATE_EVENTO,
+      PermissionKey.EDIT_EVENTO,
+      PermissionKey.VIEW_EVENTO,
+      PermissionKey.CREATE_JOGO,
+      PermissionKey.EDIT_JOGO,
+      PermissionKey.VIEW_JOGO,
+      PermissionKey.MANAGE_PREMIOS,
+      PermissionKey.VIEW_PREMIOS,
+      PermissionKey.MANAGE_VENDEDORES,
+      PermissionKey.VIEW_VENDEDORES,
+      PermissionKey.EXECUTE_VENDA,
+      PermissionKey.VIEW_VENDAS,
+      PermissionKey.VIEW_ANALYTICS_LOCAL,
+    ],
+    GESTOR: [
+      PermissionKey.VIEW_ALDEIA,
+      PermissionKey.VIEW_EVENTO,
+      PermissionKey.VIEW_JOGO,
+      PermissionKey.VIEW_PREMIOS,
+      PermissionKey.VIEW_VENDEDORES,
+      PermissionKey.EXECUTE_VENDA,
+      PermissionKey.VIEW_VENDAS,
+      PermissionKey.VIEW_ANALYTICS_LOCAL,
+    ],
+    COLABORADOR: [
+      PermissionKey.VIEW_ALDEIA,
+      PermissionKey.VIEW_EVENTO,
+      PermissionKey.VIEW_JOGO,
+      PermissionKey.EXECUTE_VENDA,
+      PermissionKey.VIEW_VENDAS,
+    ],
+    VIEWER: [
+      PermissionKey.VIEW_ALDEIA,
+      PermissionKey.VIEW_EVENTO,
+      PermissionKey.VIEW_JOGO,
+    ],
+  };
+
+  const roles: Record<string, any> = {
+    SUPER_ADMIN: superAdminRole,
+    ALDEIA_ADMIN: aldeiaAdminRole,
+    GESTOR: gestorRole,
+    COLABORADOR: colaboradorRole,
+    VIEWER: viewerRole,
+  };
+
+  for (const [roleName, perms] of Object.entries(rolePermissions)) {
+    const role = roles[roleName];
+    for (const permKey of perms) {
+      await prisma.rolePermission.create({
+        data: { roleId: role.id, permissionId: createdPermissions[permKey].id },
+      });
+    }
+  }
+  console.log('✅ Roles e permissões criadas');
+
+  // ========== CRIAR PLANOS ==========
   console.log('📦 Criando planos...');
   
   const planoGratuito = await prisma.plano.create({
@@ -71,7 +272,8 @@ async function main() {
 
   const passwordHash = await bcrypt.hash('123456', 10);
 
-  console.log('👤 Criando utilizadores...');
+  // ========== CRIAR SUPER ADMIN ==========
+  console.log('👤 Criando Super Administrador...');
 
   const superAdmin = await prisma.user.create({
     data: {
@@ -85,15 +287,16 @@ async function main() {
     },
   });
 
-  // Criar 2FA para Super Admin
-  await prisma.twoFactorAuth.create({
-    data: {
-      userId: superAdmin.id,
-      secret: 'JBSWY3DPEHPK3PXP', // Secret base32 para testes (deve ser gerado dinamicamente em produção)
-      enabled: false, // Desativado por defeito, admin pode ativar depois
-    },
+  // Atribuir role SUPER_ADMIN ao super admin
+  await prisma.userGlobalRole.create({
+    data: { userId: superAdmin.id, roleId: superAdminRole.id },
   });
 
+  await prisma.twoFactorAuth.create({
+    data: { userId: superAdmin.id, secret: 'JBSWY3DPEHPK3PXP', enabled: false },
+  });
+
+  // ========== CRIAR ALDEIAS ==========
   const aldeiasData = [
     {
       nome: 'Aldeia de Vale de Azinha',
@@ -101,16 +304,14 @@ async function main() {
       tipo: TipoOrganizacao.aldeia,
       descricao: 'Aldeia tradicional do interior com tradição em festividades.',
       locality: 'Castelo Branco',
-      users: [
-        { email: 'admin.valeazinha@aldeias.pt', nome: 'João Silva', telefone: '+351910000001' },
-      ],
+      users: [{ email: 'admin.valeazinha@aldeias.pt', nome: 'João Silva', telefone: '+351910000001' }],
       vendedores: [
         { email: 'vendedor.valeazinha@aldeias.pt', nome: 'Maria Santos', telefone: '+351910000011' },
-        { email: 'vendedor2.valeazinha@aldeias.pt', nome: 'Pedro Costa', telefone: '+351910000012' },
       ],
       eventos: [
-        { nome: 'Festa de São João 2026', slug: 'festa-sao-joao-2026', objetivo: 5000 },
-        { nome: 'Magusto da Aldeia', slug: 'magusto-2026', objetivo: 2000 },
+        { nome: 'Festa de São João 2026', slug: 'festa-sao-joao-2026', objetivo: 5000, tipoJogo: TipoJogo.raspadinha },
+        { nome: 'Tombola de Natal 2026', slug: 'tombola-natal-2026', objetivo: 3000, tipoJogo: TipoJogo.tombola },
+        { nome: 'Rifa daianta 2026', slug: 'rifa-crianca-2026', objetivo: 2000, tipoJogo: TipoJogo.rifa },
       ],
     },
     {
@@ -119,53 +320,12 @@ async function main() {
       tipo: TipoOrganizacao.escola,
       descricao: 'Escola do 1º ciclo com atividades extracurriculares.',
       locality: 'Aveiro',
-      users: [
-        { email: 'diretor.saomiguel@aldeias.pt', nome: 'Ana Rodrigues', telefone: '+351920000001' },
-      ],
-      vendedores: [
-        { email: 'professor.saomiguel@aldeias.pt', nome: 'Ricardo Lopes', telefone: '+351920000011' },
-        { email: 'encarregado.saomiguel@aldeias.pt', nome: 'Teresa Ferreira', telefone: '+351920000012' },
-      ],
+      users: [{ email: 'diretor.saomiguel@aldeias.pt', nome: 'Ana Rodrigues', telefone: '+351920000001' }],
+      vendedores: [{ email: 'professor.saomiguel@aldeias.pt', nome: 'Ricardo Lopes', telefone: '+351920000011' }],
       eventos: [
-        { nome: 'Feira do Livro 2026', slug: 'feira-livro-2026', objetivo: 1500 },
-        { nome: 'Gala de Final de Ano', slug: 'gala-2026', objetivo: 3000 },
-      ],
-    },
-    {
-      nome: 'Associação de Pais de Lisboa',
-      slug: 'pais-lisboa',
-      tipo: TipoOrganizacao.associacao_pais,
-      descricao: 'Associação de pais para apoio às escolas de Lisboa.',
-      locality: 'Lisboa',
-      users: [
-        { email: 'presidente.paislisboa@aldeias.pt', nome: 'Carlos Mendes', telefone: '+351930000001' },
-      ],
-      vendedores: [
-        { email: 'pai1.paislisboa@aldeias.pt', nome: 'Sofia Almeida', telefone: '+351930000011' },
-        { email: 'pai2.paislisboa@aldeias.pt', nome: 'Miguel Santos', telefone: '+351930000012' },
-        { email: 'pai3.paislisboa@aldeias.pt', nome: 'Laura Oliveira', telefone: '+351930000013' },
-      ],
-      eventos: [
-        { nome: 'Campanha de Natal 2025', slug: 'natal-2025', objetivo: 10000 },
-        { nome: 'Carnaval das Escolas', slug: 'carnaval-2026', objetivo: 5000 },
-      ],
-    },
-    {
-      nome: 'Clube Desportivo de Faro',
-      slug: 'cd-faro',
-      tipo: TipoOrganizacao.clube,
-      descricao: 'Clube desportivo com tradição no Algarve.',
-      locality: 'Faro',
-      users: [
-        { email: 'presidente.cd-faro@aldeias.pt', nome: 'Francisco Nogueira', telefone: '+351940000001' },
-      ],
-      vendedores: [
-        { email: 'atleta1.cd-faro@aldeias.pt', nome: 'Diogo Rodrigues', telefone: '+351940000011' },
-        { email: 'atleta2.cd-faro@aldeias.pt', nome: 'Hugo Martins', telefone: '+351940000012' },
-      ],
-      eventos: [
-        { nome: 'Torneio de Futebol 2026', slug: 'torneio-futebol-2026', objetivo: 8000 },
-        { nome: 'Gala de Aniversário do Clube', slug: 'gala-aniversario-2026', objetivo: 6000 },
+        { nome: 'Feira do Livro 2026', slug: 'feira-livro-2026', objetivo: 1500, tipoJogo: TipoJogo.raspadinha },
+        { nome: 'Tombola da Páscoa 2026', slug: 'tombola-pascoa-2026', objetivo: 1000, tipoJogo: TipoJogo.tombola },
+        { nome: 'Rifa da Escola 2026', slug: 'rifa-escola-2026', objetivo: 800, tipoJogo: TipoJogo.rifa },
       ],
     },
   ];
@@ -187,7 +347,6 @@ async function main() {
         email: aldeiaData.users[0].email,
         morada: 'Rua Principal',
         codigoPostal: '4000-000',
-        // @ts-ignore
         localidade: aldeiaData.locality,
         autorizacaoCM: true,
         documentosVerificados: true,
@@ -201,35 +360,31 @@ async function main() {
     });
     aldeias.push(aldeia);
 
-    for (const userData of aldeiaData.users) {
-      const admin = await prisma.user.create({
-        data: {
-          email: userData.email,
-          password: passwordHash,
-          nome: userData.nome,
-          telefone: userData.telefone,
-          role: UserRole.aldeia_admin,
-          aldeiaId: aldeia.id,
-          emailVerificado: true,
-        },
-      });
-       await prisma.user.update({
-         where: { id: admin.id },
-         data: { aldeiaId: aldeia.id },
-       });
+    // Criar admin de aldeia
+    const admin = await prisma.user.create({
+      data: {
+        email: aldeiaData.users[0].email,
+        password: passwordHash,
+        nome: aldeiaData.users[0].nome,
+        telefone: aldeiaData.users[0].telefone,
+        role: UserRole.aldeia_admin,
+        aldeiaId: aldeia.id,
+        emailVerificado: true,
+      },
+    });
 
-      // Criar 2FA para Admin de Aldeia (desativado por defeito)
-      await prisma.twoFactorAuth.create({
-        data: {
-          userId: admin.id,
-          secret: 'JBSWY3DPEHPK3PXP',
-          enabled: false,
-        },
-      });
-    }
+    // Atribuir role ALDEIA_ADMIN
+    await prisma.userGlobalRole.create({
+      data: { userId: admin.id, roleId: aldeiaAdminRole.id },
+    });
 
+    await prisma.twoFactorAuth.create({
+      data: { userId: admin.id, secret: 'JBSWY3DPEHPK3PXP', enabled: false },
+    });
+
+    // Criar vendedores
     for (const vendData of aldeiaData.vendedores) {
-      await prisma.user.create({
+      const vendedor = await prisma.user.create({
         data: {
           email: vendData.email,
           password: passwordHash,
@@ -240,8 +395,14 @@ async function main() {
           emailVerificado: true,
         },
       });
+
+      // Atribuir role COLABORADOR
+      await prisma.userGlobalRole.create({
+        data: { userId: vendedor.id, roleId: colaboradorRole.id },
+      });
     }
 
+    // Criar eventos e jogos
     for (const evtData of aldeiaData.eventos) {
       const premio1 = await prisma.premio.create({
         data: {
@@ -250,26 +411,6 @@ async function main() {
           valorDinheiroAlternative: evtData.objetivo * 0.3,
           aldeiaId: aldeia.id,
           ordem: 1,
-        },
-      });
-
-      const premio2 = await prisma.premio.create({
-        data: {
-          nome: 'Segundo Prémio',
-          descricao: 'Segundo prémio do evento',
-          valorDinheiroAlternative: evtData.objetivo * 0.15,
-          aldeiaId: aldeia.id,
-          ordem: 2,
-        },
-      });
-
-      const premio3 = await prisma.premio.create({
-        data: {
-          nome: 'Terceiro Prémio',
-          descricao: 'Terceiro prémio do evento',
-          valorDinheiroAlternative: evtData.objetivo * 0.1,
-          aldeiaId: aldeia.id,
-          ordem: 3,
         },
       });
 
@@ -287,16 +428,18 @@ async function main() {
         },
       });
 
-      const jogo1 = await prisma.jogo.create({
+      const jogoConfig = getJogoConfig(evtData.tipoJogo, evtData.objetivo);
+      
+      const jogo = await prisma.jogo.create({
         data: {
-          nome: 'Poio da Vaca',
-          tipo: TipoJogo.poio_da_vaca,
-          descricao: 'Jogo tradicional português',
-          configuracao: JSON.stringify({ letras: ['A', 'B', 'C', 'D', 'E'], numerosPorLetra: 20 }),
-          preco: 5,
-          stockInicial: 100,
-          stockAtual: Math.floor(Math.random() * 50) + 30,
-          limitePorUsuario: 10,
+          nome: jogoConfig.nome,
+          tipo: evtData.tipoJogo,
+          descricao: jogoConfig.descricao,
+          configuracao: JSON.stringify(jogoConfig.config),
+          preco: jogoConfig.preco,
+          stockInicial: jogoConfig.stock,
+          stockAtual: jogoConfig.stock,
+          limitePorUsuario: jogoConfig.limite,
           estado: EstadoJogo.aberto,
           dataAbertura: new Date(),
           eventoId: evento.id,
@@ -304,82 +447,30 @@ async function main() {
         },
       });
 
-      await prisma.premio.update({ where: { id: premio1.id }, data: { jogoId: jogo1.id } });
-
-      const jogo2 = await prisma.jogo.create({
-        data: {
-          nome: 'Rifa Principal',
-          tipo: TipoJogo.rifa,
-          descricao: 'Rifa com 500 números',
-          configuracao: JSON.stringify({ numeroInicial: 1, numeroFinal: 500 }),
-          preco: 2,
-          stockInicial: 500,
-          stockAtual: Math.floor(Math.random() * 200) + 100,
-          limitePorUsuario: 20,
-          estado: EstadoJogo.aberto,
-          dataAbertura: new Date(),
-          eventoId: evento.id,
-          premioId: premio2.id,
-        },
-      });
-
-      await prisma.premio.update({ where: { id: premio2.id }, data: { jogoId: jogo2.id } });
-
-      const jogo3 = await prisma.jogo.create({
-        data: {
-          nome: 'Raspadinha da Sorte',
-          tipo: TipoJogo.raspadinha,
-          descricao: 'Raspe e ganhe!',
-          configuracao: JSON.stringify({
-            premios: [
-              { nome: '€50', valor: 50, percentagem: 0.02 },
-              { nome: '€20', valor: 20, percentagem: 0.05 },
-              { nome: '€10', valor: 10, percentagem: 0.10 },
-              { nome: '€5', valor: 5, percentagem: 0.20 },
-            ],
-            semPremioPercentagem: 0.63,
-          }),
-          preco: 3,
-          stockInicial: 200,
-          stockAtual: Math.floor(Math.random() * 100) + 50,
-          limitePorUsuario: 15,
-          estado: EstadoJogo.aberto,
-          dataAbertura: new Date(),
-          eventoId: evento.id,
-          premioId: premio3.id,
-        },
-      });
-
-      await prisma.premio.update({ where: { id: premio3.id }, data: { jogoId: jogo3.id } });
-
-      console.log(`   ✅ ${evento.nome} criado com 3 jogos`);
+      await prisma.premio.update({ where: { id: premio1.id }, data: { jogoId: jogo.id } });
+      console.log(`   ✅ ${evento.nome} criado com jogo`);
     }
 
-    console.log(`   ✅ ${aldeiaData.nome} criado com admin e vendedores`);
+    console.log(`   ✅ ${aldeiaData.nome} criado`);
   }
 
+  // ========== CRIAR JOGADORES ==========
   console.log('\n👥 Criando jogadores...');
-
-  // Atribuir jogadores às aldeias (distribuição round-robin)
-  const aldeiaIds = aldeias.map(a => a.id);
 
   const jogadorNames = [
     'Pedro Santos', 'Ana Costa', 'Miguel Rodrigues', 'Sofia Almeida', 'João Ferreira',
     'Isabel Martins', 'Carlos Lima', 'Francisca Sousa', 'Antonio Pereira', 'Maria Gomes',
-    'Luís Oliveira', 'Beatriz Santos', 'Ricardo Costa', 'Inês Rodrigues', 'Nuno Ferreira'
   ];
 
-  for (let i = 0; i < 20; i++) {
-    const nome = jogadorNames[i % jogadorNames.length];
-    const count = Math.floor(i / jogadorNames.length) + 1;
-    const nomeFinal = count > 1 ? `${nome} ${count}` : nome;
-    const aldeiaId = aldeiaIds[i % aldeiaIds.length];
+  for (let i = 0; i < 10; i++) {
+    const nome = jogadorNames[i];
+    const aldeiaId = aldeias[i % aldeias.length].id;
 
     const jogador = await prisma.user.create({
       data: {
         email: `jogador${i + 1}@email.pt`,
         password: passwordHash,
-        nome: nomeFinal,
+        nome: nome,
         telefone: `+351960${String(i).padStart(6, '0')}`,
         role: UserRole.user,
         emailVerificado: true,
@@ -389,6 +480,7 @@ async function main() {
     });
     jogadores.push(jogador);
 
+    // Criar transação inicial
     await prisma.transacao.create({
       data: {
         userId: jogador.id,
@@ -400,143 +492,23 @@ async function main() {
     });
   }
 
-  console.log('✅ 20 jogadores criados com saldo');
+  console.log('✅ 10 jogadores criados com saldo');
 
-  console.log('\n🎫 Criando participações...');
-
-  for (const aldeia of aldeias) {
-    const eventos = await prisma.evento.findMany({ where: { aldeiaId: aldeia.id } });
-    const jogos = await prisma.jogo.findMany({ where: { evento: { aldeiaId: aldeia.id } } });
-
-    for (const jogo of jogos) {
-      const numParticipacoes = Math.floor(Math.random() * 10) + 3;
-      const shuffledJogadores = [...jogadores].sort(() => Math.random() - 0.5);
-
-      for (let i = 0; i < numParticipacoes; i++) {
-        const jogador = shuffledJogadores[i % shuffledJogadores.length];
-
-        if (jogo.tipo === TipoJogo.rifa) {
-          const numero = Math.floor(Math.random() * 500) + 1;
-          await prisma.participacao.create({
-            data: {
-              jogoId: jogo.id,
-              userId: jogador.id,
-              dadosParticipacao: JSON.stringify({ numero }),
-              valorPago: jogo.preco,
-              metodoPagamento: MetodoPagamento.saldo,
-              estadoPagamento: EstadoPagamento.concluido,
-              dataPagamento: new Date(),
-              createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-            },
-          });
-        } else if (jogo.tipo === TipoJogo.raspadinha) {
-          await prisma.participacao.create({
-            data: {
-              jogoId: jogo.id,
-              userId: jogador.id,
-              dadosParticipacao: JSON.stringify({ tipo: 'raspadinha' }),
-              valorPago: jogo.preco,
-              metodoPagamento: MetodoPagamento.saldo,
-              estadoPagamento: EstadoPagamento.concluido,
-              dataPagamento: new Date(),
-              seedRaspe: Math.random().toString(36).substring(7),
-              revelado: Math.random() > 0.5,
-              createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-            },
-          });
-        } else {
-          const letra = ['A', 'B', 'C', 'D', 'E'][Math.floor(Math.random() * 5)];
-          const numero = Math.floor(Math.random() * 20) + 1;
-          await prisma.participacao.create({
-            data: {
-              jogoId: jogo.id,
-              userId: jogador.id,
-              dadosParticipacao: JSON.stringify({ letra, numero }),
-              valorPago: jogo.preco,
-              metodoPagamento: MetodoPagamento.saldo,
-              estadoPagamento: EstadoPagamento.concluido,
-              dataPagamento: new Date(),
-              createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-            },
-          });
-        }
-      }
-    }
-  }
-
-  console.log('✅ Participações criadas');
-
-  const adminAldeia = await prisma.user.create({
-    data: {
-      email: 'aldeia@gmail.com',
-      password: passwordHash,
-      nome: 'Administrador Teste',
-      telefone: '+351900000002',
-      role: UserRole.aldeia_admin,
-      emailVerificado: true,
-      aldeiaId: aldeias[0].id,
-    },
-  });
-
-  await prisma.user.create({
-    data: {
-      email: 'vendedor@gmail.com',
-      password: passwordHash,
-      nome: 'Vendedor Teste',
-      telefone: '+351900000003',
-      role: UserRole.vendedor,
-      emailVerificado: true,
-      aldeiaId: aldeias[0].id,
-    },
-  });
-
-  const jogadorPrincipal = await prisma.user.create({
-    data: {
-      email: 'smpsandro1239@gmail.com',
-      password: passwordHash,
-      nome: 'Jogador Principal',
-      telefone: '+351900000004',
-      role: UserRole.user,
-      emailVerificado: true,
-      saldo: 50,
-    },
-  });
-
-  // Criar algumas participações para o jogador principal
-  const someJogos = await prisma.jogo.findMany({ take: 3 });
-  for (const jogo of someJogos) {
-    await prisma.participacao.create({
-      data: {
-        jogoId: jogo.id,
-        userId: jogadorPrincipal.id,
-        dadosParticipacao: JSON.stringify({ numero: Math.floor(Math.random() * 100) }),
-        valorPago: jogo.preco,
-        metodoPagamento: MetodoPagamento.saldo,
-        estadoPagamento: EstadoPagamento.concluido,
-        dataPagamento: new Date(),
-      },
-    });
-  }
-
+  // ========== RESUMO ==========
   console.log('\n🎉 Seed concluído com sucesso!');
   console.log('\n📊 Resumo:');
-  console.log(`   - Planos: 3`);
+  console.log(`   - Roles: ${await prisma.role.count()}`);
+  console.log(`   - Permissões: ${await prisma.permission.count()}`);
   console.log(`   - Utilizadores: ${await prisma.user.count()}`);
   console.log(`   - Aldeias: ${aldeias.length}`);
   console.log(`   - Eventos: ${await prisma.evento.count()}`);
-  console.log(`   - Prémios: ${await prisma.premio.count()}`);
   console.log(`   - Jogos: ${await prisma.jogo.count()}`);
-  console.log(`   - Participações: ${await prisma.participacao.count()}`);
+
   console.log('\n🔑 Credenciais de teste:');
-  console.log(`   - Super Admin: admin@aldeias.pt / 123456`);
-  console.log(`   - Admin Aldeia: aldeia@gmail.com / 123456`);
-  console.log(`   - Admin Vale Azinha: admin.valeazinha@aldeias.pt / 123456`);
-  console.log(`   - Admin Escola São Miguel: diretor.saomiguel@aldeias.pt / 123456`);
-  console.log(`   - Admin Associação Pais: presidente.paislisboa@aldeias.pt / 123456`);
-  console.log(`   - Admin Clube Desportivo: presidente.cd-faro@aldeias.pt / 123456`);
-  console.log(`   - Vendedor: vendedor@gmail.com / 123456`);
-  console.log(`   - Jogador: smpsandro1239@gmail.com / 123456`);
-  console.log(`   - Jogador 1: jogador1@email.pt / 123456`);
+  console.log(`   ➤ SUPER ADMIN: admin@aldeias.pt / 123456`);
+  console.log(`   ➤ ADMIN ALDEIA: admin.valeazinha@aldeias.pt / 123456`);
+  console.log(`   ➤ VENDEDOR: vendedor.valeazinha@aldeias.pt / 123456`);
+  console.log(`   ➤ JOGADOR: jogador1@email.pt / 123456`);
 }
 
 main()

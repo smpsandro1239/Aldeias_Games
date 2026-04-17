@@ -1,14 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { House } from "lucide-react";
 
 interface SplashScreenProps {
-  onEnter: () => void;
   onLoginClick: () => void;
 }
 
-export function SplashScreen({ onEnter, onLoginClick }: SplashScreenProps) {
+export function SplashScreen({ onLoginClick }: SplashScreenProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de] font-body selection:bg-[#ff734b]/30 overflow-hidden">
       {/* Grain Overlay */}
@@ -30,43 +28,30 @@ export function SplashScreen({ onEnter, onLoginClick }: SplashScreenProps) {
         <div className="w-full h-px bg-gradient-to-r from-transparent via-[#58413b]/30 to-transparent my-6 max-w-lg"></div>
 
         <p className="font-body text-[#e0bfb7] text-sm md:text-base tracking-[0.15em] uppercase font-bold">
-          Onde a Tradição, Forja o Futuro
+          Onde a Tradição, Forja o Futuro.
         </p>
 
         {/* Digital Loader Animation - Cyan */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-12 flex flex-col items-center gap-4"
-        >
+        <div className="mt-8 flex flex-col items-center gap-2">
           <div className="relative w-32 h-1 bg-[#393432]/20 rounded-full overflow-hidden">
             <div
-              className="digital-loader absolute inset-0 rounded-full shadow-[0_0_15px_rgba(0,218,243,0.4)]"
+              className="digital-loader-cy cyan absolute inset-0 rounded-full"
               style={{
                 height: '2px',
                 width: '140px',
                 background: 'linear-gradient(90deg, transparent, #00daf3, transparent)',
-                animation: 'pulse-cyan 3s infinite ease-in-out',
               }}
             />
           </div>
-        </motion.div>
+        </div>
 
-        {/* Botões de Ação */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          className="mt-8 flex flex-col md:flex-row gap-4"
+        {/* Botão Entrar */}
+        <button
+          onClick={onLoginClick}
+          className="mt-6 relative px-12 py-3 border-2 border-[#ff734b] text-[#ff734b] font-bold rounded-full hover:bg-[#ff734b]/10 active:scale-95 transition-all"
         >
-          <button
-            onClick={onLoginClick}
-            className="relative px-12 py-3 border-2 border-[#ff734b] text-[#ff734b] font-bold rounded-full hover:bg-[#ff734b]/10 active:scale-95 transition-all"
-          >
-            ENTRAR
-          </button>
-        </motion.div>
+          ENTRAR
+        </button>
       </div>
 
       {/* Editorial Accents */}
@@ -81,7 +66,7 @@ export function SplashScreen({ onEnter, onLoginClick }: SplashScreenProps) {
           0%, 100% { transform: scaleX(0); opacity: 0.3; }
           50% { transform: scaleX(1); opacity: 1; }
         }
-        .digital-loader {
+        .digital-loader-cy {
           animation: pulse-cyan 3s infinite ease-in-out;
         }
       `}</style>

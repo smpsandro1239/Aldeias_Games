@@ -34,6 +34,7 @@ import {
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { POSView } from "./pos-view";
+import { BottomNav } from "@/components/bottom-nav";
 
 interface VendedorDashboardProps {
   token: string;
@@ -426,6 +427,8 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <BottomNav role="vendedor" />
     </div>
   );
 }

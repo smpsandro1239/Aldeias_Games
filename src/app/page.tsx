@@ -105,7 +105,7 @@ export default function Home() {
   if (!mounted || isLoading) return <LoaderScreen />;
 
   if (!hasEntered && !isAuthenticated) {
-    return <SplashScreen onEnter={() => setHasEntered(true)} onLoginClick={() => { setHasEntered(true); setLoginModalOpen(true); }} />;
+    return <SplashScreen onLoginClick={() => { setHasEntered(true); setLoginModalOpen(true); }} />;
   }
 
   return (
@@ -268,7 +268,7 @@ export default function Home() {
                     variant="secondary" 
                     size="sm" 
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
-                    onClick={() => setLoginForm({ email: "admin@aldeias.pt", password: "123" })}
+                    onClick={() => setLoginForm({ email: "admin@aldeias.pt", password: "123456" })}
                   >
                     Super Admin
                   </Button>
@@ -277,7 +277,7 @@ export default function Home() {
                     variant="secondary" 
                     size="sm" 
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
-                    onClick={() => setLoginForm({ email: "aldeia@gmail.com", password: "123" })}
+                    onClick={() => setLoginForm({ email: "admin.valeazinha@aldeias.pt", password: "123456" })}
                   >
                     Admin Aldeia
                   </Button>
@@ -286,7 +286,7 @@ export default function Home() {
                     variant="secondary" 
                     size="sm" 
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
-                    onClick={() => setLoginForm({ email: "vendedor@gmail.com", password: "123" })}
+                    onClick={() => setLoginForm({ email: "vendedor.valeazinha@aldeias.pt", password: "123456" })}
                   >
                     Vendedor
                   </Button>
@@ -295,7 +295,7 @@ export default function Home() {
                     variant="secondary" 
                     size="sm" 
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
-                    onClick={() => setLoginForm({ email: "smpsandro1239@gmail.com", password: "123" })}
+                    onClick={() => setLoginForm({ email: "jogador1@email.pt", password: "123456" })}
                   >
                     Jogador
                   </Button>

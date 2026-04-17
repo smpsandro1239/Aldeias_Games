@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
-      aldeiaId: user.aldeiaId as string,
+      aldeiaId: user.aldeiaId || undefined,
     });
 
     // Atualizar último login
