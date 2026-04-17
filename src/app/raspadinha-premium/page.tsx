@@ -212,14 +212,22 @@ export default function RaspadinhaPremiumPage() {
             }
           });
 
-          // Verifica se tem 3 iguais
+          // Verifica se tem 3 iguais - soma todos os prémios encontrados
+          let totalPremio = 0;
+          let primeiroPremio: Prize | null = null;
           prizeCounts.forEach(({ count, prize }) => {
             if (count >= 3 && prize.value > 0) {
-              setWinningPrize(prize);
-              setShowWin(true);
-              confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+              // Cada grupo de 3 dá o valor do prémio
+              totalPremio += prize.value;
+              if (!primeiroPremio) primeiroPremio = prize;
             }
           });
+          
+          if (totalPremio > 0 && primeiroPremio) {
+            setWinningPrize({ ...primeiroPremio, valor: totalPremio });
+            setShowWin(true);
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+          }
 
           return newSlots;
         });
