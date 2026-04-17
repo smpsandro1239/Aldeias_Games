@@ -212,28 +212,14 @@ export default function RaspadinhaPremiumPage() {
             }
           });
 
-          // Verifica se tem 3 iguais - soma todos os prémios encontrados
-          let totalPremio = 0;
-          let winningLabel = "";
+          // Check for win - show celebration
           prizeCounts.forEach(({ count, prize }) => {
             if (count >= 3 && prize.value > 0) {
-              // Cada grupo de 3 dá o valor do prémio
-              totalPremio += prize.value;
-              if (!winningLabel) winningLabel = prize.label;
+              setWinningPrize(prize);
+              setShowWin(true);
+              confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
             }
           });
-          
-          if (totalPremio > 0 && winningLabel) {
-            const winningPrizeObj: Prize = { 
-              icon: "🎉", 
-              label: winningLabel, 
-              valor: totalPremio,
-              fill: true 
-            };
-            setWinningPrize(winningPrizeObj);
-            setShowWin(true);
-            confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
-          }
 
           return newSlots;
         });
@@ -297,14 +283,6 @@ export default function RaspadinhaPremiumPage() {
           existing.count++;
         } else {
           prizeCounts.set(key, { count: 1, prize: s.prize });
-        }
-      });
-
-      prizeCounts.forEach(({ count, prize }) => {
-        if (count >= 3 && prize.value > 0) {
-          setWinningPrize(prize);
-          setShowWin(true);
-          confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
         }
       });
 
