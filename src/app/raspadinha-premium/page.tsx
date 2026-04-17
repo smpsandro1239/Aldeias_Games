@@ -214,21 +214,21 @@ export default function RaspadinhaPremiumPage() {
 
           // Verifica se tem 3 iguais - soma todos os prémios encontrados
           let totalPremio = 0;
-          let primeiroPremio: Prize | null = null;
+          let winningLabel = "";
           prizeCounts.forEach(({ count, prize }) => {
             if (count >= 3 && prize.value > 0) {
               // Cada grupo de 3 dá o valor do prémio
               totalPremio += prize.value;
-              if (!primeiroPremio) primeiroPremio = prize;
+              if (!winningLabel) winningLabel = prize.label;
             }
           });
           
-          if (totalPremio > 0 && primeiroPremio) {
+          if (totalPremio > 0 && winningLabel) {
             const winningPrizeObj: Prize = { 
-              icon: primeiroPremio.icon, 
-              label: primeiroPremio.label, 
+              icon: "🎉", 
+              label: winningLabel, 
               valor: totalPremio,
-              fill: primeiroPremio.fill 
+              fill: true 
             };
             setWinningPrize(winningPrizeObj);
             setShowWin(true);
