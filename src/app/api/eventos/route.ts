@@ -30,15 +30,19 @@ export async function GET(request: NextRequest) {
     }
 
     if (user) {
-      if (user.role === 'aldeia_admin' && !aldeiaId) {
+      if (user.role === 'aldeia_admin' && !aldeiaId && user.aldeiaId) {
         // Admin só vê eventos da sua aldeia
         where.aldeiaId = user.aldeiaId;
-      } else if (user.role === 'vendedor' && !aldeiaId) {
+      } else if (user.role === 'vendedor' && !aldeiaId && user.aldeiaId) {
         // Vendedor só vê eventos da sua aldeia
         where.aldeiaId = user.aldeiaId;
-      } else if (user.role === 'user' && !aldeiaId) {
-        // User normal só vê eventos da sua aldeia
+      } else if (user.role === 'user' && !aldeiaId && user.aldeiaId) {
+        // User normal só vê eventos da sua aldeia (se tiver aldeia associada)
         where.aldeiaId = user.aldeiaId;
+      } else if (user.role === 'user' && !user.aldeiaId && !aldeiaId) {
+        // User sem aldeia - mostra eventos públicos
+        where.publico = true;
+        where.estado = 'ativo';
       }
       // Super admin vê todos
     } else {
