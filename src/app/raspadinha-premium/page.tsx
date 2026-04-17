@@ -224,8 +224,13 @@ export default function RaspadinhaPremiumPage() {
           });
           
           if (totalPremio > 0 && primeiroPremio) {
-            const winningObj = { icon: primeiroPremio.icon, label: primeiroPremio.label, valor: totalPremio };
-            setWinningPrize(winningObj);
+            const winningPrizeObj: Prize = { 
+              icon: primeiroPremio.icon, 
+              label: primeiroPremio.label, 
+              valor: totalPremio,
+              fill: primeiroPremio.fill 
+            };
+            setWinningPrize(winningPrizeObj);
             setShowWin(true);
             confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
           }
