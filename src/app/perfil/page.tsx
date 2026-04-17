@@ -19,10 +19,18 @@ interface UserProfile {
   nome: string;
   email: string;
   telefone?: string;
+  role?: string;
   aldeiaId?: string;
   aldeia?: Aldeia;
   fotoPerfil?: string;
 }
+
+const roleLabels: Record<string, string> = {
+  super_admin: "Super Administrador",
+  aldeia_admin: "Administrador da Aldeia",
+  vendedor: "Vendedor",
+  user: "Jogador",
+};
 
 export default function PerfilPage() {
   const router = useRouter();
@@ -41,6 +49,7 @@ export default function PerfilPage() {
     nome: "",
     email: "",
     telefone: "",
+    role: "",
     aldeiaId: "",
     aldeiaNome: "",
   });
@@ -55,6 +64,7 @@ export default function PerfilPage() {
           nome: userData.nome || "",
           email: userData.email || "",
           telefone: userData.telefone || "",
+          role: userData.role || "",
           aldeiaId: userData.aldeiaId || "",
           aldeiaNome: userData.aldeia?.nome || "",
         });
@@ -262,6 +272,16 @@ export default function PerfilPage() {
                 className="flex-1 bg-transparent outline-none text-[#eae0de]"
                 placeholder="O teu nome"
               />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Perfil</label>
+            <div className="flex items-center gap-3 bg-[#2e2928] rounded-xl px-4 py-3 opacity-70">
+              <User className="w-5 h-5 text-[#ff734b]" />
+              <span className="flex-1 text-[#eae0de] font-medium">
+                {roleLabels[user?.role || ""] || "Jogador"}
+              </span>
             </div>
           </div>
 
