@@ -304,8 +304,37 @@ export async function POST(request: NextRequest) {
             roll: outcome.roll,
           });
         } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
-          // Para rifas, usar os números selecionados como "resultado"
+          // Para rifas, verificar se números já estão ocupados
           const numerosSelecionados = data.dadosParticipacao?.numeros || [];
+          
+          // Buscar números já vendidos neste jogo
+          const participacoesExistentes = await tx.participacao.findMany({
+            where: { jogoId: jogo.id },
+            select: { dadosParticipacao: true }
+          });
+          
+          const numerosOcupados = new Set<number>();
+          for (const p of participacoesExistentes) {
+            try {
+              const dados = typeof p.dadosParticipacao === 'string' 
+                ? JSON.parse(p.dadosParticipacao) 
+                : p.dadosParticipacao;
+              if (dados?.numeros) {
+                dados.numeros.forEach((n: number) => numerosOcupados.add(n));
+              }
+            } catch {}
+          }
+          
+          // Verificar se algum número já está ocupado
+          for (const num of numerosSelecionados) {
+            if (numerosOcupados.has(num)) {
+              return NextResponse.json(
+                { error: `O número ${num} já foi vendido` },
+                { status: 400 }
+              );
+            }
+          }
+          
           const resultado = JSON.stringify(numerosSelecionados);
           const hash = generateHash(seed, resultado, jogo.stockAtual - i, timestamp);
           

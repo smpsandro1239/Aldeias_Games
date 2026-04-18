@@ -2,6 +2,7 @@
 
 import { StatCard } from "@/components/ui/StatCard";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ interface Stats {
 }
 
 export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", aldeia }: AdminDashboardProps) {
+  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [eventos, setEventos] = useState<any[]>([]);
   const [jogos, setJogos] = useState<any[]>([]);
