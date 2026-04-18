@@ -32,15 +32,14 @@ export async function POST(request: NextRequest) {
           where: { id: user.id },
           data: { saldo: { increment: valor } },
         }),
-        prisma.transacao.create({
+prisma.transacao.create({
           data: {
             valor: valor,
-            tipo: 'entrega_admin',
+            tipo: 'entrega_admin' as any,
             descricao: descricao || `Entrega de dinheiro à aldeia`,
             userId: user.id,
             dadosAdicionais: {
               aldeiaId,
-tipo: 'entrega_admin' as any,
               entregaConfirmada: false,
             },
           },
