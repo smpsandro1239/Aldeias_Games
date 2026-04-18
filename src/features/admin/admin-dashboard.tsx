@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode, ShoppingCart
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
@@ -527,6 +527,22 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }} className="bg-[#ff734b] hover:bg-[#ff734b]/90">
+              <Plus className="h-4 w-4 mr-2" /> Novo Evento
+            </Button>
+            <Button onClick={() => { setSelectedJogo(null); setJogoModalOpen(true); }} variant="outline" className="border-[#ff734b]/30">
+              <Gamepad2 className="h-4 w-4 mr-2" /> Novo Jogo
+            </Button>
+            <Button onClick={() => router.push('/vendedordashboard?venda=true')} variant="outline" className="border-[#ff734b]/30">
+              <ShoppingCart className="h-4 w-4 mr-2" /> Realizar Venda
+            </Button>
+            <Button onClick={() => router.push('/vendedordashboard')} variant="outline" className="border-[#ff734b]/30">
+              <Users className="h-4 w-4 mr-2" /> Ver Vendedores
+            </Button>
+          </div>
+
           <Card>
             <CardHeader><CardTitle>Eventos Recentes</CardTitle></CardHeader>
             <CardContent>
@@ -547,7 +563,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         </TabsContent>
 
         <TabsContent value="eventos" className="space-y-4">
-          <div className="flex justify-between"><h2 className="text-xl font-semibold">Gestão de Eventos</h2></div>
+          <div className="flex justify-between items-center"><h2 className="text-xl font-semibold">Eventos</h2><Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }} size="sm" className="bg-[#ff734b]"><Plus className="h-4 w-4 mr-1" /> Novo</Button></div>
           {eventos.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16">
