@@ -349,6 +349,7 @@ export default function PremiosPage() {
             </div>
           )}
         </div>
+        )}
 
         <div className="bg-[#1f1b19] rounded-2xl p-6 border border-[#58413b]/10">
           <h3 className="font-serif text-[#ffb5a0] font-bold mb-3">Como Ganhar Prémios?</h3>
