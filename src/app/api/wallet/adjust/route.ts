@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
             userId: user.id,
             dadosAdicionais: {
               aldeiaId,
-              tipo: 'entrega_admin',
+tipo: 'entrega_admin' as any,
               entregaConfirmada: false,
             },
           },
