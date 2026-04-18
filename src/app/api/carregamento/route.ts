@@ -29,12 +29,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Aldeia requerida' }, { status: 400 });
     }
 
-    // Check if aldeia requires authorization
-    const aldeia = await prisma.aldeia.findUnique({
-      where: { id: aldeiaId },
-      select: { requerAutorizacaoCarregamento: true }
-    });
-
     const passwordOneTime = generatePassword(6);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
@@ -47,8 +41,7 @@ export async function POST(request: NextRequest) {
         metodoPagamento: metodoPagamento || 'dinheiro',
         passwordOneTime,
         expiresAt,
-        requerAutorizacao: aldeia?.requerAutorizacaoCarregamento || false,
-        estado: aldeia?.requerAutorizacaoCarregamento ? 'aguardar_autorizacao' : 'pendente',
+        estado: 'pendente',
       },
     });
 
