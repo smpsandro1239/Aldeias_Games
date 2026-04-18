@@ -168,15 +168,46 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   // --- EVENTOS ---
   const handleSaveEvento = async (data: any) => {
     const isEditing = !!data.id;
+    const jogosSelecionados = data.jogosSelecionados || [];
+    const eventoData = { ...data };
+    delete eventoData.jogosSelecionados;
+    
     const url = isEditing ? `/api/eventos/${data.id}` : `/api/eventos`;
     const method = isEditing ? "PUT" : "POST";
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
+      body: JSON.stringify(eventoData),
     });
 
     if (res.ok) {
+      const evento = await res.json();
+      const eventoId = evento.data?.id || evento.id;
+      
+      // Criar jogos automaticamente se selecionados
+      if (!isEditing && jogosSelecionados.length > 0 && eventoId) {
+        for (const tipoJogo of jogosSelecionados) {
+          const jogoData = {
+            nome: `${data.nome} - ${tipoJogo}`,
+            tipo: tipoJogo,
+            configuracao: "{}",
+            preco: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
+            precoBase: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
+            stockInicial: 100,
+            eventoId,
+            aldeiaId: data.aldeiaId,
+            estado: "aberto",
+          };
+          
+          await fetch("/api/jogos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(jogoData),
+          });
+        }
+        toast.success(`${jogosSelecionados.length} jogo(s) criado(s) para o evento!`);
+      }
+      
       toast.success(`Evento ${isEditing ? "atualizado" : "criado"} com sucesso!`);
       fetchData();
       setEventoModalOpen(false);

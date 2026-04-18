@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Gift, Star, Award, Gamepad2 } from "lucide-react";
 
 interface EventoData {
   id?: string;
@@ -26,7 +28,15 @@ interface EventoData {
   publiko: boolean;
   aldeiaId: string;
   estado: "rascunho" | "ativo" | "fechado" | "finalizado";
+  jogosSelecionados?: string[]; // tipos de jogos para criar: raspadinha, rifa, tombola, poio_vaca
 }
+
+const TIPOS_JOGOS = [
+  { id: "raspadinha", nome: "Raspadinha", descricao: "Jogo de raspar instantâneo", icon: Gift },
+  { id: "rifa", nome: "Rifa", descricao: "Sorteio de números", icon: Star },
+  { id: "tombola", nome: "Tombola", descricao: "Lotaria tradicional", icon: Award },
+  { id: "poio_vaca", nome: "Poio da Vaca", descricao: "Jogo rápido", icon: Gamepad2 },
+];
 
 interface CreateEventoModalProps {
   open: boolean;
@@ -50,6 +60,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [jogosSelecionados, setJogosSelecionados] = useState<string[]>([]);
 
   useEffect(() => {
     if (initialData && open) {
@@ -117,6 +128,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         publiko: formData.publiko,
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
+        jogosSelecionados: jogosSelecionados,
       });
 
       if (!initialData) {
@@ -246,6 +258,46 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 onChange={(e) => setFormData({ ...formData, objectivoAngariacao: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">Valor objetivo a angariar (opcional)</p>
+            </div>
+
+            {/* Seleção de Jogos */}
+            <div className="grid gap-2">
+              <Label>Criar Jogos para este Evento</Label>
+              <p className="text-xs text-muted-foreground mb-2">Selecione os tipos de jogos que deseja criar automaticamente</p>
+              <div className="grid grid-cols-2 gap-2">
+                {TIPOS_JOGOS.map((jogo) => {
+                  const Icon = jogo.icon;
+                  const selecionado = jogosSelecionados.includes(jogo.id);
+                  return (
+                    <button
+                      key={jogo.id}
+                      type="button"
+                      onClick={() => {
+                        if (selecionado) {
+                          setJogosSelecionados(jogosSelecionados.filter(j => j !== jogo.id));
+                        } else {
+                          setJogosSelecionados([...jogosSelecionados, jogo.id]);
+                        }
+                      }}
+                      className={`p-3 rounded-xl border-2 flex items-center gap-2 transition-all ${
+                        selecionado 
+                          ? "border-[#ff734b] bg-[#ff734b]/10" 
+                          : "border-[#58413b]/20 bg-[#1f1b19] hover:border-[#ff734b]/30"
+                      }`}
+                    >
+                      <Icon className={`w-5 h-5 ${selecionado ? "text-[#ff734b]" : "text-[#e0bfb7]"}`} />
+                      <span className={`text-sm font-medium ${selecionado ? "text-[#ff734b]" : "text-[#e0bfb7]"}`}>
+                        {jogo.nome}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {jogosSelecionados.length > 0 && (
+                <p className="text-xs text-[#ff734b]">
+                  {jogosSelecionados.length} jogo(s) será(ão) criado(s) automaticamente
+                </p>
+              )}
             </div>
 
             <div className="grid gap-2">
