@@ -24,6 +24,10 @@ model User {
   aldeiaId          String?
   aldeiasPermitidas String?
   saldo             Float     @default(0)
+  
+  comissaoPercentual Float     @default(10) // % de comissão por venda
+  comissaoAtiva      Boolean   @default(true) // se comissões estão ativas
+  comissaoTotal      Float     @default(0) // total acumulado em comissões
 
   alteracoes            AlteracaoParticipacao[]
   logsAcesso            LogAcesso[]

@@ -97,8 +97,8 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
       {/* Spacer para evitar que conteúdo seja coberto */}
       <div className="h-24" />
       
-      {/* Navigation - Bottom on mobile, Sidebar on desktop */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1a1614] border-t border-[#58413b]/20 shadow-[0_-10px_40px_rgba(0,0,0,0.4)] lg:rounded-t-none lg:top-0 lg:left-0 lg:w-20 lg:h-full lg:flex-col lg:justify-start lg:pt-4 lg:pb-4 lg:gap-2 lg:border-t-0 lg:border-r">
+      {/* Navigation - Bottom on mobile, Top bar on desktop */}
+      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1a1614] border-t border-[#58413b]/20 shadow-[0_-10px_40px_rgba(0,0,0,0.4)] lg:bottom-auto lg:top-0 lg:left-0 lg:w-full lg:flex-row lg:justify-center lg:py-2 lg:pb-2 lg:gap-1 lg:border-b lg:border-t-0">
         {items.map((item, index) => {
           const Icon = item.icon;
           const active = isActive(item.path, index);
@@ -108,8 +108,8 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
               key={item.label}
               onClick={() => handleNavClick(item.path, item.label)}
               className={`
-                flex flex-col items-center justify-center transition-all duration-200
-                min-w-[64px] py-2 rounded-2xl
+                flex flex-col lg:flex-row items-center justify-center transition-all duration-200
+                min-w-[64px] lg:min-w-[80px] py-2 rounded-2xl lg:rounded-lg
                 ${active 
                   ? `bg-gradient-to-b ${index === 0 ? 'from-secondary/20 to-transparent' : 'from-primary/20 to-transparent'} lg:scale-100` 
                   : 'hover:bg-[#2e2928]'
@@ -117,11 +117,11 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
               `}
             >
               <Icon 
-                className={`h-6 w-6 transition-all ${getIconColor(active, index)}`}
+                className={`h-5 w-5 lg:h-5 lg:w-5 transition-all ${getIconColor(active, index)}`}
                 style={active && index === 0 ? { fill: "currentColor" } : {}}
               />
               <span className={`
-                font-sans text-[10px] font-bold tracking-widest uppercase mt-1
+                font-sans text-[8px] lg:text-[10px] font-bold tracking-widest uppercase mt-1
                 ${active ? 'text-primary' : 'text-on-surface-variant opacity-70'}
               `}>
                 {item.label}
