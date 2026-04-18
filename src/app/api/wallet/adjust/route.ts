@@ -6,11 +6,75 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
+    const body = await request.json();
+    const { userId, valor, tipo, descricao, aldeiaId } = body;
+
+    // Allow vendor to deliver money to admin
+    const isVendorDelivery = tipo === 'entrega_admin' && user?.role === 'vendedor';
+    
+    if (!user || (!hasRole(user.role, ['super_admin', 'aldeia_admin']) && !isVendorDelivery)) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    const { userId, valor, tipo, descricao } = await request.json();
+    // Vendor delivery to admin
+    if (isVendorDelivery) {
+      if (!valor || valor >= 0) {
+        return NextResponse.json({ error: 'Valor deve ser negativo para entrega' }, { status: 400 });
+      }
+
+      const valorAbs = Math.abs(valor);
+      if (user.saldo < valorAbs) {
+        return NextResponse.json({ error: 'Saldo insuficiente' }, { status: 400 });
+      }
+
+      const [updatedUser, transacao] = await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: { saldo: { increment: valor } },
+        }),
+        prisma.transacao.create({
+          data: {
+            valor: valor,
+            tipo: 'entrega_admin',
+            descricao: descricao || `Entrega de dinheiro à aldeia`,
+            userId: user.id,
+            dadosAdicionais: {
+              aldeiaId,
+              tipo: 'entrega_admin',
+              entregaConfirmada: false,
+            },
+          },
+        }),
+      ]);
+
+      // Notify admin
+      const adminUsers = await prisma.user.findMany({
+        where: { aldeiaId, role: 'aldeia_admin' },
+        select: { id: true }
+      });
+
+      for (const admin of adminUsers) {
+        await prisma.notificacao.create({
+          data: {
+            userId: admin.id,
+            tipo: 'sistema',
+            titulo: 'Dinheiro Recebido',
+            mensagem: `O vendedor ${user.nome} entregou ${valorAbs}€ à aldeia.`,
+          },
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Entregue ${valorAbs}€ com sucesso`,
+        novoSaldo: updatedUser.saldo,
+      });
+    }
+
+    // Original admin-only logic continues
+    if (!userId || valor === undefined || valor === null) {
+      return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
+    }
 
     if (!userId || valor === undefined || valor === null) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
