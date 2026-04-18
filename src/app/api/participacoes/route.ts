@@ -328,10 +328,7 @@ export async function POST(request: NextRequest) {
           // Verificar se algum número já está ocupado
           for (const num of numerosSelecionados) {
             if (numerosOcupados.has(num)) {
-              return NextResponse.json(
-                { error: `O número ${num} já foi vendido` },
-                { status: 400 }
-              );
+              throw new Error(`O número ${num} já foi vendido`);
             }
           }
           
