@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Loader2, ShoppingCart, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, ShoppingCart, Eye, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 
 interface RifaComprada {
   id: string;
@@ -153,7 +153,7 @@ export function RifaPlacarModal({
                   onClick={() => handleCompraRapida(2)}
                   disabled={loadingCompra || numerosDisponiveis.length < 2}
                 >
-                  2 Rifas ({(2 * preco).toFixed(2)}€)
+                  2 (€{(2 * preco).toFixed(2)})
                 </Button>
                 <Button
                   variant="outline"
@@ -161,7 +161,7 @@ export function RifaPlacarModal({
                   onClick={() => handleCompraRapida(5)}
                   disabled={loadingCompra || numerosDisponiveis.length < 5}
                 >
-                  5 Rifas ({(5 * preco).toFixed(2)}€)
+                  5 (€{(5 * preco).toFixed(2)})
                 </Button>
                 <Button
                   variant="outline"
@@ -169,7 +169,7 @@ export function RifaPlacarModal({
                   onClick={() => handleCompraRapida(10)}
                   disabled={loadingCompra || numerosDisponiveis.length < 10}
                 >
-                  10 Rifas ({(10 * preco).toFixed(2)}€)
+                  10 (€{(10 * preco).toFixed(2)})
                 </Button>
                 <Button
                   variant="default"
@@ -200,22 +200,49 @@ export function RifaPlacarModal({
                 />
               </div>
 
+              {/* Legenda */}
+              <div className="flex items-center gap-4 text-xs mb-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-[#ff734b] rounded"></div>
+                  <span>Seleccionado</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-[#2e2928] rounded border border-[#58413b]/30"></div>
+                  <span>Disponível</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-[#393432] rounded"></div>
+                  <span>Ocupado</span>
+                </div>
+              </div>
+
+              {/* Botão Limpar */}
+              {numerosSelecionados.length > 0 && (
+                <button
+                  onClick={() => setNumerosSelecionados([])}
+                  className="text-xs text-red-400 flex items-center gap-1 mb-2"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Limpar selecção
+                </button>
+              )}
+
               <div className="flex-1 overflow-y-auto">
                 <div className="grid grid-cols-10 gap-1">
                   {numerosFiltrados.map((numero) => {
-                    const ocupado = numerosOcupados.includes(numero);
-                    const selecionado = numerosSelecionados.includes(numero);
+                    const occupied = numerosOcupados.includes(numero);
+                    const selected = numerosSelecionados.includes(numero);
 
                     return (
                       <button
                         key={numero}
                         onClick={() => toggleNumero(numero)}
-                        disabled={ocupado}
+                        disabled={occupied}
                         className={cn(
                           "h-8 rounded text-xs font-medium transition-all",
-                          ocupado && "bg-muted text-muted-foreground cursor-not-allowed",
-                          !ocupado && !selecionado && "bg-primary/10 hover:bg-primary/20 text-primary",
-                          selecionado && "bg-primary text-primary-foreground"
+                          occupied && "bg-[#393432] text-[#58413b]/50 cursor-not-allowed line-through",
+                          !occupied && !selected && "bg-[#2e2928] border border-[#58413b]/30 hover:bg-[#ff734b]/20 text-[#e0bfb7]",
+                          selected && "bg-[#ff734b] text-[#110d0c] font-bold"
                         )}
                       >
                         {numero}

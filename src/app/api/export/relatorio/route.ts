@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         const vendas = await prisma.transacao.findMany({
           where: {
             aldeiaId: user.aldeiaId,
-            tipo: { in: ['venda', 'pagamento'] },
+            tipo: { in: ['venda', 'pagamento'] as any },
             ...(dataInicio && dataFim ? {
               createdAt: {
                 gte: new Date(dataInicio),
