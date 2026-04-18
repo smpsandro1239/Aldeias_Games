@@ -48,6 +48,12 @@ model User {
   userAldeiaRoles UserAldeiaRole[]
   userPermissions UserPermission[]
   auditLogs       AuditLog[]
+  
+  // Relations to carregamento requests
+  vendedorCarregamentos PedidoCarregamento[] @relation("VendedorCarregamentos")
+  confirmacaoCarregamento PedidoCarregamento[] @relation("ConfirmacaoCarregamento")
+  autorizacaoCarregamento PedidoCarregamento[] @relation("AutorizacaoCarregamento")
+  pedidosCarregamento PedidoCarregamento[]
 
   @@index([email])
   @@index([role])
@@ -751,4 +757,82 @@ model AuditLog {
   metadata Json?
 
   createdAt DateTime @default(now())
+}
+
+enum EstadoPedido {
+  pendente
+  confirmado
+  cancelado
+  expirado
+  aguardar_autorizacao
+}
+
+model PedidoCarregamento {
+  id String @id @default(cuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  vendedorId String?
+  vendedor User? @relation("VendedorCarregamentos", fields: [vendedorId], references: [id])
+
+  aldeiaId String
+  
+  valor Float
+  
+  passwordOneTime String?
+  
+  expiresAt DateTime?
+  
+  estado EstadoPedido @default(pendente)
+  
+  pagamentoConfirmado Boolean @default(false)
+  
+  confirmadoPorId String?
+  confirmadoPor User? @relation("ConfirmacaoCarregamento", fields: [confirmadoPorId], references: [id])
+  confirmadoAt DateTime?
+  
+  requerAutorizacao Boolean @default(false)
+  
+  autorizado Boolean @default(false)
+  autorizadoPorId String?
+  autorizadoPor User? @relation("AutorizacaoCarregamento", fields: [autorizadoPorId], references: [id])
+  autorizadoAt DateTime?
+  
+  codigoQR String?
+  
+  notificadoJogador Boolean @default(false)
+  notificadoVendedor Boolean @default(false)
+  notificadoAdmin Boolean @default(false)
+  
+  metodoPagamento String? // dinheiro, mbway, transferencia
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([vendedorId])
+  @@index([estado])
+  @@index([passwordOneTime])
+}
+
+model PedidoNotificacao {
+  id String @id @default(cuid())
+
+  tipo String // email, sms, push
+  destinatario String
+  assunto String?
+  mensagem String
+  
+  enviada Boolean @default(false)
+  enviadaAt DateTime?
+  
+  erro String?
+  
+  criadoPorId String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([destinatario])
+  @@index([enviada])
 }
