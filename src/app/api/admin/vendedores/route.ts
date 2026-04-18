@@ -132,3 +132,46 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const user = await getFullUserFromRequest(request);
+    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { vendaId, comissaoPercentual } = body;
+
+    if (!vendaId) {
+      return NextResponse.json({ error: 'VendaID requerido' }, { status: 400 });
+    }
+
+    // Buscar venda
+    const venda = await prisma.transacao.findUnique({
+      where: { id: vendaId },
+      include: { user: true }
+    });
+
+    if (!venda) {
+      return NextResponse.json({ error: 'Venda não encontrada' }, { status: 404 });
+    }
+
+    // Calcular comissão
+    const percent = comissaoPercentual || venda.user?.comissaoPercentual || 10;
+    const comissao = (venda.valor * percent) / 100;
+
+    // Atualizar comissão do vendedor
+    if (venda.userId) {
+      await prisma.user.update({
+        where: { id: venda.userId },
+        data: { comissaoTotal: { increment: comissao } }
+      });
+    }
+
+    return NextResponse.json({ success: true, comissao });
+  } catch (error) {
+    console.error('Erro:', error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
