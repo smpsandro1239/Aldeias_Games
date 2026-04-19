@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         qrCodeData: generateQRData('', user.id, valor, passwordOneTime),
         estado: 'pendente',
         requerAutorizacao: aldeia?.requerAutorizacaoCarregamento || false,
-        ip,
+        ipOrigem: ip,
         dispositivo,
       },
     });

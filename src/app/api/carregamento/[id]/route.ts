@@ -120,7 +120,7 @@ export async function PUT(request: NextRequest) {
         data: {
           tentativasErro: { increment: 1 },
           ultimoErroTimestamp: new Date(),
-          ip,
+          ipOrigem: ip,
         }
       });
 
@@ -155,7 +155,7 @@ export async function PUT(request: NextRequest) {
         confirmadoPorId: user.id,
         confirmadoAt: new Date(),
         tentativaUsada: true,
-        ip,
+        ipOrigem: ip,
         dispositivo,
         observacoes: 'Carregamento confirmado',
       }
