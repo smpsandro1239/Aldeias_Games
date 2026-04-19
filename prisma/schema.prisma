@@ -268,9 +268,17 @@ model Evento {
   dataFim             DateTime
   objectivoAngariacao Float?
   estado              EstadoEvento @default(rascunho)
-  publico             Boolean      @default(false)
+  publiko             Boolean      @default(false)
   totalAngariado      Float        @default(0)
   totalParticipacoes  Int          @default(0)
+  
+  // Template / Recorrência
+  isTemplate          Boolean      @default(false)
+  templateNome        String?      // Nome do template ex: "Festa Junina", "Feira Livro"
+  frequenciaRecorrencia Recorrencia? // semanal, quinzenal, mensal
+  diaSemanaRecorrencia Int?        // 0=Domingo, 1=Segunda, etc
+  proximaData         DateTime?     // Próxima data de criação automática
+  
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
   aldeiaId            String
