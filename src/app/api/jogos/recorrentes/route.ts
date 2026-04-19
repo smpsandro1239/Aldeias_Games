@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
           premio: tipoJogo === 'tombola' ? { tipo: 'euromilhoes' } : null
         }),
         preco: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
-        precoBase: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
         stockInicial: 100,
         stockAtual: 100,
         limitePorUsuario: 10,
