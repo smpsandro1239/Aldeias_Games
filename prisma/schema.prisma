@@ -310,6 +310,14 @@ model Jogo {
   estado                  EstadoJogo     @default(aberto)
   dataAbertura            DateTime?
   dataFecho               DateTime?
+  
+  // Campos para jogos recorrentes
+  recorrente              Boolean        @default(false)
+  frequenciaRecorrencia   Recorrencia?   // semanal, quinzenal, mensal
+  proximaDataCriacao     DateTime?
+  jogoPaiId              String?        // se for um jogo cópia de outro
+  ativo                 Boolean        @default(true)
+  
   totalParticipacoes      Int            @default(0)
   totalAngariado          Float          @default(0)
   sorteado                Boolean        @default(false)
@@ -601,6 +609,12 @@ enum MetodoPagamento {
   stripe
   transferencia
   saldo
+}
+
+enum Recorrencia {
+  semanal
+  quinzenal
+  mensal
 }
 
 enum EstadoPagamento {
