@@ -799,31 +799,42 @@ model PedidoCarregamento {
   valor Float
   
   passwordOneTime String?
+  qrCodeData String? // Dados encriptados do QR
   
   expiresAt DateTime?
   
   estado EstadoPedido @default(pendente)
   
-  pagamentoConfirmado Boolean @default(false)
+  // Controlo antifraude
+  tentativaUsada Boolean @default(false)
+  tentativasErro Int @default(0)
+  ultimoErroTimestamp DateTime?
+  ip origem String?
+  dispositivo String?
   
+  // Confirmação
+  pagamentoConfirmado Boolean @default(false)
   confirmadoPorId String?
   confirmadoPor User? @relation("ConfirmacaoCarregamento", fields: [confirmadoPorId], references: [id])
   confirmadoAt DateTime?
+  observacoes String?
   
+  // Autorização/admin
   requerAutorizacao Boolean @default(false)
-  
   autorizado Boolean @default(false)
   autorizadoPorId String?
   autorizadoPor User? @relation("AutorizacaoCarregamento", fields: [autorizadoPorId], references: [id])
   autorizadoAt DateTime?
+  motivoRejeicao String?
   
-  codigoQR String?
+  // Metadados
+  metodoValidacao String? // qr_code, password
+  metodoPagamento String? // dinheiro
   
+  // Notificações
   notificadoJogador Boolean @default(false)
   notificadoVendedor Boolean @default(false)
   notificadoAdmin Boolean @default(false)
-  
-  metodoPagamento String? // dinheiro, mbway, transferencia
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -832,6 +843,7 @@ model PedidoCarregamento {
   @@index([vendedorId])
   @@index([estado])
   @@index([passwordOneTime])
+  @@index([expiresAt])
 }
 
 model PedidoNotificacao {
