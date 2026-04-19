@@ -125,7 +125,6 @@ export async function PUT(request: NextRequest) {
           descricao: jogo.descricao,
           configuracao: jogo.configuracao,
           preco: jogo.preco,
-          precoBase: jogo.precoBase,
           stockInicial: jogo.stockInicial,
           stockAtual: jogo.stockInicial,
           limitePorUsuario: jogo.limitePorUsuario,
