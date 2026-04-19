@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         by: ['userId'],
         where: {
           userId: { in: vendedores.map(v => v.id) },
-          tipo: { in: ['venda', 'pagamento'] },
+          tipo: { in: ['venda', 'pagamento'] as any },
         },
         _sum: { valor: true },
         _count: { id: true },
