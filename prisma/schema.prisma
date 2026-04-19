@@ -809,7 +809,7 @@ model PedidoCarregamento {
   tentativaUsada Boolean @default(false)
   tentativasErro Int @default(0)
   ultimoErroTimestamp DateTime?
-  ip origem String?
+  ipOrigem String?
   dispositivo String?
   
   // Confirmação
