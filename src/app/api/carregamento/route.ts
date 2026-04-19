@@ -52,11 +52,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if aldeia requires authorization
-    const aldeia = await prisma.aldeia.findUnique({
-      where: { id: aldeiaId },
-      select: { requerAutorizacaoCarregamento: true }
-    });
-
     const { ip, dispositivo } = getClientInfo(request);
     const passwordOneTime = generatePassword(8);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
@@ -86,7 +81,7 @@ export async function POST(request: NextRequest) {
         expiresAt,
         qrCodeData: generateQRData('', user.id, valor, passwordOneTime),
         estado: 'pendente',
-        requerAutorizacao: aldeia?.requerAutorizacaoCarregamento || false,
+        requerAutorizacao: false,
         ipOrigem: ip,
         dispositivo,
       },
