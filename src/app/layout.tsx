@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Serif, Plus_Jakarta_Sans, Chakra_Petch, Russo_One } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ReactQueryProvider } from "@/components/providers/react-query-provider";
+import { SentryInit } from "@/components/sentry-init";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -78,8 +80,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster position="top-right" richColors />
+          <ReactQueryProvider>
+            <SentryInit />
+            {children}
+            <Toaster position="top-right" richColors />
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

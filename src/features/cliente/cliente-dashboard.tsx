@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { WalletCard } from "@/components/wallet/wallet-card";
 import { GameList } from "@/components/games/game-list";
 import { AldeiaWizardModal } from "@/components/modals/aldeia-wizard-modal";
+import { LeaderboardList } from "@/components/leaderboard/leaderboard-list";
 
 interface ClienteDashboardProps {
   token: string;
@@ -367,6 +368,13 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
             <Receipt className="h-3 w-3 mr-1" />
             Extrato
           </TabsTrigger>
+          <TabsTrigger
+            value="ranking"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
+          >
+            <Trophy className="h-3 w-3 mr-1" />
+            Rankings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="jogos" className="space-y-4">
@@ -583,6 +591,10 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ranking" className="space-y-4">
+          <LeaderboardList aldeiaId={userProfile?.aldeiaId} />
         </TabsContent>
       </Tabs>
 
