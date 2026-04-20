@@ -26,7 +26,8 @@ import {
   PartyPopper,
   Loader2,
   QrCode,
-  User
+  User,
+  X
 } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 
@@ -93,7 +94,7 @@ function AldeiaPageContent() {
   const toggleNumero = (num: string) => {
     if (numerosSelecionados.includes(num)) {
       setNumerosSelecionados(numerosSelecionados.filter((n) => n !== num));
-    } else if (numerosSelecionados.length < (selectedJogo?.tipo === 'raspadinha' ? 1 : 5)) {
+    } else if (numerosSelecionados.length < 20) {
       setNumerosSelecionados([...numerosSelecionados, num]);
     }
   };
@@ -351,9 +352,20 @@ function AldeiaPageContent() {
               </button>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Selecionados: {numerosSelecionados.length}/{selectedJogo?.tipo === 'poio_da_vaca' ? '1' : '5'}
-          </p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-muted-foreground">
+              Selecionados: {numerosSelecionados.length}/20
+            </p>
+            {numerosSelecionados.length > 0 && (
+              <button
+                onClick={() => setNumerosSelecionados([])}
+                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" />
+                Limpar
+              </button>
+            )}
+          </div>
         </div>
       )}
       

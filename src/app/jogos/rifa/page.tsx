@@ -24,7 +24,8 @@ import {
   TrendingUp,
   TrendingDown,
   Euro,
-  LayoutGrid
+  LayoutGrid,
+  X
 } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
@@ -214,10 +215,10 @@ export default function RifaPage() {
     if (numerosSelecionados.includes(num)) {
       setNumerosSelecionados(numerosSelecionados.filter(n => n !== num));
     } else {
-      if (numerosSelecionados.length < 5) {
+      if (numerosSelecionados.length < 20) {
         setNumerosSelecionados([...numerosSelecionados, num]);
       } else {
-        toast.warning("Máximo de 5 números por participação");
+        toast.warning("Máximo de 20 números por participação");
       }
     }
   };
@@ -229,11 +230,15 @@ export default function RifaPage() {
       return;
     }
     const shuffled = available.sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, Math.min(count, 5 - numerosSelecionados.length));
+    const selected = shuffled.slice(0, Math.min(count, 20 - numerosSelecionados.length));
     if (selected.length < count) {
       toast.warning(`Apenas ${selected.length} número(s) disponível(is)`);
     }
     setNumerosSelecionados([...numerosSelecionados, ...selected]);
+  };
+
+  const clearSelection = () => {
+    setNumerosSelecionados([]);
   };
 
   const handleParticipar = async () => {
@@ -607,13 +612,22 @@ export default function RifaPage() {
 
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <p className="text-xs text-[#e0bfb7]">Selecionados: {numerosSelecionados.length}/5</p>
+              <p className="text-xs text-[#e0bfb7]">Selecionados: {numerosSelecionados.length}/20</p>
               <div className="flex gap-1">
+                {numerosSelecionados.length > 0 && (
+                  <button
+                    onClick={clearSelection}
+                    className="px-2 py-1 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all flex items-center gap-1"
+                  >
+                    <X className="w-3 h-3" />
+                    Limpar
+                  </button>
+                )}
                 {randomOptions.map((count) => (
                   <button
                     key={count}
                     onClick={() => selectRandomNumbers(count)}
-                    disabled={numerosSelecionados.length >= 5}
+                    disabled={numerosSelecionados.length >= 20}
                     className="px-2 py-1 rounded-lg text-xs font-medium bg-[#ff734b]/20 text-[#ff734b] hover:bg-[#ff734b]/30 transition-all disabled:opacity-50 flex items-center gap-1"
                   >
                     <Shuffle className="w-3 h-3" />
