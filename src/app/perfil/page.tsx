@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, User as User, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X } from "lucide-react";
+import { ArrowLeft, User as User, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { BottomNav } from "@/components/bottom-nav";
 import { UserMenuModal } from "@/components/user-menu-modal";
+import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
 
 interface Aldeia {
   id: string;
@@ -44,6 +45,7 @@ export default function PerfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [carregarSaldoOpen, setCarregarSaldoOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -224,6 +226,13 @@ export default function PerfilPage() {
       </header>
 
       <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
+      
+      <CarregarSaldoModal 
+        open={carregarSaldoOpen} 
+        onOpenChange={setCarregarSaldoOpen}
+        aldeiaId={formData.aldeiaId}
+        aldeiaNome={formData.aldeiaNome}
+      />
 
       <main className="px-4 pt-6 space-y-6">
         <div className="flex flex-col items-center">
@@ -377,6 +386,14 @@ export default function PerfilPage() {
             )}
           </div>
         </div>
+
+        <button
+          onClick={() => setCarregarSaldoOpen(true)}
+          className="w-full py-4 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2"
+        >
+          <Wallet className="w-5 h-5" />
+          Carregar Saldo
+        </button>
 
         <button
           onClick={handleSave}
