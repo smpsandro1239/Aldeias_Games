@@ -281,9 +281,35 @@ export default function RifaPage() {
            return;
          }
          await criarParticipacao("saldo");
-       } else if (metodo === "stripe") {
-         toast.info("Stripe em implementação");
-       }
+} else if (metodo === "stripe") {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            toast.error("Precisa de login para usar cartão");
+            return;
+          }
+          const res = await fetch("/api/pagamentos/stripe", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              valor: numerosSelecionados.length * jogo.preco,
+              descricao: `Rifa: ${jogo.nome}`,
+              metadata: { jogoId: jogo.id, numeros: numerosSelecionados }
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            toast.error(data.error || "Erro ao processar pagamento");
+            return;
+          }
+          if (data.data?.url) {
+            window.location.href = data.data.url;
+          } else {
+            toast.error("Erro: URL de pagamento não disponível");
+          }
+        }
      } catch (error) {
        console.error("Erro no pagamento:", error);
        toast.error("Erro ao processar pagamento");
