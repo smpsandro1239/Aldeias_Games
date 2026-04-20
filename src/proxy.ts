@@ -92,8 +92,18 @@ async function handleApiRequest(request: NextRequest): Promise<NextResponse | nu
 
     // Webhooks excluídos
     if (!pathname.startsWith('/api/stripe/webhook') && !pathname.startsWith('/api/mbway/webhook')) {
-      const isValidOrigin = origin && (origin === appUrl || origin.startsWith('http://localhost:'));
-      const isValidReferer = referer && (referer.startsWith(appUrl) || referer.startsWith('http://localhost:'));
+      const isValidOrigin = origin && (
+        origin === appUrl || 
+        origin.startsWith('http://localhost:') ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.vercel.sh')
+      );
+      const isValidReferer = referer && (
+        referer.startsWith(appUrl) || 
+        referer.startsWith('http://localhost:') ||
+        referer.endsWith('.vercel.app') ||
+        referer.endsWith('.vercel.sh')
+      );
 
       if (!isValidOrigin && !isValidReferer) {
         return NextResponse.json(
