@@ -105,24 +105,34 @@ export async function PATCH(request: NextRequest) {
 
     // Se confirmado, adicionar saldo ao utilizador
     if (acao === 'confirmar' && pedido.valor > 0) {
-      // Criar transação de carregamento
-      await prisma.transacao.create({
-        data: {
-          userId: pedido.userId,
-          tipo: 'carregamento_saldo',
-          valor: pedido.valor,
-          descricao: `Carregamento via vendedor confirmado`,
-          estado: 'concluido'
-        }
-      });
+      try {
+        // Criar transação de carregamento
+        console.log('Criando transação para userId:', pedido.userId, 'valor:', pedido.valor);
+        
+        await prisma.transacao.create({
+          data: {
+            userId: pedido.userId,
+            tipo: 'carregamento_saldo',
+            valor: pedido.valor,
+            descricao: 'Carregamento via vendedor confirmado',
+            estado: 'concluido'
+          }
+        });
+        console.log('Transação criada com sucesso');
 
-      // Atualizar saldo do utilizador
-      await prisma.user.update({
-        where: { id: pedido.userId },
-        data: {
-          saldo: { increment: pedido.valor }
-        }
-      });
+        // Atualizar saldo do utilizador
+        console.log('Atualizando saldo do utilizador:', pedido.userId);
+        await prisma.user.update({
+          where: { id: pedido.userId },
+          data: {
+            saldo: { increment: pedido.valor }
+          }
+        });
+        console.log('Saldo atualizado com sucesso');
+      } catch (transError) {
+        console.error('Erro ao criar transação:', transError);
+        throw transError;
+      }
     }
 
     // TODO: Enviar notificações ao utilizador
@@ -133,6 +143,7 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error('Erro ao processar pedido:', error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+    return NextResponse.json({ error: 'Erro interno do servidor', details: errMsg }, { status: 500 });
   }
 }
