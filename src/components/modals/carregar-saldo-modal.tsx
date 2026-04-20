@@ -85,12 +85,8 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
 
   const fetchVendedores = async () => {
     if (!aldeiaId) return;
-    const token = localStorage.getItem("token");
-    if (!token) return;
     try {
-      const res = await fetch(`/api/admin/vendedores?aldeiaId=${aldeiaId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await fetch(`/api/vendedores?aldeiaId=${aldeiaId}`);
       const data = await res.json();
       if (data.data) {
         setVendedores(data.data);
