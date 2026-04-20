@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Euro, Wallet, Phone, Building2, AlertTriangle, Check, Copy, Mail, MessageCircle } from "lucide-react";
+import { Euro, Wallet, Phone, Building2, AlertTriangle, Check, Copy, Mail, MessageCircle, User, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface CarregarSaldoModalProps {
@@ -30,11 +30,15 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
   const [saldo, setSaldo] = useState(0);
   const [user, setUser] = useState<any>(null);
   const [dadosConta, setDadosConta] = useState<DadosConta>({});
-  const [metodoCarregamento, setMetodoCarregamento] = useState<"dinheiro" | "mbway" | "transferencia">("dinheiro");
+  const [metodoCarregamento, setMetodoCarregamento] = useState<"dinheiro" | "mbway" | "transferencia" | "vendedor">("dinheiro");
   const [valor, setValor] = useState("");
   const [descricao, setDescricao] = useState("");
   const [comprovativo, setComprovativo] = useState<string | null>(null);
   const [carregamentoResult, setCarregamentoResult] = useState<any>(null);
+  const [vendedores, setVendedores] = useState<any[]>([]);
+  const [selectedVendedor, setSelectedVendedor] = useState<any>(null);
+  const [vendedorDropdownOpen, setVendedorDropdownOpen] = useState(false);
+  const [pedidoResult, setPedidoResult] = useState<any>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -79,6 +83,29 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
     }
   };
 
+  const fetchVendedores = async () => {
+    if (!aldeiaId) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/admin/vendedores?aldeiaId=${aldeiaId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.data) {
+        setVendedores(data.data);
+      }
+    } catch (e) {
+      console.error("Erro ao buscar vendedores:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (open && aldeiaId) {
+      fetchVendedores();
+    }
+  }, [open, aldeiaId]);
+
   const handleCarregar = async () => {
     const valorNum = parseFloat(valor);
     if (!valorNum || valorNum <= 0) {
@@ -88,6 +115,54 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
 
     if (valorNum < 1) {
       toast.error("Valor mínimo é 1€");
+      return;
+    }
+
+    // Para pedido ao vendedor, validar seleção
+    if (metodoCarregamento === "vendedor") {
+      if (!selectedVendedor) {
+        toast.error("Selecione um vendedor");
+        return;
+      }
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/wallet/carregar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            valor: valorNum,
+            metodoCarregamento: "vendedor",
+            vendedorId: selectedVendedor.id,
+            descricao: descricao || `Pedido de carregamento para ${eventoNome || aldeiaNome}`,
+            eventoId,
+            aldeiaId
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(data.error || "Erro ao criar pedido");
+          return;
+        }
+
+        setPedidoResult({
+          vendedor: selectedVendedor,
+          valor: valorNum,
+          descricao: descricao || `Pedido de carregamento para ${eventoNome || aldeiaNome}`
+        });
+        toast.success("Pedido enviado ao vendedor!");
+
+      } catch (error) {
+        console.error("Erro ao criar pedido:", error);
+        toast.error("Erro ao criar pedido");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -137,6 +212,51 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
       toast.success("IBAN copiado!");
     }
   };
+
+  if (pedidoResult) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2 text-center">
+            <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-8 h-8 text-orange-500" />
+            </div>
+            <DialogTitle className="font-headline text-xl text-orange-500">
+              Pedido Enviado!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 space-y-4">
+            <div className="bg-surface-container-high rounded-xl p-4 text-center">
+              <p className="text-xs text-on-surface-variant">Valor Pedido</p>
+              <p className="font-headline text-4xl text-primary">{pedidoResult.valor}€</p>
+            </div>
+
+            <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+              <p className="text-xs text-orange-500 font-medium flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Vendedor: {pedidoResult.vendedor?.nome}
+              </p>
+              <p className="text-xs text-orange-500/80 mt-1">
+                O vendedor foi notificado e vai receber o seu pedido. Quando ele confirmar a receção do dinheiro, o saldo será adicionado à sua conta.
+              </p>
+            </div>
+
+            <Button 
+              onClick={() => {
+                setPedidoResult(null);
+                setValor("");
+                setDescricao("");
+                onOpenChange(false);
+              }}
+              className="w-full"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (carregamentoResult) {
     return (
@@ -271,8 +391,58 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
                   <p className="text-xs opacity-60">Transferência bancária</p>
                 </div>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setMetodoCarregamento("vendedor")}
+                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                  metodoCarregamento === "vendedor" 
+                    ? "bg-orange-600/20 text-orange-400 border border-orange-600/30" 
+                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                }`}
+              >
+                <User className="w-5 h-5" />
+                <div className="text-left">
+                  <p className="font-medium">Pedir ao Vendedor</p>
+                  <p className="text-xs opacity-60">O vendedor traz o dinheiro</p>
+                </div>
+              </button>
             </div>
           </div>
+
+          {metodoCarregamento === "vendedor" && (
+            <div className="space-y-2">
+              <Label>Escolher Vendedor</Label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setVendedorDropdownOpen(!vendedorDropdownOpen)}
+                  className="w-full p-4 rounded-xl bg-surface-container-low text-left flex items-center justify-between"
+                >
+                  <span>{selectedVendedor?.nome || "Selecione um vendedor"}</span>
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+                {vendedorDropdownOpen && (
+                  <div className="absolute z-10 w-full bg-surface-container-high border border-outline-variant/10 rounded-xl mt-1 max-h-48 overflow-y-auto">
+                    {vendedores.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedVendedor(v);
+                          setVendedorDropdownOpen(false);
+                        }}
+                        className="w-full p-3 text-left hover:bg-surface-container-low flex items-center gap-2"
+                      >
+                        <User className="w-4 h-4" />
+                        {v.nome}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {metodoCarregamento === "transferencia" && dadosConta.iban && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
@@ -313,7 +483,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
             disabled={loading || !valor || parseFloat(valor) <= 0}
             className="w-full py-6"
           >
-            {loading ? "A processar..." : `Confirmar Carregamento de €${valor || "0"}`}
+            {loading ? "A processar..." : metodoCarregamento === "vendedor" ? `Pedir ao Vendedor (${valor || "0"}€)` : `Confirmar Carregamento de €${valor || "0"}`}
           </Button>
         </div>
       </DialogContent>

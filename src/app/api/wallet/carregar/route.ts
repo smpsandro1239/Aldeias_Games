@@ -10,11 +10,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Apenas admins e vendedores podem registar carregamentos (para tracking)
-    // Utilizadores normais NÃO podem carregar saldo aqui — devem usar Stripe/MBWay
-    if (!hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
-      return NextResponse.json({ error: 'Não autorizado. Apenas admins e vendedores podem registar carregamentos.' }, { status: 403 });
-    }
-
     const body = await request.json();
     const { 
       valor, 
@@ -28,6 +23,13 @@ export async function POST(request: NextRequest) {
       aldeiaId 
     } = body;
 
+    // Utilizadores normais podem fazer pedido ao vendedor
+    if (metodoCarregamento === 'vendedor') {
+      // Todos os utilizadores podem pedir ao vendedor
+    } else if (!hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
+      return NextResponse.json({ error: 'Não autorizado. Apenas admins e vendedores podem registar carregamentos.' }, { status: 403 });
+    }
+
     if (!valor || valor <= 0) {
       return NextResponse.json({ error: 'Valor inválido' }, { status: 400 });
     }
@@ -38,6 +40,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: `Valor máximo de carregamento: €${MAX_CARREGAMENTO}` 
       }, { status: 400 });
+    }
+
+    // Para "pedido ao vendedor", criar um pedido pendente
+    if (metodoCarregamento === 'vendedor' && body.vendedorId) {
+      const aldeiaTargetIdForPedido = aldeiaId || user.aldeiaId;
+      const pedido = await prisma.pedidoCarregamento.create({
+        data: {
+          valor: valor,
+          estado: 'pendente',
+          userId: user.id,
+          vendedorId: body.vendedorId,
+          aldeiaId: aldeiaTargetIdForPedido,
+        },
+        include: {
+          vendedor: { select: { id: true, nome: true, telefone: true } },
+          user: { select: { id: true, nome: true } }
+        }
+      });
+
+      // TODO: Notificar vendedor via push/email/etc
+      
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: pedido.id,
+          valor: pedido.valor,
+          estado: pedido.estado,
+          vendedor: pedido.vendedor,
+          dataHora: pedido.createdAt
+        }
+      });
     }
 
     if (!metodoCarregamento || !['dinheiro', 'mbway', 'transferencia'].includes(metodoCarregamento)) {
