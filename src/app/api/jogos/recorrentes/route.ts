@@ -112,7 +112,7 @@ export async function PUT(request: NextRequest) {
         case 'quinzenal':
           nextDate.setDate(nextDate.getDate() + 14);
           break;
-        case 'mensual':
+        case 'mensal':
           nextDate.setMonth(nextDate.getMonth() + 1);
           break;
       }

@@ -10,6 +10,9 @@ export async function GET(request: NextRequest) {
     }
 
     const aldeiaId = user.aldeiaId;
+    if (!aldeiaId) {
+      return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 400 });
+    }
 
     // Buscar eventos dos últimos 6 meses
     const sixMonthsAgo = new Date();
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const eventos = await prisma.evento.findMany({
       where: {
-        aldeiaId,
+        aldeiaId: aldeiaId,
         createdAt: { gte: sixMonthsAgo },
         isTemplate: false,
       },

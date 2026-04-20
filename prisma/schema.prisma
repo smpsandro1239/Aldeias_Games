@@ -268,7 +268,7 @@ model Evento {
   dataFim             DateTime
   objectivoAngariacao Float?
   estado              EstadoEvento @default(rascunho)
-  publiko             Boolean      @default(false)
+  publico             Boolean      @default(false)
   totalAngariado      Float        @default(0)
   totalParticipacoes  Int          @default(0)
   

@@ -24,7 +24,7 @@ interface EventoData {
   dataInicio: string;
   dataFim: string;
   objectivoAngariacao?: number;
-  publiko: boolean;
+  publico: boolean;
   aldeiaId: string;
   estado: "rascunho" | "ativo" | "fechado" | "finalizado";
   jogosSelecionados?: string[]; // tipos de jogos para criar: raspadinha, rifa, tombola, poio_vaca
@@ -53,7 +53,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
     dataInicio: "",
     dataFim: "",
     objectivoAngariacao: "",
-    publiko: false,
+    publico: false,
     aldeiaId: aldeiaId || "",
     estado: "rascunho" as "rascunho" | "ativo" | "fechado" | "finalizado",
   });
@@ -69,7 +69,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         dataInicio: initialData.dataInicio ? new Date(initialData.dataInicio).toISOString().slice(0, 16) : "",
         dataFim: initialData.dataFim ? new Date(initialData.dataFim).toISOString().slice(0, 16) : "",
         objectivoAngariacao: initialData.objectivoAngariacao ? String(initialData.objectivoAngariacao) : "",
-        publiko: initialData.publiko || false,
+        publico: initialData.publico || false,
         aldeiaId: initialData.aldeiaId || aldeiaId || "",
         estado: initialData.estado || "rascunho",
       });
@@ -80,7 +80,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         dataInicio: "",
         dataFim: "",
         objectivoAngariacao: "",
-        publiko: false,
+        publico: false,
         aldeiaId: aldeiaId || "",
         estado: "rascunho",
       });
@@ -124,7 +124,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         objectivoAngariacao: formData.objectivoAngariacao
           ? parseFloat(formData.objectivoAngariacao)
           : undefined,
-        publiko: formData.publiko,
+        publico: formData.publico,
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
         jogosSelecionados: jogosSelecionados,
@@ -137,7 +137,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
           dataInicio: "",
           dataFim: "",
           objectivoAngariacao: "",
-          publiko: false,
+          publico: false,
           aldeiaId: aldeiaId || "",
           estado: "rascunho",
         });
@@ -329,8 +329,8 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
               </div>
               <Switch
                 id="publico"
-                checked={formData.publiko}
-                onCheckedChange={(checked) => setFormData({ ...formData, publiko: checked })}
+                checked={formData.publico}
+                onCheckedChange={(checked) => setFormData({ ...formData, publico: checked })}
               />
             </div>
           </div>

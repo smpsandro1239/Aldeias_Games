@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         descricao,
         aldeiaId,
         objectivoAngariacao,
-        publiko: false,
+        publico: false,
         estado: 'rascunho',
         dataInicio: new Date(),
         dataFim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 dias
@@ -120,7 +120,7 @@ export async function PUT(request: NextRequest) {
           descricao: evento.descricao,
           aldeiaId: evento.aldeiaId,
           objectivoAngariacao: evento.objectivoAngariacao,
-          publiko: false,
+publico: false,
           estado: 'rascunho',
           dataInicio: now,
           dataFim: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
@@ -136,7 +136,7 @@ export async function PUT(request: NextRequest) {
         case 'quinzenal':
           nextDate.setDate(nextDate.getDate() + 14);
           break;
-        case 'mensual':
+        case 'mensal':
           nextDate.setMonth(nextDate.getMonth() + 1);
           break;
       }

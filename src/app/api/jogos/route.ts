@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Não autenticado só vê jogos abertos de eventos públicos
       where.estado = 'aberto';
-      where.evento = {
+where.evento = {
         publico: true,
       };
     }
