@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ScratchCardModal, NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes, SelectPaymentModal } from "@/components/modals";
+import { NumberSelectorModal, PoioDaVacaModal, PaymentModal, ConfirmModal, VictoryCelebration, WalletBalance, EmptyJogos, EmptyParticipacoes, SelectPaymentModal } from "@/components/modals";
 import { SkeletonStats, SkeletonGrid, SkeletonList } from "@/components/modals";
 import { toast } from "sonner";
 import { WalletCard } from "@/components/wallet/wallet-card";
@@ -97,7 +97,6 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [userProfile, setUserProfile] = useState<{ role: string; aldeiaId?: string; aldeia?: { nome: string } } | null>(null);
 
   // Modais
-  const [scratchCardOpen, setScratchCardOpen] = useState(false);
   const [numberSelectorOpen, setNumberSelectorOpen] = useState(false);
   const [poioDaVacaOpen, setPoioDaVacaOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -191,7 +190,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
   const handleRevelarRaspadinha = (participacao: Participacao) => {
     setSelectedParticipacao(participacao);
-    setScratchCardOpen(true);
+    router.push(`/raspadinha-premium?participacaoId=${participacao.id}`);
   };
 
   const handleVerVitoria = (participacao: Participacao) => {
@@ -243,8 +242,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       setSelecaoPoioDaVaca([]);
 
       if (selectedJogo.tipo === "raspadinha" && data.participacao) {
-        setSelectedParticipacao(data.participacao);
-        setScratchCardOpen(true);
+        router.push(`/raspadinha-premium?participacaoId=${data.participacao.id}`);
       }
 
       fetchData();
@@ -658,18 +656,27 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         />
       )}
 
-      {selectedParticipacao && (
-        <ScratchCardModal
-          open={scratchCardOpen}
-          onOpenChange={setScratchCardOpen}
-          participacaoId={selectedParticipacao.id}
-          hashRaspe={selectedParticipacao.hashRaspe || undefined}
-          seedRaspe={selectedParticipacao.seedRaspe || undefined}
-          resultadoRaspe={selectedParticipacao.resultadoRaspe || undefined}
-          onReveal={handleRevelar}
-          jaRevelado={selectedParticipacao.revelado}
-          titulo={selectedParticipacao.jogo?.configuracao?.raspadinhaTitulo as string || "RASPADINHA PREMIUM"}
-          organizacao={selectedParticipacao.jogo?.configuracao?.raspadinhaOrganizacao as string || ""}
+      {selectedParticipacao && selectedParticipacao.jogo?.tipo === "raspadinha" && !selectedParticipacao.revelado && (
+        <ConfirmModal
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSelectedParticipacao(null);
+          }}
+          title="RASPADINHA PREMIUM"
+          description={
+            <div className="text-center py-4">
+              <p className="mb-4">Tem uma raspadinha para revelar!</p>
+              <p className="text-sm text-muted-foreground">Clique em "Revelar" para ir para o jogo.</p>
+            </div>
+          }
+          confirmText="Revelar Raspadinha"
+          onConfirm={() => {
+            // Redirecionar para página de raspadinha premium
+            if (selectedParticipacao?.jogo?.tipo === "raspadinha") {
+              setSelectedParticipacao(null);
+              router.push(`/raspadinha-premium?participacaoId=${selectedParticipacao.id}`);
+            }
+          }}
         />
       )}
 
