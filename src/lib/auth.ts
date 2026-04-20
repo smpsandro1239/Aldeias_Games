@@ -156,7 +156,14 @@ export async function getFullUserFromRequest(request: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: tokenData.userId },
-    include: {
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      telefone: true,
+      role: true,
+      aldeiaId: true,
+      saldo: true,
       aldeia: true,
     },
   });
