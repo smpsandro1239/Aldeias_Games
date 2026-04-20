@@ -129,10 +129,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       createPaginatedResponse(participacoes, total, page, limit)
     );
-  } catch (error) {
-    console.error('Erro ao listar participações:', error);
+} catch (error) {
+    console.error('Erro ao criar participação:', error);
+    const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor', details: errMsg },
       { status: 500 }
     );
   }
@@ -231,6 +232,15 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    // DEBUG: Log payment method
+    console.log('Creating participation with:', {
+      metodoPagamento: data.metodoPagamento,
+      valorTotal,
+      userSaldo: (user as any).saldo,
+      isVendaInterna: !data.dadosCliente && effectiveUser?.id,
+      effectiveUserId: effectiveUser?.id
+    });
 
     // Usar transação atómica para evitar race conditions
     const result = await prisma.$transaction(async (tx) => {
