@@ -160,21 +160,21 @@ where.evento = {
               ordem: 'asc',
             },
           },
-          _count: {
-            select: {
-              participacoes: true,
-            },
-          },
         },
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
       }),
       prisma.jogo.count({ where }),
     ]);
 
+    // Adicionar configuracao a cada jogo
+    const jogosComConfig = jogos.map(jogo => ({
+      ...jogo,
+      configuracao: typeof jogo.configuracao === 'string' 
+        ? JSON.parse(jogo.configuracao) 
+        : jogo.configuracao,
+    }));
+
     return NextResponse.json(
-      createPaginatedResponse(jogos, total, page, limit)
+      createPaginatedResponse(jogosComConfig, total, page, limit)
     );
   } catch (error) {
     console.error('Erro ao listar jogos:', error);
