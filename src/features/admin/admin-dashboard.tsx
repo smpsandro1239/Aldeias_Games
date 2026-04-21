@@ -591,6 +591,18 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                     <p className="text-sm text-muted-foreground">{formatDate(ev.dataInicio)} - {formatDate(ev.dataFim)}</p>
                   </div>
                   <div className="flex gap-2 items-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => { 
+                        setSelectedEventoIdParaJogo(ev.id); 
+                        // Filter jogos for this event
+                        const jogosDoEvento = jogos.filter(j => j.eventoId === ev.id);
+                        setJogos(jogosDoEvento.length > 0 ? jogosDoEvento : jogos);
+                      }}
+                    >
+                      <Gamepad2 className="h-4 w-4 mr-1" /> Ver Jogos
+                    </Button>
                     {getEstadoBadge(ev.estado)}
                     <Button variant="ghost" size="icon" onClick={() => { setSelectedEvento(ev); setEventoModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("evento", ev.id)}><Trash2 className="h-4 w-4" /></Button>

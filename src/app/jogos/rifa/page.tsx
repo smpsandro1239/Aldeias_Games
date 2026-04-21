@@ -166,7 +166,19 @@ export default function RifaPage() {
         
         fetchNumerosOcupados();
         
-        const configData = jogoData.configuracao ? JSON.parse(jogoData.configuracao) : { numeroInicial: 1, numeroFinal: 1000, numeroBlocos: 1, permitirStripe: false, valorPremios: null };
+        let configData: Record<string, any> = { numeroInicial: 1, numeroFinal: 1000, numeroBlocos: 1, permitirStripe: false, valorPremios: null };
+        if (jogoData.configuracao) {
+          if (typeof jogoData.configuracao === 'string') {
+            try {
+              configData = JSON.parse(jogoData.configuracao);
+            } catch (e) {
+              console.error("Erro ao parsear configuração:", e);
+              configData = { numeroInicial: 1, numeroFinal: 1000, numeroBlocos: 1, permitirStripe: false, valorPremios: null };
+            }
+          } else if (typeof jogoData.configuracao === 'object') {
+            configData = jogoData.configuracao as Record<string, any>;
+          }
+        }
         const numeroBlocos = configData.numeroBlocos || 1;
         setConfig({
           numeroInicial: configData.numeroInicial || 1,
