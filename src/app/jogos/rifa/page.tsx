@@ -269,19 +269,19 @@ export default function RifaPage() {
        return;
      }
 
-     const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
+const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
 
-     try {
-       if (metodo === "dinheiro") {
-         await criarParticipacao("dinheiro");
-       } else if (metodo === "saldo") {
-         const token = localStorage.getItem("token");
-         if (!token) {
-           toast.error("Precisa de login para usar saldo");
-           return;
-         }
-         await criarParticipacao("saldo");
-} else if (metodo === "stripe") {
+      try {
+        if (metodo === "dinheiro") {
+          await criarParticipacao("dinheiro");
+        } else if (metodo === "saldo") {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            toast.error("Precisa de login para usar saldo");
+            return;
+          }
+          await criarParticipacao("saldo");
+        } else if (metodo === "stripe") {
           const token = localStorage.getItem("token");
           if (!token) {
             toast.error("Precisa de login para usar cartão");
@@ -296,7 +296,7 @@ export default function RifaPage() {
             body: JSON.stringify({
               valor: numerosSelecionados.length * jogo.preco,
               descricao: `Rifa: ${jogo.nome}`,
-              metadata: { jogoId: jogo.id, numeros: numerosSelecionados }
+              metadata: { jogoId: jogo.id, tipo: "participacao", numeros: numerosSelecionados }
             })
           });
           const data = await res.json();
@@ -309,14 +309,44 @@ export default function RifaPage() {
           } else {
             toast.error("Erro: URL de pagamento não disponível");
           }
+        } else if (metodo === "mbway") {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            toast.error("Precisa de login para usar MBWay");
+            return;
+          }
+          if (!participante.telefone) {
+            toast.error("Telefone obrigatório para MBWay");
+            return;
+          }
+          const res = await fetch("/api/pagamentos/mbway", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              telefone: participante.telefone,
+              valor: numerosSelecionados.length * jogo.preco,
+              descricao: `Rifa: ${jogo.nome}`,
+              participacaoId: null
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            toast.error(data.error || "Erro ao iniciar pagamento MBWay");
+            return;
+          }
+          toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
+          await criarParticipacao("mbway");
         }
-     } catch (error) {
-       console.error("Erro no pagamento:", error);
-       toast.error("Erro ao processar pagamento");
-     }
-   };
+      } catch (error) {
+        console.error("Erro no pagamento:", error);
+        toast.error("Erro ao processar pagamento");
+      }
+    };
 
-  const criarParticipacao = async (metodo: "dinheiro" | "saldo") => {
+  const criarParticipacao = async (metodo: "dinheiro" | "saldo" | "mbway") => {
     if (!jogo) return;
 
     const token = localStorage.getItem("token");
@@ -327,7 +357,7 @@ export default function RifaPage() {
         numeros: numerosSelecionados
       },
       quantidade: numerosSelecionados.length,
-      metodoPagamento: metodo
+      metodoPagamento: metodo === "mbway" ? "mbway" : metodo
     };
 
     if (participante.nome && (participante.telefone || participante.email)) {
