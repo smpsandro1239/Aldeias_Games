@@ -34,6 +34,51 @@ export async function POST(request: NextRequest) {
     const result = processWebhookCallback(body);
 
     if (result.success) {
+      // Check if it's a saldo carregamento (carregamento_saldo)
+      const dados = body?.Entity_ClientPhone || body?.dados || body;
+      const tipoTransacao = dados?.tipo || dados?.metadata?.tipo;
+
+      if (tipoTransacao === 'carregamento_saldo') {
+        // Find the carregamento by transactionId reference
+        const carregamento = await prisma.transacao.findFirst({
+          where: {
+            tipo: 'carregamento_saldo',
+            dadosAdicionais: {
+              path: ['transactionId'],
+              equals: result.transactionId,
+            },
+          },
+        });
+
+        if (carregamento) {
+          const dadosOld = carregamento.dadosAdicionais as Record<string, unknown> | undefined;
+          // Verificar se já foi processado para evitar duplicados
+          if (dadosOld?.estado !== 'concluido') {
+            // Creditar saldo ao utilizador
+            await prisma.user.update({
+              where: { id: carregamento.userId },
+              data: {
+                saldo: { increment: carregamento.valor },
+              },
+            });
+
+            // Atualizar estado do carregamento
+            await prisma.transacao.update({
+              where: { id: carregamento.id },
+              data: {
+                dadosAdicionais: {
+                  ...dadosOld,
+                  estado: 'concluido',
+                  confirmedAt: new Date().toISOString(),
+                },
+              },
+            });
+
+            console.log(`Carregamento saldo creditado: €${carregamento.valor} para user ${carregamento.userId}`);
+          }
+        }
+      }
+
       // Buscar participação pelo transactionId nos dados
       const participacao = await prisma.participacao.findFirst({
         where: {

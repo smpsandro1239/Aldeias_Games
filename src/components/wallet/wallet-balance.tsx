@@ -191,34 +191,110 @@ export function AddBalanceModal({ open, onOpenChange, onSuccess, token }: AddBal
     setStep("processing");
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (selectedMethod === "stripe") {
+        const res = await fetch("/api/pagamentos/stripe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            valor: parseFloat(amount),
+            descricao: "Carregamento de saldo",
+            metadata: { tipo: "carregamento_saldo" },
+          }),
+        });
 
-      // In production, this would call the actual payment API
-      const res = await fetch("/api/wallet/carregar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          valor: parseFloat(amount),
-          metodo: selectedMethod,
-        }),
-      });
+        const data = await res.json();
 
-      if (res.ok) {
-        setStep("success");
-        setTimeout(() => {
-          onSuccess();
-          setStep("amount");
-          setAmount("");
-        }, 2000);
-      } else {
-        toast.error("Erro ao processar pagamento");
+        if (!res.ok) {
+          toast.error(data.error || "Erro ao processar pagamento");
+          setStep("method");
+          setLoading(false);
+          return;
+        }
+
+        if (data.data?.url) {
+          window.location.href = data.data.url;
+          return;
+        }
+
+        toast.error("Erro: URL de pagamento não disponível");
         setStep("method");
+      } else if (selectedMethod === "mbway") {
+        // Obter telefone do utilizador logado
+        let telefone = "";
+        try {
+          const userStr = localStorage.getItem("user");
+          if (userStr) {
+            const userData = JSON.parse(userStr);
+            telefone = userData.telefone || "";
+          }
+        } catch (e) {
+          console.error("Erro ao obter dados do utilizador:", e);
+        }
+
+        if (!telefone) {
+          toast.error("Precisa de ter um telefone associado à sua conta para MBWay");
+          setStep("method");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch("/api/pagamentos/mbway", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            telefone: telefone,
+            valor: parseFloat(amount),
+            descricao: "Carregamento de saldo",
+            tipo: "carregamento_saldo",
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(data.error || "Erro ao processar pagamento");
+          setStep("method");
+          setLoading(false);
+          return;
+        }
+
+        toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
+        setStep("method");
+      } else {
+        // For dinheiro/transferencia, use the wallet API directly
+        const res = await fetch("/api/wallet/carregar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            valor: parseFloat(amount),
+            metodoPagamento: selectedMethod,
+          }),
+        });
+
+        if (res.ok) {
+          setStep("success");
+          setTimeout(() => {
+            onSuccess();
+            setStep("amount");
+            setAmount("");
+          }, 2000);
+        } else {
+          const data = await res.json();
+          toast.error(data.error || "Erro ao processar pagamento");
+          setStep("method");
+        }
       }
     } catch (error) {
+      console.error("Payment error:", error);
       toast.error("Erro ao processar pagamento");
       setStep("method");
     } finally {

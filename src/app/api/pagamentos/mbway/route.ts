@@ -61,6 +61,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Se é um carregamento de saldo, criar registo pendente
+    if (body.tipo === 'carregamento_saldo' && user) {
+      await prisma.transacao.create({
+        data: {
+          userId: user.id,
+          tipo: 'carregamento_saldo',
+          valor: valor,
+          descricao: 'Carregamento de saldo via MBWay',
+          dadosAdicionais: {
+            transactionId: result.transactionId,
+            reference: result.reference,
+            estado: 'pendente',
+            telefone: telefoneNormalizado,
+            dataHora: new Date().toISOString(),
+          },
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: {
