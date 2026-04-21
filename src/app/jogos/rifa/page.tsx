@@ -104,7 +104,6 @@ export default function RifaPage() {
   useEffect(() => {
     fetchJogo();
     fetchSaldo();
-    fetchNumerosOcupados();
     
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -119,6 +118,12 @@ export default function RifaPage() {
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (jogo?.id) {
+      fetchNumerosOcupados();
+    }
+  }, [jogo?.id]);
 
   const fetchNumerosOcupados = async () => {
     try {
