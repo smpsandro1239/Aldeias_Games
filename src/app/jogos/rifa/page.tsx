@@ -563,6 +563,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
             onClick={() => {
               setParticipacaoConfirmada(false);
               setNumerosSelecionados([]);
+              fetchNumerosOcupados();
             }}
             className="w-full py-6 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
           >
