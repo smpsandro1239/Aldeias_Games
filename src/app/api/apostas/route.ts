@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getFullUserFromRequest } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
-function getAuthUser(request: NextRequest) {
+function getSimpleAuthUser(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader) {
     try {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     const tipo = searchParams.get("tipo");
     const jogoId = searchParams.get("jogoId");
 
-    const user = getAuthUser(request);
+    const user = getSimpleAuthUser(request);
     const userRole = user?.role || null;
     const userId = user?.id || null;
     const userAldeiaId = user?.aldeiaId || null;
@@ -112,13 +113,43 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { jogoId, numeros, jogador, vendedorId, pago } = body;
+    const { jogoId, numeros, jogador, vendedorId, pago, usarSaldo } = body;
 
     if (!jogoId || !numeros || !numeros.length || !jogador || !jogador.nome) {
       return NextResponse.json(
         { error: "Dados inválidos. É necessário jogoId, números e nome do jogador." },
         { status: 400 }
       );
+    }
+
+    // Get authenticated user for saldo payment processing
+    const user = await getFullUserFromRequest(request) as any;
+    const custoTotal = numeros.length * 5; // Default cost of 5€ per number
+
+    // Handle saldo payment
+    if (usarSaldo && user) {
+      if ((user.saldo || 0) < custoTotal) {
+        return NextResponse.json(
+          { error: "Saldo insuficiente" },
+          { status: 400 }
+        );
+      }
+
+      // Deduct from user saldo and create transaction
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { saldo: { decrement: custoTotal } },
+      });
+
+      await prisma.transacao.create({
+        data: {
+          userId: user.id,
+          valor: -custoTotal,
+          tipo: "pagamento_jogo",
+          descricao: `Poio da Vaca - ${numeros.length} números`,
+          referencia: jogoId,
+        },
+      });
     }
 
     const jogo = await prisma.jogo.findUnique({
@@ -165,9 +196,30 @@ export async function POST(request: NextRequest) {
         jogadorTelefone: jogador.telefone || null,
         jogadorEmail: jogador.email || null,
         vendedorId: vendedorId || null,
-        pago: pago || false,
+        pago: pago || usarSaldo || false,
       },
     });
+
+    // Give cashback for saldo payments
+    if (usarSaldo && user) {
+      const cashbackPercent = 0.05;
+      const cashbackValor = custoTotal * cashbackPercent;
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { saldo: { increment: cashbackValor } },
+      });
+
+      await prisma.transacao.create({
+        data: {
+          userId: user.id,
+          valor: cashbackValor,
+          tipo: "cashback",
+          descricao: `Cashback Poio da Vaca`,
+          referencia: jogoId,
+        },
+      });
+    }
 
     return NextResponse.json({ data: aposta }, { status: 201 });
   } catch (error) {

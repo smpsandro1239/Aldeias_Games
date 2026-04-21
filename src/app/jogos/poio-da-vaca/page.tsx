@@ -373,64 +373,48 @@ export default function PoioDaVacaPage() {
        return;
      }
 
-     try {
-       if (metodo === "dinheiro") {
-         await criarAposta(true);
-       } else if (metodo === "saldo") {
-         const token = localStorage.getItem("token");
-         if (!token) {
-           toast.error("Precisa de sessão para usar saldo");
-           return;
-         }
-         const res = await fetch("/api/wallet/adjust", {
-           method: "POST",
-           headers: { 
-             "Content-Type": "application/json",
-             Authorization: `Bearer ${token}`
-           },
-           body: JSON.stringify({
-             valor: -pagamentoPendente.custoTotal,
-             tipo: "debito",
-             descricao: `Aposta Poio da Vaca - ${pagamentoPendente.numeros.length} números`
-           })
-         });
-         const data = await res.json();
-         if (!res.ok) {
-           toast.error(data.error || "Erro ao processar pagamento");
-           return;
-         }
-         await criarAposta(true);
-       } else if (metodo === "mbway") {
-         const token = localStorage.getItem("token");
-         if (!token) {
-           toast.error("Precisa de sessão para usar MBWay");
-           return;
-         }
-         const tel = jogadorForm.telefone;
-         if (!tel) {
-           toast.error("Telefone obrigatório para MBWay");
-           return;
-         }
-         const res = await fetch("/api/pagamentos/mbway", {
-           method: "POST",
-           headers: { 
-             "Content-Type": "application/json",
-             Authorization: `Bearer ${token}`
-           },
-           body: JSON.stringify({
-             telefone: tel,
-             valor: pagamentoPendente.custoTotal,
-             descricao: `Aposta Poio da Vaca - ${pagamentoPendente.numeros.length} números`
-           })
-         });
-         const data = await res.json();
-         if (!res.ok) {
-           toast.error(data.error || "Erro ao iniciar pagamento MBWay");
-           return;
-         }
-         toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
-         await criarAposta(true);
-       } else if (metodo === "stripe") {
+try {
+        if (metodo === "dinheiro") {
+          await criarAposta(true, "dinheiro");
+        } else if (metodo === "saldo") {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            toast.error("Precisa de sessão para usar saldo");
+            return;
+          }
+          // criarAposta will handle the saldo payment via the apostas API
+          await criarAposta(true, "saldo");
+        } else if (metodo === "mbway") {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            toast.error("Precisa de sessão para usar MBWay");
+            return;
+          }
+          const tel = jogadorForm.telefone;
+          if (!tel) {
+            toast.error("Telefone obrigatório para MBWay");
+            return;
+          }
+          const res = await fetch("/api/pagamentos/mbway", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              telefone: tel,
+              valor: pagamentoPendente.custoTotal,
+              descricao: `Aposta Poio da Vaca - ${pagamentoPendente.numeros.length} números`
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            toast.error(data.error || "Erro ao iniciar pagamento MBWay");
+            return;
+          }
+          toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
+          await criarAposta(true, "mbway");
+        } else if (metodo === "stripe") {
          toast.info("Stripe em implementação");
        }
      } catch (error) {
@@ -439,18 +423,27 @@ export default function PoioDaVacaPage() {
      }
    };
 
-  const criarAposta = async (pago: boolean) => {
+  const criarAposta = async (pago: boolean, metodoPagamento: string = "dinheiro") => {
     if (!pagamentoPendente) return;
+
+    const usarSaldo = metodoPagamento === "saldo";
 
     try {
       const aposta = {
         ...pagamentoPendente,
-        pago
+        pago,
+        usarSaldo
       };
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const token = localStorage.getItem("token");
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
 
       const response = await fetch("/api/apostas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(aposta)
       });
 
