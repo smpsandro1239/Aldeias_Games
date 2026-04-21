@@ -122,9 +122,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Buscar jogo para obter o preço
+    const jogo = await prisma.jogo.findUnique({
+      where: { id: jogoId },
+    });
+
+    if (!jogo) {
+      return NextResponse.json(
+        { error: "Jogo não encontrado" },
+        { status: 404 }
+      );
+    }
+
     // Get authenticated user for saldo payment processing
     const user = await getFullUserFromRequest(request) as any;
-    const custoTotal = numeros.length * 5; // Default cost of 5€ per number
+    const custoTotal = numeros.length * (jogo.preco || jogo.custoQuadrado || 5);
 
     // Handle saldo payment
     if (usarSaldo && user) {
@@ -150,17 +162,6 @@ export async function POST(request: NextRequest) {
           referencia: jogoId,
         },
       });
-    }
-
-    const jogo = await prisma.jogo.findUnique({
-      where: { id: jogoId },
-    });
-
-    if (!jogo) {
-      return NextResponse.json(
-        { error: "Jogo não encontrado" },
-        { status: 404 }
-      );
     }
 
     const apostasExistentes = await prisma.aposta.findMany({
