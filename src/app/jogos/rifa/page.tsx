@@ -195,7 +195,7 @@ export default function RifaPage() {
         
         fetchNumerosOcupados();
         
-        let configData: Record<string, any> = { numeroInicial: 1, numeroFinal: 1000, numeroBlocos: 1, permitirStripe: false, valorPremios: null };
+        let configData: Record<string, any> = { numeroInicial: 1, numeroFinal: 1000, numeroBlocos: 1, permitirStripe: false, valorPremios: null, dataSorteio: null, horaSorteio: null, localSorteio: null };
         if (jogoData.configuracao) {
           if (typeof jogoData.configuracao === 'string') {
             try {
