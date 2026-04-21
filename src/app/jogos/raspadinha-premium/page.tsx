@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House, Lock, Loader2, Ticket, Phone, Mail, MessageCircle, Bell, Euro } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House, Lock, Loader2, Ticket, Phone, Mail, MessageCircle, Bell, Euro, HelpCircle, Info, TrendingUp, Calculator } from "lucide-react";
 import { UserMenuButton } from "@/components/user-menu-button";
 import { BottomNav } from "@/components/bottom-nav";
 import { PaymentSelector } from "@/components/payment";
@@ -115,6 +115,8 @@ function RaspadinhaPremiumContent() {
     email: "",
     notificacao: "whatsapp" as "whatsapp" | "email" | "nenhum"
   });
+  
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const isDraggingRef = useRef<Map<number, boolean>>(new Map());
@@ -755,6 +757,14 @@ function RaspadinhaPremiumContent() {
             <span className="text-[#ff734b]">{premioMaximo.toLocaleString("pt-PT")}€</span>
           </h2>
         </motion.section>
+        
+        <button
+          onClick={() => setHowItWorksOpen(true)}
+          className="mx-auto flex items-center gap-2 px-4 py-2 bg-[#1f1b19]/50 border border-[#ff734b]/30 rounded-full text-sm text-[#ff734b] hover:bg-[#1f1b19] hover:border-[#ff734b]/50 transition-all"
+        >
+          <HelpCircle className="w-4 h-4" />
+          Como Funciona
+        </button>
 
         {gamePhase === "not_paid" && (
           <motion.div
@@ -1159,6 +1169,82 @@ function RaspadinhaPremiumContent() {
               amount={preco}
               onSelect={processarPagamento}
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
+        <DialogContent className="max-w-[90vw] sm:max-w-md bg-surface-container border border-outline-variant/10 p-4 overflow-hidden max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="font-headline text-xl flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-[#ff734b]" />
+              Como Funciona a Raspadinha
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-4 pb-4 space-y-4">
+            <div className="bg-surface-container-high rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-[#ff734b] flex items-center gap-2">
+                <Info className="w-4 h-4" />
+                Lógica de Vitória
+              </h3>
+              <p className="text-sm text-[#e0bfb7]">
+                Cada raspadinha usa um sistema <strong>aleatório e justo</strong>. 
+                Quando compras, é gerado um número aleatório (0-9999) que determina se ganhas e qual prémio.
+              </p>
+              <p className="text-sm text-[#e0bfb7]">
+                As probabilidades são definidas pelos organizadores e cada prémio tem uma percentagem de sair.
+              </p>
+            </div>
+
+            {(jogo?.premios || jogo?.configuracao?.premios) && (
+              <div className="bg-surface-container-high rounded-xl p-4 space-y-3">
+                <h3 className="font-semibold text-[#ff734b] flex items-center gap-2">
+                  <Trophy className="w-4 h-4" />
+                  Prémios e Probabilidades
+                </h3>
+                <div className="space-y-2">
+                  {(jogo?.premios || jogo?.configuracao?.premios || []).map((premio: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center py-2 border-b border-outline-variant/10 last:border-0">
+                      <div>
+                        <p className="font-medium text-sm">{premio.nome}</p>
+                        {premio.valorDinheiroAlternative > 0 && (
+                          <p className="text-xs text-[#9cefff]">{premio.valorDinheiroAlternative}€</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-[#ff734b]">{premio.percentagem || 0}%</p>
+                        <p className="text-xs text-[#e0bfb7]/60">chance</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-[#e0bfb7]/60 mt-2 pt-2 border-t border-outline-variant/10">
+                  Soma das percentagens: {(jogo?.premios || jogo?.configuracao?.premios || []).reduce((acc: number, p: any) => acc + (p.percentagem || 0), 0)}%
+                </p>
+              </div>
+            )}
+
+            <div className="bg-surface-container-high rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-[#ff734b] flex items-center gap-2">
+                <Calculator className="w-4 h-4" />
+                Como Ganhar
+              </h3>
+              <p className="text-sm text-[#e0bfb7]">
+                Para ganhar, precisas de encontrar <strong>3 símbolos iguais</strong> entre as 9 células.
+              </p>
+              <p className="text-sm text-[#e0bfb7]">
+                Arranca com o dedo para revelar as células. Se encontrares 3 iguais, ganhas o prémio correspondente!
+              </p>
+            </div>
+
+            {premioMaximo > 0 && (
+              <div className="bg-gradient-to-r from-[#ff734b]/20 to-[#9cefff]/20 rounded-xl p-4">
+                <p className="text-sm text-center">
+                  <span className="text-[#e0bfb7]">Prémio máximo: </span>
+                  <span className="font-bold text-[#ff734b]">{premioMaximo.toLocaleString("pt-PT")}€</span>
+                </p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
