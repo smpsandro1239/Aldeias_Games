@@ -96,6 +96,7 @@ export default function RifaPage() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
+  const [numerosJogados, setNumerosJogados] = useState<number[]>([]);
 
   const randomOptions = [1, 2, 3, 5, 10, 20];
   const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
@@ -121,22 +122,45 @@ export default function RifaPage() {
 
   const fetchNumerosOcupados = async () => {
     try {
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+      const userId = userStr ? JSON.parse(userStr).id : null;
+      
       const response = await fetch(`/api/participacoes?jogoId=${jogo?.id}`);
       const data = await response.json();
       if (data.data && Array.isArray(data.data)) {
-        const numeros = data.data
-          .flatMap((p: any) => {
-            if (p.dadosParticipacao) {
-              try {
-                return JSON.parse(p.dadosParticipacao);
-              } catch {
-                return [];
+        const todosNumeros: number[] = [];
+        const meusNumeros: number[] = [];
+        
+        data.data.forEach((p: any) => {
+          if (p.dadosParticipacao) {
+            let numeros: number[] = [];
+            try {
+              const parsed = JSON.parse(p.dadosParticipacao);
+              // Support both array of numbers and object with 'numeros' property
+              if (Array.isArray(parsed)) {
+                numeros = parsed;
+              } else if (parsed.numeros && Array.isArray(parsed.numeros)) {
+                numeros = parsed.numeros;
               }
+            } catch {
+              numeros = [];
             }
-            return [];
-          })
-          .filter((n: any): n is number => typeof n === "number");
-        setNumerosOcupados(numeros);
+            
+            numeros.forEach((n: number) => {
+              if (!todosNumeros.includes(n)) {
+                todosNumeros.push(n);
+              }
+              // Track if this number belongs to the current user
+              if (userId && p.userId === userId && !meusNumeros.includes(n)) {
+                meusNumeros.push(n);
+              }
+            });
+          }
+        });
+        
+        setNumerosOcupados(todosNumeros);
+        setNumerosJogados(meusNumeros);
       }
     } catch (error) {
       console.error("Erro ao buscar números ocupados:", error);
@@ -226,6 +250,8 @@ export default function RifaPage() {
   const toggleNumero = (num: number) => {
     if (numerosSelecionados.includes(num)) {
       setNumerosSelecionados(numerosSelecionados.filter(n => n !== num));
+    } else if (numerosOcupados.includes(num)) {
+      toast.warning("Este número já foi adquirido. Por favor escolha outro.");
     } else {
       if (numerosSelecionados.length < 20) {
         setNumerosSelecionados([...numerosSelecionados, num]);
@@ -708,6 +734,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
               {numerosDisponiveis.map((num) => {
                 const isSelected = numerosSelecionados.includes(num);
                 const isOcupado = numerosOcupados.includes(num);
+                const isJogado = numerosJogados.includes(num);
                 
                 return (
                   <button
@@ -718,20 +745,26 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                       py-2 px-1 rounded-lg text-xs font-bold transition-all
                       ${isSelected 
                         ? "bg-secondary text-[#110d0c]" 
+                        : isJogado 
+                        ? "bg-orange-500/70 text-white border-2 border-orange-400 cursor-not-allowed"
                         : isOcupado 
                         ? "bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/30"
                         : "bg-surface-container-highest text-on-surface hover:bg-[#58413b]/30"
                       }
                     `}
+                    title={isJogado ? "Este número já foi adquirido por si" : isOcupado ? "Número já adquirido" : `Número ${num}`}
                   >
                     {num}
                   </button>
                 );
               })}
             </div>
-            <p className="text-xs text-[#e0bfb7]/60 mt-2 flex justify-between">
+            <p className="text-xs text-[#e0bfb7]/60 mt-2 flex flex-wrap justify-between gap-3">
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 rounded bg-surface-container-highest border border-gray-600/30"></span> Disponível
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded bg-orange-500/70 border border-orange-400"></span> Jogados
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 rounded bg-gray-800/50 border border-gray-700/30"></span> Ocupado
