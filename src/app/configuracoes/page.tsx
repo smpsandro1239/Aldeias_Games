@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, CreditCard, Phone, Building2, AlertTriangle, Check, Copy, Wallet, Info, ExternalLink } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { UserMenuButton } from "@/components/user-menu-button";
+import { LayoutHeader } from "@/components/layout-header";
 
 interface Aldeia {
   id: string;
@@ -164,19 +163,19 @@ export default function ConfiguracoesPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
-          </button>
-          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">As Minhas Configurações</h1>
-        </div>
-        <UserMenuButton />
-      </header>
+   return (
+     <LayoutHeader>
+       <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
+         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+           <div className="flex items-center gap-3">
+             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
+               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+             </button>
+             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">As Minhas Configurações</h1>
+           </div>
+         </header>
 
-      <main className="px-4 pt-6 space-y-6 pb-24">
+         <main className="px-4 pt-6 space-y-6 pb-24">
         <div className="bg-gradient-to-r from-[#ff734b]/20 to-transparent rounded-2xl p-4 border border-[#ff734b]/10">
           <h2 className="font-serif text-lg text-[#ffb5a0] mb-2">Métodos de Pagamento</h2>
           <p className="text-sm text-[#e0bfb7]">
@@ -534,10 +533,10 @@ export default function ConfiguracoesPage() {
 
             <Button onClick={() => setAjudaModalOpen(false)} className="w-full">
               Entendi
-            </Button>
-          </div>
+          </Button>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LayoutHeader>
   );
 }
