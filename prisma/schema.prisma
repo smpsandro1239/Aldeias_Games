@@ -886,10 +886,10 @@ model EntregaSaldo {
   id String @id @default(cuid())
 
   vendedorId String
-  vendedor User @relation(fields: [vendedorId], references: [id])
+  vendedor User @relation("VendedorEntregas", fields: [vendedorId], references: [id])
 
   adminId String
-  admin User @relation(fields: [adminId], references: [id])
+  admin User @relation("AdminEntregas", fields: [adminId], references: [id])
 
   aldeiaId String
 
