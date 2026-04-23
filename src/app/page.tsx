@@ -121,11 +121,6 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <nav className="hidden md:flex gap-6">
-              <button onClick={() => document.getElementById('eventos')?.scrollIntoView({ behavior: 'smooth' })} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Eventos</button>
-              <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="font-label text-xs font-bold tracking-widest uppercase text-[#9cefff] transition-colors">Aldeias</button>
-              <button onClick={() => router.push('/jogos')} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Competir</button>
-            </nav>
             <div className="w-10 h-10 rounded-full bg-[#2e2928] overflow-hidden border-2 border-[#ff734b]/20 relative">
               {isAuthenticated ? (
                 <button
@@ -168,9 +163,7 @@ export default function Home() {
             <div>
               <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Navegação</h4>
               <ul className="space-y-2 text-sm text-[#e0bfb7]">
-                <li><button onClick={() => document.getElementById('eventos')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#ff734b] transition-colors">Eventos</button></li>
-                <li><button onClick={() => router.push('/jogos')} className="hover:text-[#ff734b] transition-colors">Jogos</button></li>
-                <li><button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#ff734b] transition-colors">Aldeias</button></li>
+                <li><span className="text-[#e0bfb7]/50">Use o menu inferior no mobile</span></li>
               </ul>
             </div>
             <div>
