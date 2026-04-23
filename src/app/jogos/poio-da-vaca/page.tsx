@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Grid2X2, 
-  CheckCircle2, 
-  Calendar, 
-  MapPin, 
+import {
+  Grid2X2,
+  CheckCircle2,
+  Calendar,
+  MapPin,
   Ticket,
   Star,
   Map,
@@ -28,9 +28,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserMenuButton } from "@/components/user-menu-button";
 import { PaymentSelector } from "@/components/payment";
-import { BottomNav } from "@/components/bottom-nav";
+import { LayoutHeader } from "@/components/layout-header";
 
 interface Jogo {
   id: string;
@@ -495,21 +494,21 @@ try {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
-      {/* TopAppBar */}
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
-          </button>
-          <Grid2X2 className="text-[#ff734b]" />
-          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Poio da Vaca</h1>
-        </div>
-        <UserMenuButton />
-      </header>
+   return (
+     <LayoutHeader>
+       <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
+         {/* TopAppBar local (apenas botão voltar e título) */}
+         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+           <div className="flex items-center gap-3">
+             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
+               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+             </button>
+             <Grid2X2 className="text-[#ff734b]" />
+             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Poio da Vaca</h1>
+           </div>
+         </header>
 
-      <main className="px-4 pt-6 space-y-6">
+         <main className="px-4 pt-6 space-y-6">
         {/* Hero Section & Prize */}
         <section className="relative space-y-4 px-2">
           <div className="relative">
@@ -827,16 +826,6 @@ try {
         </section>
        </main>
 
-       <BottomNav />
-
-      <style jsx global>{`
-        .glass-card {
-          background: rgba(46, 41, 40, 0.6);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-        }
-      `}</style>
-
       {/* Modal de Registo de Aposta */}
       <Dialog open={betModalOpen} onOpenChange={setBetModalOpen}>
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
@@ -980,6 +969,7 @@ try {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LayoutHeader>
   );
 }

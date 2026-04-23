@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BottomNav } from "@/components/bottom-nav";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Gamepad2,
@@ -722,8 +722,6 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           tipoJogo={victoryPremio.tipoJogo}
         />
       )}
-
-      <BottomNav role="user" />
     </div>
   );
 }

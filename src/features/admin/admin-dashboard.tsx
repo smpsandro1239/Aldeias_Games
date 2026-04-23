@@ -20,7 +20,7 @@ import { VerificarHashModal } from "@/components/verificar-hash-modal";
 import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { DashboardAnalytics } from "./analytics-dashboard";
 import { toast } from "sonner";
-import { BottomNav } from "@/components/bottom-nav";
+
 
 interface AdminDashboardProps {
   token: string;
@@ -1040,9 +1040,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             )}
           </TabsContent>
         )}
-      </Tabs>
-
-      <BottomNav role="aldeia_admin" />
+       </Tabs>
 
       {/* Modals */}
       <CreateEventoModal

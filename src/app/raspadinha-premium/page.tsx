@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User } from "lucide-react";
-import { UserMenuButton } from "@/components/user-menu-button";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon } from "lucide-react";
+import { LayoutHeader } from "@/components/layout-header";
 
 const iconMap: Record<string, LucideIcon> = {
   military_tech: Trophy,
@@ -345,32 +345,27 @@ export default function RaspadinhaPremiumPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="font-serif italic text-[#ff734b] text-lg font-bold">
-              Aldeias Games
-            </span>
+    <LayoutHeader>
+      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
+        {/* Header da Página (botão voltar e título) */}
+        <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => router.back()}
+                className="p-2 rounded-full text-[#ff734b] hover:bg-[#2e2928] active:scale-95 transition-all"
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="font-serif font-bold text-lg text-[#ffb5a0]">
+                Raspadinha
+              </h1>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-serif font-bold text-lg text-[#ffb5a0]">
-              Raspadinha
-            </h1>
-            <button 
-              onClick={() => router.back()}
-              className="p-2 rounded-full text-[#ff734b] hover:bg-[#2e2928] active:scale-95 transition-all"
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          </div>
-          <UserMenuButton />
-        </div>
-      </header>
+        </header>
 
-      <main className="px-4 py-6 max-w-md mx-auto space-y-6">
+        <main className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Informação do Prémio */}
         <motion.section
           initial={{ opacity: 0, y: -20 }}
@@ -624,36 +619,8 @@ export default function RaspadinhaPremiumPage() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
-
-      {/* Navegação Inferior */}
-      <nav className="fixed bottom-0 left-0 w-full z-40">
-        <div className="bg-[#110d0c]/90 backdrop-blur-xl border-t border-[#ff734b]/10 rounded-t-2xl shadow-[0_-8px_32px_rgba(17,13,12,0.5)]">
-          <div className="flex justify-around items-center px-4 py-3">
-            {[
-              { icon: Home, label: "Início", active: false, route: "/" },
-              { icon: Gamepad2, label: "Jogos", active: true, route: "/jogos" },
-              { icon: Trophy, label: "Prémios", active: false, route: "/jogos" },
-              { icon: User, label: "Perfil", active: false, route: "/" },
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={() => router.push(item.route)}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all active:scale-90 ${
-                  item.active
-                    ? "bg-[#ff734b] text-[#110d0c]"
-                    : "text-[#ffb5a0]/70"
-                }`}
-              >
-                <item.icon className="text-xl" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">
-                  {item.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
-    </div>
+        </AnimatePresence>
+      </div>
+    </LayoutHeader>
   );
 }

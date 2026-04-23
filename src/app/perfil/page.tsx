@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User as User, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet } from "lucide-react";
 import { toast } from "sonner";
-import { BottomNav } from "@/components/bottom-nav";
-import { UserMenuModal } from "@/components/user-menu-modal";
 import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
+import { LayoutHeader } from "@/components/layout-header";
 
 interface Aldeia {
   id: string;
@@ -206,35 +205,26 @@ export default function PerfilPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
-          </button>
-          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">O Teu Perfil</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setUserMenuOpen(true)}
-            className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
-          >
-            <User className="h-4 w-4 text-[#ff734b]" />
-          </button>
-        </div>
-      </header>
+   return (
+     <LayoutHeader>
+       <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
+         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+           <div className="flex items-center gap-3">
+             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
+               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+             </button>
+             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">O Teu Perfil</h1>
+           </div>
+         </div>
 
-      <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
-      
-      <CarregarSaldoModal 
-        open={carregarSaldoOpen} 
-        onOpenChange={setCarregarSaldoOpen}
-        aldeiaId={formData.aldeiaId}
-        aldeiaNome={formData.aldeiaNome}
-      />
+         <CarregarSaldoModal 
+           open={carregarSaldoOpen} 
+           onOpenChange={setCarregarSaldoOpen}
+           aldeiaId={formData.aldeiaId}
+           aldeiaNome={formData.aldeiaNome}
+         />
 
-      <main className="px-4 pt-6 space-y-6">
+         <main className="px-4 pt-6 space-y-6">
         <div className="flex flex-col items-center">
           <div className="relative">
             <input
@@ -410,8 +400,7 @@ export default function PerfilPage() {
           )}
         </button>
       </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </LayoutHeader>
   );
 }

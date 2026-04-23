@@ -27,13 +27,12 @@ import {
   LayoutGrid,
   X
 } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserMenuButton } from "@/components/user-menu-button";
 import { toast } from "sonner";
 import { PaymentSelector } from "@/components/payment";
+import { LayoutHeader } from "@/components/layout-header";
 
 interface Jogo {
   id: string;
@@ -463,18 +462,19 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
     const precoPorNumero = jogo?.preco || 5;
     const totalGasto = numerosSelecionados.length * precoPorNumero;
     
-    return (
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de]">
-        <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.back()} className="p-2 hover:bg-[#2e2928] rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
-            </button>
-            <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Confirmação</h1>
-          </div>
-        </header>
+     return (
+       <LayoutHeader>
+         <div className="min-h-screen bg-[#110d0c] text-[#eae0de]">
+           <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+             <div className="flex items-center gap-3">
+               <button onClick={() => router.back()} className="p-2 hover:bg-[#2e2928] rounded-full transition-colors">
+                 <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+               </button>
+               <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Confirmação</h1>
+             </div>
+           </header>
 
-        <main className="px-4 pt-6 pb-24 max-w-2xl mx-auto">
+           <main className="px-4 pt-6 pb-24 max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="w-10 h-10 text-green-500" />
@@ -575,19 +575,19 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de]">
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 hover:bg-[#2e2928] rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
-          </button>
-          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">A Tua Rifa</h1>
-        </div>
-        <UserMenuButton />
-      </header>
+   return (
+     <LayoutHeader>
+       <div className="min-h-screen bg-[#110d0c] text-[#eae0de]">
+         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+           <div className="flex items-center gap-3">
+             <button onClick={() => router.back()} className="p-2 hover:bg-[#2e2928] rounded-full transition-colors">
+               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+             </button>
+             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">A Tua Rifa</h1>
+           </div>
+         </header>
 
-      <main className="px-4 pt-6 pb-24 max-w-2xl mx-auto space-y-6">
+         <main className="px-4 pt-6 pb-24 max-w-2xl mx-auto space-y-6">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-container to-[#3d1f1a] p-1">
           <div className="bg-surface-container-highest/90 backdrop-blur-md rounded-[1.9rem] p-6 md:p-8">
             <div className="mb-4 inline-block bg-secondary-container/10 border border-secondary-container/20 px-3 py-1 rounded-full">
@@ -879,35 +879,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
           Apoie a cultura local. Todos os lucros revertem para a associação.
         </p>
         </main>
-
-        <Dialog open={paymentModalOpen} onOpenChange={setCreditCardModalOpen}>
-        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="font-headline text-xl flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-[#ff734b]" />
-              Pagamento
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-6 pb-6 space-y-4">
-            <div className="bg-surface-container-high rounded-xl p-4 text-center">
-              <p className="text-xs text-on-surface-variant">Total a pagar</p>
-              <p className="font-headline text-3xl text-primary">
-                {numerosSelecionados.length * (jogo?.preco || 5)}€
-              </p>
-              <p className="text-xs text-on-surface-variant mt-1">
-                {numerosSelecionados.length} número(s) × {jogo?.preco || 5}€
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <PaymentSelector
-                amount={numerosSelecionados.length * (jogo?.preco || 5)}
-                onSelect={processarPagamento}
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+      </div>
+    </LayoutHeader>
   );
 }

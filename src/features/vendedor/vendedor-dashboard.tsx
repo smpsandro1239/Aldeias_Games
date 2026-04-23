@@ -34,7 +34,7 @@ import {
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { POSView } from "./pos-view";
-import { BottomNav } from "@/components/bottom-nav";
+
 import { useRouter } from "next/navigation";
 import { PedidosCarregamentoInline } from "./pedidos-inline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -688,8 +688,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <BottomNav role="vendedor" />
     </div>
   );
 }

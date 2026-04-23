@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { LayoutHeader } from "@/components/layout-header";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { LoaderScreen } from "@/components/loader-screen";
-import { BottomNav } from "@/components/bottom-nav";
 
 const AdminDashboard = dynamic(
   () => import("@/features/admin/admin-dashboard").then((mod) => mod.AdminDashboard),
@@ -78,12 +78,14 @@ export default function AdminDashboardPage() {
       redirectPath="/clientedashboard"
       panelName="AdminDashboard"
     >
-      <AdminDashboard
-        token={token}
-        aldeiaId={user.aldeiaId}
-        userRole={user.role}
-        aldeia={user.aldeia}
-      />
+      <LayoutHeader>
+        <AdminDashboard
+          token={token}
+          aldeiaId={user.aldeiaId}
+          userRole={user.role}
+          aldeia={user.aldeia}
+        />
+      </LayoutHeader>
     </RoleGuard>
   );
 }

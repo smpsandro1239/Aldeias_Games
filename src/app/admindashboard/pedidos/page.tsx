@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BottomNav } from "@/components/bottom-nav";
+import { LayoutHeader } from "@/components/layout-header";
 import { LoaderScreen } from "@/components/loader-screen";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
@@ -147,15 +148,7 @@ export default function AdminPedidosPage() {
 
   return (
     <RoleGuard allowedRoles={["super_admin", "aldeia_admin"]} redirectPath="/" panelName="AdminPedidos">
-      <div className="min-h-screen pb-24">
-        {/* Header */}
-        <div className="sticky top-0 z-40 bg-[#1a1614] border-b border-[#58413b]/20 px-4 py-3">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-[#ffb5a0]">Pedidos de Carregamento</h1>
-            <p className="text-sm text-[#e0bfb7]/60">Confirma os carregamentos solicitados pelos vendedores</p>
-          </div>
-        </div>
-
+      <LayoutHeader>
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
@@ -270,9 +263,7 @@ export default function AdminPedidosPage() {
             )}
           </div>
         </div>
-
-        <BottomNav role="aldeia_admin" />
-      </div>
+      </LayoutHeader>
     </RoleGuard>
   );
 }

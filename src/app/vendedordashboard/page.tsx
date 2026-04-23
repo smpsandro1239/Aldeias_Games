@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { LayoutHeader } from "@/components/layout-header";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { LoaderScreen } from "@/components/loader-screen";
 
@@ -57,7 +58,9 @@ export default function VendedorDashboardPage() {
       redirectPath="/clientedashboard"
       panelName="VendedorDashboard"
     >
-      <VendedorDashboard token={token} />
+      <LayoutHeader>
+        <VendedorDashboard token={token} />
+      </LayoutHeader>
     </RoleGuard>
   );
 }

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BottomNav } from "@/components/bottom-nav";
-import { UserMenuModal } from "@/components/user-menu-modal";
+import { LayoutHeader } from "@/components/layout-header";
 import { ArrowLeft, Wallet, Check, X, Clock, User, Phone, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -143,24 +142,20 @@ export default function PedidosPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-24">
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full">
-            <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
-          </button>
-          <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">
-            Pedidos de Carregamento
-          </h1>
-        </div>
-        <button onClick={() => setUserMenuButtonOpen(true)} className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 flex items-center justify-center">
-          <User className="h-4 w-4 text-[#ff734b]" />
-        </button>
-      </header>
+    <LayoutHeader>
+      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
+        <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full">
+              <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+            </button>
+            <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">
+              Pedidos de Carregamento
+            </h1>
+          </div>
+        </header>
 
-      <UserMenuModal open={userMenuButtonOpen} onOpenChange={setUserMenuButtonOpen} />
-
-      <main className="px-4 pt-4 space-y-4">
+        <main className="px-4 pt-4 space-y-4">
         {/* Pending Orders */}
         <div>
           <h2 className="text-lg font-bold text-[#ffb5a0] mb-3">
@@ -252,10 +247,9 @@ export default function PedidosPage() {
               ))}
             </div>
           </div>
-        )}
-      </main>
-
-      <BottomNav />
+          )}
+        </main>
+      </LayoutHeader>
     </div>
   );
 }
