@@ -35,6 +35,7 @@ import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { POSView } from "./pos-view";
 import { BottomNav } from "@/components/bottom-nav";
+import { useRouter } from "next/navigation";
 
 interface VendedorDashboardProps {
   token: string;
@@ -66,10 +67,16 @@ interface Jogo {
 }
 
 export function VendedorDashboard({ token }: VendedorDashboardProps) {
+  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("vendas");
+
+  // Handler para redirecionar para página de pedidos
+  const handlePedidosClick = () => {
+    router.push("/vendedordashboard/pedidos");
+  };
 
   // Form de nova venda
   const [novaVenda, setNovaVenda] = useState<{
@@ -238,9 +245,10 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pos">POS Mobile</TabsTrigger>
           <TabsTrigger value="vendas">Venda Desktop</TabsTrigger>
+          <TabsTrigger value="pedidos" onClick={handlePedidosClick}>Pedidos</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 

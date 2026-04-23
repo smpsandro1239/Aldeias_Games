@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode, ShoppingCart
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode, ShoppingCart, Wallet
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
@@ -524,24 +524,25 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="overview"><LayoutDashboard className="h-4 w-4 mr-2" /> Visão Geral</TabsTrigger>
-          <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 mr-2" /> Analytics</TabsTrigger>
-          <TabsTrigger value="eventos"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
-          <TabsTrigger value="jogos"><Gamepad2 className="h-4 w-4 mr-2" /> Jogos</TabsTrigger>
-          <TabsTrigger value="vencedores"><Trophy className="h-4 w-4 mr-2" /> Vencedores</TabsTrigger>
-          <TabsTrigger value="verificar"><Hash className="h-4 w-4 mr-2" /> Verificar</TabsTrigger>
-          <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" /> Utilizadores</TabsTrigger>
-          {userRole === "aldeia_admin" && (
-            <TabsTrigger value="comissoes"><DollarSign className="h-4 w-4 mr-2" /> Comissões & POS</TabsTrigger>
-          )}
-          {userRole === "super_admin" && (
-            <>
-              <TabsTrigger value="aldeias"><Building2 className="h-4 w-4 mr-2" /> Aldeias</TabsTrigger>
-              <TabsTrigger value="transacoes"><CreditCard className="h-4 w-4 mr-2" /> Transações</TabsTrigger>
-              <TabsTrigger value="auditoria"><Shield className="h-4 w-4 mr-2" /> Auditoria</TabsTrigger>
-            </>
-          )}
+        <TabsList className="flex flex-wrap">
+            <TabsTrigger value="overview"><LayoutDashboard className="h-4 w-4 mr-2" /> Visão Geral</TabsTrigger>
+            <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 mr-2" /> Analytics</TabsTrigger>
+            <TabsTrigger value="eventos"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
+            <TabsTrigger value="jogos"><Gamepad2 className="h-4 w-4 mr-2" /> Jogos</TabsTrigger>
+            <TabsTrigger value="vencedores"><Trophy className="h-4 w-4 mr-2" /> Vencedores</TabsTrigger>
+            <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')}><Wallet className="h-4 w-4 mr-2" /> Pedidos</TabsTrigger>
+            <TabsTrigger value="verificar"><Hash className="h-4 w-4 mr-2" /> Verificar</TabsTrigger>
+            <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" /> Utilizadores</TabsTrigger>
+            {userRole === "aldeia_admin" && (
+                <TabsTrigger value="comissoes"><DollarSign className="h-4 w-4 mr-2" /> Comissões & POS</TabsTrigger>
+            )}
+            {userRole === "super_admin" && (
+                <>
+                <TabsTrigger value="aldeias"><Building2 className="h-4 w-4 mr-2" /> Aldeias</TabsTrigger>
+                <TabsTrigger value="transacoes"><CreditCard className="h-4 w-4 mr-2" /> Transações</TabsTrigger>
+                <TabsTrigger value="auditoria"><Shield className="h-4 w-4 mr-2" /> Auditoria</TabsTrigger>
+                </>
+            )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
