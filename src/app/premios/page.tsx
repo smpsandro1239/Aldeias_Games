@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { LayoutHeader } from "@/components/layout-header";
 import { Gift, Trophy, Star, Clock, Award, Wallet, User, Heart, Home } from "lucide-react";
-import { BottomNav } from "@/components/bottom-nav";
-import { UserMenuModal } from "@/components/user-menu-modal";
 
 interface User {
   id: string;
@@ -229,67 +228,8 @@ export default function PremiosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body pb-32">
-      {/* Header com logo e perfil */}
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push("/")} className="flex items-center gap-2">
-              <Home className="text-[#ff734b] text-xl" />
-              <span className="font-serif italic text-[#ff734b] text-lg font-bold">
-                Aldeias Games
-              </span>
-            </button>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 relative">
-            {user ? (
-              <button
-                onClick={() => setUserMenuOpen(true)}
-                className="w-full h-full bg-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
-              >
-                <User className="h-4 w-4 text-[#ff734b]" />
-              </button>
-            ) : (
-              <button onClick={() => router.push("/")} className="w-full h-full flex items-center justify-center text-[#ff734b] font-bold text-lg">
-                +
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Separador de navegação */}
-      <div className="flex gap-2 px-4 py-3 border-b border-[#58413b]/20">
-        <button
-          onClick={() => setActiveTab("premios")}
-          className={`px-4 py-2 rounded-full font-bold text-sm transition-all ${
-            activeTab === "premios"
-              ? "bg-[#ff734b] text-[#110d0c]"
-              : "bg-[#2e2928] text-[#e0bfb7]"
-          }`}
-        >
-          Os Teus Prémios
-        </button>
-        <button
-          onClick={() => router.push("/jogos")}
-          className={`px-4 py-2 rounded-full font-bold text-sm transition-all ${
-            activeTab === "jogos"
-              ? "bg-[#ff734b] text-[#110d0c]"
-              : "bg-[#2e2928] text-[#e0bfb7]"
-          }`}
-        >
-          Os Teus Jogos
-        </button>
-      </div>
-
-      {/* Conteúdo principal */}
-      <main className="px-4 pt-6 max-w-md mx-auto space-y-6">
-        {/* Título e descrição */}
-        <div className="text-center mb-8">
-          <h1 className="font-serif text-3xl text-[#ff734b] mb-2">Os Teus Prémios</h1>
-          <p className="text-[#e0bfb7] text-sm">Participa nos jogos da tua aldeia</p>
-        </div>
-
+    <LayoutHeader>
+      <main className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Saldo Card - Always visible for logged users */}
         {user && (
           <div className="bg-gradient-to-br from-[#ff734b]/20 to-[#ff734b]/5 rounded-2xl p-4 border border-[#ff734b]/20">
@@ -306,7 +246,7 @@ export default function PremiosPage() {
         {/* Tab: Prémios */}
         {activeTab === "premios" && (
           <div>
-            <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">As Tuas Vitórias</h2>
+            <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">A Tuas Vitórias</h2>
 
             {loading ? (
               <div className="text-center py-12 text-[#e0bfb7]">A carregar os teus prémios...</div>
@@ -364,68 +304,6 @@ export default function PremiosPage() {
           </div>
         )}
 
-        {/* Tab: Histórico */}
-        {activeTab === "historico" && (
-          <div>
-            <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">Histórico de Jogos</h2>
-            {historico.length === 0 ? (
-              <div className="text-center py-12 text-[#e0bfb7]">Sem histórico de jogos</div>
-            ) : (
-              <div className="space-y-3">
-                {historico.map((item) => (
-                  <div key={item.id} className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-serif text-[#ffb5a0] font-bold">{item.jogoNome}</h3>
-                        <p className="text-sm text-[#e0bfb7]">{item.tipo}</p>
-                      </div>
-                      <div className="text-right">
-                        {item.valor && item.valor > 0 && (
-                          <p className="text-lg font-bold text-green-500">+{item.valor}€</p>
-                        )}
-                        <p className="text-xs text-[#e0bfb7]/60">
-                          {new Date(item.data).toLocaleDateString("pt-PT")}
-                        </p>
-                      </div>
-                    </div>
-                    {item.resultado && (
-                      <p className="text-sm text-[#e0bfb7] mt-2">Resultado: {item.resultado}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab: Números */}
-        {activeTab === "numeros" && (
-          <div>
-            <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">Os Teus Números</h2>
-            {numerosJogados.length === 0 ? (
-              <div className="text-center py-12 text-[#e0bfb7]">Ainda não jogaste nenhum número</div>
-            ) : (
-              <div className="space-y-4">
-                {numerosJogados.map(({ jogo, numeros }) => (
-                  <div key={jogo} className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
-                    <h3 className="font-serif text-[#ffb5a0] font-bold mb-2">{jogo}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {numeros.map((num) => (
-                        <span
-                          key={num}
-                          className="w-10 h-10 rounded-full bg-[#2e2928] border border-[#58413b]/20 flex items-center justify-center text-sm font-bold"
-                        >
-                          {num}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="bg-[#1f1b19] rounded-2xl p-6 border border-[#58413b]/10">
           <h3 className="font-serif text-[#ffb5a0] font-bold mb-3">Como Ganhar Prémios?</h3>
           <ul className="space-y-3 text-sm text-[#e0bfb7]">
@@ -444,9 +322,6 @@ export default function PremiosPage() {
           </ul>
         </div>
       </main>
-
-      <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
-      <BottomNav />
-    </div>
+    </LayoutHeader>
   );
 }
