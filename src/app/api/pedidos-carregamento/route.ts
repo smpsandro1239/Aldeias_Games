@@ -103,37 +103,52 @@ export async function PATCH(request: NextRequest) {
       }
     });
 
-    // Se confirmado, adicionar saldo ao utilizador
-    if (acao === 'confirmar' && pedido.valor > 0) {
-      try {
-        // Criar transação de carregamento
-        console.log('Criando transação para userId:', pedido.userId, 'valor:', pedido.valor);
-        
-        await prisma.transacao.create({
-          data: {
-            userId: pedido.userId,
-            tipo: 'carregamento_saldo',
-            valor: pedido.valor,
-            descricao: 'Carregamento via vendedor confirmado',
-            estado: 'concluido'
-          }
-        });
-        console.log('Transação criada com sucesso');
+     // Se confirmado, adicionar saldo ao utilizador (jogador) e ao vendedor
+     if (acao === 'confirmar' && pedido.valor > 0) {
+       try {
+         await prisma.$transaction(async (tx) => {
+           // 1. Creditar jogador
+           await tx.transacao.create({
+             data: {
+               userId: pedido.userId,
+               tipo: 'carregamento_saldo',
+               valor: pedido.valor,
+               descricao: 'Carregamento via vendedor confirmado',
+               estado: 'concluido',
+               dadosAdicionais: { pedidoId: pedido.id, vendedorId: pedido.vendedorId }
+             }
+           });
 
-        // Atualizar saldo do utilizador
-        console.log('Atualizando saldo do utilizador:', pedido.userId);
-        await prisma.user.update({
-          where: { id: pedido.userId },
-          data: {
-            saldo: { increment: pedido.valor }
-          }
-        });
-        console.log('Saldo atualizado com sucesso');
-      } catch (transError) {
-        console.error('Erro ao criar transação:', transError);
-        throw transError;
-      }
-    }
+           await tx.user.update({
+             where: { id: pedido.userId },
+             data: { saldo: { increment: pedido.valor } }
+           });
+
+           // 2. Creditar vendedor (se existir)
+           if (pedido.vendedorId) {
+             await tx.transacao.create({
+               data: {
+                 userId: pedido.vendedorId,
+                 tipo: 'deposito',
+                 valor: pedido.valor,
+                 descricao: `Recebimento de carregamento do jogador ${pedido.user?.nome || 'unknown'}`,
+                 estado: 'concluido',
+                 dadosAdicionais: { pedidoId: pedido.id, userId: pedido.userId }
+               }
+             });
+
+             await tx.user.update({
+               where: { id: pedido.vendedorId },
+               data: { saldo: { increment: pedido.valor } }
+             });
+           }
+         });
+
+       } catch (transError) {
+         console.error('Erro ao criar transação:', transError);
+         throw transError;
+       }
+     }
 
     // TODO: Enviar notificações ao utilizador
 

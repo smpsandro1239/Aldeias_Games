@@ -36,7 +36,10 @@ import { toast } from "sonner";
 import { POSView } from "./pos-view";
 import { BottomNav } from "@/components/bottom-nav";
 import { useRouter } from "next/navigation";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PedidosCarregamentoInline } from "./pedidos-inline";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface VendedorDashboardProps {
   token: string;
@@ -74,10 +77,59 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("vendas");
   const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
+  const [saldoAngariado, setSaldoAngariado] = useState({
+    totalAngariado: 0,
+    totalEntregue: 0,
+    totalSolicitado: 0,
+    saldoAEntregar: 0
+  });
+  const [entregaModalOpen, setEntregaModalOpen] = useState(false);
+  const [valorEntrega, setValorEntrega] = useState("");
 
   // Handler para redirecionar para página de pedidos
   const handlePedidosClick = () => {
     router.push("/vendedordashboard/pedidos");
+  };
+
+  // Handler para solicitar entrega
+  const handleSolicitarEntrega = async () => {
+    const valor = parseFloat(valorEntrega);
+    if (!valor || valor <= 0) {
+      toast.error("Insira um valor válido");
+      return;
+    }
+    if (valor > saldoAngariado.saldoAEntregar) {
+      toast.error(`Valor máximo: €${saldoAngariado.saldoAEntregar.toFixed(2)}`);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/vendedor/entrega-saldo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          valor,
+          observacoes: "Solicitação via dashboard"
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Solicitação de entrega enviada ao administrador!");
+        setEntregaModalOpen(false);
+        setValorEntrega("");
+        fetchData();
+      } else {
+        toast.error(data.error || "Erro ao solicitar entrega");
+      }
+    } catch (error) {
+      console.error("Erro:", error);
+      toast.error("Erro ao solicitar entrega");
+    }
   };
 
   // Form de nova venda
@@ -131,6 +183,20 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
        if (pedidosRes.ok) {
          const pedidosData = await pedidosRes.json();
          setPedidosPendentesCount(pedidosData.data?.length || 0);
+       }
+
+       // Fetch saldo angariado
+       const saldoRes = await fetch("/api/vendedor/saldo-angariado", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (saldoRes.ok) {
+         const saldoData = await saldoRes.json();
+         setSaldoAngariado(saldoData.data || {
+           totalAngariado: 0,
+           totalEntregue: 0,
+           totalSolicitado: 0,
+           saldoAEntregar: 0
+         });
        }
      } catch (error) {
        toast.error("Erro ao carregar dados");
@@ -256,10 +322,10 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="pos">POS Mobile</TabsTrigger>
           <TabsTrigger value="vendas">Venda Desktop</TabsTrigger>
-          <TabsTrigger value="pedidos" onClick={handlePedidosClick} className="relative">
+          <TabsTrigger value="pedidos" className="relative">
             Pedidos
             {pedidosPendentesCount > 0 && (
               <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
@@ -267,6 +333,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="angariacao">Angariação</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
@@ -409,6 +476,124 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           </Card>
         </TabsContent>
 
+        <TabsContent value="pedidos" className="space-y-4">
+          <PedidosCarregamentoInline token={token} />
+        </TabsContent>
+
+        <TabsContent value="angariacao" className="space-y-4">
+          {/* Resumo Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-[#2e2928]">
+              <CardHeader className="py-3">
+                <CardTitle className="text-xs text-muted-foreground">Total Angariado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-green-500">
+                  {formatCurrency(saldoAngariado.totalAngariado)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-[#2e2928]">
+              <CardHeader className="py-3">
+                <CardTitle className="text-xs text-muted-foreground">Entregue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-blue-500">
+                  {formatCurrency(saldoAngariado.totalEntregue)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-[#2e2928]">
+              <CardHeader className="py-3">
+                <CardTitle className="text-xs text-muted-foreground">Solicitado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-orange-500">
+                  {formatCurrency(saldoAngariado.totalSolicitado)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-[#2e2928] border-primary/30">
+              <CardHeader className="py-3">
+                <CardTitle className="text-xs text-muted-foreground">A Entregar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-primary">
+                  {formatCurrency(saldoAngariado.saldoAEntregar)}
+                </p>
+                {saldoAngariado.saldoAEntregar > 0 && (
+                  <Button
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={() => setEntregaModalOpen(true)}
+                  >
+                    <Send className="w-4 h-4 mr-1" /> Entregar
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Histórico de Entregas */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="w-5 h-5" />
+                Histórico de Entregas
+              </CardTitle>
+              <CardDescription>
+                Registos de todas as entregas solicitadas e confirmadas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {saldoAngariado.historicoEntregas?.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Nenhuma entrega registada</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {(saldoAngariado.historicoEntregas || []).map((entrega: any) => (
+                    <div
+                      key={entrega.id}
+                      className="flex items-center justify-between p-4 bg-[#2e2928] rounded-xl"
+                    >
+                      <div>
+                        <p className="font-bold text-lg">{entrega.valor.toFixed(2)}€</p>
+                        <p className="text-xs text-muted-foreground">
+                          Solicitado: {formatDate(entrega.dataSolicitacao)}
+                        </p>
+                        {entrega.admin && (
+                          <p className="text-xs text-muted-foreground">
+                            Admin: {entrega.admin.nome}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          className={
+                            entrega.estado === 'concluido' ? 'bg-green-500' :
+                            entrega.estado === 'confirmado' ? 'bg-blue-500' :
+                            entrega.estado === 'cancelado' ? 'bg-red-500' :
+                            'bg-yellow-500'
+                          }
+                        >
+                          {entrega.estado.toUpperCase()}
+                        </Badge>
+                        {entrega.dataConclusao && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Entregue: {formatDate(entrega.dataConclusao)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="historico" className="space-y-4">
           <Card>
             <CardHeader>
@@ -453,6 +638,56 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal Solicitar Entrega */}
+      <Dialog open={entregaModalOpen} onOpenChange={setEntregaModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Solicitar Entrega de Saldo</DialogTitle>
+            <DialogDescription>
+              O valor solicitado será transferido para o administrador da aldeia após confirmação.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">Saldo Disponível para Entrega</p>
+              <p className="text-3xl font-bold text-primary">
+                {formatCurrency(saldoAngariado.saldoAEntregar)}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="valorEntrega">Valor a Entregar (€)</Label>
+              <Input
+                id="valorEntrega"
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={saldoAngariado.saldoAEntregar}
+                value={valorEntrega}
+                onChange={(e) => setValorEntrega(e.target.value)}
+                placeholder="0.00"
+              />
+              {valorEntrega && parseFloat(valorEntrega) > saldoAngariado.saldoAEntregar && (
+                <p className="text-xs text-red-500">
+                  Valor excede o saldo disponível
+                </p>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground bg-yellow-500/10 p-3 rounded-lg border border-yellow-500/20">
+              <p className="font-medium text-yellow-500 mb-1">Importante:</p>
+              <p>Ao solicitar a entrega, o administrador será notificado. Após a confirmação, o valor será transferido para o saldo do administrador e o seu saldo a entregar será zerado.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEntregaModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSolicitarEntrega}>
+              Solicitar Entrega
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BottomNav role="vendedor" />
     </div>

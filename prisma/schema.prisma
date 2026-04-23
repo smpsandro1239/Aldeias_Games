@@ -59,6 +59,10 @@ model User {
   autorizacaoCarregamento PedidoCarregamento[] @relation("AutorizacaoCarregamento")
   pedidosCarregamento PedidoCarregamento[]
 
+  // Relations to entrega de saldo
+  entregasVendidas EntregaSaldo[] @relation("VendedorEntregas")
+  entregasConfirmadas EntregaSaldo[] @relation("AdminEntregas")
+
   @@index([email])
   @@index([role])
   @@index([aldeiaId])
@@ -558,6 +562,8 @@ enum TipoTransacao {
   comissao
   bonus_meta
   carregamento_saldo
+  transferencia_vendedor_admin
+  recebimento_vendedor
 }
 
 enum UserRole {
@@ -874,4 +880,43 @@ model PedidoNotificacao {
 
   @@index([destinatario])
   @@index([enviada])
+}
+
+model EntregaSaldo {
+  id String @id @default(cuid())
+
+  vendedorId String
+  vendedor User @relation(fields: [vendedorId], references: [id])
+
+  adminId String
+  admin User @relation(fields: [adminId], references: [id])
+
+  aldeiaId String
+
+  valor Float
+
+  estado EstadoEntrega @default(solicitado)
+
+  dataSolicitacao DateTime @default(now())
+  dataConfirmacao DateTime?
+  dataConclusao DateTime?
+
+  observacoes String?
+  comprovativoUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vendedorId])
+  @@index([adminId])
+  @@index([aldeiaId])
+  @@index([estado])
+  @@index([createdAt])
+}
+
+enum EstadoEntrega {
+  solicitado
+  confirmado
+  cancelado
+  concluido
 }

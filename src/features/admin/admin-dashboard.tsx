@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode, ShoppingCart, Wallet
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode, ShoppingCart, Wallet, TrendingUp
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
@@ -543,6 +543,14 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             <TabsTrigger value="vencedores"><Trophy className="h-4 w-4 mr-2" /> Vencedores</TabsTrigger>
             <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="relative">
               <Wallet className="h-4 w-4 mr-2" /> Pedidos
+              {pedidosPendentesCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                  {pedidosPendentesCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="relative">
+              <TrendingUp className="h-4 w-4 mr-2" /> Entregas
               {pedidosPendentesCount > 0 && (
                 <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
                   {pedidosPendentesCount}
