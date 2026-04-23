@@ -2,27 +2,25 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { LayoutHeader } from "@/components/layout-header";
 import { useAuth } from "@/hooks/use-auth";
 import { SplashScreen } from "@/components/splash-screen";
 import { LandingPage } from "@/components/landing-page";
 import { LoaderScreen } from "@/components/loader-screen";
-import { UserMenuModal } from "@/components/user-menu-modal";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap, Rocket, Menu, User, Gamepad2, House, Compass, Wallet } from "lucide-react";
+import { Zap, Rocket } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, login, register, logout } = useAuth();
-  
+  const { user, isAuthenticated, isLoading, login, register } = useAuth();
+
   const [mounted, setMounted] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -109,99 +107,18 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
-        <div className="flex justify-between items-center px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Menu className="text-[#ff734b] text-2xl cursor-pointer hover:opacity-80 transition-opacity" />
-            <div className="flex items-center gap-2">
-              <House className="h-8 w-8 text-[#ff734b]" />
-              <h1 className="font-serif text-xl font-bold text-[#ff734b] tracking-tight italic">Aldeias Games</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#2e2928] overflow-hidden border-2 border-[#ff734b]/20 relative">
-              {isAuthenticated ? (
-                <button
-                  onClick={() => setUserMenuOpen(true)}
-                  className="w-full h-full bg-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
-                >
-                  <User className="h-5 w-5 text-[#ff734b]" />
-                </button>
-              ) : (
-                <button onClick={() => setLoginModalOpen(true)} className="w-full h-full flex items-center justify-center text-[#ff734b] font-bold text-lg">
-                  +
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto">
-        <LandingPage 
-          jogos={jogos} 
-          eventos={eventos} 
-          aldeias={aldeias} 
-          onLoginClick={() => setLoginModalOpen(true)} 
-          onRegisterClick={() => setRegisterModalOpen(true)} 
-        />
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-[#58413b]/10 py-12 bg-[#110d0c]">
-        <div className="container max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <House className="h-8 w-8 text-[#ff734b]" />
-                <span className="font-serif text-xl font-bold text-[#ff734b]">Aldeias Games</span>
-              </div>
-              <p className="text-sm text-[#e0bfb7]">A plataforma de angariação de fundos para comunidades locais portuguesas.</p>
-            </div>
-            <div>
-              <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Navegação</h4>
-              <ul className="space-y-2 text-sm text-[#e0bfb7]">
-                <li><span className="text-[#e0bfb7]/50">Use o menu inferior no mobile</span></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-[#e0bfb7]">
-                <li><a href="/termos" className="hover:text-[#ff734b] transition-colors">Termos de Serviço</a></li>
-                <li><a href="/privacidade" className="hover:text-[#ff734b] transition-colors">Política de Privacidade</a></li>
-                <li><a href="#" className="hover:text-[#ff734b] transition-colors">RGPD</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Contacto</h4>
-              <p className="text-sm text-[#e0bfb7]">suporte@aldeiasgames.pt</p>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-[#58413b]/10 text-center text-sm text-[#e0bfb7]">
-            © 2026 Aldeias Games. Desenvolvido com ❤️ para Portugal.
-          </div>
-        </div>
-      </footer>
-
-      {/* Mobile Bottom Nav */}
-      <div className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-[#1a1614]/80 backdrop-blur-2xl z-50 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.4)] md:hidden">
-        <button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col items-center justify-center text-[#9cefff] bg-[#9cefff]/10 rounded-2xl px-4 py-2 scale-110 transition-all">
-          <House className="h-6 w-6" style={{ fill: 'currentColor' }} />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Aldeias</span>
-        </button>
-        <button onClick={() => router.push('/jogos')} className="flex flex-col items-center justify-center text-[#e0bfb7] opacity-70 hover:opacity-100 transition-all">
-          <Gamepad2 className="h-6 w-6" />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">Competir</span>
-        </button>
-        <button onClick={() => isAuthenticated ? setUserMenuOpen(true) : setLoginModalOpen(true)} className="flex flex-col items-center justify-center text-[#e0bfb7] opacity-70 hover:opacity-100 transition-all">
-          <Wallet className="h-6 w-6" />
-          <span className="font-label text-[10px] font-bold tracking-widest uppercase mt-1">{isAuthenticated ? 'Ver Saldo' : 'Carteira'}</span>
-        </button>
-      </div>
-
-      <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
+    <>
+      <LayoutHeader>
+        <main className="pt-24 pb-32 px-4 md:px-8 max-w-7xl mx-auto">
+          <LandingPage
+            jogos={jogos}
+            eventos={eventos}
+            aldeias={aldeias}
+            onLoginClick={() => setLoginModalOpen(true)}
+            onRegisterClick={() => setRegisterModalOpen(true)}
+          />
+        </main>
+      </LayoutHeader>
 
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
@@ -256,37 +173,37 @@ export default function Home() {
               <div className="pt-4 border-t border-[#58413b]/10 w-full">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#e0bfb7] mb-3 text-center">Acesso Rápido (Dev Mode)</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
                     onClick={() => setLoginForm({ email: "admin@aldeias.pt", password: "123456" })}
                   >
                     Super Admin
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
                     onClick={() => setLoginForm({ email: "admin.valeazinha@aldeias.pt", password: "123456" })}
                   >
                     Admin Aldeia
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
                     onClick={() => setLoginForm({ email: "vendedor.valeazinha@aldeias.pt", password: "123456" })}
                   >
                     Vendedor
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
                     className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
                     onClick={() => setLoginForm({ email: "jogador1@email.pt", password: "123456" })}
                   >
@@ -372,6 +289,6 @@ export default function Home() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
