@@ -59,6 +59,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   const [transacoes, setTransacoes] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [vendedoresStats, setVendedoresStats] = useState<any[]>([]);
+  const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
 
   // Modals state
   const [eventoModalOpen, setEventoModalOpen] = useState(false);
@@ -126,62 +127,72 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
     }
   }, [aldeiaId, aldeia?.metodosPagamentoDefault]);
 
-  const fetchData = async () => {
-    if (!token) return;
-    setLoading(true);
+   const fetchData = async () => {
+     if (!token) return;
+     setLoading(true);
 
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const q = aldeiaId ? `?aldeiaId=${aldeiaId}` : "";
+     try {
+       const headers = { Authorization: `Bearer ${token}` };
+       const q = aldeiaId ? `?aldeiaId=${aldeiaId}` : "";
 
-      const getApi = async (url: string) => {
-        const res = await fetch(url, { headers, cache: 'no-store' });
-        if (res.ok) {
-          const j = await res.json();
-          return j.data;
-        }
-        return null;
-      };
+       const getApi = async (url: string) => {
+         const res = await fetch(url, { headers, cache: 'no-store' });
+         if (res.ok) {
+           const j = await res.json();
+           return j.data;
+         }
+         return null;
+       };
 
-      const [st, ev, jg] = await Promise.all([
-        getApi(`/api/dashboard/stats${q}`),
-        getApi(`/api/eventos${q}`),
-        getApi(`/api/jogos${q}`)
-      ]);
+       const [st, ev, jg] = await Promise.all([
+         getApi(`/api/dashboard/stats${q}`),
+         getApi(`/api/eventos${q}`),
+         getApi(`/api/jogos${q}`)
+       ]);
 
-      if (st) setStats(st);
-      if (ev) setEventos(ev);
-      if (jg) setJogos(jg);
+       if (st) setStats(st);
+       if (ev) setEventos(ev);
+       if (jg) setJogos(jg);
 
-      if (userRole === "super_admin") {
-        const al = await getApi(`/api/aldeias`);
-        if (al) setAldeias(al);
-      }
-      
-      const us = await getApi(`/api/users${q}`);
-      if (us) setUsers(us);
+       if (userRole === "super_admin") {
+         const al = await getApi(`/api/aldeias`);
+         if (al) setAldeias(al);
+       }
+       
+       const us = await getApi(`/api/users${q}`);
+       if (us) setUsers(us);
 
-      const part = await getApi(`/api/participacoes${q}${q ? '&' : '?'}ganhador=true`);
-      if (part) setVencedores(part);
+       const part = await getApi(`/api/participacoes${q}${q ? '&' : '?'}ganhador=true`);
+       if (part) setVencedores(part);
 
-      if (userRole === "super_admin") {
-        const tr = await getApi(`/api/admin/transacoes`);
-        if (tr) setTransacoes(tr);
+       if (userRole === "super_admin") {
+         const tr = await getApi(`/api/admin/transacoes`);
+         if (tr) setTransacoes(tr);
 
-        const lg = await getApi(`/api/admin/logs`);
-        if (lg) setLogs(lg);
-      }
+         const lg = await getApi(`/api/admin/logs`);
+         if (lg) setLogs(lg);
+       }
 
-      if (userRole === "aldeia_admin") {
-        const vs = await getApi(`/api/admin/vendedores-stats`);
-        if (vs) setVendedoresStats(vs);
-      }
-    } catch (error) {
-      toast.error("Erro ao carregar dados");
-    } finally {
-      setLoading(false);
-    }
-  };
+       if (userRole === "aldeia_admin") {
+         const vs = await getApi(`/api/admin/vendedores-stats`);
+         if (vs) setVendedoresStats(vs);
+       }
+
+       // Fetch pedidos pendentes count
+       const pedidosQ = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=pendente` : "?estado=pendente";
+       const pedidosRes = await fetch(`/api/admin/pedidos-carregamento${pedidosQ}`, {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (pedidosRes.ok) {
+         const pedidosData = await pedidosRes.json();
+         setPedidosPendentesCount(pedidosData.data?.length || 0);
+       }
+     } catch (error) {
+       toast.error("Erro ao carregar dados");
+     } finally {
+       setLoading(false);
+     }
+   };
 
   // --- EVENTOS ---
   const handleSaveEvento = async (data: any) => {
@@ -530,7 +541,14 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             <TabsTrigger value="eventos"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
             <TabsTrigger value="jogos"><Gamepad2 className="h-4 w-4 mr-2" /> Jogos</TabsTrigger>
             <TabsTrigger value="vencedores"><Trophy className="h-4 w-4 mr-2" /> Vencedores</TabsTrigger>
-            <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')}><Wallet className="h-4 w-4 mr-2" /> Pedidos</TabsTrigger>
+            <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="relative">
+              <Wallet className="h-4 w-4 mr-2" /> Pedidos
+              {pedidosPendentesCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                  {pedidosPendentesCount}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="verificar"><Hash className="h-4 w-4 mr-2" /> Verificar</TabsTrigger>
             <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" /> Utilizadores</TabsTrigger>
             {userRole === "aldeia_admin" && (

@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { POSView } from "./pos-view";
 import { BottomNav } from "@/components/bottom-nav";
 import { useRouter } from "next/navigation";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface VendedorDashboardProps {
   token: string;
@@ -72,6 +73,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("vendas");
+  const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
 
   // Handler para redirecionar para página de pedidos
   const handlePedidosClick = () => {
@@ -99,34 +101,43 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
     fetchData();
   }, [token]);
 
-  const fetchData = async () => {
-    if (!token) return;
-    setLoading(true);
+   const fetchData = async () => {
+     if (!token) return;
+     setLoading(true);
 
-    try {
-      // Fetch stats
-      const statsRes = await fetch("/api/dashboard/vendedor", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData.data);
-      }
+     try {
+       // Fetch stats
+       const statsRes = await fetch("/api/dashboard/vendedor", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (statsRes.ok) {
+         const statsData = await statsRes.json();
+         setStats(statsData.data);
+       }
 
-      // Fetch jogos disponíveis
-      const jogosRes = await fetch("/api/jogos?ativos=true", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (jogosRes.ok) {
-        const jogosData = await jogosRes.json();
-        setJogos(jogosData.data);
-      }
-    } catch (error) {
-      toast.error("Erro ao carregar dados");
-    } finally {
-      setLoading(false);
-    }
-  };
+       // Fetch jogos disponíveis
+       const jogosRes = await fetch("/api/jogos?ativos=true", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (jogosRes.ok) {
+         const jogosData = await jogosRes.json();
+         setJogos(jogosData.data);
+       }
+
+       // Fetch pedidos pendentes count
+       const pedidosRes = await fetch("/api/pedidos-carregamento?estado=pendente", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (pedidosRes.ok) {
+         const pedidosData = await pedidosRes.json();
+         setPedidosPendentesCount(pedidosData.data?.length || 0);
+       }
+     } catch (error) {
+       toast.error("Erro ao carregar dados");
+     } finally {
+       setLoading(false);
+     }
+   };
 
   const handleNovaVenda = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,7 +259,14 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pos">POS Mobile</TabsTrigger>
           <TabsTrigger value="vendas">Venda Desktop</TabsTrigger>
-          <TabsTrigger value="pedidos" onClick={handlePedidosClick}>Pedidos</TabsTrigger>
+          <TabsTrigger value="pedidos" onClick={handlePedidosClick} className="relative">
+            Pedidos
+            {pedidosPendentesCount > 0 && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                {pedidosPendentesCount}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
