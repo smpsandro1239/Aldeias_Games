@@ -625,10 +625,10 @@ try {
           </div>
 
           {/* Square Field Container */}
-          <div className="bg-surface-container-low rounded-[2rem] p-3">
+          <div className="bg-surface-container-low rounded-2xl p-2 sm:p-3">
             {/* Axis Labels */}
-            <div className="flex justify-between px-8 mb-1">
-              <span className="text-[10px] text-on-surface-variant">X →</span>
+            <div className="flex justify-between px-2 sm:px-8 mb-1">
+              <span className="text-[8px] sm:text-[10px] text-on-surface-variant">X →</span>
             </div>
             
             {/* Square Grid - maintains aspect ratio */}
@@ -650,7 +650,7 @@ try {
                       onClick={() => handleSquareClick(cell.id)}
                       disabled={isOccupied}
                       className={`
-                        relative flex items-center justify-center text-[8px] font-medium transition-all duration-150 rounded-sm
+                        relative flex items-center justify-center text-[10px] sm:text-xs font-medium transition-all duration-150 rounded-sm
                         ${isSelected 
                           ? "bg-primary-container text-on-primary-container font-bold shadow-md z-10" 
                           : isOccupied
@@ -661,9 +661,9 @@ try {
                       title={isOccupied ? `${cell.display} - Já escolhido` : cell.display}
                     >
                       {isSelected ? (
-                        <CheckCircle2 className="w-2.5 h-2.5" />
+                        <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
                       ) : isOccupied ? (
-                        <CheckCircle2 className="w-2 h-2" />
+                        <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                       ) : (
                         cell.id
                       )}
@@ -678,15 +678,27 @@ try {
 
             {/* Y axis label */}
             <div className="flex justify-between px-1">
-              <span className="text-[10px] text-on-surface-variant">↑ Y</span>
-              <span className="text-[10px] text-on-surface-variant">X →</span>
+              <span className="text-[8px] sm:text-[10px] text-on-surface-variant">↑ Y</span>
+              <span className="text-[8px] sm:text-[10px] text-on-surface-variant">X →</span>
             </div>
             
-            {/* Coordinate explanation */}
-            <div className="mt-3 p-2 bg-surface-container-high/40 rounded-lg">
-              <p className="text-[10px] text-on-surface-variant text-center">
-                O campo tem <strong>{dimensoes.x}×{dimensoes.y} = {totalCells}</strong> quadrados
-              </p>
+            {/* Legend */}
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] sm:text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 rounded bg-primary-container"></div>
+                <span className="text-on-surface-variant">Selecionado</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 rounded bg-red-900/30 border border-red-900/30"></div>
+                <span className="text-on-surface-variant">Ocupado</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 rounded bg-surface-container-highest/60"></div>
+                <span className="text-on-surface-variant">Disponível</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-on-surface-variant">Total: {totalCells}</span>
+              </div>
             </div>
           </div>
         </section>
@@ -723,7 +735,8 @@ try {
               
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {apostasParaLista.map((aposta) => {
-                  const numerosFormatados = aposta.numeros.map((n: number) => cells[n - 1]?.display || `N${n}`).join(", ");
+                  const numerosArray = Array.isArray(aposta.numeros) ? aposta.numeros : [];
+                  const numerosFormatados = numerosArray.map((n: number) => cells[n - 1]?.display || `N${n}`).join(", ");
                   const mostraDetalhes = isAdmin || (isVendedor && aposta.vendedorId === vendedorId);
                   const isMinhaAposta = userNome && aposta.jogadorNome === userNome;
                   

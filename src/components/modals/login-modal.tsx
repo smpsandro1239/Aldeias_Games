@@ -97,7 +97,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => quickLogin("admin@aldeias.pt", "123456")}
+                  onClick={(e) => { e.preventDefault(); quickLogin("admin@aldeias.pt", "123456"); }}
                   disabled={loading}
                 >
                   Super Admin
@@ -106,7 +106,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => quickLogin("admin.valeazinha@aldeias.pt", "123456")}
+                  onClick={(e) => { e.preventDefault(); quickLogin("admin.valeazinha@aldeias.pt", "123456"); }}
                   disabled={loading}
                 >
                   Admin Aldeia
@@ -115,7 +115,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => quickLogin("vendedor.valeazinha@aldeias.pt", "123456")}
+                  onClick={(e) => { e.preventDefault(); quickLogin("vendedor1@valeazinha.pt", "123456"); }}
                   disabled={loading}
                 >
                   Vendedor
@@ -124,7 +124,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => quickLogin("jogador1@email.pt", "123456")}
+                  onClick={(e) => { e.preventDefault(); quickLogin("jogador1@valeazinha.pt", "123456"); }}
                   disabled={loading}
                 >
                   Jogador

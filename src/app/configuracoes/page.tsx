@@ -19,9 +19,18 @@ interface Aldeia {
   email?: string;
   permitirStripe: boolean;
   permitirMBWay: boolean;
+  metodosPagamentoDefault?: string;
   iban?: string;
   nomeTitularConta?: string;
   avisoPagamentosEnviado: boolean;
+}
+
+interface MetodoPagamentoDefault {
+  saldo: boolean;
+  dinheiro: boolean;
+  mbway: boolean;
+  stripe: boolean;
+  transferencia: boolean;
 }
 
 export default function ConfiguracoesPage() {
@@ -35,8 +44,17 @@ export default function ConfiguracoesPage() {
   const [formData, setFormData] = useState({
     permitirStripe: false,
     permitirMBWay: false,
+    metodosPagamentoDefault: '["saldo","dinheiro"]',
     iban: "",
     nomeTitularConta: "",
+  });
+
+  const [defaultMethods, setDefaultMethods] = useState<MetodoPagamentoDefault>({
+    saldo: true,
+    dinheiro: true,
+    mbway: false,
+    stripe: false,
+    transferencia: false,
   });
 
   useEffect(() => {
@@ -59,9 +77,24 @@ export default function ConfiguracoesPage() {
         setFormData({
           permitirStripe: data.data.permitirStripe || false,
           permitirMBWay: data.data.permitirMBWay || false,
+          metodosPagamentoDefault: data.data.metodosPagamentoDefault || '["saldo","dinheiro"]',
           iban: data.data.iban || "",
           nomeTitularConta: data.data.nomeTitularConta || "",
         });
+        
+        // Parse default methods
+        try {
+          const defaultArr = JSON.parse(data.data.metodosPagamentoDefault || '["saldo","dinheiro"]');
+          setDefaultMethods({
+            saldo: defaultArr.includes("saldo"),
+            dinheiro: defaultArr.includes("dinheiro"),
+            mbway: defaultArr.includes("mbway"),
+            stripe: defaultArr.includes("stripe"),
+            transferencia: defaultArr.includes("transferencia"),
+          });
+        } catch (e) {
+          console.error("Erro ao parsear métodos padrão:", e);
+        }
       }
     } catch (error) {
       console.error("Erro ao buscar aldeia:", error);
@@ -73,6 +106,18 @@ export default function ConfiguracoesPage() {
   const handleSave = async () => {
     if (!aldeia) return;
     
+    // Build the default methods array from toggle states
+    const defaultMethodsArr: string[] = [];
+    if (defaultMethods.saldo) defaultMethodsArr.push("saldo");
+    if (defaultMethods.dinheiro) defaultMethodsArr.push("dinheiro");
+    if (defaultMethods.mbway) defaultMethodsArr.push("mbway");
+    if (defaultMethods.stripe) defaultMethodsArr.push("stripe");
+    if (defaultMethods.transferencia) defaultMethodsArr.push("transferencia");
+    
+    if (defaultMethodsArr.length === 0) {
+      defaultMethodsArr.push("saldo", "dinheiro");
+    }
+    
     setSaving(true);
     try {
       const response = await fetch(`/api/aldeias/${aldeia.id}`, {
@@ -83,6 +128,7 @@ export default function ConfiguracoesPage() {
         body: JSON.stringify({
           permitirStripe: formData.permitirStripe,
           permitirMBWay: formData.permitirMBWay,
+          metodosPagamentoDefault: JSON.stringify(defaultMethodsArr),
           iban: formData.iban || null,
           nomeTitularConta: formData.nomeTitularConta || null,
         }),
@@ -90,6 +136,7 @@ export default function ConfiguracoesPage() {
 
       if (response.ok) {
         toast.success("Configurações guardadas com sucesso!");
+        setFormData(prev => ({ ...prev, metodosPagamentoDefault: JSON.stringify(defaultMethodsArr) }));
         setAldeia({ ...aldeia, ...formData });
       } else {
         toast.error("Erro ao guardar configurações");
@@ -220,6 +267,129 @@ export default function ConfiguracoesPage() {
                   formData.permitirMBWay ? "translate-x-6" : "translate-x-0.5"
                 }`} />
               </button>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-[#58413b]/20 pt-6">
+            <h3 className="font-serif text-[#ffb5a0] font-bold mb-4 flex items-center gap-2">
+              <Wallet className="w-5 h-5" />
+              Predefinição para Novos Jogos
+            </h3>
+            <p className="text-xs text-[#e0bfb7]/60 mb-4">
+              Escolha quais métodos de pagamento vêm pré-selecionados ao criar um novo jogo.
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                    <span className="text-xl">💵</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-[#ffb5a0]">Dinheiro</p>
+                    <p className="text-xs text-[#e0bfb7]/60">Sempre disponível</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDefaultMethods({ ...defaultMethods, dinheiro: !defaultMethods.dinheiro })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    defaultMethods.dinheiro ? "bg-green-500" : "bg-[#58413b]"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                    defaultMethods.dinheiro ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#ff734b]/20 rounded-lg flex items-center justify-center">
+                    <span className="text-xl">💰</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-[#ffb5a0]">Saldo Aldeias</p>
+                    <p className="text-xs text-[#e0bfb7]/60">Sem custos</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDefaultMethods({ ...defaultMethods, saldo: !defaultMethods.saldo })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    defaultMethods.saldo ? "bg-green-500" : "bg-[#58413b]"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                    defaultMethods.saldo ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              {formData.permitirStripe && (
+                <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-[#ffb5a0]">Cartão (Stripe)</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setDefaultMethods({ ...defaultMethods, stripe: !defaultMethods.stripe })}
+                    className={`w-12 h-6 rounded-full transition-colors ${
+                      defaultMethods.stripe ? "bg-green-500" : "bg-[#58413b]"
+                    }`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                      defaultMethods.stripe ? "translate-x-6" : "translate-x-0.5"
+                    }`} />
+                  </button>
+                </div>
+              )}
+
+              {formData.permitirMBWay && (
+                <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                      <Phone className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-[#ffb5a0]">MBWay</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setDefaultMethods({ ...defaultMethods, mbway: !defaultMethods.mbway })}
+                    className={`w-12 h-6 rounded-full transition-colors ${
+                      defaultMethods.mbway ? "bg-green-500" : "bg-[#58413b]"
+                    }`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                      defaultMethods.mbway ? "translate-x-6" : "translate-x-0.5"
+                    }`} />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-yellow-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-[#ffb5a0]">Transferência</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDefaultMethods({ ...defaultMethods, transferencia: !defaultMethods.transferencia })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    defaultMethods.transferencia ? "bg-green-500" : "bg-[#58413b]"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                    defaultMethods.transferencia ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
             </div>
           </div>
 

@@ -32,6 +32,7 @@ interface AdminDashboardProps {
     slug: string;
     tipoOrganizacao: string;
     logoUrl?: string;
+    metodosPagamentoDefault?: string;
   };
 }
 
@@ -83,6 +84,9 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   const [qrCodeOpen, setQrCodeOpen] = useState(false);
   const [qrCodeData, setQrCodeData] = useState<{jogoId?: string; eventoId?: string; aldeiaSlug?: string; type: "jogo" | "evento" | "aldeia"} | null>(null);
 
+  // Payment methods defaults from aldeia
+  const [paymentMethodsDefault, setPaymentMethodsDefault] = useState<string[]>(["saldo", "dinheiro"]);
+
   // Selections
   const [selectedEvento, setSelectedEvento] = useState<any>(null);
   const [selectedJogo, setSelectedJogo] = useState<any>(null);
@@ -109,6 +113,18 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   useEffect(() => {
     fetchData();
   }, [token, aldeiaId, userRole]);
+
+  // Fetch aldeia payment methods defaults
+  useEffect(() => {
+    if (aldeiaId && aldeia?.metodosPagamentoDefault) {
+      try {
+        const defaults = JSON.parse(aldeia.metodosPagamentoDefault);
+        setPaymentMethodsDefault(defaults);
+      } catch (e) {
+        setPaymentMethodsDefault(["saldo", "dinheiro"]);
+      }
+    }
+  }, [aldeiaId, aldeia?.metodosPagamentoDefault]);
 
   const fetchData = async () => {
     if (!token) return;
@@ -999,7 +1015,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         initialData={selectedEvento}
         aldeias={aldeias}
       />
-      <CreateJogoModal open={jogoModalOpen} onOpenChange={setJogoModalOpen} onSubmit={handleSaveJogo} eventoId={selectedEventoIdParaJogo} initialData={selectedJogo} userRole={userRole} token={token} />
+      <CreateJogoModal open={jogoModalOpen} onOpenChange={setJogoModalOpen} onSubmit={handleSaveJogo} eventoId={selectedEventoIdParaJogo} initialData={selectedJogo} userRole={userRole} token={token} aldeiaId={aldeiaId} metodosPagamentoDefault={paymentMethodsDefault} />
       <AldeiaModal open={aldeiaModalOpen} onOpenChange={setAldeiaModalOpen} onSubmit={handleSaveAldeia} initialData={selectedAldeia} />
       <UserModal open={userModalOpen} onOpenChange={setUserModalOpen} onSubmit={handleSaveUser} initialData={selectedUser} aldeias={aldeia ? [aldeia] : aldeias} currentUserRole={userRole} />
 

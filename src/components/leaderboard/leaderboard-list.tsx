@@ -117,16 +117,19 @@ export function LeaderboardList({ aldeiaId, tipo = "all" }: LeaderboardListProps
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "all" | "vendas" | "jogos" | "premios")} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">Geral</TabsTrigger>
-            <TabsTrigger value="vendas">
-              <Banknote className="w-4 h-4 mr-1" /> Vendas
+          <TabsList className="grid w-full grid-cols-4 text-xs">
+            <TabsTrigger value="all" className="text-xs p-1">Geral</TabsTrigger>
+            <TabsTrigger value="vendas" className="text-xs p-1">
+              <Banknote className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Vendas</span>
             </TabsTrigger>
-            <TabsTrigger value="jogos">
-              <Gamepad2 className="w-4 h-4 mr-1" /> Jogos
+            <TabsTrigger value="jogos" className="text-xs p-1">
+              <Gamepad2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Jogos</span>
             </TabsTrigger>
-            <TabsTrigger value="premios">
-              <Gift className="w-4 h-4 mr-1" /> Prémios
+            <TabsTrigger value="premios" className="text-xs p-1">
+              <Gift className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Prémios</span>
             </TabsTrigger>
           </TabsList>
 
@@ -156,7 +159,7 @@ export function LeaderboardList({ aldeiaId, tipo = "all" }: LeaderboardListProps
                 {rankings.slice(0, 10).map((entry) => (
                   <div
                     key={entry.userId}
-                    className={`flex items-center gap-3 p-3 rounded-lg ${
+                    className={`flex items-center gap-2 p-2 md:p-3 rounded-lg text-sm md:text-base ${
                       entry.posicao <= 3
                         ? "bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20"
                         : "bg-muted/30"
@@ -167,9 +170,9 @@ export function LeaderboardList({ aldeiaId, tipo = "all" }: LeaderboardListProps
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{entry.nome}</p>
+                      <p className="font-medium truncate text-sm md:text-base">{entry.nome}</p>
                       {entry.aldeia && (
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-muted-foreground truncate hidden sm:block">
                           {entry.aldeia}
                         </p>
                       )}
@@ -178,9 +181,16 @@ export function LeaderboardList({ aldeiaId, tipo = "all" }: LeaderboardListProps
                     <div className="text-right flex-shrink-0">
                       <Badge
                         variant={entry.posicao <= 3 ? "default" : "secondary"}
-                        className="font-mono"
+                        className="font-mono text-xs"
                       >
-                        {formatValue(entry)}
+                        <span className="hidden md:inline">{formatValue(entry)}</span>
+                        <span className="md:hidden">
+                          {activeTab === "vendas" && entry.totalVendas?.toFixed(0)}
+                          {activeTab === "jogos" && entry.totalJogos}
+                          {activeTab === "premios" && entry.totalPremios}
+                          {activeTab === "all" && (entry.totalVendas || entry.totalJogos || entry.totalPremios)}
+                          <span className="hidden sm:inline">€</span>
+                        </span>
                       </Badge>
                     </div>
                   </div>

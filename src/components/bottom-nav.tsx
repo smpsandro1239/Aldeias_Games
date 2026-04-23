@@ -96,11 +96,45 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
 
   return (
     <>
-      {/* Spacer para evitar que conteúdo seja coberto */}
-      <div className="h-24" />
+      {/* Desktop/Tablet: Nav no topo */}
+      <nav className="hidden sm:block sticky top-0 z-50 bg-[#1a1614] border-b border-[#58413b]/20">
+        <div className="flex justify-center items-center py-2 px-2 sm:px-4">
+          <div className="flex gap-1 overflow-x-auto">
+            {items.map((item, index) => {
+              const Icon = item.icon;
+              const active = isActive(item.path, index);
+              
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => handleNavClick(item.path, item.label)}
+                  className={`
+                    flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg transition-all duration-200 whitespace-nowrap
+                    ${active 
+                      ? 'bg-primary/20 text-primary' 
+                      : 'hover:bg-[#2e2928] text-[#e0bfb7]/70'
+                    }
+                  `}
+                >
+                  <Icon className={`h-3 w-3 sm:h-4 sm:w-4`} />
+                  <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
       
-      {/* Navigation - Bottom on mobile, Top bar on desktop */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#1a1614] border-t border-[#58413b]/20 shadow-[0_-10px_40px_rgba(0,0,0,0.4)] lg:bottom-auto lg:top-0 lg:left-0 lg:w-full lg:flex-row lg:justify-center lg:py-2 lg:pb-2 lg:gap-1 lg:border-b lg:border-t-0">
+      {/* Desktop spacer para empurrar conteúdo para baixo do nav */}
+      <div className="hidden sm:block h-[44px] sm:h-[56px]" />
+      
+      {/* Mobile spacer - evita que conteúdo seja coberto pelo nav fixo */}
+      <div className="sm:hidden h-20" />
+      
+      {/* Mobile: Bottom bar fixed */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center px-2 pb-safe pt-2 bg-[#1a1614] border-t border-[#58413b]/20 shadow-[0_-10px_40px_rgba(0,0,0,0.4)]">
         {items.map((item, index) => {
           const Icon = item.icon;
           const active = isActive(item.path, index);
@@ -110,20 +144,20 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
               key={item.label}
               onClick={() => handleNavClick(item.path, item.label)}
               className={`
-                flex flex-col lg:flex-row items-center justify-center transition-all duration-200
-                min-w-[64px] lg:min-w-[80px] py-2 rounded-2xl lg:rounded-lg
+                flex flex-col items-center justify-center transition-all duration-200
+                min-w-[56px] py-2 rounded-xl
                 ${active 
-                  ? `bg-gradient-to-b ${index === 0 ? 'from-secondary/20 to-transparent' : 'from-primary/20 to-transparent'} lg:scale-100` 
+                  ? `bg-gradient-to-b ${index === 0 ? 'from-secondary/20 to-transparent' : 'from-primary/20 to-transparent'}` 
                   : 'hover:bg-[#2e2928]'
                 }
               `}
             >
               <Icon 
-                className={`h-5 w-5 lg:h-5 lg:w-5 transition-all ${getIconColor(active, index)}`}
+                className={`h-5 w-5 transition-all ${getIconColor(active, index)}`}
                 style={active && index === 0 ? { fill: "currentColor" } : {}}
               />
               <span className={`
-                font-sans text-[8px] lg:text-[10px] font-bold tracking-widest uppercase mt-1
+                font-sans text-[9px] font-bold tracking-wider uppercase mt-1
                 ${active ? 'text-primary' : 'text-on-surface-variant opacity-70'}
               `}>
                 {item.label}

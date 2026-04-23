@@ -217,6 +217,7 @@ model Aldeia {
   logoBase64             String?
   permitirStripe         Boolean          @default(false)
   permitirMBWay          Boolean          @default(false)
+  metodosPagamentoDefault String?         @default("[\"saldo\",\"dinheiro\"]") // JSON array com métodos padrão para jogos
   iban                   String?
   nomeTitularConta       String?
   avisoPagamentosEnviado Boolean          @default(false)

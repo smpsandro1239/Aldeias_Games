@@ -34,7 +34,7 @@ interface SlotState {
   scratchPercent: number;
 }
 
-// Prémios possíveis
+// Prémios possíveis (serão substituídos pelos do jogo)
 const PRIZES: Prize[] = [
   { icon: "military_tech", label: "Troféu", value: 5000, fill: true },
   { icon: "stars", label: "Estrela", value: 500, fill: true },
@@ -43,7 +43,7 @@ const PRIZES: Prize[] = [
   { icon: "favorite", label: "Coração", value: 5, fill: false },
 ];
 
-// Gera prémios aleatórios para o grid
+// Gera prémios aleatórios para o grid (mantém compatibilidade)
 function generatePrizes(): Prize[] {
   const prizes: Prize[] = [];
   const winningPrize = PRIZES[Math.floor(Math.random() * 3)]; // Top 3 prémios
@@ -60,6 +60,50 @@ function generatePrizes(): Prize[] {
 
   // Baralha
   return prizes.sort(() => Math.random() - 0.5);
+}
+
+// Gera prizes para o grid a partir dos dados do jogo
+export function generatePrizesFromConfig(premios: Array<{ nome: string; valor: number }>): Prize[] {
+  if (!premios || premios.length === 0) {
+    return generatePrizes(); // Fallback
+  }
+  
+  const prizes: Prize[] = [];
+  
+  // Mapear premios para formato interno
+  premios.forEach((p, i) => {
+    prizes.push({
+      icon: i === 0 ? "military_tech" : i === 1 ? "stars" : "diamond",
+      label: p.nome || `Prémio ${i + 1}`,
+      value: p.valor || 0,
+      fill: i < 2, // Top 2 são preenchidos
+    });
+  });
+  
+  // Se temos menos de 5 prêmios, preenchemos com "Valor Pago"
+  while (prizes.length < 5) {
+    prizes.push({ icon: "coin", label: "Valor Pago", value: 0, fill: false });
+  }
+  
+  // Garantir vitória com o maior prêmio
+  const winningPrize = prizes[0];
+  
+  // Criar grid de 9 posições
+  const grid: Prize[] = [];
+  
+  // Adicionar 3 cópias do prêmio vencedor para garantir vitória
+  for (let i = 0; i < 3; i++) {
+    grid.push({ ...winningPrize });
+  }
+  
+  // Preencher restante com prêmios aleatórios
+  for (let i = 3; i < 9; i++) {
+    const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
+    grid.push({ ...randomPrize });
+  }
+  
+  // Baralhar
+  return grid.sort(() => Math.random() - 0.5);
 }
 
 export default function RaspadinhaPremiumPage() {
@@ -350,23 +394,23 @@ export default function RaspadinhaPremiumPage() {
           className="relative"
         >
           {/* Efeito de brilho */}
-          <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-[24px] blur-xl" />
+          <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-2xl sm:rounded-[24px] blur-xl" />
 
-          <div className="relative bg-[#1f1b19] rounded-[24px] p-4 shadow-2xl">
-            <div className="grid grid-cols-3 gap-3">
+          <div className="relative bg-[#1f1b19] rounded-2xl sm:rounded-[24px] p-2 sm:p-4 shadow-2xl">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
               {slots.map((slot) => (
                 <div
                   key={slot.id}
-                  className="relative aspect-square rounded-2xl overflow-hidden"
+                  className="relative aspect-square rounded-lg sm:rounded-2xl overflow-hidden"
                 >
-                  {/* Prémio por baixo */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#393432]">
-                    <div className="text-center">
+                  {/* Prémio por baixo - Centrado */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#393432] p-1">
+                    <div className="flex flex-col items-center justify-center text-center">
                       {(() => {
                         const IconComponent = iconMap[slot.prize.icon] || Star;
                         return (
                           <IconComponent
-                            className="text-4xl"
+                            className="text-2xl sm:text-4xl"
                             style={{
                               color:
                                 slot.prize.value >= 500
@@ -378,8 +422,8 @@ export default function RaspadinhaPremiumPage() {
                           />
                         );
                       })()}
-                      <p className="text-[10px] font-bold text-[#e0bfb7] mt-0.5">
-                        {slot.prize.value}€
+                      <p className="text-[8px] sm:text-[10px] font-bold text-[#e0bfb7] mt-0.5 leading-tight">
+                        {slot.prize.value > 0 ? `${slot.prize.value}€` : slot.prize.label}
                       </p>
                     </div>
                   </div>
@@ -401,7 +445,7 @@ export default function RaspadinhaPremiumPage() {
 
                   {/* Indicador de percentagem */}
                   {slot.scratchPercent > 10 && !slot.revealed && (
-                    <div className="absolute top-1 right-1 bg-black/60 text-[8px] text-white px-1.5 py-0.5 rounded-full font-mono">
+                    <div className="absolute top-0.5 right-0.5 bg-black/60 text-[6px] sm:text-[8px] text-white px-1 sm:px-1.5 py-0.5 rounded-full font-mono">
                       {slot.scratchPercent}%
                     </div>
                   )}
@@ -452,62 +496,81 @@ export default function RaspadinhaPremiumPage() {
           )}
         </motion.div>
 
-        {/* Tabela de Prémios */}
+        {/* Tabela de Prémios (Legenda) */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-[#2e2928]/60 backdrop-blur-xl rounded-3xl p-5 space-y-3 border border-[#58413b]/10"
+          className="bg-[#2e2928]/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-3 sm:p-5 space-y-3 border border-[#58413b]/10"
         >
-          <h3 className="font-serif text-lg text-[#ffb5a0]">
-            Tabela de Prémios
+          <h3 className="font-serif text-base sm:text-lg text-[#ffb5a0]">
+            Como Ganhar
           </h3>
           <div className="space-y-2">
-            {[
-              {
-                icon: "military_tech",
-                label: "3x Troféu de Ouro",
-                value: "5.000€",
-                fill: true,
-                color: "#ff734b",
-              },
-              {
-                icon: "stars",
-                label: "3x Estrela d'Aldeia",
-                value: "500€",
-                fill: true,
-                color: "#ffb5a0",
-              },
-              {
-                icon: "diamond",
-                label: "3x Cristal",
-                value: "50€",
-                fill: false,
-                color: "#e0bfb7",
-              },
-            ].map((prize, i) => (
+            {/* Legenda */}
+            <div className="flex items-center gap-2 p-2 bg-[#2e2928] rounded-xl text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5 text-[#9cefff]">
+                <Trophy className="w-4 h-4" />
+                <span>3 símbolos iguais = Prémio</span>
+              </div>
+            </div>
+            {/* Prémios do jogo */}
+            {PRIZES.slice(0, 3).map((prize, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-3 bg-[#393432]/40 rounded-xl"
+                className="flex items-center justify-between p-2 sm:p-3 bg-[#393432]/40 rounded-lg"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {(() => {
                     const IconComponent = iconMap[prize.icon] || Star;
                     return (
                       <IconComponent
-                        style={{ color: prize.color }}
+                        className="w-4 h-4 sm:w-5 sm:h-5"
+                        style={{ 
+                          color: prize.value >= 500 ? "#ff734b" : prize.value >= 50 ? "#9cefff" : "#e0bfb7" 
+                        }}
                       />
                     );
                   })()}
-                  <span className="text-sm font-medium text-[#e0bfb7]">
+                  <span className="text-xs sm:text-sm font-medium text-[#e0bfb7]">
                     {prize.label}
                   </span>
                 </div>
-                <span className="font-bold text-[#9cefff]">{prize.value}</span>
+                <span className="font-bold text-[#9cefff] text-sm sm:text-base">
+                  {prize.value}€
+                </span>
               </div>
             ))}
           </div>
         </motion.section>
+
+        {/* Resultado Final */}
+        {totalRevealed === 9 && !showWin && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#2e2928]/80 backdrop-blur-xl rounded-2xl p-4 text-center border border-[#58413b]/10"
+          >
+            {winningPrize ? (
+              <>
+                <p className="text-2xl mb-2">🎉</p>
+                <p className="text-lg font-bold text-[#ff734b]">
+                  Ganhaste {winningPrize.value}€!
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-2xl mb-2">😢</p>
+                <p className="text-base text-[#e0bfb7]">
+                  Não ganhaste desta vez
+                </p>
+                <p className="text-xs text-[#e0bfb7]/60 mt-1">
+                  Tenta novamente!
+                </p>
+              </>
+            )}
+          </motion.div>
+        )}
       </main>
 
       {/* Modal de Vitória */}

@@ -305,12 +305,12 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       <div className="fixed inset-0 particle-bg opacity-10 -z-10" />
 
       {/* Header e Wallet */}
-      <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 items-start">
         <div className="md:col-span-2 lg:col-span-3">
-          <h1 className="text-3xl md:text-4xl font-gaming font-bold">
+          <h1 className="text-2xl md:text-4xl font-gaming font-bold">
             <span className="text-gradient">Os Meus Jogos</span>
           </h1>
-          <p className="text-muted-foreground mt-2">Participa nos jogos e tenta a tua sorte</p>
+          <p className="text-muted-foreground mt-2 text-sm md:text-base">Participa nos jogos e tenta a tua sorte</p>
         </div>
         <div className="md:col-span-1">
           <WalletCard token={token} />
@@ -318,25 +318,25 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {[
           { icon: Ticket, label: "Participações", value: participacoes.length, color: "secondary" },
           { icon: CreditCard, label: "Total Investido", value: formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0)), color: "primary" },
           { icon: Trophy, label: "Prémios Ganhos", value: formatCurrency(walletStats?.historicoPremios?.total || 0), color: "tertiary" },
-          { icon: Gift, label: "Cashback Recebido", value: formatCurrency(walletStats?.transacoes?.filter((t: any) => t.tipo === 'cashback').reduce((acc: number, t: any) => acc + t.valor, 0) || 0), color: "green-500" },
+          { icon: Gift, label: "Cashback", value: formatCurrency(walletStats?.transacoes?.filter((t: any) => t.tipo === 'cashback').reduce((acc: number, t: any) => acc + t.valor, 0) || 0), color: "green-500" },
         ].map((stat, i) => (
           <Card
             key={i}
-            className="card-hover bg-card/50 border-white/10 backdrop-blur-sm"
+            className="card-hover bg-card/50 border-white/10 backdrop-blur-sm p-3 md:p-0"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.label}</CardTitle>
-              <div className={`p-2 rounded-lg bg-${stat.color}/20`}>
-                <stat.icon className={`h-4 w-4 text-${stat.color}`} />
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground truncate">{stat.label}</CardTitle>
+              <div className={`p-1.5 md:p-2 rounded-lg bg-${stat.color}/20 shrink-0`}>
+                <stat.icon className={`h-3 w-3 md:h-4 md:w-4 text-${stat.color}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-gaming font-bold text-white">{stat.value}</div>
+              <div className="text-lg md:text-2xl font-gaming font-bold text-white truncate">{stat.value}</div>
             </CardContent>
           </Card>
         ))}
@@ -344,34 +344,35 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-[#2e2928] border border-[#58413b]/30 p-1 grid grid-cols-3 rounded-2xl">
+        <TabsList className="bg-[#2e2928] border border-[#58413b]/30 p-1 grid grid-cols-4 rounded-2xl w-full">
           <TabsTrigger
             value="jogos"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
           >
             <Play className="h-3 w-3 mr-1" />
+            <span className="hidden sm:inline"><Play className="h-3 w-3 mr-1" /></span>
             Jogar
           </TabsTrigger>
           <TabsTrigger
             value="participacoes"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
           >
-            <Ticket className="h-3 w-3 mr-1" />
-            Bilhetes
+            <Ticket className="h-3 w-3" />
+            <span className="hidden sm:inline ml-1">Bilhetes</span>
           </TabsTrigger>
           <TabsTrigger
             value="extrato"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
           >
-            <Receipt className="h-3 w-3 mr-1" />
-            Extrato
+            <Receipt className="h-3 w-3" />
+            <span className="hidden sm:inline ml-1">Extrato</span>
           </TabsTrigger>
           <TabsTrigger
             value="ranking"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs"
+            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
           >
-            <Trophy className="h-3 w-3 mr-1" />
-            Rankings
+            <Trophy className="h-3 w-3" />
+            <span className="hidden sm:inline ml-1">Rankings</span>
           </TabsTrigger>
         </TabsList>
 
@@ -423,25 +424,25 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
             <div className="grid gap-4">
               {participacoes.map((participacao) => (
                 <Card key={participacao.id} className="bg-[#1f1b19] border-[#58413b]/20 rounded-2xl overflow-hidden card-hover">
-                  <CardContent className="p-5">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 rounded-xl bg-[#ff734b]/10 border border-[#ff734b]/20">
+                  <CardContent className="p-4 md:p-5">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 md:p-3 rounded-xl bg-[#ff734b]/10 border border-[#ff734b]/20 shrink-0">
                           {getTipoIcon(participacao.jogo?.tipo || "")}
                         </div>
-                        <div>
-                          <h3 className="font-gaming text-lg text-[#eae0de]">{participacao.jogo?.nome}</h3>
-                          <p className="text-sm text-[#e0bfb7]/60 flex items-center gap-1 mt-1">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-gaming text-base md:text-lg text-[#eae0de] truncate">{participacao.jogo?.nome}</h3>
+                          <p className="text-xs md:text-sm text-[#e0bfb7]/60 truncate mt-0.5 md:mt-1">
                             {participacao.jogo?.evento?.aldeia?.nome} • {formatDate(participacao.createdAt)}
                           </p>
-                          <p className="text-sm font-bold text-[#ff734b] mt-1">
+                          <p className="text-sm font-bold text-[#ff734b] mt-0.5 md:mt-1">
                             {formatCurrency(participacao.valorPago)}
                           </p>
 
                           {/* Números jogados */}
                           {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
                             <div className="mt-2">
-                              <p className="text-xs text-[#e0bfb7]/50">Números jogados:</p>
+                              <p className="text-xs text-[#e0bfb7]/50">Números:</p>
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {(() => {
                                   const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
@@ -485,18 +486,18 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                                   ✓ Ganhou!
                                 </p>
                               ) : (
-                                <p className="text-sm text-[#e0bfb7]/40">
-                                  Sorteio realizado: não foi sorteado
+                                <p className="text-xs md:text-sm text-[#e0bfb7]/40">
+                                  Sorteio: não foi sorteado
                                 </p>
                               )}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {participacao.ganhador && (
                           <Badge
-                            className="bg-yellow-500 cursor-pointer hover:bg-yellow-600"
+                            className="bg-yellow-500 cursor-pointer hover:bg-yellow-600 text-xs"
                             onClick={() => handleVerVitoria(participacao)}
                           >
                             <Trophy className="h-3 w-3 mr-1" />
@@ -504,22 +505,22 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                           </Badge>
                         )}
                         {participacao.jogo?.tipo === "raspadinha" && !participacao.revelado && (
-                          <Button size="sm" onClick={() => handleRevelarRaspadinha(participacao)}>
-                            <Sparkles className="h-4 w-4 mr-2" />
+                          <Button size="sm" className="text-xs" onClick={() => handleRevelarRaspadinha(participacao)}>
+                            <Sparkles className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                             Revelar
                           </Button>
                         )}
                         {participacao.jogo?.tipo === "raspadinha" && participacao.revelado && (
-                          <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"}>
+                          <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"} className="text-xs">
                             {participacao.resultadoRaspe || "Sem prémio"}
                           </Badge>
                         )}
                         {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
-                          <Button variant="outline" size="sm">
-                            Ver Prémios
+                          <Button variant="outline" size="sm" className="text-xs">
+                            Prémios
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="shrink-0">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>

@@ -139,6 +139,27 @@
   }
 }
 
+/* Safe area padding for iPhones with notch */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Ensure bottom nav doesn't cover content */
+.page-content {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .page-content {
+    padding-bottom: 1rem;
+  }
+}
+
 /* Focus styles */
 button:focus-visible,
 input:focus-visible,

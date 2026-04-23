@@ -110,7 +110,7 @@ export function ScratchCardModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg p-0 border-none bg-transparent overflow-hidden">
+      <DialogContent className="sm:max-w-lg p-0 border-none bg-transparent overflow-hidden bottom-0 sm:top-0">
         <DialogTitle className="sr-only">{titulo}</DialogTitle>
         <DialogDescription className="sr-only">
           Raspadinha interativa - Deslize o dedo para revelar o seu prémio

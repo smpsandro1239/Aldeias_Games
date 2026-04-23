@@ -97,9 +97,11 @@ interface CreateJogoModalProps {
   initialData?: JogoData;
   userRole?: string;
   token?: string;
+  aldeiaId?: string;
+  metodosPagamentoDefault?: string[];
 }
 
-export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEventoId, initialData, userRole, token }: CreateJogoModalProps) {
+export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEventoId, initialData, userRole, token, aldeiaId, metodosPagamentoDefault }: CreateJogoModalProps) {
   const [loading, setLoading] = useState(false);
   const [showTransparency, setShowTransparency] = useState(false);
   const [submittedData, setSubmittedData] = useState<JogoData | null>(null);
@@ -139,7 +141,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     horaSorteio: "",
     localSorteio: "",
     numeroBlocos: "1",
-    permitirStripe: false,
+    permitirStripe: (metodosPagamentoDefault || ["saldo", "dinheiro"]).includes("stripe"),
+    permitirMBWay: (metodosPagamentoDefault || ["saldo", "dinheiro"]).includes("mbway"),
+    permitirSaldo: (metodosPagamentoDefault || ["saldo", "dinheiro"]).includes("saldo"),
     valorPremios: "",
   });
 
@@ -155,6 +159,10 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
   useEffect(() => {
     if (initialData && open) {
+      const config = typeof initialData.configuracao === 'string' 
+        ? JSON.parse(initialData.configuracao) 
+        : initialData.configuracao || {};
+      
       setFormData({
         nome: initialData.nome || "",
         tipo: initialData.tipo || "raspadinha",
@@ -178,7 +186,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
         horaSorteio: "",
         localSorteio: "",
         numeroBlocos: "1",
-        permitirStripe: false,
+        permitirStripe: config.permitirStripe || false,
+        permitirMBWay: config.permitirMBWay || false,
+        permitirSaldo: config.permitirSaldo !== false,
         valorPremios: "",
       });
       
@@ -270,6 +280,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
   };
 
   const resetForm = () => {
+    // Get default payment methods from aldeia settings or use sensible defaults
+    const defaultMethods = metodosPagamentoDefault || ["saldo", "dinheiro"];
+    
     setFormData({
       nome: "",
       tipo: "raspadinha",
@@ -293,7 +306,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       horaSorteio: "",
       localSorteio: "",
       numeroBlocos: "1",
-      permitirStripe: false,
+      permitirStripe: defaultMethods.includes("stripe"),
+      permitirMBWay: defaultMethods.includes("mbway"),
+      permitirSaldo: defaultMethods.includes("saldo"),
       valorPremios: "",
     });
     setRaspadinhaPremios([
@@ -467,7 +482,19 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       config.localSorteio = formData.localSorteio;
       config.numeroBlocos = parseInt(formData.numeroBlocos) || 1;
       config.permitirStripe = formData.permitirStripe;
+      config.permitirMBWay = formData.permitirMBWay;
+      config.permitirSaldo = formData.permitirSaldo;
+      config.permitirDinheiro = true;
+      config.permitirTransferencia = true;
       config.valorPremios = formData.valorPremios ? parseFloat(formData.valorPremios) : null;
+    }
+
+    if (formData.tipo === "raspadinha") {
+      config.permitirStripe = formData.permitirStripe;
+      config.permitirMBWay = formData.permitirMBWay;
+      config.permitirSaldo = formData.permitirSaldo;
+      config.permitirDinheiro = true;
+      config.permitirTransferencia = true;
     }
 
     if (formData.tipo === "poio_da_vaca") {
@@ -476,6 +503,11 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       config.custoQuadrado = parseFloat(formData.custoQuadrado) || 5;
       config.valorMercadoVaca = parseFloat(formData.valorMercadoVaca) || 1000;
       config.valorCompraVaca = parseFloat(formData.valorCompraVaca) || 800;
+      config.permitirStripe = formData.permitirStripe;
+      config.permitirMBWay = formData.permitirMBWay;
+      config.permitirSaldo = formData.permitirSaldo;
+      config.permitirDinheiro = true;
+      config.permitirTransferencia = true;
     }
 
     if (formData.tipo === "raspadinha") {
@@ -805,6 +837,44 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       required
                     />
                   </div>
+                </div>
+              )}
+
+              {(formData.tipo === "rifa" || formData.tipo === "tombola" || formData.tipo === "raspadinha" || formData.tipo === "poio_da_vaca") && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Métodos de Pagamento</Label>
+                  <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-2 px-3 py-2 bg-surface-container-high rounded-lg border border-outline-variant/20 cursor-pointer hover:bg-surface-container-highest transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.permitirSaldo}
+                        onChange={(e) => setFormData({ ...formData, permitirSaldo: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-400 text-[#ff734b] focus:ring-[#ff734b]"
+                      />
+                      <span className="text-sm">💰 Saldo Aldeias</span>
+                    </label>
+                    <label className="flex items-center gap-2 px-3 py-2 bg-surface-container-high rounded-lg border border-outline-variant/20 cursor-pointer hover:bg-surface-container-highest transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.permitirMBWay}
+                        onChange={(e) => setFormData({ ...formData, permitirMBWay: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-400 text-[#ff734b] focus:ring-[#ff734b]"
+                      />
+                      <span className="text-sm">📱 MBWay</span>
+                    </label>
+                    <label className="flex items-center gap-2 px-3 py-2 bg-surface-container-high rounded-lg border border-outline-variant/20 cursor-pointer hover:bg-surface-container-highest transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.permitirStripe}
+                        onChange={(e) => setFormData({ ...formData, permitirStripe: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-400 text-[#ff734b] focus:ring-[#ff734b]"
+                      />
+                      <span className="text-sm">💳 Cartão</span>
+                    </label>
+                  </div>
+                  {(!formData.permitirSaldo && !formData.permitirMBWay && !formData.permitirStripe) && (
+                    <p className="text-xs text-red-500">Selecione pelo menos um método de pagamento</p>
+                  )}
                 </div>
               )}
 
