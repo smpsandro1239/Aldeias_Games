@@ -60,6 +60,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   const [logs, setLogs] = useState<any[]>([]);
   const [vendedoresStats, setVendedoresStats] = useState<any[]>([]);
   const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
+  const [entregasPendentesCount, setEntregasPendentesCount] = useState(0);
 
   // Modals state
   const [eventoModalOpen, setEventoModalOpen] = useState(false);
@@ -178,15 +179,25 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
          if (vs) setVendedoresStats(vs);
        }
 
-       // Fetch pedidos pendentes count
-       const pedidosQ = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=pendente` : "?estado=pendente";
-       const pedidosRes = await fetch(`/api/admin/pedidos-carregamento${pedidosQ}`, {
-         headers: { Authorization: `Bearer ${token}` },
-       });
-       if (pedidosRes.ok) {
-         const pedidosData = await pedidosRes.json();
-         setPedidosPendentesCount(pedidosData.data?.length || 0);
-       }
+        // Fetch pedidos pendentes count
+        const pedidosQ = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=pendente` : "?estado=pendente";
+        const pedidosRes = await fetch(`/api/admin/pedidos-carregamento${pedidosQ}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (pedidosRes.ok) {
+          const pedidosData = await pedidosRes.json();
+          setPedidosPendentesCount(pedidosData.data?.length || 0);
+        }
+
+        // Fetch entregas pendentes count
+        const entregasQ = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=solicitado` : "?estado=solicitado";
+        const entregasRes = await fetch(`/api/admin/entregas-saldo${entregasQ}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (entregasRes.ok) {
+          const entregasData = await entregasRes.json();
+          setEntregasPendentesCount(entregasData.data?.length || 0);
+        }
      } catch (error) {
        toast.error("Erro ao carregar dados");
      } finally {
@@ -551,9 +562,9 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             </TabsTrigger>
             <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="relative">
               <TrendingUp className="h-4 w-4 mr-2" /> Entregas
-              {pedidosPendentesCount > 0 && (
+              {entregasPendentesCount > 0 && (
                 <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
-                  {pedidosPendentesCount}
+                  {entregasPendentesCount}
                 </Badge>
               )}
             </TabsTrigger>
