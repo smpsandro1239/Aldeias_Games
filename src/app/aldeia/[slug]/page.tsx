@@ -422,7 +422,9 @@ export default function AldeiaPage() {
         <Loader2 className="h-12 w-12 text-white animate-spin" />
       </div>
     }>
-      <AldeiaPageContent />
+      <LayoutHeader>
+        <AldeiaPageContent />
+      </LayoutHeader>
     </Suspense>
   );
 }

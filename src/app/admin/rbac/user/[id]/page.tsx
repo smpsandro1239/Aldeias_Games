@@ -8,7 +8,6 @@ import UserEffectivePermissions from "@/components/rbac/UserEffectivePermissions
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Shield, Users, Lock } from "lucide-react";
 import { LayoutHeader } from "@/components/layout-header";
-import { LayoutHeader } from "@/components/layout-header";
 
 type Role = {
   id: string;
