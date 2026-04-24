@@ -4,6 +4,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LayoutHeader } from "@/components/layout-header";
+import { LayoutHeader } from "@/components/layout-header";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -132,8 +134,10 @@ function SuccessContent() {
 
 export default function PagamentoSucessoPage() {
   return (
-    <Suspense>
-      <SuccessContent />
-    </Suspense>
+    <LayoutHeader>
+      <Suspense>
+        <SuccessContent />
+      </Suspense>
+    </LayoutHeader>
   );
 }

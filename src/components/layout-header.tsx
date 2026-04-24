@@ -184,7 +184,7 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
       </footer>
 
       {/* Modal do usuário */}
-      <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} onLogout={handleLogout} />
+      <UserMenuModal open={userMenuOpen} onOpenChange={setUserMenuOpen} />
     </>
   );
 }

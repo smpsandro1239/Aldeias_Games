@@ -3,11 +3,14 @@ export const metadata = {
   description: "Política de privacidade e proteção de dados pessoais",
 };
 
+import { LayoutHeader } from "@/components/layout-header";
+
 export default function PrivacidadePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-black text-violet-600 mb-8">Política de Privacidade</h1>
+    <LayoutHeader>
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 py-12 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-black text-violet-600 mb-8">Política de Privacidade</h1>
         
         <div className="prose prose-violet max-w-none space-y-6">
           <section>
@@ -106,6 +109,6 @@ export default function PrivacidadePage() {
           Última actualização: {new Date().toLocaleDateString("pt-PT")}
         </p>
       </div>
-    </div>
+    </LayoutHeader>
   );
 }
