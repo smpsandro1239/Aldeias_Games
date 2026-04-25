@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -61,6 +62,8 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   const [vendedoresStats, setVendedoresStats] = useState<any[]>([]);
   const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
   const [entregasPendentesCount, setEntregasPendentesCount] = useState(0);
+  const [userSearch, setUserSearch] = useState<string>("");
+  const [userPage, setUserPage] = useState<number>(1);
 
   // Modals state
   const [eventoModalOpen, setEventoModalOpen] = useState(false);
@@ -200,11 +203,26 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         }
      } catch (error) {
        toast.error("Erro ao carregar dados");
-     } finally {
-       setLoading(false);
-     }
-   };
+      } finally {
+        setLoading(false);
+      }
+    };
 
+  // Computed: filtered users based on search
+  const filteredUsers = users.filter((u) => {
+    const searchLower = userSearch.toLowerCase();
+    if (!searchLower) return true;
+    return (
+      u.nome?.toLowerCase().includes(searchLower) ||
+      u.email?.toLowerCase().includes(searchLower) ||
+      u.telefone?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [userSearch]);
+  
   // --- EVENTOS ---
   const handleSaveEvento = async (data: any) => {
     const isEditing = !!data.id;
@@ -482,41 +500,64 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">
-              {userRole === "super_admin" ? "Painel Global" : "O Meu Painel"}
-            </h1>
-            {userRole === "aldeia_admin" && aldeia && (
-              <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-medium rounded-full">
-                {aldeia.nome}
-              </span>
-            )}
-          </div>
-          <p className="text-muted-foreground">
-            {userRole === "super_admin" 
-              ? "Visão global de todas as aldeias" 
-              : `A gerir a tua aldeia: ${aldeia?.nome || 'Aldeia'}`
-            }
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {userRole === "super_admin" && (
-            <Button variant="outline" onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Aldeia
-            </Button>
-          )}
-          <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" /> Novo Evento
-          </Button>
-          <Button variant="outline" onClick={() => setResultadosExternosOpen(true)}>
-            <Globe className="h-4 w-4 mr-2" /> Lotaria Externa
-          </Button>
-        </div>
-      </div>
+   return (
+     <div className="space-y-6">
+       <div className="flex justify-between items-center">
+         <div>
+           <div className="flex items-center gap-3">
+             <h1 className="text-3xl font-bold">
+               {userRole === "super_admin" ? "Painel Global" : (userRole === "aldeia_admin" ? "O Meu Painel" : "Dashboard")}
+             </h1>
+             {userRole === "aldeia_admin" && aldeia && (
+               <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-medium rounded-full">
+                 {aldeia.nome}
+               </span>
+             )}
+           </div>
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
+             <div className="flex items-center gap-2">
+               {userRole === "super_admin" && (
+                 <>
+                   <div className="relative">
+                     <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ff734b] via-[#9cefff] to-[#ff734b] rounded-lg opacity-50 blur animate-pulse" />
+                     <div className="relative px-4 py-1 bg-[#110d0c] border border-[#ff734b]/30 rounded-lg">
+                       <span className="bg-gradient-to-r from-[#ff734b] to-[#9cefff] bg-clip-text text-transparent font-semibold text-sm">
+                         Visão Global
+                       </span>
+                     </div>
+                   </div>
+                   <span className="text-muted-foreground hidden sm:inline">
+                     de todas as organizações
+                   </span>
+                 </>
+               )}
+               {userRole === "aldeia_admin" && (
+                 <span className="text-muted-foreground">
+                   A gerir a tua aldeia: {aldeia?.nome || 'Aldeia'}
+                 </span>
+               )}
+               {userRole !== "super_admin" && userRole !== "aldeia_admin" && (
+                 <span className="text-muted-foreground">
+                   A tua área pessoal
+                 </span>
+               )}
+             </div>
+           </div>
+         </div>
+         <div className="flex gap-2">
+           {userRole === "super_admin" && (
+             <Button variant="outline" onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
+               <Plus className="h-4 w-4 mr-2" /> Nova Aldeia
+             </Button>
+           )}
+           <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}>
+             <Plus className="h-4 w-4 mr-2" /> Novo Evento
+           </Button>
+           <Button variant="outline" onClick={() => setResultadosExternosOpen(true)}>
+             <Globe className="h-4 w-4 mr-2" /> Lotaria Externa
+           </Button>
+         </div>
+       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -823,47 +864,91 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
           </Card>
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-4">
-          <div className="flex justify-between">
-            <h2 className="text-xl font-semibold">Gestão de Utilizadores</h2>
-            <Button onClick={() => { setSelectedUser(null); setUserModalOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Novo Utilizador
-            </Button>
-          </div>
-          {users.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="rounded-full bg-primary/10 p-4 mb-4">
-                  <Users className="h-12 w-12 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Sem utilizadores</h3>
-                <p className="text-muted-foreground text-center max-w-sm mb-6">
-                  Adicione utilizadores à sua organização para gerir o sistema.
-                </p>
-                <Button onClick={() => { setSelectedUser(null); setUserModalOpen(true); }}>
-                  <Plus className="h-4 w-4 mr-2" /> Adicionar Utilizador
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-          <div className="grid gap-4">
-            {users.map((u) => (
-              <Card key={u.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{u.nome}</h3>
-                    <p className="text-sm text-muted-foreground">{u.email} • {u.role}</p>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setUserModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("user", u.id)}><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          )}
-        </TabsContent>
+         <TabsContent value="users" className="space-y-4">
+           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+             <h2 className="text-xl font-semibold">Gestão de Utilizadores</h2>
+             <Button onClick={() => { setSelectedUser(null); setUserModalOpen(true); }}>
+               <Plus className="h-4 w-4 mr-2" /> Novo Utilizador
+             </Button>
+           </div>
+
+           {/* Filtros e Paginação */}
+           <Card>
+             <CardContent className="p-4">
+               <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                 <div className="flex-1 min-w-0">
+                   <Label htmlFor="userSearch" className="sr-only">Pesquisar (nome, email, telemóvel)</Label>
+                   <div className="relative">
+                     <Input
+                       id="userSearch"
+                       placeholder="Pesquisar por nome, email ou telemóvel..."
+                       value={userSearch}
+                       onChange={(e) => setUserSearch(e.target.value)}
+                       className="pl-10"
+                     />
+                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                     </svg>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Lista filtrada e paginada */}
+               <div className="space-y-3">
+                 {filteredUsers.length === 0 ? (
+                   <p className="text-center text-muted-foreground py-8">
+                     {users.length === 0 ? "Sem utilizadores" : "Nenhum utilizador corresponde aos filtros"}
+                   </p>
+                 ) : (
+                   filteredUsers.slice((userPage - 1) * 50, userPage * 50).map((u) => (
+                     <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg border">
+                       <div className="min-w-0">
+                         <h3 className="font-semibold truncate">{u.nome}</h3>
+                         <p className="text-sm text-muted-foreground truncate">{u.email}</p>
+                         <p className="text-xs text-muted-foreground">{u.telefone ? `Tlm: ${u.telefone}` : 'Sem telemóvel'} • Perfil: {u.role}</p>
+                       </div>
+                       <div className="flex gap-2 items-center self-stretch sm:self-auto">
+                         <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setUserModalOpen(true); }} title="Editar">
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("user", u.id)} title="Eliminar">
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </div>
+                   ))
+                 )}
+               </div>
+
+               {/* Paginação */}
+               {filteredUsers.length > 50 && (
+                 <div className="flex items-center justify-between pt-4 mt-4 border-t">
+                   <p className="text-sm text-muted-foreground">
+                     Mostrando {(userPage - 1) * 50 + 1} a {Math.min(userPage * 50, filteredUsers.length)} de {filteredUsers.length} utilizadores
+                   </p>
+                   <div className="flex gap-2">
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       disabled={userPage === 1}
+                       onClick={() => setUserPage(userPage - 1)}
+                     >
+                       Anterior
+                     </Button>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       disabled={userPage * 50 >= filteredUsers.length}
+                       onClick={() => setUserPage(userPage + 1)}
+                     >
+                       Próxima
+                     </Button>
+                   </div>
+                 </div>
+               )}
+             </CardContent>
+           </Card>
+         </TabsContent>
 
         {userRole === "super_admin" && (
           <>
