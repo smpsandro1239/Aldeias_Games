@@ -131,10 +131,10 @@ export function QRCodeGenerator({ open, onOpenChange, data, title }: QRCodeGener
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1f1b19] border-[#ff734b]/20 p-0 max-w-sm overflow-hidden">
+      <DialogContent className="bg-surface-container border-primary/20 p-0 max-w-sm overflow-hidden">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
-            <QrCode className="h-5 w-5 text-[#ff734b]" />
+            <QrCode className="h-5 w-5 text-primary" />
             QR Code
           </DialogTitle>
         </DialogHeader>
@@ -145,16 +145,16 @@ export function QRCodeGenerator({ open, onOpenChange, data, title }: QRCodeGener
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="bg-white p-4 rounded-2xl"
+              className="bg-foreground p-4 rounded-2xl"
             >
               {loading ? (
                 <div className="w-48 h-48 flex items-center justify-center">
-                  <div className="animate-pulse text-gray-400">A gerar...</div>
+                  <div className="animate-pulse text-muted-foreground">A gerar...</div>
                 </div>
               ) : (
                 <div className="w-48 h-48 bg-black relative">
                   {/* Simple QR placeholder - in production use a QR library */}
-                  <div className="absolute inset-4 bg-white p-2">
+                  <div className="absolute inset-4 bg-foreground p-2">
                     <div className="w-full h-full grid grid-cols-8 gap-0.5">
                       {Array.from({ length: 64 }).map((_, i) => (
                         <div
@@ -167,7 +167,7 @@ export function QRCodeGenerator({ open, onOpenChange, data, title }: QRCodeGener
                               ? "bg-black"
                               : (i === 27 || i === 28 || i === 35 || i === 36)
                               ? "bg-black"
-                              : "bg-white"
+                              : "bg-foreground"
                           }`}
                         />
                       ))}
@@ -180,23 +180,23 @@ export function QRCodeGenerator({ open, onOpenChange, data, title }: QRCodeGener
 
           {/* URL */}
           <div className="space-y-2">
-            <Label className="text-xs text-[#e0bfb7] uppercase tracking-wider">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">
               Link para partilhar
             </Label>
             <div className="flex gap-2">
               <Input
                 value={qrUrl}
                 readOnly
-                className="bg-[#2e2928] border-transparent text-white text-sm flex-1"
+                className="bg-surface-container-low border-transparent text-foreground text-sm flex-1"
               />
               <Button
                 size="icon"
                 variant="outline"
                 onClick={handleCopy}
-                className="border-[#ff734b]/30"
+                className="border-primary/30"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-primary" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -205,9 +205,9 @@ export function QRCodeGenerator({ open, onOpenChange, data, title }: QRCodeGener
           </div>
 
           {/* Instructions */}
-          <div className="bg-[#2e2928] rounded-xl p-4 flex items-start gap-3">
-            <Smartphone className="h-5 w-5 text-[#9cefff] mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-[#e0bfb7]">
+          <div className="bg-surface-container-low rounded-xl p-4 flex items-start gap-3">
+            <Smartphone className="h-5 w-5 text-secondary mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
               Mostra este QR Code aos jogadores. Ao scanear, serão direcionados diretamente para o jogo!
             </p>
           </div>
@@ -217,14 +217,14 @@ export function QRCodeGenerator({ open, onOpenChange, data, title }: QRCodeGener
             <Button
               variant="outline"
               onClick={handleShare}
-              className="flex-1 border-[#ff734b]/30 text-[#ff734b] hover:bg-[#ff734b]/10"
+              className="flex-1 border-primary/30 text-primary hover:bg-primary/10"
             >
               <Share2 className="h-4 w-4 mr-2" />
               Partilhar
             </Button>
             <Button
               onClick={handleDownload}
-              className="flex-1 bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
             >
               <Download className="h-4 w-4 mr-2" />
               Descarregar
@@ -262,7 +262,7 @@ export function QuickShare({ url, title, description }: QuickShareProps) {
           variant="outline"
           size="sm"
           onClick={handleCopyLink}
-          className="border-[#ff734b]/30 text-[#ff734b]"
+          className="border-primary/30 text-primary"
         >
           <Copy className="h-4 w-4 mr-2" />
           Copiar Link
@@ -271,7 +271,7 @@ export function QuickShare({ url, title, description }: QuickShareProps) {
           variant="outline"
           size="sm"
           onClick={() => setShowQR(true)}
-          className="border-[#ff734b]/30 text-[#ff734b]"
+          className="border-primary/30 text-primary"
         >
           <QrCode className="h-4 w-4 mr-2" />
           QR Code

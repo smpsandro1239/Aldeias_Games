@@ -129,7 +129,7 @@ export function SorteioModal({
                   className="space-y-4"
                 >
                   <Alert className="border-green-500">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <CheckCircle className="h-4 w-4 text-primary" />
                     <AlertDescription className="text-green-700">
                       Sorteio executado com sucesso!
                     </AlertDescription>

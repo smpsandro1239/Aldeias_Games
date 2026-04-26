@@ -158,7 +158,7 @@ export function AccessibleModal({
         transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
         className={`
           relative w-full ${sizes[size]}
-          bg-[#1f1b19] rounded-2xl border border-[#ff734b]/20
+          bg-surface-container rounded-2xl border border-primary/20
           shadow-2xl shadow-black/50 overflow-hidden
         `}
         onClick={(e) => e.stopPropagation()}
@@ -166,11 +166,11 @@ export function AccessibleModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-0">
           <div>
-            <h2 id="modal-title" className="text-xl font-bold text-white">
+            <h2 id="modal-title" className="text-xl font-bold text-foreground">
               {title}
             </h2>
             {description && (
-              <p id="modal-description" className="text-sm text-[#e0bfb7] mt-1">
+              <p id="modal-description" className="text-sm text-muted-foreground mt-1">
                 {description}
               </p>
             )}
@@ -179,10 +179,10 @@ export function AccessibleModal({
           {showCloseButton && (
             <button
               onClick={() => onOpenChange(false)}
-              className="p-2 rounded-xl hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff734b]/50"
+              className="p-2 rounded-xl hover:bg-foreground/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label="Fechar diálogo"
             >
-              <X className="h-5 w-5 text-white/70" />
+              <X className="h-5 w-5 text-foreground/70" />
             </button>
           )}
         </div>
@@ -241,13 +241,13 @@ export function ConfirmDialog({
       size="sm"
     >
       <div className="space-y-6">
-        <p className="text-[#e0bfb7]">{description}</p>
+        <p className="text-muted-foreground">{description}</p>
         
         <div className="flex gap-3 justify-end">
           <button
             onClick={handleCancel}
             disabled={loading}
-            className="px-4 py-2 rounded-xl border border-[#ff734b]/30 text-[#ff734b] hover:bg-[#ff734b]/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff734b]/50 disabled:opacity-50"
+            className="px-4 py-2 rounded-xl border border-primary/30 text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -255,10 +255,10 @@ export function ConfirmDialog({
             onClick={handleConfirm}
             disabled={loading}
             className={`
-              px-4 py-2 rounded-xl font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1b19]
+               px-4 py-2 rounded-xl font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container
               ${variant === "destructive"
-                ? "bg-red-500 hover:bg-red-600 text-white focus-visible:ring-red-500"
-                : "bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] focus-visible:ring-[#ff734b]"
+                ? "bg-destructive hover:bg-red-600 text-foreground focus-visible:ring-red-500"
+                : "bg-primary hover:bg-primary/90 text-primary-foreground focus-visible:ring-primary"
               }
               disabled:opacity-50
             `}

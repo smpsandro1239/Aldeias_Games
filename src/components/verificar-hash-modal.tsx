@@ -115,16 +115,16 @@ export function VerificarHashModal({ open, onOpenChange, token }: VerificarHashM
           {resultado && (
             <div className={`rounded-xl border-2 p-4 space-y-3 ${
               resultado.valido 
-                ? "border-green-500/30 bg-green-500/10" 
-                : "border-red-500/30 bg-red-500/10"
+                ? "border-green-500/30 bg-primary/10" 
+                : "border-red-500/30 bg-destructive/10"
             }`}>
               <div className="flex items-center gap-2">
                 {resultado.valido ? (
-                  <CheckCircle className="h-6 w-6 text-green-500" />
+                  <CheckCircle className="h-6 w-6 text-primary" />
                 ) : (
-                  <XCircle className="h-6 w-6 text-red-500" />
+                  <XCircle className="h-6 w-6 text-destructive" />
                 )}
-                <span className={`font-bold ${resultado.valido ? "text-green-500" : "text-red-500"}`}>
+                <span className={`font-bold ${resultado.valido ? "text-primary" : "text-destructive"}`}>
                   {resultado.mensagem}
                 </span>
               </div>
@@ -163,7 +163,7 @@ export function VerificarHashModal({ open, onOpenChange, token }: VerificarHashM
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Prémio Entregue:</span>
-                    <span className={`font-medium ${resultado.participacao.premioEntregue ? "text-green-500" : "text-yellow-500"}`}>
+                    <span className={`font-medium ${resultado.participacao.premioEntregue ? "text-primary" : "text-accent"}`}>
                       {resultado.participacao.premioEntregue ? "Sim" : "Não"}
                     </span>
                   </div>

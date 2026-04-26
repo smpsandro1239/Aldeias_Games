@@ -124,9 +124,9 @@ export function ScratchCardModal({
               transition={{ duration: 2, repeat: Infinity }}
               className="inline-block mb-2"
             >
-              <Sparkles className="w-8 h-8 text-white" />
+              <Sparkles className="w-8 h-8 text-foreground" />
             </motion.div>
-            <h2 className="text-4xl font-black text-white font-headline tracking-wider">{titulo}</h2>
+            <h2 className="text-4xl font-black text-foreground font-headline tracking-wider">{titulo}</h2>
             {organizacao && <p className="text-tertiary mt-1 font-semibold">{organizacao}</p>}
           </div>
 
@@ -168,7 +168,7 @@ export function ScratchCardModal({
                 </p>
 
                 {result.ganhou && result.premio?.valorDinheiroAlternative && (
-                  <p className="text-5xl font-bold text-white mt-4">
+                  <p className="text-5xl font-bold text-foreground mt-4">
                     €{result.premio.valorDinheiroAlternative}
                   </p>
                 )}

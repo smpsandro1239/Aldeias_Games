@@ -123,30 +123,30 @@ export function PoioDaVacaModal({
         <div className="relative bg-gradient-to-br from-emerald-950 via-teal-900 to-cyan-950 p-6 pb-4">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuMDUiLz48L3N2Zz4=')] opacity-30" />
 
-          <DialogHeader className="relative text-center text-white mb-4">
+          <DialogHeader className="relative text-center text-foreground mb-4">
             <motion.div
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className="flex justify-center mb-2"
             >
-              <div className="p-3 bg-white/10 rounded-full backdrop-blur-sm border border-white/20">
+              <div className="p-3 bg-foreground/10 rounded-full backdrop-blur-sm border border-white/20">
                 <Grid3X3 className="w-8 h-8 text-emerald-400" />
               </div>
             </motion.div>
-            <DialogTitle className="text-2xl font-black tracking-wide text-white drop-shadow-lg">
+            <DialogTitle className="text-2xl font-black tracking-wide text-foreground drop-shadow-lg">
               POIO DA VACA
             </DialogTitle>
-            <DialogDescription className="text-white/70">
+            <DialogDescription className="text-foreground/70">
               Selecione as coordenadas do seu jogo
             </DialogDescription>
           </DialogHeader>
 
           <div className="relative flex justify-center">
             <Tabs value={modo} onValueChange={(v) => setModo(v as "individual" | "cartao")}>
-              <TabsList className="bg-white/10 backdrop-blur-sm border border-white/20">
+              <TabsList className="bg-foreground/10 backdrop-blur-sm border border-white/20">
                 <TabsTrigger
                   value="individual"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-foreground"
                 >
                   <Grid3X3 className="w-4 h-4 mr-2" />
                   Individual
@@ -154,7 +154,7 @@ export function PoioDaVacaModal({
                 </TabsTrigger>
                 <TabsTrigger
                   value="cartao"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-foreground"
                 >
                   <Layers className="w-4 h-4 mr-2" />
                   Cartão Completo
@@ -171,7 +171,7 @@ export function PoioDaVacaModal({
               variant="outline"
               size="sm"
               onClick={() => setVerPainelCompleto(!verPainelCompleto)}
-              className="bg-white dark:bg-slate-800"
+              className="bg-foreground dark:bg-slate-800"
             >
               <Grid3X3 className="w-4 h-4 mr-2" />
               {verPainelCompleto ? "Ver por Letra" : "Ver Painel Completo"}
@@ -185,7 +185,7 @@ export function PoioDaVacaModal({
                   <motion.div
                     key={letra}
                     layout
-                    className="border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-3 bg-white dark:bg-slate-800"
+                    className="border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-3 bg-foreground dark:bg-slate-800"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
@@ -216,7 +216,7 @@ export function PoioDaVacaModal({
                               jogadoPorMim && "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-not-allowed border-2 border-green-400",
                               ocupado && !jogadoPorMim && "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed border-2 border-slate-300 dark:border-slate-600",
                               !disabled && !selecionado && "bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-400",
-                              selecionado && "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-2 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                              selecionado && "bg-gradient-to-r from-emerald-500 to-teal-600 text-foreground border-2 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
                             )}
                           >
                             {letra}{numero}
@@ -241,10 +241,10 @@ export function PoioDaVacaModal({
                         className={cn(
                           "min-w-[50px] h-12 rounded-xl font-black text-sm transition-all border-2",
                           letraAtiva === letra
-                            ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-emerald-400 shadow-lg shadow-emerald-500/30"
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-foreground border-emerald-400 shadow-lg shadow-emerald-500/30"
                             : isComplete
                             ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-400"
-                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-emerald-400"
+                            : "bg-foreground dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-emerald-400"
                         )}
                       >
                         {letra}
@@ -278,7 +278,7 @@ export function PoioDaVacaModal({
                               jogadoPorMim && "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-not-allowed border-2 border-green-500",
                               ocupado && !jogadoPorMim && "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed border-2 border-slate-300 dark:border-slate-600",
                               !disabled && !selecionado && "bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-400 hover:shadow-emerald-500/20",
-                              selecionado && "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-2 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+                              selecionado && "bg-gradient-to-r from-emerald-500 to-teal-600 text-foreground border-2 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
                             )}
                           >
                             <span className="relative">
@@ -289,7 +289,7 @@ export function PoioDaVacaModal({
                                   animate={{ scale: 1 }}
                                   className="absolute -top-1 -right-1"
                                 >
-                                  <CheckCircle className="w-4 h-4 text-white" />
+                                  <CheckCircle className="w-4 h-4 text-foreground" />
                                 </motion.span>
                               )}
                             </span>
@@ -319,7 +319,7 @@ export function PoioDaVacaModal({
                   <span className="text-slate-600 dark:text-slate-400">Ocupados</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-lg bg-white border-2 border-slate-200 dark:bg-slate-800 dark:border-slate-700" />
+                  <div className="w-5 h-5 rounded-lg bg-foreground border-2 border-slate-200 dark:bg-slate-800 dark:border-slate-700" />
                   <span className="text-slate-600 dark:text-slate-400">Disponíveis</span>
                 </div>
               </div>
@@ -332,7 +332,7 @@ export function PoioDaVacaModal({
                   key={getValorTotal()}
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
-                  className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl text-white font-black text-lg shadow-lg"
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl text-foreground font-black text-lg shadow-lg"
                 >
                   {getValorTotal().toFixed(2)}€
                 </motion.div>
@@ -350,7 +350,7 @@ export function PoioDaVacaModal({
                     key={i}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold rounded-lg shadow-md"
+                    className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-foreground text-xs font-bold rounded-lg shadow-md"
                   >
                     {s.letra}{s.numero}
                   </motion.span>
@@ -365,7 +365,7 @@ export function PoioDaVacaModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-foreground dark:bg-slate-950">
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -377,7 +377,7 @@ export function PoioDaVacaModal({
             <Button
               onClick={handleConfirm}
               disabled={selecao.length === 0}
-              className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+              className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-foreground font-bold shadow-lg hover:shadow-xl transition-all"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Confirmar ({getValorTotal().toFixed(2)}€)

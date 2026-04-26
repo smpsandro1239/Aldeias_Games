@@ -288,7 +288,7 @@ export default function UltimateRaffleTicket({
             <div className="flex items-start justify-between mb-4 relative z-10">
               <div className="flex items-center gap-3">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-white/20 p-2" />
+                  <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-foreground/20 p-2" />
                 ) : (
                   <div className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                     {organizationName.charAt(0)}
@@ -394,7 +394,7 @@ export default function UltimateRaffleTicket({
           </div>
 
           {layout.showPerforation && (
-            <div className="w-6 bg-gray-100 relative flex items-center justify-center" style={{ backgroundColor: "#f3f4f6" }}>
+            <div className="w-6 bg-muted relative flex items-center justify-center" style={{ backgroundColor: "#f3f4f6" }}>
               <svg width="24" height="100%" viewBox="0 0 24 400" preserveAspectRatio="none" className="h-full">
                 {layout.perforationStyle === "scissors" ? (
                   <>
@@ -425,7 +425,7 @@ export default function UltimateRaffleTicket({
             </div>
 
             {extras.showQRCode && (
-              <div className="my-3 mx-auto w-20 h-20 bg-white rounded p-1">
+              <div className="my-3 mx-auto w-20 h-20 bg-foreground rounded p-1">
                 <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs">QR</div>
               </div>
             )}
@@ -434,7 +434,7 @@ export default function UltimateRaffleTicket({
               <div className="my-2 mx-auto">
                 <div className="h-8 bg-gray-800 w-full flex items-end justify-center gap-0.5 px-2">
                   {[...Array(20)].map((_, i) => (
-                    <div key={i} className="bg-white w-0.5" style={{ height: `${Math.random() * 100}%` }} />
+                    <div key={i} className="bg-foreground w-0.5" style={{ height: `${Math.random() * 100}%` }} />
                   ))}
                 </div>
                 <p className="text-center text-xs font-mono mt-1" style={getTextStyle(theme.stubTextColor)}>{fullTicketNumber}</p>
@@ -463,11 +463,11 @@ export default function UltimateRaffleTicket({
       </div>
 
       <div className="mt-6 flex gap-3 justify-center no-print">
-        <button onClick={onPrint || (() => window.print())} className="px-6 py-2 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2">
+        <button onClick={onPrint || (() => window.print())} className="px-6 py-2 bg-gray-800 text-foreground rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2">
           🖨️ Imprimir Rifa
         </button>
         {onValidate && (
-          <button onClick={onValidate} className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
+          <button onClick={onValidate} className="px-6 py-2 bg-primary text-foreground rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
             ✅ Validar
           </button>
         )}

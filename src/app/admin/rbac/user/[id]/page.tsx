@@ -115,7 +115,7 @@ export default function UserRbacPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
                   <div className="rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary)]/80 p-3">
-                    <Users className="h-6 w-6 text-white" />
+                    <Users className="h-6 w-6 text-foreground" />
                   </div>
                   <div>
                     <h1 className="text-3xl font-bold tracking-tight text-[var(--text)]">{user.nome}</h1>

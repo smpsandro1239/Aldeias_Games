@@ -203,7 +203,7 @@ export default function TombolaTicket({
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-white/20 p-2" />
+                  <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-foreground/20 p-2" />
                 ) : (
                   <div className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                     {organizationName.charAt(0)}
@@ -242,7 +242,7 @@ export default function TombolaTicket({
 
             {/* Tombola Card */}
             <div className="relative">
-              <div className="bg-white/10 rounded-xl p-4" style={{ borderColor: "rgba(255,255,255,0.2)", borderWidth: "1px" }}>
+              <div className="bg-foreground/10 rounded-xl p-4" style={{ borderColor: "rgba(255,255,255,0.2)", borderWidth: "1px" }}>
                 <h3 className="text-lg font-bold mb-4 text-center" style={{ color: theme.mainTextColor }}>
                   Seus Números da Sorte
                 </h3>
@@ -260,7 +260,7 @@ export default function TombolaTicket({
             </div>
 
             {/* Prize Info */}
-            <div className="mt-6 p-4 bg-white/10 rounded-xl" style={{ borderColor: "rgba(255,255,255,0.2)", borderWidth: "1px" }}>
+            <div className="mt-6 p-4 bg-foreground/10 rounded-xl" style={{ borderColor: "rgba(255,255,255,0.2)", borderWidth: "1px" }}>
               <p className="text-sm font-bold mb-2" style={{ color: theme.mainTextColor }}>
                 Prémios:
               </p>
@@ -273,7 +273,7 @@ export default function TombolaTicket({
             </div>
 
             {/* Draw Info */}
-            <div className="mt-4 p-4 bg-white/10 rounded-xl" style={{ borderColor: "rgba(255,255,255,0.2)", borderWidth: "1px" }}>
+            <div className="mt-4 p-4 bg-foreground/10 rounded-xl" style={{ borderColor: "rgba(255,255,255,0.2)", borderWidth: "1px" }}>
               <p className="text-sm font-bold mb-2" style={{ color: theme.mainTextColor }}>
                 Informações do Sorteio:
               </p>
@@ -322,11 +322,11 @@ export default function TombolaTicket({
       </div>
 
       <div className="mt-6 flex gap-3 justify-center no-print">
-        <button onClick={onPrint || (() => window.print())} className="px-6 py-2 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2">
+        <button onClick={onPrint || (() => window.print())} className="px-6 py-2 bg-gray-800 text-foreground rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2">
           🖨️ Imprimir Tombola
         </button>
         {onValidate && (
-          <button onClick={onValidate} className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
+          <button onClick={onValidate} className="px-6 py-2 bg-primary text-foreground rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
             ✅ Validar
           </button>
         )}

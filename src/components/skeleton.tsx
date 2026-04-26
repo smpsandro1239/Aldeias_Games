@@ -12,14 +12,14 @@ export function Skeleton({ className = "" }: SkeletonProps) {
       initial={{ opacity: 0.5 }}
       animate={{ opacity: [0.5, 1, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-      className={`bg-[#2e2928] rounded-lg ${className}`}
+      className={`bg-surface-container-low rounded-lg ${className}`}
     />
   );
 }
 
 export function SkeletonCard() {
   return (
-    <div className="bg-[#1f1b19] rounded-2xl p-5 border border-[#58413b]/10">
+    <div className="bg-surface-container rounded-2xl p-5 border border-outline-variant/10">
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="w-12 h-12 rounded-xl" />
         <Skeleton className="w-16 h-6 rounded-full" />
@@ -27,7 +27,7 @@ export function SkeletonCard() {
       <Skeleton className="w-3/4 h-6 rounded mb-2" />
       <Skeleton className="w-full h-4 rounded mb-4" />
       <Skeleton className="w-full h-4 rounded mb-2" />
-      <div className="flex justify-between items-center pt-4 border-t border-[#58413b]/10">
+      <div className="flex justify-between items-center pt-4 border-t border-outline-variant/10">
         <Skeleton className="w-20 h-8 rounded" />
         <Skeleton className="w-24 h-10 rounded-xl" />
       </div>
@@ -37,9 +37,9 @@ export function SkeletonCard() {
 
 export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="bg-[#1f1b19] rounded-2xl p-5 border border-[#58413b]/10">
+    <div className="bg-surface-container rounded-2xl p-5 border border-outline-variant/10">
       {/* Header */}
-      <div className="flex gap-4 pb-4 border-b border-[#58413b]/20">
+      <div className="flex gap-4 pb-4 border-b border-outline-variant/20">
         <Skeleton className="w-1/4 h-4" />
         <Skeleton className="w-1/4 h-4" />
         <Skeleton className="w-1/4 h-4" />
@@ -47,7 +47,7 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
       </div>
       {/* Rows */}
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex gap-4 py-4 border-b border-[#58413b]/10 last:border-0">
+        <div key={i} className="flex gap-4 py-4 border-b border-outline-variant/10 last:border-0">
           <Skeleton className="w-1/4 h-4" />
           <Skeleton className="w-1/4 h-4" />
           <Skeleton className="w-1/4 h-4" />
@@ -62,7 +62,7 @@ export function SkeletonStats() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-[#1f1b19] rounded-2xl p-5 border border-[#58413b]/10">
+        <div key={i} className="bg-surface-container rounded-2xl p-5 border border-outline-variant/10">
           <div className="flex items-center justify-between mb-3">
             <Skeleton className="w-10 h-10 rounded-lg" />
             <Skeleton className="w-5 h-5 rounded" />
@@ -79,7 +79,7 @@ export function SkeletonList({ items = 3 }: { items?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="bg-[#1f1b19] rounded-xl p-4 border border-[#58413b]/10 flex items-center gap-4">
+        <div key={i} className="bg-surface-container rounded-xl p-4 border border-outline-variant/10 flex items-center gap-4">
           <Skeleton className="w-12 h-12 rounded-lg" />
           <div className="flex-1">
             <Skeleton className="w-3/4 h-4 rounded mb-2" />
@@ -99,11 +99,11 @@ export function SkeletonProfile() {
       <Skeleton className="w-32 h-6 rounded mb-2" />
       <Skeleton className="w-48 h-4 rounded mb-6" />
       <div className="w-full space-y-4">
-        <div className="bg-[#1f1b19] rounded-xl p-4">
+        <div className="bg-surface-container rounded-xl p-4">
           <Skeleton className="w-16 h-3 rounded mb-3" />
           <Skeleton className="w-full h-10 rounded" />
         </div>
-        <div className="bg-[#1f1b19] rounded-xl p-4">
+        <div className="bg-surface-container rounded-xl p-4">
           <Skeleton className="w-16 h-3 rounded mb-3" />
           <Skeleton className="w-full h-10 rounded" />
         </div>
@@ -114,7 +114,7 @@ export function SkeletonProfile() {
 
 export function SkeletonWallet() {
   return (
-    <div className="bg-gradient-to-br from-[#1f1b19] to-[#2e2928] rounded-2xl p-6 border border-[#ff734b]/20">
+    <div className="bg-gradient-to-br from-surface-container to-surface-container-low rounded-2xl p-6 border border-primary/20">
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="w-24 h-4 rounded" />
         <Skeleton className="w-10 h-10 rounded-full" />
@@ -127,7 +127,7 @@ export function SkeletonWallet() {
 
 export function SkeletonGameCard() {
   return (
-    <div className="bg-[#1f1b19] rounded-2xl p-5 border border-[#58413b]/10 overflow-hidden relative">
+    <div className="bg-surface-container rounded-2xl p-5 border border-outline-variant/10 overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-primary/5 opacity-0" />
       <div className="relative">
         <div className="flex items-center justify-between mb-4">

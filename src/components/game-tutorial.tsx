@@ -181,25 +181,25 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1f1b19] border-[#ff734b]/20 p-0 max-w-md overflow-hidden">
+      <DialogContent className="bg-surface-container border-primary/20 p-0 max-w-md overflow-hidden">
         {/* Header with progress */}
         <div className="p-6 pb-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <HelpCircle className="h-4 w-4 text-[#9cefff]" />
-              <span className="text-xs text-[#9cefff] uppercase tracking-wider">
+              <HelpCircle className="h-4 w-4 text-secondary" />
+              <span className="text-xs text-secondary uppercase tracking-wider">
                 Tutorial
               </span>
             </div>
             <button
               onClick={handleSkip}
-              className="text-xs text-[#e0bfb7] hover:text-white transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Saltar
             </button>
           </div>
           
-          <Progress value={progress} className="h-1 bg-[#2e2928]" />
+          <Progress value={progress} className="h-1 bg-surface-container-low" />
           
           <div className="flex justify-center gap-1 mt-3">
             {steps.map((_, index) => (
@@ -207,10 +207,10 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
                 key={index}
                 className={`h-1.5 rounded-full transition-all ${
                   index === currentStep
-                    ? "w-6 bg-[#ff734b]"
+                    ? "w-6 bg-primary"
                     : index < currentStep
-                    ? "w-1.5 bg-[#ff734b]"
-                    : "w-1.5 bg-[#58413b]"
+                    ? "w-1.5 bg-primary"
+                    : "w-1.5 bg-muted"
                 }`}
               />
             ))}
@@ -233,9 +233,9 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 10 }}
-                className="w-20 h-20 bg-gradient-to-br from-[#ff734b]/20 to-[#ff4488]/20 rounded-3xl flex items-center justify-center border border-[#ff734b]/20"
+                className="w-20 h-20 bg-gradient-to-br from-primary/20 to-destructive/20 rounded-3xl flex items-center justify-center border border-primary/20"
               >
-                <div className="text-[#ff734b]">
+                <div className="text-primary">
                   {currentTutorial.icon}
                 </div>
               </motion.div>
@@ -243,10 +243,10 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
 
             {/* Title & Description */}
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-white mb-3">
+              <h2 className="text-xl font-bold text-foreground mb-3">
                 {currentTutorial.title}
               </h2>
-              <p className="text-[#e0bfb7] leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 {currentTutorial.description}
               </p>
             </div>
@@ -260,7 +260,7 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
                     scale: index === currentStep ? 1.2 : 1,
                     opacity: index === currentStep ? 1 : 0.3,
                   }}
-                  className="w-2 h-2 rounded-full bg-[#ff734b]"
+                  className="w-2 h-2 rounded-full bg-primary"
                 />
               ))}
             </div>
@@ -273,7 +273,7 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
             <Button
               variant="outline"
               onClick={handleBack}
-              className="flex-1 border-[#ff734b]/30 text-[#ff734b]"
+              className="flex-1 border-primary/30 text-primary"
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               Anterior
@@ -284,7 +284,7 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
           
           <Button
             onClick={handleNext}
-            className="flex-1 bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
+            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
           >
             {currentStep === steps.length - 1 ? (
               <>

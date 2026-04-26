@@ -123,7 +123,7 @@ export default function PedidosPage() {
       case 'pendente': return 'text-orange-400 bg-orange-400/10';
       case 'confirmado': return 'text-green-400 bg-green-400/10';
       case 'cancelado': return 'text-red-400 bg-red-400/10';
-      default: return 'text-gray-400 bg-gray-400/10';
+      default: return 'text-muted-foreground bg-muted/10';
     }
   };
 
@@ -143,13 +143,13 @@ export default function PedidosPage() {
 
   return (
     <LayoutHeader>
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
-        <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+      <div className="min-h-screen bg-background text-foreground font-body">
+        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full">
-              <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+            <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-low rounded-full">
+              <ArrowLeft className="w-5 h-5 text-primary" />
             </button>
-            <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">
+            <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">
               Pedidos de Carregamento
             </h1>
           </div>
@@ -158,25 +158,25 @@ export default function PedidosPage() {
         <main className="px-4 pt-4 space-y-4">
         {/* Pending Orders */}
         <div>
-          <h2 className="text-lg font-bold text-[#ffb5a0] mb-3">
+          <h2 className="text-lg font-bold text-accent mb-3">
             Pedidos Pendentes ({pedidosPendentes.length})
           </h2>
           
           {loading ? (
-            <div className="text-center py-8 text-[#e0bfb7]">A carregar...</div>
+            <div className="text-center py-8 text-muted-foreground">A carregar...</div>
           ) : pedidosPendentes.length === 0 ? (
-            <div className="text-center py-8 text-[#e0bfb7]">
+            <div className="text-center py-8 text-muted-foreground">
               <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>Sem pedidos pendentes</p>
             </div>
           ) : (
             <div className="space-y-3">
               {pedidosPendentes.map((pedido) => (
-                <div key={pedido.id} className="bg-[#2e2928] rounded-xl p-4 space-y-3">
+                <div key={pedido.id} className="bg-surface-container-low rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-2xl font-bold text-[#ff734b]">{pedido.valor.toFixed(2)}€</p>
-                      <p className="text-xs text-[#e0bfb7]">{new Date(pedido.createdAt).toLocaleString("pt-PT")}</p>
+                      <p className="text-2xl font-bold text-primary">{pedido.valor.toFixed(2)}€</p>
+                      <p className="text-xs text-muted-foreground">{new Date(pedido.createdAt).toLocaleString("pt-PT")}</p>
                     </div>
                     <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getEstadoColor(pedido.estado)}`}>
                       {getEstadoIcon(pedido.estado)}
@@ -185,14 +185,14 @@ export default function PedidosPage() {
                   </div>
 
                   <div className="bg-[#1a1817] rounded-lg p-3 space-y-2">
-                    <p className="text-sm font-medium text-[#e0bfb7]">Solicitado por:</p>
+                    <p className="text-sm font-medium text-muted-foreground">Solicitado por:</p>
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-[#ff734b]" />
+                      <User className="w-4 h-4 text-primary" />
                       <span>{pedido.user?.nome || "Utilizador"}</span>
                     </div>
                     {pedido.user?.telefone && (
                       <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-[#ff734b]" />
+                        <Phone className="w-4 h-4 text-primary" />
                         <span className="text-sm">{pedido.user.telefone}</span>
                       </div>
                     )}
@@ -202,7 +202,7 @@ export default function PedidosPage() {
                     <button
                       onClick={() => handleConfirmar(pedido.id)}
                       disabled={processing === pedido.id}
-                      className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="flex-1 py-3 bg-primary text-foreground font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {processing === pedido.id ? (
                         <RefreshCw className="w-5 h-5 animate-spin" />
@@ -214,7 +214,7 @@ export default function PedidosPage() {
                     <button
                       onClick={() => handleRejeitar(pedido.id)}
                       disabled={processing === pedido.id}
-                      className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="flex-1 py-3 bg-red-600 text-foreground font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       <X className="w-5 h-5" />
                       Rejeitar
@@ -229,15 +229,15 @@ export default function PedidosPage() {
         {/* History */}
         {pedidosHistorico.length > 0 && (
           <div>
-            <h2 className="text-lg font-bold text-[#ffb5a0] mb-3">
+            <h2 className="text-lg font-bold text-accent mb-3">
               Histórico ({pedidosHistorico.length})
             </h2>
             <div className="space-y-2">
               {pedidosHistorico.map((pedido) => (
-                <div key={pedido.id} className="bg-[#2e2928] rounded-xl p-3 flex items-center justify-between">
+                <div key={pedido.id} className="bg-surface-container-low rounded-xl p-3 flex items-center justify-between">
                   <div>
                     <p className="font-bold">{pedido.valor.toFixed(2)}€</p>
-                    <p className="text-xs text-[#e0bfb7]">{pedido.user?.nome}</p>
+                    <p className="text-xs text-muted-foreground">{pedido.user?.nome}</p>
                   </div>
                   <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getEstadoColor(pedido.estado)}`}>
                     {getEstadoIcon(pedido.estado)}

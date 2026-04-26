@@ -72,10 +72,10 @@ function SuccessContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1f1b19] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-container flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-[#ff734b] animate-spin mx-auto mb-4" />
-          <p className="text-[#e0bfb7]">A verificar pagamento...</p>
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">A verificar pagamento...</p>
         </div>
       </div>
     );
@@ -83,26 +83,26 @@ function SuccessContent() {
 
   if (status === "success") {
     return (
-      <div className="min-h-screen bg-[#1f1b19] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-container flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Pagamento Concluído!</h1>
-          <p className="text-[#e0bfb7] mb-2">
-            O seu saldo foi creditado com sucesso.
-          </p>
+          <CheckCircle className="w-16 h-16 text-primary mx-auto mb-4" />
+           <h1 className="text-2xl font-bold text-foreground mb-2">Pagamento Concluído!</h1>
+           <p className="text-muted-foreground mb-2">
+             O seu saldo foi creditado com sucesso.
+           </p>
           {amount && (
-            <p className="text-lg text-[#ff734b] font-bold mb-2">
+            <p className="text-lg text-primary font-bold mb-2">
               +€{amount.toFixed(2)}
             </p>
           )}
           {saldoAtual !== null && (
-            <p className="text-sm text-[#e0bfb7] mb-6">
-              Saldo atual: <span className="text-white font-bold">€{saldoAtual.toFixed(2)}</span>
+            <p className="text-sm text-muted-foreground mb-6">
+               Saldo atual: <span className="text-foreground font-bold">€{saldoAtual.toFixed(2)}</span>
             </p>
           )}
           <Button
             onClick={handleGoBack}
-            className="bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar ao Início
@@ -113,15 +113,15 @@ function SuccessContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1f1b19] flex items-center justify-center">
+    <div className="min-h-screen bg-surface-container flex items-center justify-center">
       <div className="text-center max-w-md mx-auto p-6">
-        <h1 className="text-2xl font-bold text-white mb-2">Pagamento em Processamento</h1>
-        <p className="text-[#e0bfb7] mb-6">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Pagamento em Processamento</h1>
+        <p className="text-muted-foreground mb-6">
           O seu pagamento está a ser processado. O saldo será creditado assim que for confirmado.
         </p>
         <Button
           onClick={handleGoBack}
-          className="bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao Início

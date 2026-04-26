@@ -9,15 +9,15 @@ function generatePDFReport(data: any, type: string): string {
 <head>
   <meta charset="UTF-8">
   <title>Relatório - ${type}</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { color: #ff734b; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #ff734b; color: white; }
-    .total { font-weight: bold; font-size: 18px; }
-    .date { color: #666; font-size: 12px; }
-  </style>
+   <style>
+     body { font-family: Arial, sans-serif; padding: 20px; }
+     h1 { color: hsl(var(--primary)); }
+     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+     th, td { border: 1px solid hsl(var(--border)); padding: 8px; text-align: left; }
+     th { background: hsl(var(--primary)); color: white; }
+     .total { font-weight: bold; font-size: 18px; }
+     .date { color: hsl(var(--muted-foreground)); font-size: 12px; }
+   </style>
 </head>
 <body>
   <h1>Aldeias Games - ${type}</h1>

@@ -42,12 +42,12 @@ const iconesPorTipo = {
 };
 
 const coresPorTipo = {
-  sistema: "text-blue-500",
-  pagamento: "text-green-500",
-  sorteio: "text-purple-500",
-  premio: "text-yellow-500",
+  sistema: "text-secondary",
+  pagamento: "text-primary",
+  sorteio: "text-accent",
+  premio: "text-accent",
   campanha: "text-indigo-500",
-  alerta: "text-red-500",
+  alerta: "text-destructive",
 };
 
 export function NotificationsModal({

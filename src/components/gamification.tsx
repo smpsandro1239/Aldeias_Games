@@ -168,12 +168,12 @@ export function GamificationBadge({ badge, size = "md", showDescription = false 
       <div
         className={`absolute inset-0 rounded-2xl ${
           badge.unlocked
-            ? "bg-gradient-to-br from-[#ff734b]/20 to-[#ff4488]/20 border border-[#ff734b]/30"
-            : "bg-[#2e2928] border border-[#58413b]/20 opacity-50"
+            ? "bg-gradient-to-br from-primary/20 to-destructive/20 border border-primary/30"
+            : "bg-surface-container-low border border-outline-variant/20 opacity-50"
         }`}
       >
         {badge.unlocked && (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#ff734b]/5 to-transparent rounded-2xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl" />
         )}
       </div>
 
@@ -185,7 +185,7 @@ export function GamificationBadge({ badge, size = "md", showDescription = false 
       {/* Lock overlay */}
       {!badge.unlocked && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Shield className="h-4 w-4 text-[#58413b]" />
+          <Shield className="h-4 w-4 text-outline-variant" />
         </div>
       )}
 
@@ -199,10 +199,10 @@ export function GamificationBadge({ badge, size = "md", showDescription = false 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileHover={{ opacity: 1, y: 0 }}
-          className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-[#1f1b19] border border-[#ff734b]/30 rounded-lg px-3 py-2 whitespace-nowrap z-10"
+          className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-surface-container border border-primary/30 rounded-lg px-3 py-2 whitespace-nowrap z-10"
         >
-          <p className="text-xs text-white font-medium">{badge.name}</p>
-          <p className="text-[10px] text-[#e0bfb7]">{badge.description}</p>
+          <p className="text-xs text-foreground font-medium">{badge.name}</p>
+          <p className="text-[10px] text-muted-foreground">{badge.description}</p>
         </motion.div>
       )}
     </motion.div>
@@ -225,7 +225,7 @@ export function LevelProgress({ currentXP, showDetails = false }: LevelProgressP
     : 100;
 
   return (
-    <Card className="bg-[#1f1b19] border-[#58413b]/20 overflow-hidden">
+    <Card className="bg-surface-container border-outline-variant/20 overflow-hidden">
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {/* Level Badge */}
@@ -241,16 +241,16 @@ export function LevelProgress({ currentXP, showDetails = false }: LevelProgressP
           {/* Progress */}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-bold text-foreground">
                 Nível {currentLevel.level}
               </span>
-              <span className="text-xs text-[#e0bfb7]">
+              <span className="text-xs text-muted-foreground">
                 {currentXP} / {nextLevel?.minXP || "∞"} XP
               </span>
             </div>
             
             {/* Progress bar */}
-            <div className="h-2 bg-[#2e2928] rounded-full overflow-hidden">
+            <div className="h-2 bg-surface-container-low rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
@@ -262,13 +262,13 @@ export function LevelProgress({ currentXP, showDetails = false }: LevelProgressP
 
             {showDetails && (
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-[#e0bfb7]">
+                <span className="text-xs text-muted-foreground">
                   {currentLevel.name}
                 </span>
                 {currentLevel.benefits.length > 0 && (
                   <>
-                    <span className="text-[#58413b]">•</span>
-                    <span className="text-xs text-[#9cefff]">
+                    <span className="text-outline-variant">•</span>
+                    <span className="text-xs text-secondary">
                       {currentLevel.benefits[0]}
                     </span>
                   </>
@@ -304,27 +304,27 @@ export function GamificationDashboard({ stats, badges }: GamificationDashboardPr
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-[#1f1b19] rounded-xl p-3 text-center border border-[#58413b]/10">
-          <Trophy className="h-5 w-5 text-[#ffcc00] mx-auto mb-1" />
-          <p className="text-lg font-bold text-white">{stats.totalWins}</p>
-          <p className="text-[10px] text-[#e0bfb7]">Vitórias</p>
+        <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/10">
+          <Trophy className="h-5 w-5 text-accent mx-auto mb-1" />
+          <p className="text-lg font-bold text-foreground">{stats.totalWins}</p>
+          <p className="text-[10px] text-muted-foreground">Vitórias</p>
         </div>
-        <div className="bg-[#1f1b19] rounded-xl p-3 text-center border border-[#58413b]/10">
-          <Gamepad2 className="h-5 w-5 text-[#ff734b] mx-auto mb-1" />
-          <p className="text-lg font-bold text-white">{stats.totalGames}</p>
-          <p className="text-[10px] text-[#e0bfb7]">Jogos</p>
+        <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/10">
+          <Gamepad2 className="h-5 w-5 text-primary mx-auto mb-1" />
+          <p className="text-lg font-bold text-foreground">{stats.totalGames}</p>
+          <p className="text-[10px] text-muted-foreground">Jogos</p>
         </div>
-        <div className="bg-[#1f1b19] rounded-xl p-3 text-center border border-[#58413b]/10">
+        <div className="bg-surface-container rounded-xl p-3 text-center border border-outline-variant/10">
           <Flame className="h-5 w-5 text-orange-500 mx-auto mb-1" />
-          <p className="text-lg font-bold text-white">{stats.currentStreak}</p>
-          <p className="text-[10px] text-[#e0bfb7]">Sequência</p>
+          <p className="text-lg font-bold text-foreground">{stats.currentStreak}</p>
+          <p className="text-[10px] text-muted-foreground">Sequência</p>
         </div>
       </div>
 
       {/* Badges */}
       <div>
-        <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-          <Medal className="h-4 w-4 text-[#ff734b]" />
+        <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+          <Medal className="h-4 w-4 text-primary" />
           Minhas Medalhas ({unlockedBadges.length}/{badges.length})
         </h4>
         
@@ -337,16 +337,16 @@ export function GamificationDashboard({ stats, badges }: GamificationDashboardPr
 
       {/* Next Badge Progress */}
       {lockedBadges.length > 0 && (
-        <div className="bg-[#1f1b19] rounded-xl p-4 border border-[#58413b]/10">
-          <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#9cefff]" />
+        <div className="bg-surface-container rounded-xl p-4 border border-outline-variant/10">
+          <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-secondary" />
             Próxima Medalha
           </h4>
           <div className="flex items-center gap-3">
             <span className="text-2xl">{lockedBadges[0].icon}</span>
             <div className="flex-1">
-              <p className="text-sm font-medium text-white">{lockedBadges[0].name}</p>
-              <p className="text-xs text-[#e0bfb7]">{lockedBadges[0].description}</p>
+              <p className="text-sm font-medium text-foreground">{lockedBadges[0].name}</p>
+              <p className="text-xs text-muted-foreground">{lockedBadges[0].description}</p>
             </div>
           </div>
         </div>

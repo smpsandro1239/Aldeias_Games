@@ -307,13 +307,13 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         <Card className="border-orange-200 bg-orange-50/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-orange-800">Saldo a Entregar</CardTitle>
-            <Banknote className="h-4 w-4 text-orange-600" />
+            <Banknote className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-700">
               {formatCurrency(stats?.aEntregar || 0)}
             </div>
-            <p className="text-xs text-orange-600/80 mt-1">
+            <p className="text-xs text-accent/80 mt-1">
               Dinheiro vivo retido menos a sua comissão
             </p>
           </CardContent>
@@ -328,7 +328,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           <TabsTrigger value="pedidos" className="relative">
             Pedidos
             {pedidosPendentesCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
                 {pedidosPendentesCount}
               </Badge>
             )}
@@ -483,27 +483,27 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         <TabsContent value="angariacao" className="space-y-4">
           {/* Resumo Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="bg-[#2e2928]">
+            <Card className="bg-surface-container-low">
               <CardHeader className="py-3">
                 <CardTitle className="text-xs text-muted-foreground">Total Angariado</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-500">
+                <p className="text-2xl font-bold text-primary">
                   {formatCurrency(saldoAngariado.totalAngariado)}
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-[#2e2928]">
+            <Card className="bg-surface-container-low">
               <CardHeader className="py-3">
                 <CardTitle className="text-xs text-muted-foreground">Entregue</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-blue-500">
+                <p className="text-2xl font-bold text-secondary">
                   {formatCurrency(saldoAngariado.totalEntregue)}
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-[#2e2928]">
+            <Card className="bg-surface-container-low">
               <CardHeader className="py-3">
                 <CardTitle className="text-xs text-muted-foreground">Solicitado</CardTitle>
               </CardHeader>
@@ -513,7 +513,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-[#2e2928] border-primary/30">
+            <Card className="bg-surface-container-low border-primary/30">
               <CardHeader className="py-3">
                 <CardTitle className="text-xs text-muted-foreground">A Entregar</CardTitle>
               </CardHeader>
@@ -556,7 +556,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                   {(saldoAngariado.historicoEntregas || []).map((entrega: any) => (
                     <div
                       key={entrega.id}
-                      className="flex items-center justify-between p-4 bg-[#2e2928] rounded-xl"
+                      className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl"
                     >
                       <div>
                         <p className="font-bold text-lg">{entrega.valor.toFixed(2)}€</p>
@@ -572,10 +572,10 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                       <div className="text-right">
                         <Badge
                           className={
-                            entrega.estado === 'concluido' ? 'bg-green-500' :
-                            entrega.estado === 'confirmado' ? 'bg-blue-500' :
-                            entrega.estado === 'cancelado' ? 'bg-red-500' :
-                            'bg-yellow-500'
+                            entrega.estado === 'concluido' ? 'bg-primary' :
+                            entrega.estado === 'confirmado' ? 'bg-secondary' :
+                            entrega.estado === 'cancelado' ? 'bg-destructive' :
+                            'bg-accent'
                           }
                         >
                           {entrega.estado.toUpperCase()}
@@ -668,13 +668,13 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                 placeholder="0.00"
               />
               {valorEntrega && parseFloat(valorEntrega) > saldoAngariado.saldoAEntregar && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-destructive">
                   Valor excede o saldo disponível
                 </p>
               )}
             </div>
-            <div className="text-xs text-muted-foreground bg-yellow-500/10 p-3 rounded-lg border border-yellow-500/20">
-              <p className="font-medium text-yellow-500 mb-1">Importante:</p>
+            <div className="text-xs text-muted-foreground bg-accent/10 p-3 rounded-lg border border-accent/20">
+              <p className="font-medium text-accent mb-1">Importante:</p>
               <p>Ao solicitar a entrega, o administrador será notificado. Após a confirmação, o valor será transferido para o saldo do administrador e o seu saldo a entregar será zerado.</p>
             </div>
           </div>

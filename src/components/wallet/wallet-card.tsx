@@ -74,7 +74,7 @@ export function WalletCard({ token }: WalletCardProps) {
       >
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-            <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+            <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
           </div>
           <div className="text-left">
             <p className="text-[10px] sm:text-xs text-muted-foreground">Saldo</p>
@@ -136,12 +136,12 @@ export function WalletCard({ token }: WalletCardProps) {
                           <Gift className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-500" />
                         </div>
                       ) : t.valor > 0 ? (
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                          <ArrowUpRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-500" />
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                          <ArrowUpRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary" />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-500/20 flex items-center justify-center">
-                          <ArrowDownLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-red-500" />
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-destructive/20 flex items-center justify-center">
+                          <ArrowDownLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive" />
                         </div>
                       )}
                       <span className="truncate max-w-[80px] sm:max-w-[140px] text-muted-foreground text-[10px] sm:text-xs">

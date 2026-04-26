@@ -336,7 +336,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-lg md:text-2xl font-gaming font-bold text-white truncate">{stat.value}</div>
+              <div className="text-lg md:text-2xl font-gaming font-bold text-foreground truncate">{stat.value}</div>
             </CardContent>
           </Card>
         ))}
@@ -344,10 +344,10 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-[#2e2928] border border-[#58413b]/30 p-1 grid grid-cols-4 rounded-2xl w-full">
+        <TabsList className="bg-surface-container-low border border-outline-variant/30 p-1 grid grid-cols-4 rounded-2xl w-full">
           <TabsTrigger
             value="jogos"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold rounded-xl transition-all duration-200 text-muted-foreground text-xs sm:text-sm"
           >
             <Play className="h-3 w-3 mr-1" />
             <span className="hidden sm:inline"><Play className="h-3 w-3 mr-1" /></span>
@@ -355,21 +355,21 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           </TabsTrigger>
           <TabsTrigger
             value="participacoes"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold rounded-xl transition-all duration-200 text-muted-foreground text-xs sm:text-sm"
           >
             <Ticket className="h-3 w-3" />
             <span className="hidden sm:inline ml-1">Bilhetes</span>
           </TabsTrigger>
           <TabsTrigger
             value="extrato"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold rounded-xl transition-all duration-200 text-muted-foreground text-xs sm:text-sm"
           >
             <Receipt className="h-3 w-3" />
             <span className="hidden sm:inline ml-1">Extrato</span>
           </TabsTrigger>
           <TabsTrigger
             value="ranking"
-            className="data-[state=active]:bg-[#ff734b] data-[state=active]:text-[#110d0c] data-[state=active]:font-bold rounded-xl transition-all duration-200 text-[#e0bfb7] text-xs sm:text-sm"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold rounded-xl transition-all duration-200 text-muted-foreground text-xs sm:text-sm"
           >
             <Trophy className="h-3 w-3" />
             <span className="hidden sm:inline ml-1">Rankings</span>
@@ -385,7 +385,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                   <div className="absolute inset-0 bg-secondary/10 blur-xl rounded-full" />
                 </div>
                 <div>
-                  <p className="text-xl font-gaming font-bold text-white">Escolhe a tua Aldeia</p>
+                  <p className="text-xl font-gaming font-bold text-foreground">Escolhe a tua Aldeia</p>
                   <p className="text-sm text-muted-foreground mt-2">Precisas de selecionar uma aldeia para ver os jogos disponíveis.</p>
                   <Button
                     onClick={() => setWizardOpen(true)}
@@ -423,26 +423,26 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           ) : (
             <div className="grid gap-4">
               {participacoes.map((participacao) => (
-                <Card key={participacao.id} className="bg-[#1f1b19] border-[#58413b]/20 rounded-2xl overflow-hidden card-hover">
+                <Card key={participacao.id} className="bg-surface-container border-outline-variant/20 rounded-2xl overflow-hidden card-hover">
                   <CardContent className="p-4 md:p-5">
                     <div className="flex flex-col gap-4">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 md:p-3 rounded-xl bg-[#ff734b]/10 border border-[#ff734b]/20 shrink-0">
+                        <div className="p-2 md:p-3 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
                           {getTipoIcon(participacao.jogo?.tipo || "")}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-gaming text-base md:text-lg text-[#eae0de] truncate">{participacao.jogo?.nome}</h3>
-                          <p className="text-xs md:text-sm text-[#e0bfb7]/60 truncate mt-0.5 md:mt-1">
+                          <h3 className="font-gaming text-base md:text-lg text-foreground truncate">{participacao.jogo?.nome}</h3>
+                          <p className="text-xs md:text-sm text-muted-foreground/60 truncate mt-0.5 md:mt-1">
                             {participacao.jogo?.evento?.aldeia?.nome} • {formatDate(participacao.createdAt)}
                           </p>
-                          <p className="text-sm font-bold text-[#ff734b] mt-0.5 md:mt-1">
+                          <p className="text-sm font-bold text-primary mt-0.5 md:mt-1">
                             {formatCurrency(participacao.valorPago)}
                           </p>
 
                           {/* Números jogados */}
                           {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
                             <div className="mt-2">
-                              <p className="text-xs text-[#e0bfb7]/50">Números:</p>
+                              <p className="text-xs text-muted-foreground/50">Números:</p>
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {(() => {
                                   const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
@@ -450,7 +450,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                                   return numeros.map((n: number) => (
                                     <span
                                       key={n}
-                                      className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
+                                      className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
                                     >
                                       {n}
                                     </span>
@@ -460,7 +460,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                             </div>
                           ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
                             <div className="mt-2">
-                              <p className="text-xs text-[#e0bfb7]/50">Coordenadas:</p>
+                              <p className="text-xs text-muted-foreground/50">Coordenadas:</p>
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {(() => {
                                   const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
@@ -468,7 +468,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                                   return coordenadas.map((c: { letra: string; numero: number }) => (
                                     <span
                                       key={`${c.letra}${c.numero}`}
-                                      className="px-2 py-0.5 bg-[#ff734b]/10 text-[#ff734b] text-xs rounded"
+                                      className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
                                     >
                                       {c.letra}{c.numero}
                                     </span>
@@ -482,11 +482,11 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                           {participacao.jogo?.sorteado && (
                             <div className="mt-2">
                               {participacao.ganhador ? (
-                                <p className="text-sm text-green-500 font-medium">
+                                <p className="text-sm text-primary font-medium">
                                   ✓ Ganhou!
                                 </p>
                               ) : (
-                                <p className="text-xs md:text-sm text-[#e0bfb7]/40">
+                                <p className="text-xs md:text-sm text-muted-foreground/40">
                                   Sorteio: não foi sorteado
                                 </p>
                               )}
@@ -497,7 +497,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                       <div className="flex flex-wrap items-center gap-2">
                         {participacao.ganhador && (
                           <Badge
-                            className="bg-yellow-500 cursor-pointer hover:bg-yellow-600 text-xs"
+                            className="bg-accent cursor-pointer hover:bg-yellow-600 text-xs"
                             onClick={() => handleVerVitoria(participacao)}
                           >
                             <Trophy className="h-3 w-3 mr-1" />
@@ -533,9 +533,9 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         </TabsContent>
 
         <TabsContent value="extrato" className="space-y-4">
-          <Card className="bg-[#1f1b19] border-[#58413b]/20">
+          <Card className="bg-surface-container border-outline-variant/20">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-secondary" />
                 Extrato de Movimentos
               </CardTitle>
@@ -554,33 +554,33 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                   {walletStats.transacoes.map((t: any) => (
                     <div
                       key={t.id}
-                      className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+                      className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-foreground/5 transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         {t.tipo === "cashback" ? (
-                          <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <Gift className="h-5 w-5 text-green-500" />
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <Gift className="h-5 w-5 text-primary" />
                           </div>
                         ) : t.valor > 0 ? (
-                          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <ArrowUpRight className="h-5 w-5 text-blue-500" />
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <ArrowUpRight className="h-5 w-5 text-secondary" />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
-                            <ArrowDownLeft className="h-5 w-5 text-red-500" />
+                          <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
+                            <ArrowDownLeft className="h-5 w-5 text-destructive" />
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-[#eae0de]">
+                          <p className="font-medium text-foreground">
                             {t.descricao || "Transação"}
                           </p>
-                          <p className="text-xs text-[#e0bfb7]/50 mt-1">
+                          <p className="text-xs text-muted-foreground/50 mt-1">
                             {formatDate(t.createdAt)} • Tipo: {t.tipo?.replace('_', ' ')}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className={`font-bold text-lg ${t.valor > 0 ? "text-green-500" : "text-white"}`}>
+                        <span className={`font-bold text-lg ${t.valor > 0 ? "text-primary" : "text-foreground"}`}>
                           {t.valor > 0 ? "+" : ""}{formatCurrency(t.valor)}
                         </span>
                       </div>

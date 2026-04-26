@@ -203,15 +203,15 @@ export function RifaPlacarModal({
               {/* Legenda */}
               <div className="flex items-center gap-4 text-xs mb-2">
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-[#ff734b] rounded"></div>
+                  <div className="w-4 h-4 bg-primary rounded"></div>
                   <span>Seleccionado</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-[#2e2928] rounded border border-[#58413b]/30"></div>
+                  <div className="w-4 h-4 bg-surface-container-low rounded border border-outline-variant/30"></div>
                   <span>Disponível</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-[#393432] rounded"></div>
+                  <div className="w-4 h-4 bg-surface-container-highest rounded"></div>
                   <span>Ocupado</span>
                 </div>
               </div>
@@ -240,9 +240,9 @@ export function RifaPlacarModal({
                         disabled={occupied}
                         className={cn(
                           "h-8 rounded text-xs font-medium transition-all",
-                          occupied && "bg-[#393432] text-[#58413b]/50 cursor-not-allowed line-through",
-                          !occupied && !selected && "bg-[#2e2928] border border-[#58413b]/30 hover:bg-[#ff734b]/20 text-[#e0bfb7]",
-                          selected && "bg-[#ff734b] text-[#110d0c] font-bold"
+                          occupied && "bg-surface-container-highest text-outline-variant/50 cursor-not-allowed line-through",
+                          !occupied && !selected && "bg-surface-container-low border border-outline-variant/30 hover:bg-primary/20 text-muted-foreground",
+                          selected && "bg-primary text-primary-foreground font-bold"
                         )}
                       >
                         {numero}

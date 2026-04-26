@@ -89,32 +89,32 @@ export function NumberSelectorModal({
         <div className="relative bg-gradient-to-br from-indigo-950 via-purple-950 to-pink-950 p-6 pb-4">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEwIDBoMTB2MTBIMTB6TTAgMTBoMTB2MTBIMHoiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')] opacity-30" />
 
-          <DialogHeader className="relative text-center text-white mb-4">
+          <DialogHeader className="relative text-center text-foreground mb-4">
             <motion.div
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className="flex justify-center mb-2"
             >
-              <div className="p-3 bg-white/10 rounded-full backdrop-blur-sm border border-white/20">
+              <div className="p-3 bg-foreground/10 rounded-full backdrop-blur-sm border border-white/20">
                 <Ticket className="w-8 h-8 text-pink-400" />
               </div>
             </motion.div>
-            <DialogTitle className="text-2xl font-black tracking-wide text-white drop-shadow-lg">
+            <DialogTitle className="text-2xl font-black tracking-wide text-foreground drop-shadow-lg">
               SELECIONE OS SEUS NÚMEROS
             </DialogTitle>
-            <DialogDescription className="text-white/70">
+            <DialogDescription className="text-foreground/70">
               Escolha os números da sua sorte!
             </DialogDescription>
           </DialogHeader>
 
           <div className="relative">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
               <Input
                 placeholder="Pesquisar número..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:ring-pink-500"
+                className="pl-10 bg-foreground/10 border-white/20 text-foreground placeholder:text-foreground/40 focus:ring-pink-500"
               />
             </div>
           </div>
@@ -141,12 +141,12 @@ export function NumberSelectorModal({
                         "h-12 rounded-xl text-sm font-bold transition-all shadow-sm",
                         status === "ocupado" && "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed border-2 border-slate-300 dark:border-slate-700",
                         status === "disponivel" && "bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500",
-                        status === "selecionado" && "bg-gradient-to-r from-pink-500 to-purple-600 text-white border-2 border-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.4)]"
+                        status === "selecionado" && "bg-gradient-to-r from-pink-500 to-purple-600 text-foreground border-2 border-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.4)]"
                       )}
                     >
                       <span className={cn(
                         "relative",
-                        status === "selecionado" && "after:content-['✓'] after:absolute after:-top-1 after:-right-1 after:text-xs after:bg-white after:rounded-full after:p-0.5"
+                        status === "selecionado" && "after:content-['✓'] after:absolute after:-top-1 after:-right-1 after:text-xs after:bg-foreground after:rounded-full after:p-0.5"
                       )}>
                         {numero}
                       </span>
@@ -162,7 +162,7 @@ export function NumberSelectorModal({
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-xs">
                   <div className="w-5 h-5 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center">
-                    <CheckCircle2 className="w-3 h-3 text-white" />
+                    <CheckCircle2 className="w-3 h-3 text-foreground" />
                   </div>
                   <span className="text-slate-600 dark:text-slate-400">Selecionados</span>
                 </div>
@@ -173,7 +173,7 @@ export function NumberSelectorModal({
                   <span className="text-slate-600 dark:text-slate-400">Ocupados</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
-                  <div className="w-5 h-5 rounded-lg bg-white border-2 border-slate-200 dark:bg-slate-800 dark:border-slate-700" />
+                  <div className="w-5 h-5 rounded-lg bg-foreground border-2 border-slate-200 dark:bg-slate-800 dark:border-slate-700" />
                   <span className="text-slate-600 dark:text-slate-400">Disponíveis</span>
                 </div>
               </div>
@@ -186,7 +186,7 @@ export function NumberSelectorModal({
                   key={valorTotal}
                   initial={{ scale: 1.2 }}
                   animate={{ scale: 1 }}
-                  className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl text-white font-black text-lg shadow-lg"
+                  className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl text-foreground font-black text-lg shadow-lg"
                 >
                   {valorTotal.toFixed(2)}€
                 </motion.div>
@@ -204,7 +204,7 @@ export function NumberSelectorModal({
                     key={n}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="px-3 py-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold rounded-lg shadow-md"
+                    className="px-3 py-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-foreground text-xs font-bold rounded-lg shadow-md"
                   >
                     #{n}
                   </motion.span>
@@ -219,7 +219,7 @@ export function NumberSelectorModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-foreground dark:bg-slate-950">
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -231,7 +231,7 @@ export function NumberSelectorModal({
             <Button
               onClick={onConfirmWithPayment || onConfirm}
               disabled={numerosSelecionados.length === 0}
-              className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+              className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-foreground font-bold shadow-lg hover:shadow-xl transition-all"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               {onConfirmWithPayment ? "Escolher Pagamento" : `Confirmar (${valorTotal.toFixed(2)}€)`}

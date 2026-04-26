@@ -67,7 +67,7 @@ export function LotteryAnimation({
               transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
               className="p-4 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full shadow-[0_0_30px_rgba(251,191,36,0.5)]"
             >
-              <Sparkles className="w-8 h-8 text-white" />
+              <Sparkles className="w-8 h-8 text-foreground" />
             </motion.div>
           ) : showResult ? (
             <motion.div
@@ -76,7 +76,7 @@ export function LotteryAnimation({
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
               className="p-4 bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 rounded-full shadow-[0_0_40px_rgba(251,191,36,0.6)]"
             >
-              <Trophy className="w-8 h-8 text-white" />
+              <Trophy className="w-8 h-8 text-foreground" />
             </motion.div>
           ) : null}
         </div>
@@ -97,10 +97,10 @@ export function LotteryAnimation({
               className={cn(
                 "text-7xl md:text-8xl font-black tracking-wider text-center",
                 isSpinning
-                  ? "text-white/80 drop-shadow-lg"
+                  ? "text-foreground/80 drop-shadow-lg"
                   : showResult
                   ? "bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(251,191,36,0.8)]"
-                  : "text-white"
+                  : "text-foreground"
               )}
             >
               {displayValue}
@@ -161,17 +161,17 @@ export function LotteryAnimation({
               className={cn(
                 "w-3 h-3 rounded-full mx-1",
                 isSpinning
-                  ? "bg-purple-500"
+                  ? "bg-accent"
                   : showResult
                   ? "bg-yellow-400"
-                  : "bg-white/30"
+                  : "bg-foreground/30"
               )}
             />
           ))}
         </div>
 
         {!isSpinning && !showResult && (
-          <p className="text-center text-white/50 text-sm mt-4">
+          <p className="text-center text-foreground/50 text-sm mt-4">
             A sortear...
           </p>
         )}
@@ -181,9 +181,9 @@ export function LotteryAnimation({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-center text-white/80 text-lg font-bold mt-4"
+            className="text-center text-foreground/80 text-lg font-bold mt-4"
           >
-            <Star className="w-5 h-5 inline mr-2 text-yellow-400" />
+            <Star className="w-5 h-5 inline mr-2 text-primary" />
             Resultado Final!
           </motion.p>
         )}

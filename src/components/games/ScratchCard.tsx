@@ -267,14 +267,14 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
             className="w-32 h-32 object-contain drop-shadow-2xl"
           />
         )}
-        <h1 className="text-3xl font-black text-white text-center mt-2 tracking-tighter">
+        <h1 className="text-3xl font-black text-foreground text-center mt-2 tracking-tighter">
           {finalPremio.nome || "Prémio Especial"}
         </h1>
-        <p className="text-white/90 text-lg mt-1">
+        <p className="text-foreground/90 text-lg mt-1">
           {finalPremio.descricao || "Prémio Especial"}
         </p>
         {finalPremio.valorDinheiroAlternative && (
-          <p className="text-4xl font-bold text-white mt-2">
+          <p className="text-4xl font-bold text-foreground mt-2">
             €{finalPremio.valorDinheiroAlternative}
           </p>
         )}
@@ -289,7 +289,7 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
 
       {/* Percentagem */}
       {percent > 10 && !revelado && (
-        <div className="absolute top-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-mono">
+        <div className="absolute top-4 right-4 bg-black/70 text-foreground text-xs px-3 py-1 rounded-full font-mono">
           {percent}%
         </div>
       )}
@@ -303,12 +303,12 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
         >
           <div className="text-center">
             <div className="text-5xl mb-2">🎉</div>
-            <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full text-white text-sm font-bold bg-gradient-to-r ${getPrizeLevelColor(prizeLevel)}`}>
+            <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full text-foreground text-sm font-bold bg-gradient-to-r ${getPrizeLevelColor(prizeLevel)}`}>
               {prizeLevel.toUpperCase()}
             </div>
-            <p className="text-2xl font-black mt-2 text-white">{finalPremio.nome}</p>
+            <p className="text-2xl font-black mt-2 text-foreground">{finalPremio.nome}</p>
             {finalPremio.valorDinheiroAlternative && (
-              <p className="text-3xl font-bold text-white mt-1">
+              <p className="text-3xl font-bold text-foreground mt-1">
                 €{finalPremio.valorDinheiroAlternative}
               </p>
             )}

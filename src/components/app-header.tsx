@@ -65,17 +65,17 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-primary/10">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             {showMenuButton && onMenuClick && (
-              <button onClick={onMenuClick} className="text-[#ff734b] text-xl">
+              <button onClick={onMenuClick} className="text-primary text-xl">
                 ☰
               </button>
             )}
             <button onClick={() => router.push("/")} className="flex items-center gap-2">
-              <House className="h-6 w-6 text-[#ff734b]" />
-              <span className="font-serif italic text-[#ff734b] text-lg font-bold">
+              <House className="h-6 w-6 text-primary" />
+              <span className="font-serif italic text-primary text-lg font-bold">
                 {title}
               </span>
             </button>
@@ -84,9 +84,9 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
             {user && (
               <button 
                 onClick={() => setUserMenuOpen(true)}
-                className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
+                className="w-9 h-9 rounded-full bg-surface-container-low overflow-hidden border border-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
               >
-                <User className="h-4 w-4 text-[#ff734b]" />
+                <User className="h-4 w-4 text-primary" />
               </button>
             )}
           </div>
@@ -95,26 +95,26 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
 
       {/* User Menu Modal */}
       <Dialog open={userMenuOpen} onOpenChange={setUserMenuOpen}>
-        <DialogContent className="sm:max-w-md bg-[#1f1b19] border border-[#ff734b]/10 p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-md bg-surface-container border border-primary/10 p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="font-serif text-xl text-[#ffb5a0]">A minha Conta</DialogTitle>
+            <DialogTitle className="font-serif text-xl text-accent">A minha Conta</DialogTitle>
           </DialogHeader>
           <div className="px-6 pb-6 space-y-4">
-            <div className="bg-[#2e2928] rounded-xl p-4 text-center">
-              <p className="text-xs text-[#e0bfb7] mb-1">Bem-vindo</p>
-              <p className="font-serif text-lg text-[#ffb5a0]">{user?.nome}</p>
-              <p className="text-xs text-[#e0bfb7]/60 mt-1">{user?.email}</p>
+            <div className="bg-surface-container-low rounded-xl p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Bem-vindo</p>
+              <p className="font-serif text-lg text-accent">{user?.nome}</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">{user?.email}</p>
             </div>
-            <div className="bg-[#2e2928] rounded-xl p-4 text-center">
-              <p className="text-xs text-[#e0bfb7] mb-1">O meu Saldo Aldeias</p>
-              <p className="font-serif text-3xl text-[#ff734b]">{saldo.toFixed(2)} €</p>
+            <div className="bg-surface-container-low rounded-xl p-4 text-center">
+              <p className="text-xs text-muted-foreground mb-1">O meu Saldo Aldeias</p>
+              <p className="font-serif text-3xl text-primary">{saldo.toFixed(2)} €</p>
             </div>
             <button 
               onClick={() => {
                 setUserMenuOpen(false);
                 router.push('/perfil');
               }}
-              className="w-full py-3 text-center text-[#9cefff] hover:bg-[#9cefff]/10 rounded-xl flex items-center justify-center gap-2"
+              className="w-full py-3 text-center text-secondary hover:bg-secondary/10 rounded-xl flex items-center justify-center gap-2"
             >
               <User className="h-4 w-4" />
               Editar Perfil
@@ -125,7 +125,7 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
                   setUserMenuOpen(false);
                   router.push('/configuracoes');
                 }}
-                className="w-full py-3 text-center text-[#ff734b] hover:bg-[#ff734b]/10 rounded-xl flex items-center justify-center gap-2"
+                className="w-full py-3 text-center text-primary hover:bg-primary/10 rounded-xl flex items-center justify-center gap-2"
               >
                 <Settings className="h-4 w-4" />
                 Configurações
@@ -133,7 +133,7 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
             )}
             <button 
               onClick={handleLogout}
-              className="w-full py-3 text-center text-red-500 hover:bg-red-500/10 rounded-xl flex items-center justify-center gap-2"
+              className="w-full py-3 text-center text-destructive hover:bg-destructive/10 rounded-xl flex items-center justify-center gap-2"
             >
               <LogOut className="h-4 w-4" />
               Terminar Sessão

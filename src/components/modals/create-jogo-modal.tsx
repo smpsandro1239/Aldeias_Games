@@ -641,10 +641,10 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     const m = getMetrics();
     
     return (
-      <div className={`p-4 rounded-xl border-2 ${m.isLucrativo ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+      <div className={`p-4 rounded-xl border-2 ${m.isLucrativo ? 'bg-primary/10 border-green-500/30' : 'bg-destructive/10 border-red-500/30'}`}>
         <div className="flex items-center gap-2 mb-3">
-          <Calculator className={`w-5 h-5 ${m.isLucrativo ? 'text-green-500' : 'text-red-500'}`} />
-          <h4 className={`font-bold ${m.isLucrativo ? 'text-green-500' : 'text-red-500'}`}>
+          <Calculator className={`w-5 h-5 ${m.isLucrativo ? 'text-primary' : 'text-destructive'}`} />
+          <h4 className={`font-bold ${m.isLucrativo ? 'text-primary' : 'text-destructive'}`}>
             {m.isLucrativo ? '✅ Lucrativo' : '❌ Não Lucrativo'}
           </h4>
         </div>
@@ -653,19 +653,19 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">% Total Prémios:</span>
-              <span className={metricsRaspadinha.totalPercentagem > 50 ? "text-red-500" : ""}>
+              <span className={metricsRaspadinha.totalPercentagem > 50 ? "text-destructive" : ""}>
                 {metricsRaspadinha.totalPercentagem}%
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro Mínimo:</span>
-              <span className={metricsRaspadinha.lucroMinimo >= 50 ? "text-green-500" : "text-red-500"}>
+              <span className={metricsRaspadinha.lucroMinimo >= 50 ? "text-primary" : "text-destructive"}>
                 {metricsRaspadinha.lucroMinimo}%
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Custo Médio/Bilhete:</span>
-              <span className="font-bold text-[#ff734b]">{metricsRaspadinha.custoMedioPorBilhete.toFixed(2)}€</span>
+              <span className="font-bold text-primary">{metricsRaspadinha.custoMedioPorBilhete.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita (100 bilhetes):</span>
@@ -673,7 +673,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro Estimado:</span>
-              <span className={metricsRaspadinha.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
+              <span className={metricsRaspadinha.lucroEstimado >= 0 ? "text-primary" : "text-destructive"}>
                 {metricsRaspadinha.lucroEstimado.toFixed(2)}€
               </span>
             </div>
@@ -684,7 +684,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Prémios:</span>
-              <span className="font-bold text-[#ff734b]">{metricsRifa.totalPremios.toFixed(2)}€</span>
+              <span className="font-bold text-primary">{metricsRifa.totalPremios.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita Total:</span>
@@ -692,13 +692,13 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro:</span>
-              <span className={metricsRifa.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
+              <span className={metricsRifa.lucroEstimado >= 0 ? "text-primary" : "text-destructive"}>
                 {metricsRifa.lucroEstimado.toFixed(2)}€
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Margem:</span>
-              <span className={metricsRifa.margemLucro >= 50 ? "text-green-500" : "text-red-500"}>
+              <span className={metricsRifa.margemLucro >= 50 ? "text-primary" : "text-destructive"}>
                 {metricsRifa.margemLucro.toFixed(1)}%
               </span>
             </div>
@@ -717,17 +717,17 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Custo Vaca:</span>
-              <span className="font-bold text-[#ff734b]">{metricsPoioDaVaca.valorCompraVaca.toFixed(2)}€</span>
+              <span className="font-bold text-primary">{metricsPoioDaVaca.valorCompraVaca.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro:</span>
-              <span className={metricsPoioDaVaca.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
+              <span className={metricsPoioDaVaca.lucroEstimado >= 0 ? "text-primary" : "text-destructive"}>
                 {metricsPoioDaVaca.lucroEstimado.toFixed(2)}€
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Margem:</span>
-              <span className={metricsPoioDaVaca.margemLucro >= 50 ? "text-green-500" : "text-red-500"}>
+              <span className={metricsPoioDaVaca.margemLucro >= 50 ? "text-primary" : "text-destructive"}>
                 {metricsPoioDaVaca.margemLucro.toFixed(1)}%
               </span>
             </div>
@@ -849,7 +849,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         type="checkbox"
                         checked={formData.permitirSaldo}
                         onChange={(e) => setFormData({ ...formData, permitirSaldo: e.target.checked })}
-                        className="w-4 h-4 rounded border-gray-400 text-[#ff734b] focus:ring-[#ff734b]"
+                        className="w-4 h-4 rounded border-gray-400 text-primary focus:ring-primary"
                       />
                       <span className="text-sm">💰 Saldo Aldeias</span>
                     </label>
@@ -858,7 +858,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         type="checkbox"
                         checked={formData.permitirMBWay}
                         onChange={(e) => setFormData({ ...formData, permitirMBWay: e.target.checked })}
-                        className="w-4 h-4 rounded border-gray-400 text-[#ff734b] focus:ring-[#ff734b]"
+                        className="w-4 h-4 rounded border-gray-400 text-primary focus:ring-primary"
                       />
                       <span className="text-sm">📱 MBWay</span>
                     </label>
@@ -867,13 +867,13 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         type="checkbox"
                         checked={formData.permitirStripe}
                         onChange={(e) => setFormData({ ...formData, permitirStripe: e.target.checked })}
-                        className="w-4 h-4 rounded border-gray-400 text-[#ff734b] focus:ring-[#ff734b]"
+                        className="w-4 h-4 rounded border-gray-400 text-primary focus:ring-primary"
                       />
                       <span className="text-sm">💳 Cartão</span>
                     </label>
                   </div>
                   {(!formData.permitirSaldo && !formData.permitirMBWay && !formData.permitirStripe) && (
-                    <p className="text-xs text-red-500">Selecione pelo menos um método de pagamento</p>
+                    <p className="text-xs text-destructive">Selecione pelo menos um método de pagamento</p>
                   )}
                 </div>
               )}
@@ -883,7 +883,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold">Configuração da Raspadinha</h3>
-                      <Badge variant={isLucrativo ? "default" : "destructive"} className={isLucrativo ? "bg-green-500" : ""}>
+                      <Badge variant={isLucrativo ? "default" : "destructive"} className={isLucrativo ? "bg-primary" : ""}>
                         {isLucrativo ? `${metricsRaspadinha.lucroMinimo}% lucro` : "Lucre baixo!"}
                       </Badge>
                     </div>
@@ -910,9 +910,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       </div>
                     </div>
 
-                    <div className="bg-[#1f1b19] rounded-xl p-4 space-y-4 border border-[#ff734b]/20">
+                    <div className="bg-surface-container rounded-xl p-4 space-y-4 border border-primary/20">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-[#ff734b]">Prémios e Percentagens</h4>
+                        <h4 className="text-sm font-semibold text-primary">Prémios e Percentagens</h4>
                         <Button type="button" variant="outline" size="sm" onClick={adicionarPremioRaspadinha}>
                           + Prémio
                         </Button>
@@ -920,9 +920,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
                       <div className="space-y-3">
                         {rashadinhaPremios.map((premio) => (
-                          <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
+                          <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-surface-container-low rounded-lg">
                             <div className="col-span-1 flex items-center justify-center">
-                              <Trophy className="h-4 w-4 text-[#ff734b]" />
+                              <Trophy className="h-4 w-4 text-primary" />
                             </div>
                             <div className="col-span-4">
                               <Input
@@ -964,7 +964,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                   type="button"
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 text-red-500"
+                                  className="h-8 w-8 p-0 text-destructive"
                                   onClick={() => removerPremioRaspadinha(premio.id)}
                                 >
                                   ✕
@@ -987,9 +987,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                     
                     <div className="space-y-3">
                       {rifaPremios.map((premio) => (
-                        <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
+                        <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-surface-container-low rounded-lg">
                           <div className="col-span-1 flex items-center justify-center">
-                            <Trophy className="h-4 w-4 text-[#ff734b]" />
+                            <Trophy className="h-4 w-4 text-primary" />
                           </div>
                           <div className="col-span-6">
                             <Input
@@ -1016,7 +1016,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-red-500"
+                              className="h-8 w-8 p-0 text-destructive"
                               onClick={() => removerPremioRifa(premio.id)}
                             >
                               ✕
@@ -1108,7 +1108,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
               <Button 
                 type="submit" 
                 disabled={loading || !isLucrativo || !formData.nome.trim()}
-                className={isLucrativo ? "bg-green-500 hover:bg-green-600" : ""}
+                className={isLucrativo ? "bg-primary hover:bg-primary" : ""}
               >
                 {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Jogo")}
               </Button>

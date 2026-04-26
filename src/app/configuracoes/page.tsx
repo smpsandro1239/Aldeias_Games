@@ -157,33 +157,33 @@ export default function ConfiguracoesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] flex items-center justify-center">
-        <div className="text-[#ff734b]">A carregar...</div>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-primary">A carregar...</div>
       </div>
     );
   }
 
    return (
      <LayoutHeader>
-       <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
-         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+       <div className="min-h-screen bg-background text-foreground font-body">
+          <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
            <div className="flex items-center gap-3">
-             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
-               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+              <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-low rounded-full transition-colors">
+                <ArrowLeft className="w-5 h-5 text-primary" />
              </button>
-             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">As Minhas Configurações</h1>
+              <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">As Minhas Configurações</h1>
            </div>
          </header>
 
          <main className="px-4 pt-6 space-y-6 pb-24">
-        <div className="bg-gradient-to-r from-[#ff734b]/20 to-transparent rounded-2xl p-4 border border-[#ff734b]/10">
-          <h2 className="font-serif text-lg text-[#ffb5a0] mb-2">Métodos de Pagamento</h2>
-          <p className="text-sm text-[#e0bfb7]">
+        <div className="bg-gradient-to-r from-primary/20 to-transparent rounded-2xl p-4 border border-primary/10">
+          <h2 className="font-serif text-lg text-accent mb-2">Métodos de Pagamento</h2>
+          <p className="text-sm text-muted-foreground">
             Configure os métodos de pagamento disponíveis para a sua aldeia/organização.
           </p>
           <button
             onClick={() => setAjudaModalOpen(true)}
-            className="mt-3 text-xs text-[#9cefff] flex items-center gap-1 hover:underline"
+            className="mt-3 text-xs text-secondary flex items-center gap-1 hover:underline"
           >
             <Info className="w-3 h-3" />
             Ver tutorial completo
@@ -191,155 +191,155 @@ export default function ConfiguracoesPage() {
           </button>
         </div>
 
-        <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
-          <h3 className="font-serif text-[#ffb5a0] font-bold mb-4 flex items-center gap-2">
+        <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
+          <h3 className="font-serif text-accent font-bold mb-4 flex items-center gap-2">
             <Wallet className="w-5 h-5" />
             Métodos Ativos
           </h3>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl">
+            <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
                   <span className="text-xl">💵</span>
                 </div>
                 <div>
-                  <p className="font-medium text-[#ffb5a0]">Dinheiro</p>
-                  <p className="text-xs text-[#e0bfb7]/60">Sempre disponível</p>
+                  <p className="font-medium text-accent">Dinheiro</p>
+                  <p className="text-xs text-muted-foreground/60">Sempre disponível</p>
                 </div>
               </div>
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-5 h-5 text-primary" />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl">
+            <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#ff734b]/20 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
                   <span className="text-xl">💰</span>
                 </div>
                 <div>
-                  <p className="font-medium text-[#ffb5a0]">Saldo Aldeias</p>
-                  <p className="text-xs text-[#e0bfb7]/60">Sem custos</p>
+                  <p className="font-medium text-accent">Saldo Aldeias</p>
+                  <p className="text-xs text-muted-foreground/60">Sem custos</p>
                 </div>
               </div>
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-5 h-5 text-primary" />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+            <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-[#ffb5a0]">Stripe (Cartão)</p>
-                  <p className="text-xs text-[#e0bfb7]/60">1.5% + €0.25 por transação</p>
+                  <p className="font-medium text-accent">Stripe (Cartão)</p>
+                  <p className="text-xs text-muted-foreground/60">1.5% + €0.25 por transação</p>
                 </div>
               </div>
               <button
                 onClick={() => setFormData({ ...formData, permitirStripe: !formData.permitirStripe })}
                 className={`w-12 h-6 rounded-full transition-colors ${
-                  formData.permitirStripe ? "bg-green-500" : "bg-[#58413b]"
+                  formData.permitirStripe ? "bg-primary" : "bg-muted"
                 }`}
               >
-                <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
                   formData.permitirStripe ? "translate-x-6" : "translate-x-0.5"
                 }`} />
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+            <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-purple-400" />
+                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <Phone className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-[#ffb5a0]">MBWay</p>
-                  <p className="text-xs text-[#e0bfb7]/60">~1-2% por transação</p>
+                  <p className="font-medium text-accent">MBWay</p>
+                  <p className="text-xs text-muted-foreground/60">~1-2% por transação</p>
                 </div>
               </div>
               <button
                 onClick={() => setFormData({ ...formData, permitirMBWay: !formData.permitirMBWay })}
                 className={`w-12 h-6 rounded-full transition-colors ${
-                  formData.permitirMBWay ? "bg-green-500" : "bg-[#58413b]"
+                  formData.permitirMBWay ? "bg-primary" : "bg-muted"
                 }`}
               >
-                <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
                   formData.permitirMBWay ? "translate-x-6" : "translate-x-0.5"
                 }`} />
               </button>
             </div>
           </div>
 
-          <div className="mt-6 border-t border-[#58413b]/20 pt-6">
-            <h3 className="font-serif text-[#ffb5a0] font-bold mb-4 flex items-center gap-2">
+          <div className="mt-6 border-t border-outline-variant/20 pt-6">
+            <h3 className="font-serif text-accent font-bold mb-4 flex items-center gap-2">
               <Wallet className="w-5 h-5" />
               Predefinição para Novos Jogos
             </h3>
-            <p className="text-xs text-[#e0bfb7]/60 mb-4">
+            <p className="text-xs text-muted-foreground/60 mb-4">
               Escolha quais métodos de pagamento vêm pré-selecionados ao criar um novo jogo.
             </p>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
                     <span className="text-xl">💵</span>
                   </div>
                   <div>
-                    <p className="font-medium text-[#ffb5a0]">Dinheiro</p>
-                    <p className="text-xs text-[#e0bfb7]/60">Sempre disponível</p>
+                    <p className="font-medium text-accent">Dinheiro</p>
+                    <p className="text-xs text-muted-foreground/60">Sempre disponível</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setDefaultMethods({ ...defaultMethods, dinheiro: !defaultMethods.dinheiro })}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    defaultMethods.dinheiro ? "bg-green-500" : "bg-[#58413b]"
+                    defaultMethods.dinheiro ? "bg-primary" : "bg-muted"
                   }`}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
                     defaultMethods.dinheiro ? "translate-x-6" : "translate-x-0.5"
                   }`} />
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#ff734b]/20 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
                     <span className="text-xl">💰</span>
                   </div>
                   <div>
-                    <p className="font-medium text-[#ffb5a0]">Saldo Aldeias</p>
-                    <p className="text-xs text-[#e0bfb7]/60">Sem custos</p>
+                    <p className="font-medium text-accent">Saldo Aldeias</p>
+                    <p className="text-xs text-muted-foreground/60">Sem custos</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setDefaultMethods({ ...defaultMethods, saldo: !defaultMethods.saldo })}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    defaultMethods.saldo ? "bg-green-500" : "bg-[#58413b]"
+                    defaultMethods.saldo ? "bg-primary" : "bg-muted"
                   }`}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
                     defaultMethods.saldo ? "translate-x-6" : "translate-x-0.5"
                   }`} />
                 </button>
               </div>
 
               {formData.permitirStripe && (
-                <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+                <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 text-blue-400" />
+                    <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-[#ffb5a0]">Cartão (Stripe)</p>
+                      <p className="font-medium text-accent">Cartão (Stripe)</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setDefaultMethods({ ...defaultMethods, stripe: !defaultMethods.stripe })}
                     className={`w-12 h-6 rounded-full transition-colors ${
-                      defaultMethods.stripe ? "bg-green-500" : "bg-[#58413b]"
+                      defaultMethods.stripe ? "bg-primary" : "bg-muted"
                     }`}
                   >
-                    <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                    <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
                       defaultMethods.stripe ? "translate-x-6" : "translate-x-0.5"
                     }`} />
                   </button>
@@ -347,44 +347,44 @@ export default function ConfiguracoesPage() {
               )}
 
               {formData.permitirMBWay && (
-                <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+                <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-purple-400" />
+                    <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                      <Phone className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-[#ffb5a0]">MBWay</p>
+                      <p className="font-medium text-accent">MBWay</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setDefaultMethods({ ...defaultMethods, mbway: !defaultMethods.mbway })}
                     className={`w-12 h-6 rounded-full transition-colors ${
-                      defaultMethods.mbway ? "bg-green-500" : "bg-[#58413b]"
+                      defaultMethods.mbway ? "bg-primary" : "bg-muted"
                     }`}
                   >
-                    <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                    <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
                       defaultMethods.mbway ? "translate-x-6" : "translate-x-0.5"
                     }`} />
                   </button>
                 </div>
               )}
 
-              <div className="flex items-center justify-between p-3 bg-[#2e2928] rounded-xl border border-[#58413b]/20">
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-yellow-400" />
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-[#ffb5a0]">Transferência</p>
+                    <p className="font-medium text-accent">Transferência</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setDefaultMethods({ ...defaultMethods, transferencia: !defaultMethods.transferencia })}
                   className={`w-12 h-6 rounded-full transition-colors ${
-                    defaultMethods.transferencia ? "bg-green-500" : "bg-[#58413b]"
+                    defaultMethods.transferencia ? "bg-primary" : "bg-muted"
                   }`}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
                     defaultMethods.transferencia ? "translate-x-6" : "translate-x-0.5"
                   }`} />
                 </button>
@@ -393,64 +393,64 @@ export default function ConfiguracoesPage() {
           </div>
 
           {(formData.permitirStripe || formData.permitirMBWay) && (
-            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl space-y-2">
-              <p className="text-xs text-yellow-500 flex items-center gap-2">
+            <div className="mt-4 p-3 bg-accent/10 border border-accent/20 rounded-xl space-y-2">
+              <p className="text-xs text-accent flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 <strong>Aviso:</strong> Ao ativar estes métodos, terão custos por transação.
               </p>
               {formData.permitirStripe && (
-                <p className="text-xs text-yellow-500/80 pl-6">
+                <p className="text-xs text-accent/80 pl-6">
                   • Stripe: ~2.9% + €0.30 por transação
                 </p>
               )}
               {formData.permitirMBWay && (
-                <p className="text-xs text-yellow-500/80 pl-6">
+                <p className="text-xs text-accent/80 pl-6">
                   • MBWay: ~1.5% + €0.25 por transação
                 </p>
               )}
-              <p className="text-xs text-green-500 pl-6 pt-1">
+              <p className="text-xs text-primary pl-6 pt-1">
                 💡 Recomendamos Dinheiro e Saldo Aldeias para maximizar receitas (sem comissões).
               </p>
             </div>
           )}
         </div>
 
-        <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
-          <h3 className="font-serif text-[#ffb5a0] font-bold mb-4 flex items-center gap-2">
+        <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
+          <h3 className="font-serif text-accent font-bold mb-4 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
             Dados para Transferência
           </h3>
 
-          <p className="text-xs text-[#e0bfb7]/60 mb-4">
+          <p className="text-xs text-muted-foreground/60 mb-4">
             Estes dados serão mostrados aos clientes que quiserem fazer transferência bancária.
           </p>
 
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label className="text-xs text-[#e0bfb7]">Nome do Titular da Conta</Label>
+              <Label className="text-xs text-muted-foreground">Nome do Titular da Conta</Label>
               <Input
                 value={formData.nomeTitularConta}
                 onChange={(e) => setFormData({ ...formData, nomeTitularConta: e.target.value })}
                 placeholder="Ex: Junta de Freguesia de Vila Verde"
-                className="bg-[#2e2928] border-[#58413b]/20"
+                className="bg-surface-container-low border-outline-variant/20"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs text-[#e0bfb7]">IBAN</Label>
+              <Label className="text-xs text-muted-foreground">IBAN</Label>
               <div className="flex gap-2">
                 <Input
                   value={formData.iban}
                   onChange={(e) => setFormData({ ...formData, iban: e.target.value.toUpperCase() })}
                   placeholder="PT50 0000 0000 0000 0000 00"
-                  className="bg-[#2e2928] border-[#58413b]/20 font-mono"
+                  className="bg-surface-container-low border-outline-variant/20 font-mono"
                 />
                 {formData.iban && (
                   <button
                     onClick={copiarIBAN}
-                    className="p-2 bg-[#2e2928] rounded-lg hover:bg-[#58413b]/30"
+                    className="p-2 bg-surface-container-low rounded-lg hover:bg-muted/30"
                   >
-                    <Copy className="w-5 h-5 text-[#ff734b]" />
+                    <Copy className="w-5 h-5 text-primary" />
                   </button>
                 )}
               </div>
@@ -461,7 +461,7 @@ export default function ConfiguracoesPage() {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-6 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
+          className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-xl"
         >
           <Save className="w-5 h-5 mr-2" />
           {saving ? "A guardar..." : "Guardar Configurações"}
@@ -471,38 +471,38 @@ export default function ConfiguracoesPage() {
       <BottomNav />
 
       <Dialog open={ajudaModalOpen} onOpenChange={setAjudaModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-[#1f1b19] border border-[#ff734b]/10">
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-surface-container border border-primary/10">
           <DialogHeader>
-            <DialogTitle className="font-serif text-xl text-[#ffb5a0]">Tutorial: Métodos de Pagamento</DialogTitle>
+            <DialogTitle className="font-serif text-xl text-accent">Tutorial: Métodos de Pagamento</DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <section>
-              <h3 className="font-bold text-[#ffb5a0] mb-2">1. Dinheiro (Grátis ✅)</h3>
-              <p className="text-sm text-[#e0bfb7]">
+              <h3 className="font-bold text-accent mb-2">1. Dinheiro (Grátis ✅)</h3>
+              <p className="text-sm text-muted-foreground">
                 O vendedor recebe dinheiro vivo e carrega o saldo na app. Tudo fica registado automaticamente.
               </p>
             </section>
 
             <section>
-              <h3 className="font-bold text-[#ffb5a0] mb-2">2. Saldo Aldeias (Grátis ✅)</h3>
-              <p className="text-sm text-[#e0bfb7]">
+              <h3 className="font-bold text-accent mb-2">2. Saldo Aldeias (Grátis ✅)</h3>
+              <p className="text-sm text-muted-foreground">
                 Os jogadores podem ter saldo na plataforma. Os vendedores carregam saldo quando recebem pagamento.
               </p>
             </section>
 
             <section>
-              <h3 className="font-bold text-[#ffb5a0] mb-2">3. Transferência Bancária</h3>
-              <p className="text-sm text-[#e0bfb7]">
+              <h3 className="font-bold text-accent mb-2">3. Transferência Bancária</h3>
+              <p className="text-sm text-muted-foreground">
                 Configure os dados bancários acima. O cliente faz a transferência e o vendedor confirma o recebimento.
               </p>
             </section>
 
             <section>
-              <h3 className="font-bold text-blue-400 mb-2">4. Stripe (1.5% + €0.25)</h3>
-              <p className="text-sm text-[#e0bfb7]">
+              <h3 className="font-bold text-primary mb-2">4. Stripe (1.5% + €0.25)</h3>
+              <p className="text-sm text-muted-foreground">
                 Permite pagamentos com cartão de crédito/débito. Para ativar:
               </p>
-              <ul className="text-sm text-[#e0bfb7]/80 mt-2 space-y-1 ml-4">
+              <ul className="text-sm text-muted-foreground/80 mt-2 space-y-1 ml-4">
                 <li>1. Criar conta em <strong>stripe.com/pt</strong></li>
                 <li>2. Obter as chaves API (Publishable e Secret)</li>
                 <li>3. Ativar no admin da aldeia</li>
@@ -511,11 +511,11 @@ export default function ConfiguracoesPage() {
             </section>
 
             <section>
-              <h3 className="font-bold text-purple-400 mb-2">5. MBWay (~1-2%)</h3>
-              <p className="text-sm text-[#e0bfb7]">
+              <h3 className="font-bold text-primary mb-2">5. MBWay (~1-2%)</h3>
+              <p className="text-sm text-muted-foreground">
                 Pagamento via telemóvel. Para ativar:
               </p>
-              <ul className="text-sm text-[#e0bfb7]/80 mt-2 space-y-1 ml-4">
+              <ul className="text-sm text-muted-foreground/80 mt-2 space-y-1 ml-4">
                 <li>1. Registar em <strong>lemonway.com</strong> ou <strong>paybyrd.com</strong></li>
                 <li>2. Completar verificação de identidade</li>
                 <li>3. Obter credenciais API</li>
@@ -523,9 +523,9 @@ export default function ConfiguracoesPage() {
               </ul>
             </section>
 
-            <section className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-              <h3 className="font-bold text-yellow-500 mb-2">💡 Recomendação</h3>
-              <p className="text-sm text-[#e0bfb7]">
+            <section className="bg-accent/10 border border-accent/20 rounded-xl p-4">
+              <h3 className="font-bold text-accent mb-2">💡 Recomendação</h3>
+              <p className="text-sm text-muted-foreground">
                 Para maximizar a angariação de fundos, use principalmente <strong>Dinheiro</strong> e <strong>Saldo</strong> 
                 (sem custos). Ative Stripe/MBWay apenas se clientes insistirem, pois as comissões reduzem os fundos angariados.
               </p>

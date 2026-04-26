@@ -280,12 +280,12 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                       }}
                       className={`p-3 rounded-xl border-2 flex items-center gap-2 transition-all ${
                         selecionado 
-                          ? "border-[#ff734b] bg-[#ff734b]/10" 
-                          : "border-[#58413b]/20 bg-[#1f1b19] hover:border-[#ff734b]/30"
+                          ? "border-primary bg-primary/10" 
+                          : "border-outline-variant/20 bg-surface-container hover:border-primary/30"
                       }`}
                     >
-                      <Icon className={`w-5 h-5 ${selecionado ? "text-[#ff734b]" : "text-[#e0bfb7]"}`} />
-                      <span className={`text-sm font-medium ${selecionado ? "text-[#ff734b]" : "text-[#e0bfb7]"}`}>
+                      <Icon className={`w-5 h-5 ${selecionado ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className={`text-sm font-medium ${selecionado ? "text-primary" : "text-muted-foreground"}`}>
                         {jogo.nome}
                       </span>
                     </button>
@@ -293,7 +293,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 })}
               </div>
               {jogosSelecionados.length > 0 && (
-                <p className="text-xs text-[#ff734b]">
+                <p className="text-xs text-primary">
                   {jogosSelecionados.length} jogo(s) será(ão) criado(s) automaticamente
                 </p>
               )}

@@ -10,7 +10,7 @@ export default function PermissionsPage() {
         <div className="card-m3 mb-8 px-8 py-6">
           <div className="flex items-center gap-4">
             <div className="rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary)]/80 p-3">
-              <Shield className="h-6 w-6 text-white" />
+              <Shield className="h-6 w-6 text-foreground" />
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-[var(--text)]">Permissões do Sistema</h1>

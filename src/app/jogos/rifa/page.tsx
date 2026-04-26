@@ -450,8 +450,8 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] flex items-center justify-center">
-        <div className="text-[#ff734b]">A carregar...</div>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-primary">A carregar...</div>
       </div>
     );
   }
@@ -464,32 +464,32 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
     
      return (
        <LayoutHeader>
-         <div className="min-h-screen bg-[#110d0c] text-[#eae0de]">
-           <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+         <div className="min-h-screen bg-background text-foreground">
+           <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
              <div className="flex items-center gap-3">
-               <button onClick={() => router.back()} className="p-2 hover:bg-[#2e2928] rounded-full transition-colors">
-                 <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+               <button onClick={() => router.back()} className="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+                 <ArrowLeft className="w-5 h-5 text-primary" />
                </button>
-               <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Confirmação</h1>
+               <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">Confirmação</h1>
              </div>
            </header>
 
            <main className="px-4 pt-6 pb-24 max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-10 h-10 text-green-500" />
+            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-10 h-10 text-primary" />
             </div>
-            <h2 className="font-serif text-2xl text-[#ffb5a0] font-bold">Participação Confirmada!</h2>
-            <p className="text-[#e0bfb7] mt-2">Obrigado pela sua participação</p>
+            <h2 className="font-serif text-2xl text-accent font-bold">Participação Confirmada!</h2>
+            <p className="text-muted-foreground mt-2">Obrigado pela sua participação</p>
           </div>
 
           <div className="bg-surface-container rounded-3xl overflow-hidden mb-6">
             <div className="p-6 md:p-8 space-y-6">
-              <div className="text-center border-b border-[#58413b]/15 pb-6">
+              <div className="text-center border-b border-outline-variant/15 pb-6">
                 <p className="text-sm text-secondary font-semibold tracking-widest uppercase mb-2">Seus Números</p>
                 <div className="flex flex-wrap justify-center gap-2 mt-4">
                   {numerosSelecionados.map((num) => (
-                    <span key={num} className="bg-[#ff734b] text-[#110d0c] px-4 py-2 rounded-xl text-xl font-bold">
+                    <span key={num} className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xl font-bold">
                       {num.toString().padStart(3, "0")}
                     </span>
                   ))}
@@ -503,7 +503,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                 </div>
                 <div className="bg-surface-container-high rounded-xl p-4 text-center">
                   <p className="text-[10px] text-on-surface/50 uppercase">Números Jogados</p>
-                  <p className="text-xl font-bold text-[#ff734b]">{numerosSelecionados.length}</p>
+                  <p className="text-xl font-bold text-primary">{numerosSelecionados.length}</p>
                 </div>
               </div>
 
@@ -514,7 +514,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                 </div>
                 <div className="bg-surface-container-high rounded-xl p-3 text-center">
                   <p className="text-[10px] text-on-surface/50 uppercase">Vendidos</p>
-                  <p className="text-lg font-bold text-yellow-400">{numerosVendidos}</p>
+                  <p className="text-lg font-bold text-primary">{numerosVendidos}</p>
                 </div>
                 <div className="bg-surface-container-high rounded-xl p-3 text-center">
                   <p className="text-[10px] text-on-surface/50 uppercase">Disponíveis</p>
@@ -529,11 +529,11 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-on-surface/60">Participações:</span>
-                  <span className="text-lg font-bold text-[#ff734b]">{jogo?.totalParticipacoes || 0}</span>
+                  <span className="text-lg font-bold text-primary">{jogo?.totalParticipacoes || 0}</span>
                 </div>
               </div>
 
-              <div className="space-y-3 text-center border-t border-[#58413b]/15 pt-6">
+              <div className="space-y-3 text-center border-t border-outline-variant/15 pt-6">
                 <p className="text-on-surface/60 text-sm flex items-center justify-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Sorteio: {config.dataSorteio ? `${config.dataSorteio}${config.horaSorteio ? ` às ${config.horaSorteio}` : ''}` : 'A definir'}
@@ -546,9 +546,9 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
 
               <div className="bg-surface-container-highest/50 rounded-2xl p-4">
                 <div className="flex justify-center mb-4">
-                  <div className="w-32 h-32 bg-white rounded-xl p-2">
+                  <div className="w-32 h-32 bg-foreground rounded-xl p-2">
                     <div className="w-full h-full bg-[#111] rounded-lg flex items-center justify-center">
-                      <QrCode className="w-16 h-16 text-white" />
+                      <QrCode className="w-16 h-16 text-foreground" />
                     </div>
                   </div>
                 </div>
@@ -565,7 +565,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
               setNumerosSelecionados([]);
               fetchNumerosOcupados();
             }}
-            className="w-full py-6 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
+            className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-xl"
           >
             Participar Novamente
           </Button>
@@ -577,13 +577,13 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
 
    return (
      <LayoutHeader>
-       <div className="min-h-screen bg-[#110d0c] text-[#eae0de]">
-         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+       <div className="min-h-screen bg-background text-foreground">
+         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
            <div className="flex items-center gap-3">
-             <button onClick={() => router.back()} className="p-2 hover:bg-[#2e2928] rounded-full transition-colors">
-               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+             <button onClick={() => router.back()} className="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+               <ArrowLeft className="w-5 h-5 text-primary" />
              </button>
-             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">A Tua Rifa</h1>
+             <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">A Tua Rifa</h1>
            </div>
          </header>
 
@@ -648,10 +648,10 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
         </div>
 
         {isAdmin && config.valorPremios && config.valorPremios > 0 && (
-          <div className="bg-surface-container rounded-2xl p-6 border border-[#ff734b]/20">
+          <div className="bg-surface-container rounded-2xl p-6 border border-primary/20">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-[#ff734b]" />
-              <h3 className="text-lg font-headline font-bold text-[#ffb5a0]">Análise de Rentabilidade</h3>
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-headline font-bold text-accent">Análise de Rentabilidade</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-surface-container-high rounded-xl p-4">
@@ -673,7 +673,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
             </div>
             <div className="mt-4 p-3 bg-surface-container-high rounded-xl">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-[#e0bfb7]">Lucro Projetado:</span>
+                <span className="text-sm text-muted-foreground">Lucro Projetado:</span>
                 <span className={`text-lg font-bold ${(jogo?.totalAngariado || 0) - (config.valorPremios || 0) >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {((jogo?.totalAngariado || 0) - (config.valorPremios || 0)).toFixed(2)}€
                 </span>
@@ -683,14 +683,14 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
         )}
 
         <div className="bg-surface-container rounded-3xl p-6 space-y-6">
-          <div className="flex items-center gap-3 border-b border-[#58413b]/15 pb-4">
+          <div className="flex items-center gap-3 border-b border-outline-variant/15 pb-4">
             <User className="w-5 h-5 text-secondary" />
             <h4 className="text-xl font-headline font-bold">Escolha os seus números</h4>
           </div>
 
           {config.numeroBlocos > 1 && (
             <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              <LayoutGrid className="w-4 h-4 text-[#ff734b] flex-shrink-0" />
+              <LayoutGrid className="w-4 h-4 text-primary flex-shrink-0" />
               {Array.from({ length: config.numeroBlocos }, (_, i) => i + 1).map((bloco) => (
                 <button
                   key={bloco}
@@ -700,8 +700,8 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                   }}
                   className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                     blocoSelecionado === bloco
-                      ? "bg-[#ff734b] text-[#110d0c]"
-                      : "bg-surface-container-high text-[#e0bfb7] hover:bg-surface-container-highest"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest"
                   }`}
                 >
                   Bloco {bloco}
@@ -712,12 +712,12 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
 
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <p className="text-xs text-[#e0bfb7]">Selecionados: {numerosSelecionados.length}/20</p>
+              <p className="text-xs text-muted-foreground">Selecionados: {numerosSelecionados.length}/20</p>
               <div className="flex gap-1">
                 {numerosSelecionados.length > 0 && (
                   <button
                     onClick={clearSelection}
-                    className="px-2 py-1 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all flex items-center gap-1"
+                    className="px-2 py-1 rounded-lg text-xs font-medium bg-destructive/20 text-red-400 hover:bg-destructive/30 transition-all flex items-center gap-1"
                   >
                     <X className="w-3 h-3" />
                     Limpar
@@ -728,7 +728,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                     key={count}
                     onClick={() => selectRandomNumbers(count)}
                     disabled={numerosSelecionados.length >= 20}
-                    className="px-2 py-1 rounded-lg text-xs font-medium bg-[#ff734b]/20 text-[#ff734b] hover:bg-[#ff734b]/30 transition-all disabled:opacity-50 flex items-center gap-1"
+                    className="px-2 py-1 rounded-lg text-xs font-medium bg-primary/20 text-primary hover:bg-primary/30 transition-all disabled:opacity-50 flex items-center gap-1"
                   >
                     <Shuffle className="w-3 h-3" />
                     {count}
@@ -750,12 +750,12 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                     className={`
                       py-2 px-1 rounded-lg text-xs font-bold transition-all
                       ${isSelected 
-                        ? "bg-secondary text-[#110d0c]" 
+                        ? "bg-secondary text-primary-foreground" 
                         : isJogado 
-                        ? "bg-orange-500/70 text-white border-2 border-orange-400 cursor-not-allowed"
+                        ? "bg-orange-500/70 text-foreground border-2 border-orange-400 cursor-not-allowed"
                         : isOcupado 
                         ? "bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/30"
-                        : "bg-surface-container-highest text-on-surface hover:bg-[#58413b]/30"
+                        : "bg-surface-container-highest text-on-surface hover:bg-muted/30"
                       }
                     `}
                     title={isJogado ? "Este número já foi adquirido por si" : isOcupado ? "Número já adquirido" : `Número ${num}`}
@@ -765,7 +765,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                 );
               })}
             </div>
-            <p className="text-xs text-[#e0bfb7]/60 mt-2 flex flex-wrap justify-between gap-3">
+            <p className="text-xs text-muted-foreground/60 mt-2 flex flex-wrap justify-between gap-3">
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 rounded bg-surface-container-highest border border-gray-600/30"></span> Disponível
               </span>
@@ -783,7 +783,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
               <p className="text-xs text-secondary mb-2">Números selecionados:</p>
               <div className="flex flex-wrap gap-2">
                 {numerosSelecionados.map((num) => (
-                  <span key={num} className="bg-secondary text-[#110d0c] px-3 py-1 rounded-full text-sm font-bold">
+                  <span key={num} className="bg-secondary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold">
                     {num.toString().padStart(3, "0")}
                   </span>
                 ))}
@@ -793,27 +793,27 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Nome Completo</label>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Nome Completo</label>
               <div className="flex items-center gap-3 bg-surface-container-high rounded-xl px-4 py-3">
-                <User className="w-5 h-5 text-[#ff734b]" />
+                <User className="w-5 h-5 text-primary" />
                 <input
                   type="text"
                   value={participante.nome}
                   onChange={(e) => setParticipante({ ...participante, nome: e.target.value })}
-                  className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                  className="flex-1 bg-transparent outline-none text-foreground"
                   placeholder="O seu nome"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Telemóvel</label>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Telemóvel</label>
               <div className="flex items-center gap-3 bg-surface-container-high rounded-xl px-4 py-3">
-                <Phone className="w-5 h-5 text-[#ff734b]" />
+                <Phone className="w-5 h-5 text-primary" />
                 <input
                   type="tel"
                   value={participante.telefone}
                   onChange={(e) => setParticipante({ ...participante, telefone: e.target.value })}
-                  className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                  className="flex-1 bg-transparent outline-none text-foreground"
                   placeholder="+351 000 000 000"
                 />
               </div>
@@ -821,15 +821,15 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Receber Notificação</label>
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Receber Notificação</label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setParticipante({ ...participante, notificacao: "whatsapp" })}
                 className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
                   participante.notificacao === "whatsapp" 
-                    ? "bg-[#25D366] text-white" 
-                    : "bg-surface-container-high text-[#e0bfb7] hover:bg-surface-container-highest"
+                    ? "bg-[#25D366] text-foreground" 
+                    : "bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest"
                 }`}
               >
                 <MessageCircle className="w-4 h-4" />
@@ -840,8 +840,8 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                 onClick={() => setParticipante({ ...participante, notificacao: "email" })}
                 className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
                   participante.notificacao === "email" 
-                    ? "bg-[#ff734b] text-white" 
-                    : "bg-surface-container-high text-[#e0bfb7] hover:bg-surface-container-highest"
+                    ? "bg-primary text-foreground" 
+                    : "bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest"
                 }`}
               >
                 <Mail className="w-4 h-4" />
@@ -852,15 +852,15 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                 onClick={() => setParticipante({ ...participante, notificacao: "nenhum" })}
                 className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
                   participante.notificacao === "nenhum" 
-                    ? "bg-[#666] text-white" 
-                    : "bg-surface-container-high text-[#e0bfb7] hover:bg-surface-container-highest"
+                    ? "bg-[#666] text-foreground" 
+                    : "bg-surface-container-high text-muted-foreground hover:bg-surface-container-highest"
                 }`}
               >
                 <Check className="w-4 h-4" />
                 <span className="text-xs font-medium">Nenhum</span>
               </button>
             </div>
-            <p className="text-[10px] text-[#e0bfb7]/60">
+            <p className="text-[10px] text-muted-foreground/60">
               Por predefinição, receberá notificação por WhatsApp
             </p>
           </div>
@@ -868,7 +868,7 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
           <Button 
             onClick={handleParticipar}
             disabled={numerosSelecionados.length === 0 || !participante.nome}
-            className="w-full py-6 bg-[#ff734b] text-[#110d0c] font-bold rounded-full text-lg transition-all hover:shadow-[0_0_20px_rgba(255,115,75,0.4)]"
+            className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-full text-lg transition-all hover:shadow-[0_0_20px_rgba(255,115,75,0.4)]"
           >
             <Ticket className="w-5 h-5 mr-2" />
             Confirmar Participação

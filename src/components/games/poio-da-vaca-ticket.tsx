@@ -219,7 +219,7 @@ export default function PoioDaVacaTicket({
           <div className="flex items-start justify-between mb-4 p-6">
             <div className="flex items-center gap-3">
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-white/20 p-2" />
+                <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-foreground/20 p-2" />
               ) : (
                 <div className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                   {organizationName.charAt(0)}
@@ -338,11 +338,11 @@ export default function PoioDaVacaTicket({
       </div>
 
       <div className="mt-6 flex gap-3 justify-center no-print">
-        <button onClick={onPrint || (() => window.print())} className="px-6 py-2 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2">
+        <button onClick={onPrint || (() => window.print())} className="px-6 py-2 bg-gray-800 text-foreground rounded-lg font-semibold hover:bg-gray-900 transition flex items-center gap-2">
           🖨️ Imprimir Poio da Vaca
         </button>
         {onValidate && (
-          <button onClick={onValidate} className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
+          <button onClick={onValidate} className="px-6 py-2 bg-primary text-foreground rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
             ✅ Validar
           </button>
         )}

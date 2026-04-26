@@ -148,10 +148,10 @@ export function PremioModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1f1b19] border-[#ff734b]/20 p-0 max-w-md overflow-hidden">
+      <DialogContent className="bg-surface-container border-primary/20 p-0 max-w-md overflow-hidden">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-[#ff734b]" />
+            <Gift className="h-5 w-5 text-primary" />
             {premio ? "Editar Prémio" : "Novo Prémio"}
           </DialogTitle>
           <DialogDescription>
@@ -164,37 +164,37 @@ export function PremioModal({
         <div className="p-6 space-y-4">
           {/* Nome */}
           <div>
-            <Label className="text-xs text-[#e0bfb7] uppercase tracking-wider mb-2 block">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
               Nome do Prémio *
             </Label>
             <Input
               placeholder="Ex: Vale de 50€"
               value={formData.nome}
               onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              className="bg-[#2e2928] border-transparent text-white"
+              className="bg-surface-container-low border-transparent text-foreground"
             />
           </div>
 
           {/* Descrição */}
           <div>
-            <Label className="text-xs text-[#e0bfb7] uppercase tracking-wider mb-2 block">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
               Descrição
             </Label>
             <Input
               placeholder="Descrição do prémio"
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              className="bg-[#2e2928] border-transparent text-white"
+              className="bg-surface-container-low border-transparent text-foreground"
             />
           </div>
 
           {/* Valor em Dinheiro */}
           <div>
-            <Label className="text-xs text-[#e0bfb7] uppercase tracking-wider mb-2 block">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
               Valor em Dinheiro (alternativa)
             </Label>
             <div className="relative">
-              <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#ff734b]" />
+              <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
               <Input
                 type="number"
                 min="0"
@@ -207,34 +207,34 @@ export function PremioModal({
                     valorDinheiroAlternative: parseFloat(e.target.value) || 0,
                   })
                 }
-                className="pl-10 bg-[#2e2928] border-transparent text-white"
+                className="pl-10 bg-surface-container-low border-transparent text-foreground"
               />
             </div>
-            <p className="text-xs text-[#e0bfb7] mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Se preferir dar dinheiro em vez do prémio físico
             </p>
           </div>
 
           {/* Imagem URL */}
           <div>
-            <Label className="text-xs text-[#e0bfb7] uppercase tracking-wider mb-2 block">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
               URL da Imagem
             </Label>
             <div className="relative">
-              <Image className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#ff734b]" />
+              <Image className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
               <Input
                 placeholder="https://..."
                 value={formData.imagemUrl}
                 onChange={(e) => setFormData({ ...formData, imagemUrl: e.target.value })}
-                className="pl-10 bg-[#2e2928] border-transparent text-white"
+                className="pl-10 bg-surface-container-low border-transparent text-foreground"
               />
             </div>
           </div>
 
           {/* Preview */}
           {formData.imagemUrl && (
-            <div className="bg-[#2e2928] rounded-xl p-4">
-              <p className="text-xs text-[#e0bfb7] mb-2">Preview:</p>
+            <div className="bg-surface-container-low rounded-xl p-4">
+              <p className="text-xs text-muted-foreground mb-2">Preview:</p>
               <img
                 src={formData.imagemUrl}
                 alt={formData.nome}
@@ -247,9 +247,9 @@ export function PremioModal({
           )}
 
           {/* Info */}
-          <div className="bg-[#9cefff]/10 rounded-xl p-4 flex items-start gap-3">
-            <Gift className="h-5 w-5 text-[#9cefff] mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-[#9cefff]">
+          <div className="bg-secondary/10 rounded-xl p-4 flex items-start gap-3">
+            <Gift className="h-5 w-5 text-secondary mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-secondary">
               Os prémios são ordenados por ordem de atribuição. O 1º prémio vai ao 1º número sorteado, o 2º ao 2º número, etc.
             </p>
           </div>
@@ -262,7 +262,7 @@ export function PremioModal({
               variant="outline"
               onClick={handleDelete}
               disabled={deleting}
-              className="border-red-500/30 text-red-500 hover:bg-red-500/10"
+              className="border-red-500/30 text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               {deleting ? "A eliminar..." : "Eliminar"}
@@ -272,14 +272,14 @@ export function PremioModal({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-[#ff734b]/30 text-[#ff734b]"
+            className="border-primary/30 text-primary"
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
           >
             {saving ? "A guardar..." : premio?.id ? "Guardar" : "Criar Prémio"}
           </Button>
@@ -318,9 +318,9 @@ export function PremioList({ premios, onEdit, onDelete, onReorder }: PremioListP
   return (
     <div className="space-y-2">
       {premios.length === 0 ? (
-        <div className="bg-[#1f1b19] rounded-xl p-6 text-center border border-[#58413b]/10">
-          <Gift className="h-10 w-10 text-[#ff734b] mx-auto mb-2 opacity-50" />
-          <p className="text-sm text-[#e0bfb7]">Nenhum prémio adicionado</p>
+        <div className="bg-surface-container rounded-xl p-6 text-center border border-outline-variant/10">
+          <Gift className="h-10 w-10 text-primary mx-auto mb-2 opacity-50" />
+          <p className="text-sm text-muted-foreground">Nenhum prémio adicionado</p>
         </div>
       ) : (
         premios.map((premio, index) => (
@@ -328,10 +328,10 @@ export function PremioList({ premios, onEdit, onDelete, onReorder }: PremioListP
             key={premio.id || index}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#1f1b19] rounded-xl p-4 border border-[#58413b]/10 flex items-center gap-3"
+            className="bg-surface-container rounded-xl p-4 border border-outline-variant/10 flex items-center gap-3"
           >
             {/* Order badge */}
-            <div className="w-8 h-8 rounded-full bg-[#ff734b]/20 flex items-center justify-center text-[#ff734b] font-bold text-sm">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
               {index + 1}
             </div>
 
@@ -343,22 +343,22 @@ export function PremioList({ premios, onEdit, onDelete, onReorder }: PremioListP
                 className="w-12 h-12 rounded-lg object-cover"
               />
             ) : (
-              <div className="w-12 h-12 rounded-lg bg-[#2e2928] flex items-center justify-center">
-                <Gift className="h-5 w-5 text-[#ff734b]" />
+              <div className="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center">
+                <Gift className="h-5 w-5 text-primary" />
               </div>
             )}
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-white truncate">{premio.nome}</p>
-              <p className="text-xs text-[#e0bfb7] truncate">
+              <p className="font-medium text-foreground truncate">{premio.nome}</p>
+              <p className="text-xs text-muted-foreground truncate">
                 {premio.descricao || ((premio.valorDinheiroAlternative ?? 0) > 0 && `€${premio.valorDinheiroAlternative}`)}
               </p>
             </div>
 
             {/* Value */}
             {(premio.valorDinheiroAlternative ?? 0) > 0 && (
-              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
+              <Badge variant="outline" className="bg-primary/10 text-green-400 border-green-500/30">
                 €{premio.valorDinheiroAlternative}
               </Badge>
             )}
@@ -368,28 +368,28 @@ export function PremioList({ premios, onEdit, onDelete, onReorder }: PremioListP
               <button
                 onClick={() => handleMoveUp(index)}
                 disabled={index === 0}
-                className="p-2 rounded-lg hover:bg-[#2e2928] disabled:opacity-30 transition-colors"
+                className="p-2 rounded-lg hover:bg-surface-container-low disabled:opacity-30 transition-colors"
               >
-                <ArrowUp className="h-4 w-4 text-[#e0bfb7]" />
+                <ArrowUp className="h-4 w-4 text-muted-foreground" />
               </button>
               <button
                 onClick={() => handleMoveDown(index)}
                 disabled={index === premios.length - 1}
-                className="p-2 rounded-lg hover:bg-[#2e2928] disabled:opacity-30 transition-colors"
+                className="p-2 rounded-lg hover:bg-surface-container-low disabled:opacity-30 transition-colors"
               >
-                <ArrowDown className="h-4 w-4 text-[#e0bfb7]" />
+                <ArrowDown className="h-4 w-4 text-muted-foreground" />
               </button>
               <button
                 onClick={() => onEdit(premio)}
-                className="p-2 rounded-lg hover:bg-[#2e2928] transition-colors"
+                className="p-2 rounded-lg hover:bg-surface-container-low transition-colors"
               >
-                <Edit className="h-4 w-4 text-[#9cefff]" />
+                <Edit className="h-4 w-4 text-secondary" />
               </button>
               <button
                 onClick={() => premio.id && onDelete(premio.id)}
-                className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
               >
-                <Trash2 className="h-4 w-4 text-red-500" />
+                <Trash2 className="h-4 w-4 text-destructive" />
               </button>
             </div>
           </motion.div>

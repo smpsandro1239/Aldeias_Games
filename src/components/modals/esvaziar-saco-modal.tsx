@@ -94,38 +94,38 @@ export function EsvaziarSacoModal({ open, onOpenChange, aldeiaId, aldeiaNome }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#1f1b19] border-[#ff734b]/20">
+      <DialogContent className="sm:max-w-md bg-surface-container border-primary/20">
         <DialogHeader>
-          <DialogTitle className="text-[#eae0de] flex items-center gap-2">
-            <Banknote className="w-5 h-5 text-[#ff734b]" />
+          <DialogTitle className="text-foreground flex items-center gap-2">
+            <Banknote className="w-5 h-5 text-primary" />
             Entregar Dinheiro
           </DialogTitle>
         </DialogHeader>
 
         {confirmado ? (
           <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-8 h-8 text-green-500" />
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-primary" />
             </div>
             <p className="text-xl text-green-400 font-bold">Dinheiro Entregue!</p>
-            <p className="text-[#e0bfb7] mt-2">{valor}€ entregue ao administrador</p>
+            <p className="text-muted-foreground mt-2">{valor}€ entregue ao administrador</p>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Saldo Info */}
-            <div className="bg-[#2e2928] rounded-xl p-4">
+            <div className="bg-surface-container-low rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#e0bfb7] uppercase">Saldo em Caixa</p>
-                  <p className="text-2xl font-black text-[#ff734b]">{saldo.toFixed(2)}€</p>
+                  <p className="text-xs text-muted-foreground uppercase">Saldo em Caixa</p>
+                  <p className="text-2xl font-black text-primary">{saldo.toFixed(2)}€</p>
                 </div>
-                <Wallet className="w-8 h-8 text-[#ff734b]/50" />
+                <Wallet className="w-8 h-8 text-primary/50" />
               </div>
             </div>
 
             {/* Valor Input */}
             <div>
-              <Label className="text-xs text-[#e0bfb7] uppercase tracking-wider">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
                 Valor a Entregar
               </Label>
               <Input
@@ -154,11 +154,11 @@ export function EsvaziarSacoModal({ open, onOpenChange, aldeiaId, aldeiaNome }: 
             </div>
 
             {/* Admin Info */}
-            <div className="bg-[#2e2928] rounded-xl p-4 flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-[#ff734b]" />
+            <div className="bg-surface-container-low rounded-xl p-4 flex items-center gap-3">
+              <Building2 className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-xs text-[#e0bfb7] uppercase">Recebedor</p>
-                <p className="font-bold text-white">{aldeiaNome || "Administrador"}</p>
+                <p className="text-xs text-muted-foreground uppercase">Recebedor</p>
+                <p className="font-bold text-foreground">{aldeiaNome || "Administrador"}</p>
               </div>
             </div>
 
@@ -177,7 +177,7 @@ export function EsvaziarSacoModal({ open, onOpenChange, aldeiaId, aldeiaNome }: 
                 type="button"
                 onClick={handleEntregar}
                 disabled={loading || !valor || parseFloat(valor) > saldo}
-                className="flex-1 bg-[#ff734b] text-[#110d0c]"
+                className="flex-1 bg-primary text-primary-foreground"
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

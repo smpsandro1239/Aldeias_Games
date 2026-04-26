@@ -120,7 +120,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
       case 'pendente': return 'text-orange-400 bg-orange-400/10';
       case 'confirmado': return 'text-green-400 bg-green-400/10';
       case 'cancelado': return 'text-red-400 bg-red-400/10';
-      default: return 'text-gray-400 bg-gray-400/10';
+      default: return 'text-muted-foreground bg-muted/10';
     }
   };
 
@@ -148,12 +148,12 @@ export function PedidosCarregamentoInline({ token }: Props) {
             Pendentes ({pedidosPendentes.length})
           </h3>
           {pedidosPendentes.map((pedido) => (
-            <Card key={pedido.id} className="bg-[#2e2928]">
+            <Card key={pedido.id} className="bg-surface-container-low">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#ff734b]/20 flex items-center justify-center">
-                      <User className="w-5 h-5 text-[#ff734b]" />
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
                     </div>
                     <div>
                       <p className="font-medium">{pedido.user?.nome || "Utilizador"}</p>
@@ -175,7 +175,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
                 <div className="flex gap-2 mt-4">
                   <Button
                     size="sm"
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    className="flex-1 bg-primary hover:bg-green-700"
                     onClick={() => handleConfirmar(pedido.id)}
                     disabled={processing === pedido.id}
                   >
@@ -189,7 +189,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="flex-1 border-red-500 text-red-500 hover:bg-red-500/10"
+                    className="flex-1 border-red-500 text-destructive hover:bg-destructive/10"
                     onClick={() => handleRejeitar(pedido.id)}
                     disabled={processing === pedido.id}
                   >
@@ -207,14 +207,14 @@ export function PedidosCarregamentoInline({ token }: Props) {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Histórico</h3>
         {pedidos.length === 0 ? (
-          <Card className="bg-[#2e2928] p-8 text-center">
+          <Card className="bg-surface-container-low p-8 text-center">
             <Wallet className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
             <p className="text-muted-foreground">Nenhum pedido encontrado</p>
           </Card>
         ) : (
           <div className="space-y-2">
             {pedidos.map((pedido) => (
-              <Card key={pedido.id} className="bg-[#2e2928]">
+              <Card key={pedido.id} className="bg-surface-container-low">
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between">
                     <div>

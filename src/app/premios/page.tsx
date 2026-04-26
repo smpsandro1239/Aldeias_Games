@@ -232,12 +232,12 @@ export default function PremiosPage() {
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Saldo Card - Always visible for logged users */}
         {user && (
-          <div className="bg-gradient-to-br from-[#ff734b]/20 to-[#ff734b]/5 rounded-2xl p-4 border border-[#ff734b]/20">
+          <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-4 border border-primary/20">
             <div className="flex items-center gap-3">
-              <Wallet className="w-8 h-8 text-[#ff734b]" />
+              <Wallet className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-xs text-[#e0bfb7] uppercase tracking-wider">Saldo Disponível</p>
-                <p className="text-2xl font-black text-[#ff734b]">{saldo.toFixed(2)}€</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Saldo Disponível</p>
+                <p className="text-2xl font-black text-primary">{saldo.toFixed(2)}€</p>
               </div>
             </div>
           </div>
@@ -246,41 +246,41 @@ export default function PremiosPage() {
         {/* Tab: Prémios */}
         {activeTab === "premios" && (
           <div>
-            <h2 className="font-serif text-lg text-[#ffb5a0] mb-4">A Tuas Vitórias</h2>
+            <h2 className="font-serif text-lg text-accent mb-4">A Tuas Vitórias</h2>
 
             {loading ? (
-              <div className="text-center py-12 text-[#e0bfb7]">A carregar os teus prémios...</div>
+              <div className="text-center py-12 text-muted-foreground">A carregar os teus prémios...</div>
             ) : premios.length > 0 ? (
               <div className="space-y-3">
                 {premios.map((premio) => (
                   <div
                     key={premio.id}
-                    className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10 flex items-center gap-4"
+                    className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 flex items-center gap-4"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#ff734b]/20 flex items-center justify-center text-[#ff734b]">
+                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
                       {getTipoIcon(premio.tipo)}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-serif text-[#ffb5a0] font-bold">{premio.nome}</h3>
+                        <h3 className="font-serif text-accent font-bold">{premio.nome}</h3>
                         {premio.valor && (
-                          <span className="text-xs bg-[#ff734b]/20 text-[#ff734b] px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
                             +{premio.valor}€
                           </span>
                         )}
                         {premio.premioEntregue && (
-                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-primary/20 text-green-400 px-2 py-0.5 rounded-full">
                             Recebido
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-[#e0bfb7]">{premio.jogoNome || premio.descricao}</p>
+                      <p className="text-sm text-muted-foreground">{premio.jogoNome || premio.descricao}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <span className="text-xs text-[#e0bfb7]/60 flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground/60 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {new Date(premio.data).toLocaleDateString("pt-PT")}
                         </span>
-                        <span className="text-xs bg-[#2e2928] text-[#e0bfb7] px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-surface-container-low text-muted-foreground px-2 py-0.5 rounded-full">
                           {getTipoLabel(premio.tipo)}
                         </span>
                       </div>
@@ -290,12 +290,12 @@ export default function PremiosPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Heart className="w-16 h-16 text-[#ff734b]/30 mx-auto mb-4" />
-                <p className="text-[#e0bfb7]">Ainda não ganhaste nenhum prémio</p>
-                <p className="text-sm text-[#e0bfb7]/60 mt-1">A sorte ainda não te sorriu. Participa e tenta a tua sorte!</p>
+                <Heart className="w-16 h-16 text-primary/30 mx-auto mb-4" />
+                <p className="text-muted-foreground">Ainda não ganhaste nenhum prémio</p>
+                <p className="text-sm text-muted-foreground/60 mt-1">A sorte ainda não te sorriu. Participa e tenta a tua sorte!</p>
                 <button
                   onClick={() => router.push("/jogos")}
-                  className="mt-4 px-6 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
+                  className="mt-4 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
                 >
                   Participar Agora
                 </button>
@@ -304,19 +304,19 @@ export default function PremiosPage() {
           </div>
         )}
 
-        <div className="bg-[#1f1b19] rounded-2xl p-6 border border-[#58413b]/10">
-          <h3 className="font-serif text-[#ffb5a0] font-bold mb-3">Como Ganhar Prémios?</h3>
-          <ul className="space-y-3 text-sm text-[#e0bfb7]">
+        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+          <h3 className="font-serif text-accent font-bold mb-3">Como Ganhar Prémios?</h3>
+          <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <Star className="w-4 h-4 text-[#ff734b] mt-0.5" />
+              <Star className="w-4 h-4 text-primary mt-0.5" />
               <span>Participa nas Raspadinhas e descobre os teus prémios instantâneos</span>
             </li>
             <li className="flex items-start gap-2">
-              <Trophy className="w-4 h-4 text-[#ff734b] mt-0.5" />
+              <Trophy className="w-4 h-4 text-primary mt-0.5" />
               <span>No Poio da Vaca, os mais rápidos podem trazer prémios para casa</span>
             </li>
             <li className="flex items-start gap-2">
-              <Award className="w-4 h-4 text-[#ff734b] mt-0.5" />
+              <Award className="w-4 h-4 text-primary mt-0.5" />
               <span>As Tombolas e Rifas sorteiam prémios em dinheiro para a tua aldeia</span>
             </li>
           </ul>

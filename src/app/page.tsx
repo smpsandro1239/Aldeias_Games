@@ -122,10 +122,10 @@ export default function Home() {
 
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#1a1614] border border-[#58413b]/10 p-0 overflow-hidden text-[#eae0de]">
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
           <DialogHeader className="p-8 pb-4">
             <DialogTitle className="font-serif text-2xl text-center">Entrar</DialogTitle>
-            <DialogDescription className="text-center text-[#e0bfb7]">
+            <DialogDescription className="text-center text-muted-foreground">
               Acede à tua conta para jogar e ganhar prémios
             </DialogDescription>
           </DialogHeader>
@@ -141,7 +141,7 @@ export default function Home() {
                   value={loginForm.email}
                   onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                   required
-                  className="bg-[#110d0c] border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-[#9cefff]/50 text-[#eae0de]"
+                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -153,31 +153,31 @@ export default function Home() {
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                   required
-                  className="bg-[#110d0c] border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-[#9cefff]/50 text-[#eae0de]"
+                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
               </div>
             </div>
 
             <DialogFooter className="mt-6 flex-col gap-4">
               <div className="flex gap-2 w-full">
-                <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-[#58413b]/20 text-[#eae0de]">
+                <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
                   Cancelar
                 </Button>
-                <Button type="submit" className="flex-1 bg-[#ff734b] text-[#110d0c] font-bold">
+                <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold">
                   <Zap className="h-4 w-4 mr-2" />
                   Entrar
                 </Button>
               </div>
 
               {/* Botões de Atalho para Testes (Quick Login) */}
-              <div className="pt-4 border-t border-[#58413b]/10 w-full">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#e0bfb7] mb-3 text-center">Acesso Rápido (Dev Mode)</p>
+              <div className="pt-4 border-t border-outline-variant/10 w-full">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
+                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
                     onClick={() => setLoginForm({ email: "admin@aldeias.pt", password: "123456" })}
                   >
                     Super Admin
@@ -186,7 +186,7 @@ export default function Home() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
+                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
                     onClick={() => setLoginForm({ email: "admin.valeazinha@aldeias.pt", password: "123456" })}
                   >
                     Admin Aldeia
@@ -195,7 +195,7 @@ export default function Home() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
+                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
                     onClick={() => setLoginForm({ email: "vendedor.valeazinha@aldeias.pt", password: "123456" })}
                   >
                     Vendedor
@@ -204,7 +204,7 @@ export default function Home() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="text-[10px] h-8 bg-[#2e2928] text-[#eae0de]"
+                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
                     onClick={() => setLoginForm({ email: "jogador1@email.pt", password: "123456" })}
                   >
                     Jogador
@@ -218,10 +218,10 @@ export default function Home() {
 
       {/* Register Modal */}
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#1a1614] border border-[#58413b]/10 p-0 overflow-hidden text-[#eae0de]">
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
           <DialogHeader className="p-8 pb-4">
             <DialogTitle className="font-serif text-2xl text-center">Criar Conta</DialogTitle>
-            <DialogDescription className="text-center text-[#e0bfb7]">
+            <DialogDescription className="text-center text-muted-foreground">
               Regista-te para participar nos jogos e campanhas
             </DialogDescription>
           </DialogHeader>
@@ -236,7 +236,7 @@ export default function Home() {
                   value={registerForm.nome}
                   onChange={(e) => setRegisterForm({ ...registerForm, nome: e.target.value })}
                   required
-                  className="bg-[#110d0c] border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-[#9cefff]/50 text-[#eae0de]"
+                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -248,7 +248,7 @@ export default function Home() {
                   value={registerForm.email}
                   onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                   required
-                  className="bg-[#110d0c] border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-[#9cefff]/50 text-[#eae0de]"
+                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -261,7 +261,7 @@ export default function Home() {
                   onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                   required
                   minLength={8}
-                  className="bg-[#110d0c] border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-[#9cefff]/50 text-[#eae0de]"
+                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -272,16 +272,16 @@ export default function Home() {
                   placeholder="+351 9XX XXX XXX"
                   value={registerForm.telefone}
                   onChange={(e) => setRegisterForm({ ...registerForm, telefone: e.target.value })}
-                  className="bg-[#110d0c] border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-[#9cefff]/50 text-[#eae0de]"
+                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
               </div>
             </div>
 
             <DialogFooter className="mt-6 gap-2">
-              <Button type="button" variant="outline" onClick={() => setRegisterModalOpen(false)} className="flex-1 bg-transparent border-[#58413b]/20 text-[#eae0de]">
+              <Button type="button" variant="outline" onClick={() => setRegisterModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1 bg-[#ff734b] text-[#110d0c] font-bold">
+              <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold">
                 <Rocket className="h-4 w-4 mr-2" />
                 Registar
               </Button>

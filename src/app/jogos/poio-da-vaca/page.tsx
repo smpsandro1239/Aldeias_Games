@@ -124,7 +124,7 @@ function getRentabilidadeStatus(rentabilidade: number): {
   if (rentabilidade >= 10) {
     return {
       label: "Aceitável",
-      cor: "text-yellow-400",
+      cor: "text-primary",
       icon: TrendingUp,
       descricao: "Rentabilidade moderada"
     };
@@ -488,23 +488,23 @@ try {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#110d0c] flex items-center justify-center">
-        <div className="text-[#e0bfb7]">A carregar...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">A carregar...</div>
       </div>
     );
   }
 
    return (
      <LayoutHeader>
-       <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
+       <div className="min-h-screen bg-background text-foreground font-body">
          {/* TopAppBar local (apenas botão voltar e título) */}
-         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
            <div className="flex items-center gap-3">
-             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
-               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-low rounded-full transition-colors">
+               <ArrowLeft className="w-5 h-5 text-primary" />
              </button>
-             <Grid2X2 className="text-[#ff734b]" />
-             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">Poio da Vaca</h1>
+             <Grid2X2 className="text-primary" />
+             <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">Poio da Vaca</h1>
            </div>
          </header>
 
@@ -512,22 +512,22 @@ try {
         {/* Hero Section & Prize */}
         <section className="relative space-y-4 px-2">
           <div className="relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff734b]/10 blur-3xl -mr-10 -mt-10" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-10 -mt-10" />
             <div className="relative glass-card rounded-3xl p-6 overflow-hidden">
-              <p className="text-xs font-semibold tracking-widest text-[#9cefff] uppercase mb-2">Grande Evento</p>
-              <h2 className="font-serif text-3xl leading-tight text-[#eae0de] max-w-[80%]">Onde a Sorte Encontra a Tradição</h2>
+              <p className="text-xs font-semibold tracking-widest text-secondary uppercase mb-2">Grande Evento</p>
+              <h2 className="font-serif text-3xl leading-tight text-foreground max-w-[80%]">Onde a Sorte Encontra a Tradição</h2>
               
               <div className="flex flex-col gap-2 mt-4">
                 {isAdmin ? (
-                  <span className="text-[#ff734b] font-bold text-sm">GRANDE PRÉMIO</span>
+                  <span className="text-primary font-bold text-sm">GRANDE PRÉMIO</span>
                 ) : (
-                  <span className="text-[#ff734b] font-bold text-sm">VALOR EM JOGO</span>
+                  <span className="text-primary font-bold text-sm">VALOR EM JOGO</span>
                 )}
-                <p className="font-serif text-xl text-[#ffb5a0]">
+                <p className="font-serif text-xl text-accent">
                   {valorMercado > 500 ? "Vaca de Raça" : `${valorMercado}€ em Cartão`}
                 </p>
-                <div className="mt-3 flex items-center gap-2 text-[#e0bfb7] text-sm bg-[#2e2928]/50 self-start px-3 py-1 rounded-full">
-                  <Star className="w-3 h-3 text-[#ff734b]" style={{ fontVariationSettings: "'FILL' 1" }} />
+                <div className="mt-3 flex items-center gap-2 text-muted-foreground text-sm bg-surface-container-low/50 self-start px-3 py-1 rounded-full">
+                  <Star className="w-3 h-3 text-primary" style={{ fontVariationSettings: "'FILL' 1" }} />
                   <span>Sorteio Local Certificado</span>
                 </div>
               </div>
@@ -538,19 +538,19 @@ try {
         {/* Rentabilidade Info - Only for Admins */}
         {isAdmin && (
           <section className="px-2">
-            <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
+            <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-[#9cefff]" />
-                <h3 className="font-serif text-lg text-[#ffb5a0]">Análise de Rentabilidade</h3>
+                <TrendingUp className="w-5 h-5 text-secondary" />
+                <h3 className="font-serif text-lg text-accent">Análise de Rentabilidade</h3>
               </div>
               
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-[#2e2928] p-3 rounded-xl">
-                  <p className="text-[10px] text-[#e0bfb7] uppercase">Receita Total</p>
-                  <p className="font-serif text-xl text-[#ff734b]">{custoPorQuadrado * totalCells}€</p>
+                <div className="bg-surface-container-low p-3 rounded-xl">
+                  <p className="text-[10px] text-muted-foreground uppercase">Receita Total</p>
+                  <p className="font-serif text-xl text-primary">{custoPorQuadrado * totalCells}€</p>
                 </div>
-                <div className="bg-[#2e2928] p-3 rounded-xl">
-                  <p className="text-[10px] text-[#e0bfb7] uppercase">Custo Real (Contabilidade)</p>
+                <div className="bg-surface-container-low p-3 rounded-xl">
+                  <p className="text-[10px] text-muted-foreground uppercase">Custo Real (Contabilidade)</p>
                   <p className="font-serif text-xl text-red-400">{valorCompra}€</p>
                 </div>
               </div>
@@ -566,7 +566,7 @@ try {
                 </div>
               </div>
               
-              <div className={`p-3 rounded-xl ${rentabilidade >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+              <div className={`p-3 rounded-xl ${rentabilidade >= 0 ? 'bg-primary/10' : 'bg-destructive/10'}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold">Rentabilidade:</span>
                   <span className={`font-headline text-2xl ${statusRentabilidade.cor}`}>
@@ -721,13 +721,13 @@ try {
         {/* Apostas Registadas - conforme permissões */}
         {apostasParaLista.length > 0 && (isAdmin || isVendedor || userNome) && (
           <section className="px-2">
-            <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10">
+            <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
               <div className="flex items-center gap-2 mb-3">
-                <Ticket className="w-5 h-5 text-[#ff734b]" />
-                <h3 className="font-serif text-lg text-[#ffb5a0]">
+                <Ticket className="w-5 h-5 text-primary" />
+                <h3 className="font-serif text-lg text-accent">
                   {isAdmin ? "Todas as Apostas" : isVendedor ? "As Minhas Vendas" : "As Minhas Apostas"}
                 </h3>
-                <span className="text-xs bg-[#ff734b]/20 text-[#ff734b] px-2 py-0.5 rounded-full ml-auto">
+                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-auto">
                   {apostasParaLista.length}
                 </span>
               </div>
@@ -742,41 +742,41 @@ try {
                   return (
                     <div 
                       key={aposta.id} 
-                      className={`p-3 rounded-xl ${isMinhaAposta ? 'bg-[#9cefff]/10 border border-[#9cefff]/20' : 'bg-[#2e2928]'}`}
+                      className={`p-3 rounded-xl ${isMinhaAposta ? 'bg-secondary/10 border border-secondary/20' : 'bg-surface-container-low'}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <p className="font-medium text-[#ffb5a0] text-sm">{numerosFormatados}</p>
+                          <p className="font-medium text-accent text-sm">{numerosFormatados}</p>
                           {mostraDetalhes && (
                             <>
-                              <p className="text-xs text-[#e0bfb7] mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 👤 {aposta.jogadorNome || "Anónimo"}
                               </p>
                               {aposta.jogadorTelefone && (
-                                <p className="text-xs text-[#e0bfb7]/60">
+                                <p className="text-xs text-muted-foreground/60">
                                   📞 {aposta.jogadorTelefone}
                                 </p>
                               )}
                               {aposta.jogadorEmail && (
-                                <p className="text-xs text-[#e0bfb7]/60">
+                                <p className="text-xs text-muted-foreground/60">
                                   ✉️ {aposta.jogadorEmail}
                                 </p>
                               )}
                             </>
                           )}
                           {isMinhaAposta && !mostraDetalhes && (
-                            <p className="text-xs text-[#9cefff] mt-1">✓ A tua aposta</p>
+                            <p className="text-xs text-secondary mt-1">✓ A tua aposta</p>
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-[#e0bfb7]/60">
+                          <p className="text-xs text-muted-foreground/60">
                             {aposta.createdAt ? new Date(aposta.createdAt).toLocaleDateString("pt-PT") : '-'}
                           </p>
-                          <p className="text-xs text-[#e0bfb7]/60">
+                          <p className="text-xs text-muted-foreground/60">
                             {aposta.createdAt ? new Date(aposta.createdAt).toLocaleTimeString("pt-PT", { hour: '2-digit', minute: '2-digit' }) : '-'}
                           </p>
                           {mostraDetalhes && aposta.vendedorId && (
-                            <p className="text-[10px] text-[#e0bfb7]/40 mt-1">
+                            <p className="text-[10px] text-muted-foreground/40 mt-1">
                               Vendedor: {String(aposta.vendedorId).slice(0, 8)}...
                             </p>
                           )}
@@ -831,7 +831,7 @@ try {
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="font-headline text-xl flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-[#ff734b]" />
+              <UserPlus className="w-5 h-5 text-primary" />
               Identificar Jogador
             </DialogTitle>
           </DialogHeader>
@@ -842,57 +842,57 @@ try {
             
             <div className="bg-surface-container-high rounded-xl p-4 space-y-3">
               <div className="space-y-2">
-                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Nome do Jogador *</label>
+                <label className="text-xs text-muted-foreground uppercase tracking-wider">Nome do Jogador *</label>
                 <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-                  <User className="w-5 h-5 text-[#ff734b]" />
+                  <User className="w-5 h-5 text-primary" />
                   <input
                     type="text"
                     value={jogadorForm.nome}
                     onChange={(e) => setJogadorForm({ ...jogadorForm, nome: e.target.value })}
-                    className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                    className="flex-1 bg-transparent outline-none text-foreground"
                     placeholder="Nome completo"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Telemóvel</label>
+                <label className="text-xs text-muted-foreground uppercase tracking-wider">Telemóvel</label>
                 <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-                  <Phone className="w-5 h-5 text-[#ff734b]" />
+                  <Phone className="w-5 h-5 text-primary" />
                   <input
                     type="tel"
                     value={jogadorForm.telefone}
                     onChange={(e) => setJogadorForm({ ...jogadorForm, telefone: e.target.value })}
-                    className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                    className="flex-1 bg-transparent outline-none text-foreground"
                     placeholder="912 345 678"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Ou Email</label>
+                <label className="text-xs text-muted-foreground uppercase tracking-wider">Ou Email</label>
                 <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-                  <Mail className="w-5 h-5 text-[#ff734b]" />
+                  <Mail className="w-5 h-5 text-primary" />
                   <input
                     type="email"
                     value={jogadorForm.email}
                     onChange={(e) => setJogadorForm({ ...jogadorForm, email: e.target.value })}
-                    className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                    className="flex-1 bg-transparent outline-none text-foreground"
                     placeholder="email@exemplo.com"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Receber Notificação</label>
+                <label className="text-xs text-muted-foreground uppercase tracking-wider">Receber Notificação</label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setJogadorForm({ ...jogadorForm, notificacao: "whatsapp" })}
                     className={`p-3 rounded-xl flex items-center gap-2 transition-all ${
                       jogadorForm.notificacao === "whatsapp" 
-                        ? "bg-[#25D366] text-white" 
-                        : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                        ? "bg-[#25D366] text-foreground" 
+                        : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                     }`}
                   >
                     <MessageCircle className="w-4 h-4" />
@@ -903,8 +903,8 @@ try {
                     onClick={() => setJogadorForm({ ...jogadorForm, notificacao: "email" })}
                     className={`p-3 rounded-xl flex items-center gap-2 transition-all ${
                       jogadorForm.notificacao === "email" 
-                        ? "bg-[#ff734b] text-white" 
-                        : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                        ? "bg-primary text-foreground" 
+                        : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                     }`}
                   >
                     <Mail className="w-4 h-4" />
@@ -915,15 +915,15 @@ try {
                     onClick={() => setJogadorForm({ ...jogadorForm, notificacao: "nenhum" })}
                     className={`p-3 rounded-xl flex items-center gap-2 transition-all ${
                       jogadorForm.notificacao === "nenhum" 
-                        ? "bg-[#666] text-white" 
-                        : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                        ? "bg-[#666] text-foreground" 
+                        : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                     }`}
                   >
                     <Bell className="w-4 h-4" />
                     <span className="text-xs font-medium">Nenhum</span>
                   </button>
                 </div>
-                <p className="text-[10px] text-[#e0bfb7]/60">
+                <p className="text-[10px] text-muted-foreground/60">
                   Por predefinição, receberá notificação por WhatsApp
                 </p>
               </div>
@@ -936,7 +936,7 @@ try {
 
             <button 
               onClick={handleSubmitBet}
-              className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl flex items-center justify-center gap-2"
+              className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-xl flex items-center justify-center gap-2"
             >
               <Ticket className="w-5 h-5" />
               Confirmar Aposta
@@ -950,7 +950,7 @@ try {
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="font-headline text-xl flex items-center gap-2">
-              <Euro className="w-5 h-5 text-[#ff734b]" />
+              <Euro className="w-5 h-5 text-primary" />
               Pagamento
             </DialogTitle>
           </DialogHeader>

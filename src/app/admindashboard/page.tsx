@@ -58,12 +58,12 @@ export default function AdminDashboardPage() {
 
   if (error || !user || !token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#110d0c] text-[#eae0de]">
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         <div className="text-center p-8">
-          <p className="text-red-500 mb-4">{error || "Sessão inválida. Faça login novamente."}</p>
+          <p className="text-destructive mb-4">{error || "Sessão inválida. Faça login novamente."}</p>
           <button 
             onClick={() => { localStorage.clear(); window.location.href = "/"; }}
-            className="px-4 py-2 bg-[#ff734b] text-[#110d0c] rounded"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded"
           >
             Voltar ao início
           </button>

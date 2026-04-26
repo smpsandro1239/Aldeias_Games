@@ -15,11 +15,11 @@ interface AccessibleButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 const variants = {
-  primary: "bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold",
-  secondary: "bg-[#9cefff]/20 hover:bg-[#9cefff]/30 text-[#9cefff]",
-  outline: "border border-[#ff734b]/30 hover:bg-[#ff734b]/10 text-[#ff734b]",
-  ghost: "hover:bg-[#2e2928] text-[#e0bfb7]",
-  destructive: "bg-red-500 hover:bg-red-600 text-white",
+  primary: "bg-primary hover:bg-primary/90 text-primary-foreground font-bold",
+  secondary: "bg-secondary/20 hover:bg-secondary/30 text-secondary",
+  outline: "border border-primary/30 hover:bg-primary/10 text-primary",
+  ghost: "hover:bg-surface-container-low text-muted-foreground",
+  destructive: "bg-destructive hover:bg-red-600 text-foreground",
 };
 
 const sizes = {
@@ -75,7 +75,7 @@ export const AccessibleButton = forwardRef<HTMLButtonElement, AccessibleButtonPr
           ${sizes[size]}
           ${fullWidth ? "w-full" : ""}
           ${isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff734b]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#110d0c]
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background
           disabled:pointer-events-none
           ${className}
         `.trim().replace(/\s+/g, " ")}
@@ -148,7 +148,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
           ${iconSizes[size]}
           ${iconPadding[size]}
           ${variants[variant]}
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff734b]/50
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50
           disabled:opacity-50 disabled:pointer-events-none
           ${className}
         `.trim().replace(/\s+/g, " ")}
@@ -182,7 +182,7 @@ export const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(
         
         {progress !== undefined && progress >= 0 && progress <= 100 && (
           <div 
-            className="absolute bottom-0 left-0 h-1 bg-white/30 rounded-b-xl transition-all duration-300"
+            className="absolute bottom-0 left-0 h-1 bg-foreground/30 rounded-b-xl transition-all duration-300"
             style={{ width: `${progress}%` }}
             role="progressbar"
             aria-valuenow={progress}

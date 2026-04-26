@@ -68,7 +68,7 @@ export function PermissionsMatrix() {
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-foreground rounded-lg shadow p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Matriz de Permissões por Papel
         </h2>
@@ -92,7 +92,7 @@ export function PermissionsMatrix() {
                   >
                     {role}
                     <br />
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-muted-foreground">
                       {/* Exibir o papel com a primeira letra maiúscula e os restantes minúsculas */}
                       {role === 'SUPER_ADMIN' ? 'Super Admin' :
                         role === 'ADMIN' ? 'Aldeia Admin' :
@@ -172,7 +172,7 @@ export function PermissionsMatrix() {
       </div>
 
       {/* Resumo por papel */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-foreground rounded-lg shadow p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4">Resumo por Papel</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {roles.map(role => (

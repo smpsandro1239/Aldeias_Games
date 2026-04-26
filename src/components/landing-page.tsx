@@ -57,19 +57,19 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Hero Section */}
       <section className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="max-w-2xl">
-          <span className="text-[#ff734b] font-label font-bold tracking-widest uppercase text-xs mb-4 block">O Teu Legado</span>
+          <span className="text-primary font-label font-bold tracking-widest uppercase text-xs mb-4 block">O Teu Legado</span>
           <h2 className="font-serif text-5xl md:text-7xl leading-tight">
-            Traz a tua <span className="text-[#ff734b] italic">Aldeia para o Futuro</span>
+            Traz a tua <span className="text-primary italic">Aldeia para o Futuro</span>
           </h2>
-          <p className="text-[#e0bfb7] text-lg mt-6 leading-relaxed">
+          <p className="text-muted-foreground text-lg mt-6 leading-relaxed">
             Mesmo longe, o teu coração nunca deixe de bater pela terra que te viu crescer. 
            Aqui, a tradição encontra a tecnologia e tu podes ser o elo que une gerações.
           </p>
         </div>
-        <div className="hidden lg:block w-48 h-48 bg-[#1a1614] rounded-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#ff734b]/20 to-transparent"></div>
+        <div className="hidden lg:block w-48 h-48 bg-surface-container rounded-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
           <div className="p-6 flex flex-col h-full justify-between">
-            <Heart className="text-[#ff734b] text-4xl" />
+            <Heart className="text-primary text-4xl" />
             <span className="font-label text-xs font-bold leading-tight uppercase opacity-60">Preserva as tuas raízes</span>
           </div>
         </div>
@@ -78,12 +78,12 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
         {[
-          { icon: Home, label: "Aldeias", value: "50+", color: "text-[#ff734b]" },
-          { icon: Heart, label: " Corações", value: "10K+", color: "text-[#ff734b]" },
-          { icon: Flame, label: "Angariado", value: "€500K+", color: "text-[#ffc107]" },
-          { icon: Shield, label: "Transparente", value: "100%", color: "text-[#9cefff]" },
+          { icon: Home, label: "Aldeias", value: "50+", color: "text-primary" },
+          { icon: Heart, label: " Corações", value: "10K+", color: "text-primary" },
+          { icon: Flame, label: "Angariado", value: "€500K+", color: "text-accent" },
+          { icon: Shield, label: "Transparente", value: "100%", color: "text-secondary" },
         ].map((stat, i) => (
-          <div key={i} className="bg-[#1a1614] rounded-2xl p-6 border border-[#58413b]/10">
+          <div key={i} className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
             <div className="flex items-center gap-3 mb-3">
               <stat.icon className={`${stat.color} text-xl`} />
               <span className="text-xs font-bold uppercase tracking-widest opacity-60">{stat.label}</span>
@@ -96,25 +96,25 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Features Section */}
       <section className="mb-16">
         <h3 className="font-serif text-3xl mb-8 flex items-center gap-4">
-          <span className="text-[#9cefff]">Por que razão isto é teu?</span>
+          <span className="text-secondary">Por que razão isto é teu?</span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { icon: Gamepad2, title: "Jogos que são Memórias", desc: "O Poio da Vaca, as Rifas, Tombolas e Raspadinhas que conheces desde pequeno, agora na ponta dos teus dedos.", color: "[#ff734b]", tags: ["Tradição", "Nostalgia"] },
-            { icon: Shield, title: "Sorteio com Honra", desc: "Algoritmos SHA-256 auditáveis. Aqui, nada é manipulado. A sorte é tua, como sempre foi.", color: "[#9cefff]", tags: ["Justo", "Auditado"] },
-            { icon: CreditCard, title: "Pagamentos que Chegam Longe", desc: "Stripe + MBWay. O dinheiro que angarias vai direto para a tua aldeia, esteja ela a 100km ou a 10000km.", color: "[#ffc107]", tags: ["Rápido", "Seguro"] },
+            { icon: Gamepad2, title: "Jogos que são Memórias", desc: "O Poio da Vaca, as Rifas, Tombolas e Raspadinhas que conheces desde pequeno, agora na ponta dos teus dedos.", color: "primary", tags: ["Tradição", "Nostalgia"] },
+            { icon: Shield, title: "Sorteio com Honra", desc: "Algoritmos SHA-256 auditáveis. Aqui, nada é manipulado. A sorte é tua, como sempre foi.", color: "secondary", tags: ["Justo", "Auditado"] },
+            { icon: CreditCard, title: "Pagamentos que Chegam Longe", desc: "Stripe + MBWay. O dinheiro que angarias vai direto para a tua aldeia, esteja ela a 100km ou a 10000km.", color: "accent", tags: ["Rápido", "Seguro"] },
           ].map((feature, i) => (
-            <div key={i} className="group bg-[#1a1614] rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-[#58413b]/10 hover:ring-[#ff734b]/50">
+            <div key={i} className="group bg-surface-container rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-outline-variant/10 hover:ring-primary/50">
               <div className="flex justify-between items-start mb-6">
-                <div className="w-14 h-14 bg-[#2e2928] rounded-2xl flex items-center justify-center group-hover:bg-[#ff734b]/20 transition-colors">
+                <div className="w-14 h-14 bg-surface-container-low rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <feature.icon className={`text-${feature.color} text-3xl`} />
                 </div>
               </div>
               <h4 className="font-serif text-2xl mb-2">{feature.title}</h4>
-              <p className="text-[#e0bfb7] text-sm leading-relaxed mb-4">{feature.desc}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-4">{feature.desc}</p>
               <div className="flex gap-2 flex-wrap">
                 {feature.tags.map((tag, j) => (
-                  <span key={j} className={`bg-[#2e2928] px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tighter ${j === 0 ? `text-${feature.color}` : 'text-[#e0bfb7]'}`}>
+                  <span key={j} className={`bg-surface-container-low px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tighter ${j === 0 ? `text-${feature.color}` : 'text-muted-foreground'}`}>
                     {tag}
                   </span>
                 ))}
@@ -129,34 +129,34 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
         <section className="mb-16" id="eventos">
           <div className="flex justify-between items-center mb-8">
             <h3 className="font-serif text-3xl flex items-center gap-4">
-              <span className="text-[#9cefff]">Os Teus Jogos</span>
+              <span className="text-secondary">Os Teus Jogos</span>
             </h3>
-            <Button variant="outline" className="border-[#58413b]/20">
+            <Button variant="outline" className="border-outline-variant/20">
               Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {jogos.slice(0, 4).map((jogo) => (
-              <div key={jogo.id} className="group bg-[#1a1614] rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-[#58413b]/10 hover:ring-[#ff734b]/50">
+              <div key={jogo.id} className="group bg-surface-container rounded-3xl p-6 transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-outline-variant/10 hover:ring-primary/50">
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-14 h-14 bg-[#ff734b]/20 rounded-2xl flex items-center justify-center">
+                  <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center">
                     {getJogoIcon(jogo.tipo)}
                   </div>
-                  <Badge variant="secondary" className="bg-[#9cefff]/20 text-[#9cefff] text-xs capitalize">
+                  <Badge variant="secondary" className="bg-secondary/20 text-secondary text-xs capitalize">
                     {jogo.tipo.replace("_", " ")}
                   </Badge>
                 </div>
-                <h4 className="font-serif text-xl mb-2 group-hover:text-[#ff734b] transition-colors">{jogo.nome}</h4>
-                <p className="text-[#e0bfb7] text-sm mb-4 line-clamp-2">{jogo.descricao}</p>
-                <div className="flex items-center justify-between pt-4 border-t border-[#58413b]/10">
+                <h4 className="font-serif text-xl mb-2 group-hover:text-primary transition-colors">{jogo.nome}</h4>
+                <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{jogo.descricao}</p>
+                <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
                   <div>
-                    <span className="font-serif text-2xl font-bold text-[#ff734b]">{jogo.preco.toFixed(2)}€</span>
-                    <p className="text-xs text-[#e0bfb7] mt-1 flex items-center gap-1">
-                      <Star className="h-3 w-3 text-[#ffc107]" />
+                    <span className="font-serif text-2xl font-bold text-primary">{jogo.preco.toFixed(2)}€</span>
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                       <Star className="h-3 w-3 text-accent" />
                       {jogo.stockAtual} disponíveis
                     </p>
                   </div>
-                  <Button size="sm" className="bg-[#ff734b] text-[#110d0c] font-bold">
+                  <Button size="sm" className="bg-primary text-primary-foreground font-bold">
                     Participar
                   </Button>
                 </div>
@@ -171,25 +171,25 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
         <section className="mb-16">
           <div className="flex justify-between items-center mb-8">
             <h3 className="font-serif text-3xl flex items-center gap-4">
-              <span className="text-[#ff734b]">Eventos em Destaque</span>
+              <span className="text-primary">Eventos em Destaque</span>
             </h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {eventos.slice(0, 6).map((evento) => (
-              <div key={evento.id} className="group bg-[#1a1614] rounded-3xl overflow-hidden transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-[#58413b]/10 hover:ring-[#ff734b]/50">
+              <div key={evento.id} className="group bg-surface-container rounded-3xl overflow-hidden transition-all hover:scale-[1.02] cursor-pointer ring-1 ring-outline-variant/10 hover:ring-primary/50">
                 {evento.imagemUrl && (
                   <div className="aspect-video w-full overflow-hidden">
                     <img src={evento.imagemUrl} alt={evento.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                 )}
                 <div className="p-6">
-                  <div className="flex items-center gap-2 text-sm text-[#e0bfb7] mb-2">
-                    <Home className="h-4 w-4 text-[#ff734b]" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <Home className="h-4 w-4 text-primary" />
                     <span>{evento.aldeia?.nome}</span>
                   </div>
-                  <h4 className="font-serif text-xl mb-2 group-hover:text-[#ff734b] transition-colors">{evento.nome}</h4>
-                  <p className="text-[#e0bfb7] text-sm line-clamp-2 mb-4">{evento.descricao}</p>
-                  <div className="flex items-center gap-2 text-xs text-[#e0bfb7]">
+                  <h4 className="font-serif text-xl mb-2 group-hover:text-primary transition-colors">{evento.nome}</h4>
+                  <p className="text-muted-foreground text-sm line-clamp-2 mb-4">{evento.descricao}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     <span>{new Date(evento.dataInicio).toLocaleDateString("pt-PT")} - {new Date(evento.dataFim).toLocaleDateString("pt-PT")}</span>
                   </div>
@@ -203,22 +203,22 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       {/* Aldeias Section */}
       <section className="mb-16" id="aldeias">
         <h3 className="font-serif text-3xl mb-8 flex items-center gap-4">
-          <span className="text-[#ffc107]">A Tua Aldeia</span>
+          <span className="text-accent">A Tua Aldeia</span>
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {aldeias.slice(0, 8).map((aldeia) => (
-            <div key={aldeia.id} className="bg-[#1a1614] rounded-2xl p-4 border border-[#58413b]/10 hover:border-[#ff734b]/30 transition-colors">
+            <div key={aldeia.id} className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 hover:border-primary/30 transition-colors">
               <div className="flex items-center gap-3">
                 {aldeia.logoUrl ? (
-                  <img src={aldeia.logoUrl} alt={aldeia.nome} className="h-10 w-10 rounded-xl object-cover ring-2 ring-[#ff734b]/30" />
+                  <img src={aldeia.logoUrl} alt={aldeia.nome} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/30" />
                 ) : (
-                  <div className="h-10 w-10 rounded-xl bg-[#ff734b]/20 flex items-center justify-center">
-                    <Home className="h-5 w-5 text-[#ff734b]" />
+                  <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Home className="h-5 w-5 text-primary" />
                   </div>
                 )}
                 <div>
                   <p className="font-bold text-sm">{aldeia.nome}</p>
-                  <p className="text-xs text-[#e0bfb7] capitalize">{aldeia.tipoOrganizacao.replace("_", " ")}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{aldeia.tipoOrganizacao.replace("_", " ")}</p>
                 </div>
               </div>
             </div>
@@ -228,17 +228,17 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
 
       {/* CTA Section */}
       <section className="mb-16">
-        <div className="bg-[#1a1614] rounded-3xl p-12 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#ff734b]/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+        <div className="bg-surface-container rounded-3xl p-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
           <div className="relative z-10 text-center max-w-2xl mx-auto">
             <h3 className="font-serif text-4xl mb-4">O teu lugar é aqui</h3>
-            <p className="text-[#e0bfb7] text-lg mb-8">Mesmo que estejas do outro lado do mundo, a tua aldeia precisa de ti. Une-te a milhares de Corações que mantêm a tradição viva.</p>
+            <p className="text-muted-foreground text-lg mb-8">Mesmo que estejas do outro lado do mundo, a tua aldeia precisa de ti. Une-te a milhares de Corações que mantêm a tradição viva.</p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button onClick={onRegisterClick} className="bg-gradient-to-r from-[#ff734b] to-[#ff734b]/80 text-[#110d0c] px-10 py-4 rounded-xl font-bold shadow-xl shadow-[#ff734b]/20 hover:scale-105 transition-transform flex items-center gap-3">
+               <Button onClick={onRegisterClick} className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-10 py-4 rounded-xl font-bold shadow-xl shadow-glow hover:scale-105 transition-transform flex items-center gap-3">
                 Criar Conta Grátis
                 <ArrowRight className="h-5 w-5" />
               </Button>
-              <Button variant="outline" onClick={onLoginClick} className="px-10 py-4 rounded-xl border-[#58413b]/20 text-[#eae0de]">
+              <Button variant="outline" onClick={onLoginClick} className="px-10 py-4 rounded-xl border-outline-variant/20 text-foreground">
                 Já tenho conta
               </Button>
             </div>

@@ -85,7 +85,7 @@ export default function UserEffectivePermissions({ user }: { user: User }) {
             {user.userPermissions.map((up, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Badge
-                  className={up.allow ? "bg-green-500/20 text-green-500 hover:bg-green-500/20 border-0" : "bg-red-500/20 text-red-500 hover:bg-red-500/20 border-0"}
+                  className={up.allow ? "bg-primary/20 text-primary hover:bg-primary/20 border-0" : "bg-destructive/20 text-destructive hover:bg-destructive/20 border-0"}
                 >
                   {up.allow ? "✓" : "✗"}
                 </Badge>

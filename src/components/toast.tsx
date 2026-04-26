@@ -28,34 +28,34 @@ const icons = {
 
 const colors = {
   success: {
-    bg: "bg-green-500/10",
+    bg: "bg-primary/10",
     border: "border-green-500/30",
-    icon: "text-green-500",
+    icon: "text-primary",
     title: "text-green-400",
   },
   error: {
-    bg: "bg-red-500/10",
+    bg: "bg-destructive/10",
     border: "border-red-500/30",
-    icon: "text-red-500",
+    icon: "text-destructive",
     title: "text-red-400",
   },
   warning: {
-    bg: "bg-yellow-500/10",
+    bg: "bg-accent/10",
     border: "border-yellow-500/30",
-    icon: "text-yellow-500",
-    title: "text-yellow-400",
+    icon: "text-accent",
+    title: "text-primary",
   },
   info: {
-    bg: "bg-blue-500/10",
+    bg: "bg-secondary/10",
     border: "border-blue-500/30",
-    icon: "text-blue-500",
-    title: "text-blue-400",
+    icon: "text-secondary",
+    title: "text-primary",
   },
   win: {
-    bg: "bg-[#ff734b]/10",
-    border: "border-[#ff734b]/30",
-    icon: "text-[#ff734b]",
-    title: "text-[#ff734b]",
+    bg: "bg-primary/10",
+    border: "border-primary/30",
+    icon: "text-primary",
+    title: "text-primary",
   },
 };
 
@@ -101,12 +101,12 @@ export function Toast({ id, type, title, message, action, onClose }: ToastProps)
         <div className="flex-1 min-w-0">
           <p className={`font-semibold ${colorScheme.title}`}>{title}</p>
           {message && (
-            <p className="text-sm text-white/70 mt-1">{message}</p>
+            <p className="text-sm text-foreground/70 mt-1">{message}</p>
           )}
           {action && (
             <button
               onClick={action.onClick}
-              className="text-sm font-medium text-[#ff734b] hover:text-[#ff734b]/80 mt-2 focus:outline-none focus:underline"
+              className="text-sm font-medium text-primary hover:text-primary/80 mt-2 focus:outline-none focus:underline"
             >
               {action.label}
             </button>
@@ -116,10 +116,10 @@ export function Toast({ id, type, title, message, action, onClose }: ToastProps)
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
+          className="flex-shrink-0 p-1 rounded hover:bg-foreground/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
           aria-label="Fechar notificação"
         >
-          <X className="h-4 w-4 text-white/50" />
+          <X className="h-4 w-4 text-foreground/50" />
         </button>
       </div>
     </motion.div>

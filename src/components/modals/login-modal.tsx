@@ -87,7 +87,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                 required
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
             {/* Quick Login */}
             <div className="border-t pt-4">

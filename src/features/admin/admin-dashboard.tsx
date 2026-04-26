@@ -516,21 +516,21 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
            </div>
            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
              <div className="flex items-center gap-2">
-               {userRole === "super_admin" && (
-                 <>
-                   <div className="relative">
-                     <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ff734b] via-[#9cefff] to-[#ff734b] rounded-lg opacity-50 blur animate-pulse" />
-                     <div className="relative px-4 py-1 bg-[#110d0c] border border-[#ff734b]/30 rounded-lg">
-                       <span className="bg-gradient-to-r from-[#ff734b] to-[#9cefff] bg-clip-text text-transparent font-semibold text-sm">
-                         Visão Global
-                       </span>
-                     </div>
-                   </div>
-                   <span className="text-muted-foreground hidden sm:inline">
-                     de todas as organizações
-                   </span>
-                 </>
-               )}
+{userRole === "super_admin" && (
+                  <>
+                    <div className="relative">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-secondary to-primary rounded-lg opacity-50 blur animate-pulse" />
+                      <div className="relative px-4 py-1 bg-background border border-primary/30 rounded-lg">
+                        <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-semibold text-sm">
+                          Visão Global
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-muted-foreground hidden sm:inline">
+                      de todas as organizações
+                    </span>
+                  </>
+                )}
                {userRole === "aldeia_admin" && (
                  <span className="text-muted-foreground">
                    A gerir a tua aldeia: {aldeia?.nome || 'Aldeia'}
@@ -596,7 +596,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="relative">
               <Wallet className="h-4 w-4 mr-2" /> Pedidos
               {pedidosPendentesCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
                   {pedidosPendentesCount}
                 </Badge>
               )}
@@ -604,7 +604,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="relative">
               <TrendingUp className="h-4 w-4 mr-2" /> Entregas
               {entregasPendentesCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
                   {entregasPendentesCount}
                 </Badge>
               )}
@@ -626,16 +626,16 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         <TabsContent value="overview" className="space-y-4">
           {/* Quick Actions */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }} className="bg-[#ff734b] hover:bg-[#ff734b]/90">
+            <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }} className="bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" /> Novo Evento
             </Button>
-            <Button onClick={() => { setSelectedJogo(null); setJogoModalOpen(true); }} variant="outline" className="border-[#ff734b]/30">
+            <Button onClick={() => { setSelectedJogo(null); setJogoModalOpen(true); }} variant="outline" className="border-primary/30">
               <Gamepad2 className="h-4 w-4 mr-2" /> Novo Jogo
             </Button>
-            <Button onClick={() => router.push('/vendedordashboard?venda=true')} variant="outline" className="border-[#ff734b]/30">
+            <Button onClick={() => router.push('/vendedordashboard?venda=true')} variant="outline" className="border-primary/30">
               <ShoppingCart className="h-4 w-4 mr-2" /> Realizar Venda
             </Button>
-            <Button onClick={() => router.push('/vendedordashboard')} variant="outline" className="border-[#ff734b]/30">
+            <Button onClick={() => router.push('/vendedordashboard')} variant="outline" className="border-primary/30">
               <Users className="h-4 w-4 mr-2" /> Ver Vendedores
             </Button>
           </div>
@@ -660,7 +660,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         </TabsContent>
 
         <TabsContent value="eventos" className="space-y-4">
-          <div className="flex justify-between items-center"><h2 className="text-xl font-semibold">Eventos</h2><Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }} size="sm" className="bg-[#ff734b]"><Plus className="h-4 w-4 mr-1" /> Novo</Button></div>
+          <div className="flex justify-between items-center"><h2 className="text-xl font-semibold">Eventos</h2><Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }} size="sm" className="bg-primary"><Plus className="h-4 w-4 mr-1" /> Novo</Button></div>
           {eventos.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16">
@@ -700,7 +700,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                     </Button>
                     {getEstadoBadge(ev.estado)}
                     <Button variant="ghost" size="icon" onClick={() => { setSelectedEvento(ev); setEventoModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("evento", ev.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => requestDelete("evento", ev.id)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </CardContent>
               </Card>
@@ -741,9 +741,9 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                     <p className="text-sm text-muted-foreground">{jg.tipo} • {jg.evento?.nome} • {formatCurrency(jg.preco)}</p>
                   </div>
                     <div className="flex gap-2 items-center">
-                      {jg.estado === 'aberto' && (
-                        <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                       {jg.estado === 'aberto' && (
+                        <span className="flex items-center gap-1 text-primary text-xs font-medium">
+                          <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                           Ativo
                         </span>
                       )}
@@ -753,7 +753,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                           variant="ghost"
                           size="icon"
                           title="Testar jogo (modo fictício)"
-                          className="text-blue-500 hover:text-blue-400"
+                           className="text-secondary hover:text-primary"
                           onClick={() => handleTestarJogo(jg)}
                         >
                           <Eye className="h-4 w-4" />
@@ -763,7 +763,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                         variant="ghost"
                         size="icon"
                         title="Gerar QR Code para partilha"
-                        className="text-purple-500 hover:text-purple-400"
+                        className="text-secondary hover:text-primary"
                         onClick={() => { setQrCodeData({ jogoId: jg.id, type: "jogo" }); setQrCodeOpen(true); }}
                       >
                         <QrCode className="h-4 w-4" />
@@ -772,13 +772,13 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                         variant="ghost"
                         size="icon"
                         title={jg.estado === 'aberto' ? 'Desativar jogo' : 'Ativar jogo'}
-                        className={jg.estado === 'aberto' ? 'text-green-600 hover:text-red-500' : 'text-gray-400 hover:text-green-600'}
+                        className={jg.estado === 'aberto' ? 'text-primary hover:text-destructive' : 'text-muted-foreground hover:text-primary'}
                         onClick={() => handleToggleJogoEstado(jg)}
                       >
                         {jg.estado === 'aberto' ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => { setSelectedJogo(jg); setSelectedEventoIdParaJogo(jg.eventoId); setJogoModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("jogo", jg.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => requestDelete("jogo", jg.id)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                 </CardContent>
               </Card>
@@ -809,7 +809,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                   </div>
                   <div className="flex gap-2 items-center">
                     {v.premioEntregue ? (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                         Prémio Entregue/Convertido
                       </Badge>
                     ) : (
@@ -911,7 +911,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                          <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setUserModalOpen(true); }} title="Editar">
                            <Edit className="h-4 w-4" />
                          </Button>
-                         <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("user", u.id)} title="Eliminar">
+                         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => requestDelete("user", u.id)} title="Eliminar">
                            <Trash2 className="h-4 w-4" />
                          </Button>
                        </div>
@@ -982,7 +982,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                      </div>
                      <div className="flex gap-2 items-center">
                        <Button variant="ghost" size="icon" onClick={() => { setSelectedAldeia(al); setAldeiaModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                       <Button variant="ghost" size="icon" className="text-red-500" onClick={() => requestDelete("aldeia", al.id)}><Trash2 className="h-4 w-4" /></Button>
+                       <Button variant="ghost" size="icon" className="text-destructive" onClick={() => requestDelete("aldeia", al.id)}><Trash2 className="h-4 w-4" /></Button>
                      </div>
                    </CardContent>
                  </Card>
@@ -1103,15 +1103,15 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                       <div className="flex items-center gap-4 mt-2">
                          <div>
                             <p className="text-xs text-muted-foreground">Volume Faturado</p>
-                            <p className="font-semibold text-green-600">{formatCurrency(vs.volumeTotal)}</p>
+                             <p className="font-semibold text-primary">{formatCurrency(vs.volumeTotal)}</p>
                          </div>
                          <div>
                             <p className="text-xs text-muted-foreground">Comissão ({vs.comissaoPercentual}%)</p>
-                            <p className="font-semibold text-blue-600">{formatCurrency(vs.comissaoGanhas)}</p>
+                             <p className="font-semibold text-secondary">{formatCurrency(vs.comissaoGanhas)}</p>
                          </div>
                          <div>
                             <p className="text-xs text-muted-foreground">Saldo Aberto (A Pagar)</p>
-                            <p className="font-semibold text-orange-600">{formatCurrency(vs.saldoAberto)}</p>
+                             <p className="font-semibold text-accent">{formatCurrency(vs.saldoAberto)}</p>
                          </div>
                       </div>
                     </div>
@@ -1215,7 +1215,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-blue-500" />
+              <Eye className="h-5 w-5 text-secondary" />
               Testar Jogo — Modo Fictício
             </DialogTitle>
             <DialogDescription>
@@ -1249,10 +1249,10 @@ function JogoTestView({ jogo }: { jogo: any }) {
       <div className="space-y-6">
         <div className="bg-muted/50 rounded-xl p-6 space-y-4">
           <div className="flex items-center gap-3">
-            {jogo.tipo === "raspadinha" && <Sparkles className="h-6 w-6 text-yellow-500" />}
-            {jogo.tipo === "rifa" && <Ticket className="h-6 w-6 text-blue-500" />}
-            {jogo.tipo === "tombola" && <Ticket className="h-6 w-6 text-purple-500" />}
-            {jogo.tipo === "poio_da_vaca" && <Grid3X3 className="h-6 w-6 text-green-500" />}
+            {jogo.tipo === "raspadinha" && <Sparkles className="h-6 w-6 text-accent" />}
+            {jogo.tipo === "rifa" && <Ticket className="h-6 w-6 text-secondary" />}
+            {jogo.tipo === "tombola" && <Ticket className="h-6 w-6 text-accent" />}
+            {jogo.tipo === "poio_da_vaca" && <Grid3X3 className="h-6 w-6 text-primary" />}
             <div>
               <h3 className="text-lg font-bold">{jogo.nome}</h3>
               <Badge variant="secondary">{tipoLabel(jogo.tipo)}</Badge>

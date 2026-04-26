@@ -69,7 +69,7 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
   return (
     <>
       {/* Header com navegação integrada */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-outline-variant/20">
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logo */}
           <div className="flex items-center gap-3">
@@ -77,8 +77,8 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
               onClick={() => router.push("/")}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <House className="h-8 w-8 text-[#ff734b]" />
-              <span className="font-serif italic text-[#ff734b] text-lg font-bold">
+                    <House className="h-8 w-8 text-primary" />
+              <span className="font-serif italic text-primary text-lg font-bold">
                 Aldeias Games
               </span>
             </button>
@@ -89,7 +89,7 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
             {/* Hamburger menu button - only on mobile */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden flex items-center justify-center w-9 h-9 text-[#e0bfb7] hover:text-[#ff734b] transition-colors"
+              className="md:hidden flex items-center justify-center w-9 h-9 text-muted-foreground hover:text-primary transition-colors"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -98,30 +98,30 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center gap-6">
               {isAuthenticated && user?.role === 'super_admin' && (
-                <button onClick={() => router.push("/superadmindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Painel</button>
+                 <button onClick={() => router.push("/superadmindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Painel</button>
               )}
               {isAuthenticated && user?.role === 'aldeia_admin' && (
-                <button onClick={() => router.push("/admindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Dashboard</button>
+                 <button onClick={() => router.push("/admindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Dashboard</button>
               )}
-              <button onClick={() => router.push('/jogos')} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Jogos</button>
+               <button onClick={() => router.push('/jogos')} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Jogos</button>
               {!isAuthenticated && (
-                <button onClick={() => router.push('/')} className="font-label text-xs font-bold tracking-widest uppercase text-[#e0bfb7] hover:text-[#9cefff] transition-colors">Início</button>
+                 <button onClick={() => router.push('/')} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Início</button>
               )}
             </nav>
 
             {/* User menu */}
-            <div className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 relative">
+            <div className="w-9 h-9 rounded-full bg-surface-container-low overflow-hidden border border-primary/20 relative">
               {isAuthenticated && user ? (
                 <button
                   onClick={() => setUserMenuOpen(true)}
-                  className="w-full h-full bg-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
+                   className="w-full h-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
                 >
-                  <User className="h-4 w-4 text-[#ff734b]" />
+                  <User className="h-4 w-4 text-primary" />
                 </button>
               ) : (
                 <button
                   onClick={() => router.push("/")}
-                  className="w-full h-full flex items-center justify-center text-[#ff734b] font-bold text-lg"
+                  className="w-full h-full flex items-center justify-center text-primary font-bold text-lg"
                 >
                   +
                 </button>
@@ -132,7 +132,7 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-[#110d0c]/98 backdrop-blur-xl border-b border-[#ff734b]/10 shadow-lg z-50">
+          <div className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-primary/10 shadow-lg z-50">
             <nav className="px-4 py-6 space-y-1">
               {getRoleNavItems().map((item) => {
                 const Icon = item.icon;
@@ -143,8 +143,8 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
                     onClick={() => handleNavClick(item.path)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-[#ff734b]/20 text-[#ff734b]'
-                        : 'text-[#e0bfb7] hover:bg-[#2e2928]'
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-muted-foreground hover:bg-surface-container-low'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -153,10 +153,10 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
                 );
               })}
               {/* Logout option */}
-              <div className="pt-4 mt-4 border-t border-[#58413b]/20">
+               <div className="pt-4 mt-4 border-t border-outline-variant/20">
                 <button
                   onClick={() => handleNavClick("/")}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-destructive/10 transition-colors"
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="font-medium">Sair</span>
@@ -176,21 +176,21 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
       </main>
 
       {/* Footer */}
-       <footer className="border-t border-[#58413b]/10 py-8 md:py-12 bg-[#110d0c]">
+        <footer className="border-t border-outline-variant/10 py-8 md:py-12 bg-background">
          <div className="container max-w-7xl mx-auto px-4 md:px-8">
            {/* Mobile: Simplified footer */}
            <div className="md:hidden text-center space-y-4">
              <div className="flex items-center justify-center gap-3">
-               <House className="h-6 w-6 text-[#ff734b]" />
-               <span className="font-serif text-lg font-bold text-[#ff734b]">Aldeias Games</span>
+                <House className="h-6 w-6 text-primary" />
+                <span className="font-serif text-lg font-bold text-primary">Aldeias Games</span>
              </div>
-             <p className="text-xs text-[#e0bfb7]">Plataforma de angariação de fundos para comunidades locais</p>
-             <div className="flex justify-center gap-4 text-xs text-[#e0bfb7]">
-               <a href="/termos" className="hover:text-[#ff734b] transition-colors">Termos</a>
-               <a href="/privacidade" className="hover:text-[#ff734b] transition-colors">Privacidade</a>
-               <a href="mailto:suporte@aldeiasgames.pt" className="hover:text-[#ff734b] transition-colors">Contacto</a>
+              <p className="text-xs text-muted-foreground">Plataforma de angariação de fundos para comunidades locais</p>
+              <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+                <a href="/termos" className="hover:text-primary transition-colors">Termos</a>
+                <a href="/privacidade" className="hover:text-primary transition-colors">Privacidade</a>
+                <a href="mailto:suporte@aldeiasgames.pt" className="hover:text-primary transition-colors">Contacto</a>
              </div>
-             <p className="text-xs text-[#e0bfb7]/60">© 2026 Aldeias Games</p>
+              <p className="text-xs text-muted-foreground/60">© 2026 Aldeias Games</p>
            </div>
 
            {/* Desktop: Full footer */}
@@ -198,33 +198,33 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                <div>
                  <div className="flex items-center gap-3 mb-4">
-                   <House className="h-8 w-8 text-[#ff734b]" />
-                   <span className="font-serif text-xl font-bold text-[#ff734b]">Aldeias Games</span>
+                   <House className="h-8 w-8 text-primary" />
+                    <span className="font-serif text-xl font-bold text-primary">Aldeias Games</span>
                  </div>
-                 <p className="text-sm text-[#e0bfb7]">A plataforma de angariação de fundos para comunidades locais portuguesas.</p>
+                  <p className="text-sm text-muted-foreground">A plataforma de angariação de fundos para comunidades locais portuguesas.</p>
                </div>
                <div>
                  <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Navegação</h4>
-                 <ul className="space-y-2 text-sm text-[#e0bfb7]">
-                   <li><button onClick={() => document.getElementById('eventos')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#ff734b] transition-colors">Eventos</button></li>
-                   <li><button onClick={() => router.push('/jogos')} className="hover:text-[#ff734b] transition-colors">Jogos</button></li>
-                   <li><button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-[#ff734b] transition-colors">Aldeias</button></li>
-                 </ul>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li><button onClick={() => document.getElementById('eventos')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-primary transition-colors">Eventos</button></li>
+                    <li><button onClick={() => router.push('/jogos')} className="hover:text-primary transition-colors">Jogos</button></li>
+                    <li><button onClick={() => document.getElementById('aldeias')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-primary transition-colors">Aldeias</button></li>
+                  </ul>
                </div>
                <div>
                  <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Legal</h4>
-                 <ul className="space-y-2 text-sm text-[#e0bfb7]">
-                   <li><a href="/termos" className="hover:text-[#ff734b] transition-colors">Termos de Serviço</a></li>
-                   <li><a href="/privacidade" className="hover:text-[#ff734b] transition-colors">Política de Privacidade</a></li>
-                   <li><a href="#" className="hover:text-[#ff734b] transition-colors">RGPD</a></li>
-                 </ul>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li><a href="/termos" className="hover:text-primary transition-colors">Termos de Serviço</a></li>
+                    <li><a href="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</a></li>
+                    <li><a href="#" className="hover:text-primary transition-colors">RGPD</a></li>
+                  </ul>
                </div>
                <div>
                  <h4 className="font-label font-bold uppercase tracking-widest text-xs mb-4">Contacto</h4>
-                 <p className="text-sm text-[#e0bfb7]">suporte@aldeiasgames.pt</p>
+                  <p className="text-sm text-muted-foreground">suporte@aldeiasgames.pt</p>
                </div>
              </div>
-             <div className="mt-8 pt-8 border-t border-[#58413b]/10 text-center text-sm text-[#e0bfb7]">
+              <div className="mt-8 pt-8 border-t border-outline-variant/10 text-center text-sm text-muted-foreground">
                © 2026 Aldeias Games. Desenvolvido com ❤️ para Portugal.
              </div>
            </div>

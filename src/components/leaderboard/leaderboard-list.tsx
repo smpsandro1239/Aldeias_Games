@@ -67,9 +67,9 @@ export function LeaderboardList({ aldeiaId, tipo = "all" }: LeaderboardListProps
   const getMedalColor = (posicao: number) => {
     switch (posicao) {
       case 1:
-        return "text-yellow-500";
+        return "text-accent";
       case 2:
-        return "text-gray-400";
+        return "text-muted-foreground";
       case 3:
         return "text-amber-700";
       default:
@@ -111,7 +111,7 @@ export function LeaderboardList({ aldeiaId, tipo = "all" }: LeaderboardListProps
     <Card className="w-full">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Trophy className="w-5 h-5 text-yellow-500" />
+          <Trophy className="w-5 h-5 text-accent" />
           Leaderboard
         </CardTitle>
       </CardHeader>
@@ -161,7 +161,7 @@ export function LeaderboardList({ aldeiaId, tipo = "all" }: LeaderboardListProps
                     key={entry.userId}
                     className={`flex items-center gap-2 p-2 md:p-3 rounded-lg text-sm md:text-base ${
                       entry.posicao <= 3
-                        ? "bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20"
+                        ? "bg-gradient-to-r from-yellow-500/10 to-transparent border border-accent/20"
                         : "bg-muted/30"
                     }`}
                   >

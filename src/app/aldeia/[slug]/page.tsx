@@ -127,7 +127,7 @@ function AldeiaPageContent() {
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         >
-          <Loader2 className="h-12 w-12 text-white" />
+          <Loader2 className="h-12 w-12 text-foreground" />
         </motion.div>
       </div>
     );
@@ -138,7 +138,7 @@ function AldeiaPageContent() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500">
         <Card className="max-w-md mx-4">
           <CardContent className="p-8 text-center">
-            <PartyPopper className="h-16 w-16 mx-auto mb-4 text-yellow-500" />
+            <PartyPopper className="h-16 w-16 mx-auto mb-4 text-accent" />
             <h1 className="text-2xl font-bold mb-2">Ops!</h1>
             <p className="text-muted-foreground">Esta organização não foi encontrada.</p>
           </CardContent>
@@ -158,29 +158,29 @@ function AldeiaPageContent() {
       {data.logo ? (
         <img src={data.logo} alt={data.nome} className="h-12 w-12 rounded-xl object-cover" />
       ) : (
-        <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
-          <Gamepad2 className="h-6 w-6 text-white" />
+        <div className="h-12 w-12 bg-foreground/20 rounded-xl flex items-center justify-center">
+          <Gamepad2 className="h-6 w-6 text-foreground" />
         </div>
       )}
       <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">{data.nome}</h1>
-        <p className="text-white/70 text-sm">{data.eventos.length} evento(s) ativo(s)</p>
+        <h1 className="text-2xl font-black text-foreground tracking-tight">{data.nome}</h1>
+        <p className="text-foreground/70 text-sm">{data.eventos.length} evento(s) ativo(s)</p>
       </div>
     </div>
     <div className="flex items-center gap-2">
-      <div className="w-9 h-9 rounded-full bg-[#2e2928] overflow-hidden border border-[#ff734b]/20 relative">
+       <div className="w-9 h-9 rounded-full bg-surface-container-low overflow-hidden border border-primary/20 relative">
         {/* User will be fetched from localStorage in the modal */}
         <button 
           onClick={() => {
             // We'll handle opening the modal in the modal itself since it reads from localStorage
             // For now, we'll just toggle a state that the modal will read
           }}
-          className="w-full h-full bg-[#ff734b]/20 flex items-center justify-center hover:bg-[#ff734b]/30 transition-colors"
+           className="w-full h-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
         >
-          <User className="h-4 w-4 text-[#ff734b]" />
+          <User className="h-4 w-4 text-primary" />
         </button>
       </div>
-      <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+      <Button variant="ghost" size="icon" className="text-foreground hover:bg-foreground/20">
         <Share2 className="h-5 w-5" />
       </Button>
     </div>
@@ -193,7 +193,7 @@ function AldeiaPageContent() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-white/90"
+                className="bg-foreground/10 backdrop-blur-md rounded-2xl p-4 text-foreground/90"
               >
                 {data.descricao}
               </motion.div>
@@ -208,7 +208,7 @@ function AldeiaPageContent() {
               >
                 <a
                   href={`tel:${data.contactos.telefone}`}
-                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full px-4 py-2 text-white transition-colors"
+                  className="flex items-center gap-2 bg-foreground/10 hover:bg-foreground/20 backdrop-blur-md rounded-full px-4 py-2 text-foreground transition-colors"
                 >
                   <Phone className="h-4 w-4" />
                   <span className="text-sm font-medium">{data.contactos.telefone}</span>
@@ -216,7 +216,7 @@ function AldeiaPageContent() {
                 {data.contactos.email && (
                   <a
                     href={`mailto:${data.contactos.email}`}
-                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full px-4 py-2 text-white transition-colors"
+                    className="flex items-center gap-2 bg-foreground/10 hover:bg-foreground/20 backdrop-blur-md rounded-full px-4 py-2 text-foreground transition-colors"
                   >
                     <Mail className="h-4 w-4" />
                     <span className="text-sm font-medium">{data.contactos.email}</span>
@@ -232,9 +232,9 @@ function AldeiaPageContent() {
                   animate={{ opacity: 1 }}
                   className="text-center py-12"
                 >
-                  <PartyPopper className="h-16 w-16 mx-auto mb-4 text-white/50" />
-                  <p className="text-white/70">De momento não há eventos disponíveis.</p>
-                  <p className="text-white/50 text-sm mt-2">Volte em breve!</p>
+                  <PartyPopper className="h-16 w-16 mx-auto mb-4 text-foreground/50" />
+                  <p className="text-foreground/70">De momento não há eventos disponíveis.</p>
+                  <p className="text-foreground/50 text-sm mt-2">Volte em breve!</p>
                 </motion.div>
               ) : (
                 data.eventos.map((evento, index) => (
@@ -259,7 +259,7 @@ function AldeiaPageContent() {
                         <div className="flex items-start justify-between">
                           <div>
                             <CardTitle className="text-xl font-black flex items-center gap-2">
-                              <Sparkles className="h-5 w-5 text-yellow-500" />
+                              <Sparkles className="h-5 w-5 text-accent" />
                               {evento.nome}
                             </CardTitle>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
@@ -344,7 +344,7 @@ function AldeiaPageContent() {
                 onClick={() => toggleNumero(num.toString())}
                 className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${
                   numerosSelecionados.includes(num.toString())
-                    ? "bg-violet-600 text-white"
+                    ? "bg-violet-600 text-foreground"
                     : "bg-muted hover:bg-violet-100"
                 }`}
               >
@@ -419,7 +419,7 @@ export default function AldeiaPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500">
-        <Loader2 className="h-12 w-12 text-white animate-spin" />
+        <Loader2 className="h-12 w-12 text-foreground animate-spin" />
       </div>
     }>
       <LayoutHeader>

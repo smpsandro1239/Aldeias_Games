@@ -52,13 +52,13 @@ export function GameList({
         animate={{ opacity: 1, y: 0 }}
         className="text-center space-y-1 mb-6"
       >
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9cefff]">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
           Escolhe o Jogo
         </p>
         <h2 className="font-serif text-3xl font-bold tracking-tight">
           {title.split(' ').map((word, i, arr) => (
             i === arr.length - 1 ? (
-              <span key={i} className="text-[#ff734b]"> {word}</span>
+              <span key={i} className="text-primary"> {word}</span>
             ) : (
               <span key={i}> {word}</span>
             )
@@ -68,12 +68,12 @@ export function GameList({
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-[#ff734b]" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : jogos.length === 0 ? (
-        <div className="text-center py-12 bg-[#1f1b19] rounded-2xl border border-[#58413b]/20">
-          <p className="text-[#e0bfb7] font-medium">{emptyMessage}</p>
-          <p className="text-sm text-[#e0bfb7]/60 mt-2">{emptySubtext}</p>
+        <div className="text-center py-12 bg-surface-container rounded-2xl border border-outline-variant/20">
+          <p className="text-muted-foreground font-medium">{emptyMessage}</p>
+          <p className="text-sm text-muted-foreground/60 mt-2">{emptySubtext}</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -86,23 +86,23 @@ export function GameList({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => onJogoClick(jogo)}
-                className="w-full text-left bg-[#1f1b19] rounded-2xl p-5 hover:scale-[1.02] transition-all border border-[#58413b]/20 shadow-lg"
+                className="w-full text-left bg-surface-container rounded-2xl p-5 hover:scale-[1.02] transition-all border border-outline-variant/20 shadow-lg"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-[#2e2928] flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-[#ff734b]" />
+                  <div className="w-14 h-14 rounded-xl bg-surface-container-low flex items-center justify-center">
+                    <Icon className="w-7 h-7 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-serif text-xl font-bold text-[#ffb5a0]">{jogo.nome}</h3>
-                    <p className="text-sm text-[#e0bfb7] mt-1">
+                    <h3 className="font-serif text-xl font-bold text-accent">{jogo.nome}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
                       {showAldeia && (jogo.evento?.aldeia?.nome ? `${jogo.evento.aldeia.nome} • ` : "Aldeias Games • ")}
                       {jogo.preco}€
                     </p>
-                    <p className="text-xs text-[#e0bfb7]/60 mt-1">
+                    <p className="text-xs text-muted-foreground/60 mt-1">
                       {jogo.stockAtual} disponíveis
                     </p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-[#ff734b]" />
+                  <ArrowRight className="w-5 h-5 text-primary" />
                 </div>
               </motion.button>
             );

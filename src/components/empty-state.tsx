@@ -77,16 +77,16 @@ export function EmptyState({
         transition={{ type: "spring", damping: 10 }}
         className="relative mb-4"
       >
-        <div className={`${size.iconSize} bg-[#2e2928] rounded-2xl flex items-center justify-center`}>
+        <div className={`${size.iconSize} bg-surface-container-low rounded-2xl flex items-center justify-center`}>
           <Icon className={size.iconInner} />
         </div>
-        <div className="absolute inset-0 bg-[#ff734b]/10 rounded-2xl blur-xl -z-10" />
+        <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-xl -z-10" />
       </motion.div>
 
-      <h3 className={`${size.title} font-bold text-white mb-2`}>
+      <h3 className={`${size.title} font-bold text-foreground mb-2`}>
         {title}
       </h3>
-      <p className={`${size.description} text-[#e0bfb7] max-w-sm mb-6`}>
+      <p className={`${size.description} text-muted-foreground max-w-sm mb-6`}>
         {description}
       </p>
 
@@ -94,7 +94,7 @@ export function EmptyState({
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={action.onClick}
-            className="bg-[#ff734b] hover:bg-[#ff734b]/90 text-[#110d0c] font-bold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
           >
             {action.label}
           </Button>
@@ -102,7 +102,7 @@ export function EmptyState({
             <Button
               onClick={secondaryAction.onClick}
               variant="outline"
-              className="border-[#ff734b]/30 text-[#ff734b] hover:bg-[#ff734b]/10"
+              className="border-primary/30 text-primary hover:bg-primary/10"
             >
               {secondaryAction.label}
             </Button>

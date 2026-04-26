@@ -34,7 +34,7 @@ export function StatCard({
             <p className="text-2xl font-bold">{value}</p>
           </div>
           {Icon && (
-            <div className="h-8 w-8 rounded-full bg-white/50 p-1.5">
+            <div className="h-8 w-8 rounded-full bg-foreground/50 p-1.5">
               <Icon className="h-5 w-5" />
             </div>
           )}

@@ -129,13 +129,13 @@ export default function AdminEntregasPage() {
   const getEstadoBadge = (estado: string) => {
     switch (estado) {
       case "solicitado":
-        return <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" />Solicitado</Badge>;
+        return <Badge className="bg-accent"><Clock className="w-3 h-3 mr-1" />Solicitado</Badge>;
       case "confirmado":
-        return <Badge className="bg-blue-500"><CheckCircle2 className="w-3 h-3 mr-1" />Confirmado</Badge>;
+        return <Badge className="bg-secondary"><CheckCircle2 className="w-3 h-3 mr-1" />Confirmado</Badge>;
       case "concluido":
-        return <Badge className="bg-green-500"><CheckCircle2 className="w-3 h-3 mr-1" />Concluído</Badge>;
+        return <Badge className="bg-primary"><CheckCircle2 className="w-3 h-3 mr-1" />Concluído</Badge>;
       case "cancelado":
-        return <Badge className="bg-red-500"><XCircle className="w-3 h-3 mr-1" />Cancelado</Badge>;
+        return <Badge className="bg-destructive"><XCircle className="w-3 h-3 mr-1" />Cancelado</Badge>;
       default:
         return <Badge>{estado}</Badge>;
     }
@@ -160,24 +160,24 @@ export default function AdminEntregasPage() {
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <Card className="bg-[#2e2928]">
+            <Card className="bg-surface-container-low">
               <CardHeader className="flex flex-row items-center justify-between py-3">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-yellow-500" />
-                  <span className="text-sm text-[#e0bfb7]">Pendentes</span>
+                  <Clock className="w-5 h-5 text-accent" />
+                  <span className="text-sm text-muted-foreground">Pendentes</span>
                 </div>
-                <span className="text-xl font-bold text-yellow-500">
+                <span className="text-xl font-bold text-accent">
                   {formatCurrency(totalPendente)}
                 </span>
               </CardHeader>
             </Card>
-            <Card className="bg-[#2e2928]">
+            <Card className="bg-surface-container-low">
               <CardHeader className="flex flex-row items-center justify-between py-3">
                 <div className="flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-green-500" />
-                  <span className="text-sm text-[#e0bfb7]">Entregues</span>
+                  <Wallet className="w-5 h-5 text-primary" />
+                  <span className="text-sm text-muted-foreground">Entregues</span>
                 </div>
-                <span className="text-xl font-bold text-green-500">
+                <span className="text-xl font-bold text-primary">
                   {formatCurrency(
                     entregas
                       .filter(e => e.estado === 'concluido')
@@ -193,7 +193,7 @@ export default function AdminEntregasPage() {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-4 py-2 bg-[#2e2928] border border-[#58413b]/20 rounded-xl text-[#e0bfb7] text-sm"
+              className="px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-xl text-muted-foreground text-sm"
             >
               <option value="todos">Todos</option>
               <option value="solicitado">Solicitados</option>
@@ -209,35 +209,35 @@ export default function AdminEntregasPage() {
           {/* Lista de Entregas */}
           <div className="space-y-3">
             {filteredEntregas.length === 0 ? (
-              <Card className="bg-[#2e2928] p-8 text-center">
-                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-[#e0bfb7]/30" />
-                <p className="text-[#e0bfb7]">Nenhuma entrega encontrada</p>
+              <Card className="bg-surface-container-low p-8 text-center">
+                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                <p className="text-muted-foreground">Nenhuma entrega encontrada</p>
               </Card>
             ) : (
               filteredEntregas.map((entrega) => (
-                <Card key={entrega.id} className="bg-[#2e2928] overflow-hidden">
+                <Card key={entrega.id} className="bg-surface-container-low overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-full bg-[#ff734b]/20 flex items-center justify-center">
-                            <User className="w-5 h-5 text-[#ff734b]" />
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <User className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <p className="font-medium text-[#eae0de]">
+                            <p className="font-medium text-foreground">
                               {entrega.vendedor?.nome || "Vendedor"}
                             </p>
-                            <p className="text-xs text-[#e0bfb7]/60">
+                            <p className="text-xs text-muted-foreground/60">
                               {entrega.vendedor?.email}
                             </p>
                             {entrega.vendedor?.telefone && (
-                              <p className="text-xs text-[#e0bfb7]/60">
+                              <p className="text-xs text-muted-foreground/60">
                                 {entrega.vendedor.telefone}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-[#e0bfb7]/60">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground/60">
                           <span>{formatDate(entrega.dataSolicitacao)}</span>
                           {entrega.admin && (
                             <>
@@ -249,7 +249,7 @@ export default function AdminEntregasPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-[#ff734b]">
+                          <p className="text-2xl font-bold text-primary">
                             {formatCurrency(entrega.valor)}
                           </p>
                           {getEstadoBadge(entrega.estado)}
@@ -258,7 +258,7 @@ export default function AdminEntregasPage() {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              className="bg-green-500 hover:bg-green-600"
+                              className="bg-primary hover:bg-primary"
                               onClick={() => handleAcao(entrega.id, 'confirmar')}
                               disabled={processing === entrega.id}
                             >
@@ -272,7 +272,7 @@ export default function AdminEntregasPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-red-500 text-red-500 hover:bg-red-500/10"
+                              className="border-red-500 text-destructive hover:bg-destructive/10"
                               onClick={() => handleAcao(entrega.id, 'rejeitar')}
                               disabled={processing === entrega.id}
                             >
@@ -283,7 +283,7 @@ export default function AdminEntregasPage() {
                         {entrega.estado === "confirmado" && (
                           <Button
                             size="sm"
-                            className="bg-blue-500 hover:bg-blue-600"
+                            className="bg-secondary hover:bg-blue-600"
                             onClick={() => handleAcao(entrega.id, 'concluir')}
                             disabled={processing === entrega.id}
                           >
@@ -298,7 +298,7 @@ export default function AdminEntregasPage() {
                       </div>
                     </div>
                     {entrega.observacoes && (
-                      <div className="mt-3 p-2 bg-[#1a1817] rounded text-xs text-[#e0bfb7]/70">
+                      <div className="mt-3 p-2 bg-[#1a1817] rounded text-xs text-muted-foreground/70">
                         <strong>Nota:</strong> {entrega.observacoes}
                       </div>
                     )}

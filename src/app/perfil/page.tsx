@@ -184,20 +184,20 @@ export default function PerfilPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body flex items-center justify-center">
-        <div className="animate-pulse text-[#ff734b]">A carregar...</div>
+      <div className="min-h-screen bg-background text-foreground font-body flex items-center justify-center">
+        <div className="animate-pulse text-primary">A carregar...</div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body flex flex-col items-center justify-center p-4">
-        <User className="w-16 h-16 text-[#ff734b] mb-4" />
+      <div className="min-h-screen bg-background text-foreground font-body flex flex-col items-center justify-center p-4">
+        <User className="w-16 h-16 text-primary mb-4" />
         <p className="text-lg mb-4">Precisas de fazer login para ver o teu perfil</p>
         <button
           onClick={() => router.push("/")}
-          className="px-6 py-3 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl"
+          className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
         >
           Voltar ao Início
         </button>
@@ -207,13 +207,13 @@ export default function PerfilPage() {
 
    return (
      <LayoutHeader>
-       <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
-         <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10 flex items-center justify-between px-4 py-3">
+       <div className="min-h-screen bg-background text-foreground font-body">
+         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
            <div className="flex items-center gap-3">
-             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-[#2e2928] rounded-full transition-colors">
-               <ArrowLeft className="w-5 h-5 text-[#ff734b]" />
+             <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-low rounded-full transition-colors">
+               <ArrowLeft className="w-5 h-5 text-primary" />
              </button>
-             <h1 className="font-serif text-xl tracking-wide text-[#ffb5a0] font-bold italic">O Teu Perfil</h1>
+             <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">O Teu Perfil</h1>
            </div>
          </div>
 
@@ -234,91 +234,91 @@ export default function PerfilPage() {
               onChange={handleImageSelect}
               className="hidden"
             />
-            <div className="w-24 h-24 rounded-full bg-[#2e2928] border-2 border-[#ff734b] flex items-center justify-center overflow-hidden">
+            <div className="w-24 h-24 rounded-full bg-surface-container-low border-2 border-primary flex items-center justify-center overflow-hidden">
               {profileImage ? (
                 <img src={profileImage} alt="Foto de perfil" className="w-full h-full object-cover" />
               ) : (
-                <User className="w-12 h-12 text-[#ff734b]" />
+                <User className="w-12 h-12 text-primary" />
               )}
             </div>
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-[#ff734b] rounded-full flex items-center justify-center"
+              className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center"
             >
-              <Camera className="w-4 h-4 text-[#110d0c]" />
+              <Camera className="w-4 h-4 text-primary-foreground" />
             </button>
           </div>
-          <p className="text-sm text-[#e0bfb7] mt-2">Foto de perfil</p>
+          <p className="text-sm text-muted-foreground mt-2">Foto de perfil</p>
           {profileImage && (
             <button
               onClick={() => setProfileImage(null)}
-              className="text-xs text-red-500 mt-1 hover:underline"
+              className="text-xs text-destructive mt-1 hover:underline"
             >
               Remover foto
             </button>
           )}
         </div>
 
-        <div className="bg-[#1f1b19] rounded-2xl p-4 border border-[#58413b]/10 space-y-4">
+        <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 space-y-4">
           <div className="space-y-2">
-            <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Nome</label>
-            <div className="flex items-center gap-3 bg-[#2e2928] rounded-xl px-4 py-3">
-              <User className="w-5 h-5 text-[#ff734b]" />
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Nome</label>
+            <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+              <User className="w-5 h-5 text-primary" />
               <input
                 type="text"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                className="flex-1 bg-transparent outline-none text-foreground"
                 placeholder="O teu nome"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Perfil</label>
-            <div className="flex items-center gap-3 bg-[#2e2928] rounded-xl px-4 py-3 opacity-70">
-              <User className="w-5 h-5 text-[#ff734b]" />
-              <span className="flex-1 text-[#eae0de] font-medium">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Perfil</label>
+            <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3 opacity-70">
+              <User className="w-5 h-5 text-primary" />
+              <span className="flex-1 text-foreground font-medium">
                 {roleLabels[user?.role || ""] || "Jogador"}
               </span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Email</label>
-            <div className="flex items-center gap-3 bg-[#2e2928] rounded-xl px-4 py-3">
-              <Mail className="w-5 h-5 text-[#ff734b]" />
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Email</label>
+            <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+              <Mail className="w-5 h-5 text-primary" />
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                className="flex-1 bg-transparent outline-none text-foreground"
                 placeholder="o.teu@email.com"
                 disabled
               />
             </div>
-            <p className="text-[10px] text-[#e0bfb7]/50">O email não pode ser alterado</p>
+            <p className="text-[10px] text-muted-foreground/50">O email não pode ser alterado</p>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Telefone</label>
-            <div className="flex items-center gap-3 bg-[#2e2928] rounded-xl px-4 py-3">
-              <Phone className="w-5 h-5 text-[#ff734b]" />
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Telefone</label>
+            <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+              <Phone className="w-5 h-5 text-primary" />
               <input
                 type="tel"
                 value={formData.telefone}
                 onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                className="flex-1 bg-transparent outline-none text-foreground"
                 placeholder="912 345 678"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-[#e0bfb7] uppercase tracking-wider">Aldeia</label>
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Aldeia</label>
             <div ref={dropdownRef} className="relative">
-              <div className="flex items-center gap-3 bg-[#2e2928] rounded-xl px-4 py-3">
-                <MapPin className="w-5 h-5 text-[#ff734b] flex-shrink-0" />
+              <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+                <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
                 <input
                   type="text"
                   value={aldeiaSearch}
@@ -328,43 +328,43 @@ export default function PerfilPage() {
                     setAldeiaDropdownOpen(true);
                   }}
                   onFocus={() => setAldeiaDropdownOpen(true)}
-                  className="flex-1 bg-transparent outline-none text-[#eae0de]"
+                  className="flex-1 bg-transparent outline-none text-foreground"
                   placeholder="Pesquisar aldeia..."
                 />
                 {aldeiaSearch && (
                   <button
                     onClick={handleClearAldeia}
-                    className="text-[#e0bfb7] hover:text-[#ff734b]"
+                    className="text-muted-foreground hover:text-primary"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 )}
                 <button
                   onClick={() => setAldeiaDropdownOpen(!aldeiaDropdownOpen)}
-                  className="text-[#e0bfb7] hover:text-[#ff734b]"
+                  className="text-muted-foreground hover:text-primary"
                 >
                   <ChevronDown className={`w-5 h-5 transition-transform ${aldeiaDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
               </div>
               
               {aldeiaDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#2e2928] rounded-xl border border-[#58413b]/20 max-h-60 overflow-y-auto z-50 shadow-xl">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-low rounded-xl border border-outline-variant/20 max-h-60 overflow-y-auto z-50 shadow-xl">
                   {filteredAldeias.length > 0 ? (
                     filteredAldeias.map((aldeia) => (
                       <button
                         key={aldeia.id}
                         onClick={() => handleSelectAldeia(aldeia)}
-                        className="w-full px-4 py-3 text-left hover:bg-[#58413b]/30 flex items-center gap-3 transition-colors"
+                        className="w-full px-4 py-3 text-left hover:bg-muted/30 flex items-center gap-3 transition-colors"
                       >
-                        <MapPin className="w-4 h-4 text-[#ff734b] flex-shrink-0" />
+                        <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
                         <div>
-                          <p className="text-[#eae0de] font-medium">{aldeia.nome}</p>
-                          <p className="text-xs text-[#e0bfb7]/60 capitalize">{aldeia.tipoOrganizacao.replace("_", " ")}</p>
+                          <p className="text-foreground font-medium">{aldeia.nome}</p>
+                          <p className="text-xs text-muted-foreground/60 capitalize">{aldeia.tipoOrganizacao.replace("_", " ")}</p>
                         </div>
                       </button>
                     ))
                   ) : (
-                    <div className="px-4 py-3 text-center text-[#e0bfb7]/60">
+                    <div className="px-4 py-3 text-center text-muted-foreground/60">
                       Nenhuma aldeia encontrada
                     </div>
                   )}
@@ -372,14 +372,14 @@ export default function PerfilPage() {
               )}
             </div>
             {formData.aldeiaId && (
-              <p className="text-[10px] text-[#9cefff]">Aldeia selecionada</p>
+              <p className="text-[10px] text-secondary">Aldeia selecionada</p>
             )}
           </div>
         </div>
 
         <button
           onClick={() => setCarregarSaldoOpen(true)}
-          className="w-full py-4 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2"
+          className="w-full py-4 bg-primary text-foreground font-bold rounded-xl flex items-center justify-center gap-2"
         >
           <Wallet className="w-5 h-5" />
           Carregar Saldo
@@ -388,7 +388,7 @@ export default function PerfilPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {saving ? (
             "A guardar..."

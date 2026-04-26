@@ -53,8 +53,8 @@ export default function JogosPage() {
     <LayoutHeader>
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
         <div className="text-center mb-8">
-          <h1 className="font-serif text-3xl text-[#ff734b] mb-2">Os Teus Jogos</h1>
-          <p className="text-[#e0bfb7] text-sm">Participa nos jogos da tua aldeia</p>
+          <h1 className="font-serif text-3xl text-primary mb-2">Os Teus Jogos</h1>
+          <p className="text-muted-foreground text-sm">Participa nos jogos da tua aldeia</p>
         </div>
         <GameList
           jogos={jogos}

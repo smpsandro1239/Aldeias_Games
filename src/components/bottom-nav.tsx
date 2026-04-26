@@ -86,86 +86,83 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
     return pathname.startsWith(path);
   };
 
-  const getIconColor = (isActive: boolean, index: number) => {
-    if (!isActive) return "text-[#e0bfb7]/60";
-    
-    if (index === 0) return "text-secondary drop-shadow-[0_0_8px_rgba(0,218,243,0.5)]";
-    
-    return "text-primary";
-  };
+const getIconColor = (isActive: boolean, index: number) => {
+  if (!isActive) return "text-muted-foreground/60";
+  
+  return "text-primary";
+};
 
   return (
     <>
-      {/* Desktop/Tablet: Nav no topo */}
-      <nav className="hidden sm:block sticky top-0 z-50 bg-[#1a1614] border-b border-[#58413b]/20">
-        <div className="flex justify-center items-center py-2 px-2 sm:px-4">
-          <div className="flex gap-1 overflow-x-auto">
-            {items.map((item, index) => {
-              const Icon = item.icon;
-              const active = isActive(item.path, index);
-              
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => handleNavClick(item.path, item.label)}
-                  className={`
-                    flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg transition-all duration-200 whitespace-nowrap
-                    ${active 
-                      ? 'bg-primary/20 text-primary' 
-                      : 'hover:bg-[#2e2928] text-[#e0bfb7]/70'
-                    }
-                  `}
-                >
-                  <Icon className={`h-3 w-3 sm:h-4 sm:w-4`} />
-                  <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
-      
-      {/* Desktop spacer para empurrar conteúdo para baixo do nav */}
-      <div className="hidden sm:block h-[44px] sm:h-[56px]" />
-      
-      {/* Mobile spacer - evita que conteúdo seja coberto pelo nav fixo */}
-      <div className="sm:hidden h-20" />
-      
-      {/* Mobile: Bottom bar fixed */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center px-2 pb-safe pt-2 bg-[#1a1614] border-t border-[#58413b]/20 shadow-[0_-10px_40px_rgba(0,0,0,0.4)]">
-        {items.map((item, index) => {
-          const Icon = item.icon;
-          const active = isActive(item.path, index);
-          
-          return (
-            <button
-              key={item.label}
-              onClick={() => handleNavClick(item.path, item.label)}
-              className={`
-                flex flex-col items-center justify-center transition-all duration-200
-                min-w-[56px] py-2 rounded-xl
-                ${active 
-                  ? `bg-gradient-to-b ${index === 0 ? 'from-secondary/20 to-transparent' : 'from-primary/20 to-transparent'}` 
-                  : 'hover:bg-[#2e2928]'
-                }
-              `}
-            >
-              <Icon 
-                className={`h-5 w-5 transition-all ${getIconColor(active, index)}`}
-                style={active && index === 0 ? { fill: "currentColor" } : {}}
-              />
-              <span className={`
-                font-sans text-[9px] font-bold tracking-wider uppercase mt-1
-                ${active ? 'text-primary' : 'text-on-surface-variant opacity-70'}
-              `}>
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
+       {/* Desktop/Tablet: Nav no topo */}
+       <nav className="hidden sm:block sticky top-0 z-50 bg-background/90 border-b border-outline/20 backdrop-blur">
+         <div className="flex justify-center items-center py-2 px-2 sm:px-4">
+           <div className="flex gap-1 overflow-x-auto">
+             {items.map((item, index) => {
+               const Icon = item.icon;
+               const active = isActive(item.path, index);
+               
+               return (
+                 <button
+                   key={item.label}
+                   onClick={() => handleNavClick(item.path, item.label)}
+                   className={`
+                     flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg transition-all duration-200 whitespace-nowrap
+                     ${active 
+                       ? 'bg-primary/20 text-primary' 
+                       : 'hover:bg-muted/50 text-muted-foreground/70'
+                     }
+                   `}
+                 >
+                   <Icon className={`h-3 w-3 sm:h-4 sm:w-4`} />
+                   <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">
+                     {item.label}
+                   </span>
+                 </button>
+               );
+             })}
+           </div>
+         </div>
+       </nav>
+       
+       {/* Desktop spacer para empurrar conteúdo para baixo do nav */}
+       <div className="hidden sm:block h-[44px] sm:h-[56px]" />
+       
+       {/* Mobile spacer - evita que conteúdo seja coberto pelo nav fixo */}
+       <div className="sm:hidden h-20" />
+       
+       {/* Mobile: Bottom bar fixed */}
+       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center px-2 pb-safe pt-2 bg-background/90 border-t border-outline/20 backdrop-blur shadow-[0_-10px_40px_rgba(0,0,0,0.4)]">
+         {items.map((item, index) => {
+           const Icon = item.icon;
+           const active = isActive(item.path, index);
+           
+           return (
+             <button
+               key={item.label}
+               onClick={() => handleNavClick(item.path, item.label)}
+               className={`
+                 flex flex-col items-center justify-center transition-all duration-200
+                 min-w-[56px] py-2 rounded-xl
+                 ${active 
+                   ? 'bg-primary/20' 
+                   : 'hover:bg-muted/50'
+                 }
+               `}
+             >
+               <Icon 
+                 className={`h-5 w-5 transition-all ${getIconColor(active, index)}`}
+               />
+               <span className={`
+                 font-sans text-[9px] font-bold tracking-wider uppercase mt-1
+                 ${active ? 'text-primary' : 'text-muted-foreground/70'}
+               `}>
+                 {item.label}
+               </span>
+             </button>
+           );
+         })}
+       </nav>
     </>
   );
 }

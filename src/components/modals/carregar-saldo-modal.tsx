@@ -259,10 +259,10 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2 text-center">
-            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-8 h-8 text-green-500" />
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-primary" />
             </div>
-            <DialogTitle className="font-headline text-xl text-green-500">
+            <DialogTitle className="font-headline text-xl text-primary">
               Carregamento Registado!
             </DialogTitle>
           </DialogHeader>
@@ -272,12 +272,12 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
               <p className="font-headline text-4xl text-primary">{carregamentoResult.saldoAtual?.toFixed(2) || saldo.toFixed(2)}€</p>
             </div>
 
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
-              <p className="text-xs text-yellow-500 font-medium flex items-center gap-2">
+            <div className="bg-accent/10 border border-accent/20 rounded-xl p-3">
+              <p className="text-xs text-accent font-medium flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 Importante
               </p>
-              <p className="text-xs text-yellow-500/80 mt-1">
+              <p className="text-xs text-accent/80 mt-1">
                 Todos os administradores foram notificados. O regis
                 to detalhado foi guardado no sistema.
               </p>
@@ -311,7 +311,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
       <DialogContent className="sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="font-headline text-xl flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-[#ff734b]" />
+            <Wallet className="w-5 h-5 text-primary" />
             Carregar Saldo
           </DialogTitle>
         </DialogHeader>
@@ -324,7 +324,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
           <div className="space-y-2">
             <Label>Valor a Carregar</Label>
             <div className="relative">
-              <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ff734b]" />
+              <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
               <Input
                 type="number"
                 min="1"
@@ -345,8 +345,8 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
                 onClick={() => setMetodoCarregamento("dinheiro")}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                   metodoCarregamento === "dinheiro" 
-                    ? "bg-green-600/20 text-green-400 border border-green-600/30" 
-                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                    ? "bg-primary/20 text-green-400 border border-green-600/30" 
+                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
               >
                 <Euro className="w-5 h-5" />
@@ -361,8 +361,8 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
                 onClick={() => setMetodoCarregamento("mbway")}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                   metodoCarregamento === "mbway" 
-                    ? "bg-purple-600/20 text-purple-400 border border-purple-600/30" 
-                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                    ? "bg-purple-600/20 text-primary border border-purple-600/30" 
+                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
               >
                 <Phone className="w-5 h-5" />
@@ -377,8 +377,8 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
                 onClick={() => setMetodoCarregamento("transferencia")}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                   metodoCarregamento === "transferencia" 
-                    ? "bg-blue-600/20 text-blue-400 border border-blue-600/30" 
-                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                    ? "bg-blue-600/20 text-primary border border-blue-600/30" 
+                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
               >
                 <Building2 className="w-5 h-5" />
@@ -393,8 +393,8 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
                 onClick={() => setMetodoCarregamento("vendedor")}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
                   metodoCarregamento === "vendedor" 
-                    ? "bg-orange-600/20 text-orange-400 border border-orange-600/30" 
-                    : "bg-surface-container-low text-[#e0bfb7] hover:bg-surface-container-high"
+                    ? "bg-accent/20 text-orange-400 border border-orange-600/30" 
+                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
               >
                 <User className="w-5 h-5" />
@@ -441,12 +441,12 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
           )}
 
           {metodoCarregamento === "transferencia" && dadosConta.iban && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
-              <p className="text-xs text-blue-400 font-medium">Dados para Transferência:</p>
+            <div className="bg-secondary/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
+              <p className="text-xs text-primary font-medium">Dados para Transferência:</p>
               <div className="flex items-center justify-between bg-surface-container-low p-2 rounded-lg">
                 <span className="text-xs font-mono">{dadosConta.iban}</span>
                 <button onClick={copiarIBAN} className="p-1 hover:bg-surface-container-high rounded">
-                  <Copy className="w-4 h-4 text-blue-400" />
+                  <Copy className="w-4 h-4 text-primary" />
                 </button>
               </div>
               {dadosConta.nomeTitularConta && (
@@ -464,7 +464,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
             />
           </div>
 
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+          <div className="bg-destructive/10 border border-red-500/20 rounded-xl p-3">
             <p className="text-xs text-red-400 font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               Transparência Obrigatória

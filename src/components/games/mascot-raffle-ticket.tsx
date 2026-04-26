@@ -102,10 +102,10 @@ export default function MascotRaffleTicket({
                 <img 
                   src={logoSrc} 
                   alt="Logo" 
-                  className="w-16 h-16 object-contain rounded-full bg-white/20 p-1"
+                  className="w-16 h-16 object-contain rounded-full bg-foreground/20 p-1"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold text-white">
+                <div className="w-16 h-16 rounded-full bg-foreground/20 flex items-center justify-center text-2xl font-bold text-foreground">
                   {clubName.charAt(0)}
                 </div>
               )}
@@ -278,7 +278,7 @@ export default function MascotRaffleTicket({
         </div>
 
         {showPerforation && orientation === "horizontal" && (
-          <div className="w-4 bg-gray-100 relative flex items-center justify-center">
+          <div className="w-4 bg-muted relative flex items-center justify-center">
             <svg 
               width="16" 
               height="100%" 

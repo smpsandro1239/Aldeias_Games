@@ -224,10 +224,10 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Jogos Ativos</p>
-                  <p className="text-2xl font-black text-orange-600">{stats.jogosAtivos}</p>
+                  <p className="text-2xl font-black text-accent">{stats.jogosAtivos}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center">
-                  <Gamepad2 className="h-6 w-6 text-orange-600" />
+                  <Gamepad2 className="h-6 w-6 text-accent" />
                 </div>
               </div>
               <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">

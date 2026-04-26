@@ -172,15 +172,15 @@ export function TransparencyModal({
       <html>
         <head>
           <title>Resumo Jogo - ${data.nome}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #ff734b; }
-            .section { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
-            .metric { display: flex; justify-content: space-between; margin: 10px 0; }
-            .highlight { color: #ff734b; font-weight: bold; }
-            .success { color: green; }
-            .hash { font-family: monospace; background: #eee; padding: 5px; }
-          </style>
+           <style>
+             body { font-family: Arial, sans-serif; padding: 20px; }
+             h1 { color: hsl(var(--primary)); }
+             .section { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
+             .metric { display: flex; justify-content: space-between; margin: 10px 0; }
+             .highlight { color: hsl(var(--primary)); font-weight: bold; }
+             .success { color: green; }
+             .hash { font-family: monospace; background: #eee; padding: 5px; }
+           </style>
         </head>
         <body>
           <h1>🏆 Aldeias Games - ${data.nome}</h1>
@@ -233,126 +233,126 @@ export function TransparencyModal({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#1f1b19] rounded-2xl overflow-hidden"
+              className="bg-surface-container rounded-2xl overflow-hidden"
             >
-              <div className="bg-emerald-500 text-white shadow-md p-6 rounded-lg">
-                <Shield className="w-12 h-12 mx-auto mb-2 text-white" />
+              <div className="bg-emerald-500 text-foreground shadow-md p-6 rounded-lg">
+                <Shield className="w-12 h-12 mx-auto mb-2 text-foreground" />
                 <h3 className="text-xl font-medium mb-4">Resumo de Rentabilidade e Transparência</h3>
               </div>
 
               <div className="p-6 space-y-6">
-                <div className="bg-[#2e2928] rounded-xl p-4 space-y-2">
+                <div className="bg-surface-container-low rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[#e0bfb7]">Jogo:</span>
-                    <span className="font-bold text-[#ffb5a0]">{data.nome}</span>
+                    <span className="text-muted-foreground">Jogo:</span>
+                    <span className="font-bold text-accent">{data.nome}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[#e0bfb7]">Tipo:</span>
-                    <Badge className="bg-[#ff734b]/20 text-[#ff734b]">{getTipoJogoNome()}</Badge>
+                    <span className="text-muted-foreground">Tipo:</span>
+                    <Badge className="bg-primary/20 text-primary">{getTipoJogoNome()}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[#e0bfb7]">Preço Unitário:</span>
-                    <span className="font-bold text-[#9cefff]">{data.preco.toFixed(2)}€</span>
+                    <span className="text-muted-foreground">Preço Unitário:</span>
+                    <span className="font-bold text-secondary">{data.preco.toFixed(2)}€</span>
                   </div>
                   {data.stock && (
                     <div className="flex items-center justify-between">
-                      <span className="text-[#e0bfb7]">Stock Total:</span>
+                      <span className="text-muted-foreground">Stock Total:</span>
                       <span className="font-bold">{data.stock} bilhetes</span>
                     </div>
                   )}
                   {metrics.totalQuadrados > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-[#e0bfb7]">Total Quadrados:</span>
+                      <span className="text-muted-foreground">Total Quadrados:</span>
                       <span className="font-bold">{metrics.totalQuadrados}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-[#ffb5a0] flex items-center gap-2">
+                  <h3 className="font-semibold text-accent flex items-center gap-2">
                     <Euro className="w-4 h-4" /> Receita Esperada
                   </h3>
-                  <div className="bg-[#2e2928] rounded-xl p-4 space-y-2">
+                  <div className="bg-surface-container-low rounded-xl p-4 space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#e0bfb7]">Total Bilhetes/Números</span>
+                      <span className="text-muted-foreground">Total Bilhetes/Números</span>
                       <span>{data.stock || metrics.totalQuadrados}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#e0bfb7]">Preço Unitário</span>
+                      <span className="text-muted-foreground">Preço Unitário</span>
                       <span>{data.preco.toFixed(2)}€</span>
                     </div>
-                    <div className="border-t border-[#58413b]/30 pt-2 flex items-center justify-between font-bold">
-                      <span className="text-[#ffb5a0]">RECEITA TOTAL</span>
-                      <span className="text-[#9cefff] text-lg">{metrics.receitaTotal.toFixed(2)}€</span>
+                    <div className="border-t border-outline-variant/30 pt-2 flex items-center justify-between font-bold">
+                      <span className="text-accent">RECEITA TOTAL</span>
+                      <span className="text-secondary text-lg">{metrics.receitaTotal.toFixed(2)}€</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-[#ffb5a0] flex items-center gap-2">
+                  <h3 className="font-semibold text-accent flex items-center gap-2">
                     <Trophy className="w-4 h-4" /> Prémios
                   </h3>
-                  <div className="bg-[#2e2928] rounded-xl p-4 space-y-2">
+                  <div className="bg-surface-container-low rounded-xl p-4 space-y-2">
                     {data.premios.map((premio, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
-                        <span className="text-[#e0bfb7]">{premio.nome || `Prémio ${i + 1}`}</span>
+                        <span className="text-muted-foreground">{premio.nome || `Prémio ${i + 1}`}</span>
                         <span className="font-medium">
                           {premio.valor.toFixed(2)}€
                           {premio.percentagem && ` (${premio.percentagem}%)`}
                         </span>
                       </div>
                     ))}
-                    <div className="border-t border-[#58413b]/30 pt-2 flex items-center justify-between font-bold">
-                      <span className="text-[#ffb5a0]">CUSTO TOTAL</span>
-                      <span className="text-[#ff734b] text-lg">{metrics.custoTotalPremios.toFixed(2)}€</span>
+                    <div className="border-t border-outline-variant/30 pt-2 flex items-center justify-between font-bold">
+                      <span className="text-accent">CUSTO TOTAL</span>
+                      <span className="text-primary text-lg">{metrics.custoTotalPremios.toFixed(2)}€</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-[#ffb5a0] flex items-center gap-2">
+                  <h3 className="font-semibold text-accent flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" /> Análise de Rentabilidade
                   </h3>
-                  <div className="bg-[#2e2928] rounded-xl p-4 space-y-3">
+                  <div className="bg-surface-container-low rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#e0bfb7]">Lucro Líquido</span>
-                      <span className={`font-bold ${metrics.lucroLiquido >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <span className="text-muted-foreground">Lucro Líquido</span>
+                      <span className={`font-bold ${metrics.lucroLiquido >= 0 ? 'text-primary' : 'text-destructive'}`}>
                         {metrics.lucroLiquido.toFixed(2)}€
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#e0bfb7]">Margem de Lucro</span>
-                      <span className={`font-bold ${metrics.margemLucro >= 50 ? 'text-green-500' : metrics.margemLucro >= 0 ? 'text-yellow-500' : 'text-red-500'}`}>
+                      <span className="text-muted-foreground">Margem de Lucro</span>
+                      <span className={`font-bold ${metrics.margemLucro >= 50 ? 'text-primary' : metrics.margemLucro >= 0 ? 'text-accent' : 'text-destructive'}`}>
                         {metrics.margemLucro.toFixed(1)}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#e0bfb7]">Lucro Mínimo Garantido</span>
-                      <span className={`font-bold ${metrics.lucroMinimo >= 50 ? 'text-green-500' : 'text-red-500'}`}>
+                      <span className="text-muted-foreground">Lucro Mínimo Garantido</span>
+                      <span className={`font-bold ${metrics.lucroMinimo >= 50 ? 'text-primary' : 'text-destructive'}`}>
                         {metrics.lucroMinimo.toFixed(1)}%
                       </span>
                     </div>
                     {metrics.percentagemTotal > 0 && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#e0bfb7]">% Total Prémios</span>
+                        <span className="text-muted-foreground">% Total Prémios</span>
                         <span className="font-bold">{metrics.percentagemTotal.toFixed(1)}%</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className={`p-4 rounded-xl border-2 ${metrics.isLucrativo ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                <div className={`p-4 rounded-xl border-2 ${metrics.isLucrativo ? 'bg-primary/10 border-green-500/30' : 'bg-destructive/10 border-red-500/30'}`}>
                   <div className="flex items-start gap-3">
                     {metrics.isLucrativo ? (
-                      <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
                     ) : (
-                      <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
+                      <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <p className={`font-bold ${metrics.isLucrativo ? 'text-green-500' : 'text-red-500'}`}>
+                      <p className={`font-bold ${metrics.isLucrativo ? 'text-primary' : 'text-destructive'}`}>
                         {metrics.isLucrativo ? '✅ JOGO APROVADO' : '❌ JOGO REJEITADO'}
                       </p>
-                      <p className="text-sm text-[#e0bfb7] mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {metrics.isLucrativo 
                           ? `Este jogo garante ${metrics.lucroMinimo.toFixed(1)}% de lucro mínimo e cumpre todas as regras antifraude.`
                           : `Este jogo não cumpre o requisito mínimo de 50% de lucro. Ajuste os valores.`
@@ -362,25 +362,25 @@ export function TransparencyModal({
                   </div>
                 </div>
 
-                <div className="bg-[#2e2928] rounded-xl p-4">
+                <div className="bg-surface-container-low rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-[#ffb5a0] flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-accent flex items-center gap-2">
                       <Hash className="w-4 h-4" /> Hash de Verificação
                     </h4>
                     <Button variant="ghost" size="sm" onClick={copyHash} className="h-7 text-xs">
                       <Copy className="w-3 h-3 mr-1" /> Copiar
                     </Button>
                   </div>
-                  <p className="font-mono text-sm bg-[#393432] p-2 rounded-lg text-[#9cefff] break-all">
+                  <p className="font-mono text-sm bg-surface-container-highest p-2 rounded-lg text-secondary break-all">
                     {verificationHash}
                   </p>
-                  <p className="text-xs text-[#e0bfb7]/60 mt-2">
+                  <p className="text-xs text-muted-foreground/60 mt-2">
                     Este hash garante a integridade dos dados do jogo para auditoria futura.
                   </p>
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={shareWhatsApp} className="flex-1 bg-green-500/10 border-green-500/30 text-green-500 hover:bg-green-500/20">
+                  <Button variant="outline" size="sm" onClick={shareWhatsApp} className="flex-1 bg-primary/10 border-green-500/30 text-primary hover:bg-primary/20">
                     <Share2 className="w-4 h-4 mr-2" /> WhatsApp
                   </Button>
                   <Button variant="outline" size="sm" onClick={printSummary} className="flex-1">
@@ -401,7 +401,7 @@ export function TransparencyModal({
                 <Button 
                   onClick={onConfirm}
                   disabled={loading || !metrics.isLucrativo}
-                  className={`flex-1 ${metrics.isLucrativo ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                  className={`flex-1 ${metrics.isLucrativo ? 'bg-primary hover:bg-primary' : ''}`}
                 >
                   {loading ? "A criar..." : "✅ Confirmar e Criar"}
                 </Button>

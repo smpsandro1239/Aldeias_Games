@@ -143,11 +143,12 @@ export default function RaspadinhaPremiumPage() {
     canvas.style.height = `${SLOT_SIZE}px`;
 
     // Textura metálica
-    ctx.fillStyle = "#393432";
+    const rootStyles = getComputedStyle(document.documentElement);
+    ctx.fillStyle = `hsl(${rootStyles.getPropertyValue('--surface-container-highest')})`;
     ctx.fillRect(0, 0, SLOT_SIZE * 2, SLOT_SIZE * 2);
 
     // Padrão de pontos
-    ctx.fillStyle = "rgba(255, 115, 75, 0.15)";
+    ctx.fillStyle = `hsl(${rootStyles.getPropertyValue('--primary')} / 0.15)`;
     for (let i = 0; i < 200; i++) {
       ctx.beginPath();
       ctx.arc(
@@ -161,7 +162,7 @@ export default function RaspadinhaPremiumPage() {
     }
 
     // Ícone central
-    ctx.fillStyle = "#ff734b";
+    ctx.fillStyle = `hsl(${rootStyles.getPropertyValue('--primary')})`;
     ctx.font = "bold 48px Material Symbols Rounded";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -346,19 +347,19 @@ export default function RaspadinhaPremiumPage() {
 
   return (
     <LayoutHeader>
-      <div className="min-h-screen bg-[#110d0c] text-[#eae0de] font-body">
+      <div className="min-h-screen bg-background text-foreground font-body">
         {/* Header da Página (botão voltar e título) */}
-        <header className="sticky top-0 z-40 bg-[#110d0c]/95 backdrop-blur-xl border-b border-[#ff734b]/10">
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => router.back()}
-                className="p-2 rounded-full text-[#ff734b] hover:bg-[#2e2928] active:scale-95 transition-all"
+                className="p-2 rounded-full text-primary hover:bg-surface-container-low active:scale-95 transition-all"
                 aria-label="Voltar"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <h1 className="font-serif font-bold text-lg text-[#ffb5a0]">
+              <h1 className="font-serif font-bold text-lg text-accent">
                 Raspadinha
               </h1>
             </div>
@@ -372,12 +373,12 @@ export default function RaspadinhaPremiumPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center space-y-1"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9cefff]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
             Prémio Máximo
           </p>
           <h2 className="font-serif text-3xl font-bold tracking-tight">
             Ganha até{" "}
-            <span className="text-[#ff734b]">5.000€</span>
+            <span className="text-primary">5.000€</span>
           </h2>
         </motion.section>
 
@@ -389,9 +390,9 @@ export default function RaspadinhaPremiumPage() {
           className="relative"
         >
           {/* Efeito de brilho */}
-          <div className="absolute -inset-1 bg-gradient-to-tr from-[#ff734b]/20 to-[#9cefff]/20 rounded-2xl sm:rounded-[24px] blur-xl" />
+          <div className="absolute -inset-1 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-2xl sm:rounded-[24px] blur-xl" />
 
-          <div className="relative bg-[#1f1b19] rounded-2xl sm:rounded-[24px] p-2 sm:p-4 shadow-2xl">
+          <div className="relative bg-surface-container rounded-2xl sm:rounded-[24px] p-2 sm:p-4 shadow-2xl">
             <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
               {slots.map((slot) => (
                 <div
@@ -399,7 +400,7 @@ export default function RaspadinhaPremiumPage() {
                   className="relative aspect-square rounded-lg sm:rounded-2xl overflow-hidden"
                 >
                   {/* Prémio por baixo - Centrado */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#393432] p-1">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-highest p-1">
                     <div className="flex flex-col items-center justify-center text-center">
                       {(() => {
                         const IconComponent = iconMap[slot.prize.icon] || Star;
@@ -409,15 +410,15 @@ export default function RaspadinhaPremiumPage() {
                             style={{
                               color:
                                 slot.prize.value >= 500
-                                  ? "#ff734b"
+                                  ? "hsl(var(--primary))"
                                   : slot.prize.value >= 50
-                                  ? "#9cefff"
-                                  : "#e0bfb7",
+                                  ? "hsl(var(--secondary))"
+                                  : "hsl(var(--muted-foreground))",
                             }}
                           />
                         );
                       })()}
-                      <p className="text-[8px] sm:text-[10px] font-bold text-[#e0bfb7] mt-0.5 leading-tight">
+                      <p className="text-[8px] sm:text-[10px] font-bold text-muted-foreground mt-0.5 leading-tight">
                         {slot.prize.value > 0 ? `${slot.prize.value}€` : slot.prize.label}
                       </p>
                     </div>
@@ -440,7 +441,7 @@ export default function RaspadinhaPremiumPage() {
 
                   {/* Indicador de percentagem */}
                   {slot.scratchPercent > 10 && !slot.revealed && (
-                    <div className="absolute top-0.5 right-0.5 bg-black/60 text-[6px] sm:text-[8px] text-white px-1 sm:px-1.5 py-0.5 rounded-full font-mono">
+                    <div className="absolute top-0.5 right-0.5 bg-black/60 text-[6px] sm:text-[8px] text-foreground px-1 sm:px-1.5 py-0.5 rounded-full font-mono">
                       {slot.scratchPercent}%
                     </div>
                   )}
@@ -456,9 +457,9 @@ export default function RaspadinhaPremiumPage() {
                 transition={{ delay: 0.3 }}
                 className="mt-4 flex justify-center"
               >
-                <div className="flex items-center gap-2 px-4 py-2 bg-[#2e2928] rounded-full">
-                  <Sparkles className="text-[#9cefff] text-sm animate-pulse" />
-                  <span className="text-[10px] uppercase font-bold tracking-tighter text-[#e0bfb7]">
+                <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-full">
+                  <Sparkles className="text-secondary text-sm animate-pulse" />
+                  <span className="text-[10px] uppercase font-bold tracking-tighter text-muted-foreground">
                     Raspe para revelar
                   </span>
                 </div>
@@ -474,7 +475,7 @@ export default function RaspadinhaPremiumPage() {
           transition={{ delay: 0.2 }}
           className="flex flex-col gap-3"
         >
-          <button className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl shadow-xl shadow-[#ff734b]/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+          <button className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-2xl shadow-xl shadow-glow active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
             <span className="text-lg">Comprar Nova</span>
             <span className="px-2 py-0.5 bg-black/10 rounded-lg text-sm">
               2€
@@ -484,7 +485,7 @@ export default function RaspadinhaPremiumPage() {
           {totalRevealed < 9 && (
             <button
               onClick={scratchAll}
-              className="w-full py-4 bg-[#2e2928] text-[#e0bfb7] font-semibold rounded-2xl border border-[#58413b]/20 active:scale-[0.98] transition-all duration-200"
+              className="w-full py-4 bg-surface-container-low text-muted-foreground font-semibold rounded-2xl border border-outline-variant/20 active:scale-[0.98] transition-all duration-200"
             >
               Raspar Tudo
             </button>
@@ -496,15 +497,15 @@ export default function RaspadinhaPremiumPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-[#2e2928]/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-3 sm:p-5 space-y-3 border border-[#58413b]/10"
+          className="bg-surface-container-low/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-3 sm:p-5 space-y-3 border border-outline-variant/10"
         >
-          <h3 className="font-serif text-base sm:text-lg text-[#ffb5a0]">
+          <h3 className="font-serif text-base sm:text-lg text-accent">
             Como Ganhar
           </h3>
           <div className="space-y-2">
             {/* Legenda */}
-            <div className="flex items-center gap-2 p-2 bg-[#2e2928] rounded-xl text-xs sm:text-sm">
-              <div className="flex items-center gap-1.5 text-[#9cefff]">
+            <div className="flex items-center gap-2 p-2 bg-surface-container-low rounded-xl text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5 text-secondary">
                 <Trophy className="w-4 h-4" />
                 <span>3 símbolos iguais = Prémio</span>
               </div>
@@ -513,7 +514,7 @@ export default function RaspadinhaPremiumPage() {
             {PRIZES.slice(0, 3).map((prize, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-2 sm:p-3 bg-[#393432]/40 rounded-lg"
+                className="flex items-center justify-between p-2 sm:p-3 bg-surface-container-highest/40 rounded-lg"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   {(() => {
@@ -522,16 +523,16 @@ export default function RaspadinhaPremiumPage() {
                       <IconComponent
                         className="w-4 h-4 sm:w-5 sm:h-5"
                         style={{ 
-                          color: prize.value >= 500 ? "#ff734b" : prize.value >= 50 ? "#9cefff" : "#e0bfb7" 
+                          color: prize.value >= 500 ? "hsl(var(--primary))" : prize.value >= 50 ? "hsl(var(--secondary))" : "hsl(var(--muted-foreground))" 
                         }}
                       />
                     );
                   })()}
-                  <span className="text-xs sm:text-sm font-medium text-[#e0bfb7]">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                     {prize.label}
                   </span>
                 </div>
-                <span className="font-bold text-[#9cefff] text-sm sm:text-base">
+                <span className="font-bold text-secondary text-sm sm:text-base">
                   {prize.value}€
                 </span>
               </div>
@@ -544,22 +545,22 @@ export default function RaspadinhaPremiumPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#2e2928]/80 backdrop-blur-xl rounded-2xl p-4 text-center border border-[#58413b]/10"
+            className="bg-surface-container-low/80 backdrop-blur-xl rounded-2xl p-4 text-center border border-outline-variant/10"
           >
             {winningPrize ? (
               <>
                 <p className="text-2xl mb-2">🎉</p>
-                <p className="text-lg font-bold text-[#ff734b]">
+                <p className="text-lg font-bold text-primary">
                   Ganhaste {winningPrize.value}€!
                 </p>
               </>
             ) : (
               <>
                 <p className="text-2xl mb-2">😢</p>
-                <p className="text-base text-[#e0bfb7]">
+                <p className="text-base text-muted-foreground">
                   Não ganhaste desta vez
                 </p>
-                <p className="text-xs text-[#e0bfb7]/60 mt-1">
+                <p className="text-xs text-muted-foreground/60 mt-1">
                   Tenta novamente!
                 </p>
               </>
@@ -582,7 +583,7 @@ export default function RaspadinhaPremiumPage() {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
-              className="bg-[#1f1b19] rounded-3xl p-8 mx-4 max-w-sm w-full text-center border border-[#ff734b]/30 shadow-2xl shadow-[#ff734b]/20"
+              className="bg-surface-container rounded-3xl p-8 mx-4 max-w-sm w-full text-center border border-primary/30 shadow-2xl shadow-glow"
               onClick={(e) => e.stopPropagation()}
             >
               <motion.div
@@ -594,25 +595,25 @@ export default function RaspadinhaPremiumPage() {
                   const IconComponent = iconMap[winningPrize.icon] || Trophy;
                   return (
                     <IconComponent
-                      style={{ color: "#ff734b" }}
+                      style={{ color: "hsl(var(--primary))" }}
                     />
                   );
                 })()}
               </motion.div>
 
-              <h2 className="font-serif text-3xl font-bold text-[#ff734b] mb-2">
+              <h2 className="font-serif text-3xl font-bold text-primary mb-2">
                 PARABÉNS!
               </h2>
-              <p className="text-[#e0bfb7] mb-4">
+              <p className="text-muted-foreground mb-4">
                 Ganhou {winningPrize.label}!
               </p>
-              <p className="text-5xl font-bold text-[#9cefff] mb-6">
+              <p className="text-5xl font-bold text-secondary mb-6">
                 {winningPrize.value}€
               </p>
 
               <button
                 onClick={() => setShowWin(false)}
-                className="w-full py-4 bg-[#ff734b] text-[#110d0c] font-bold rounded-2xl active:scale-[0.98] transition-all"
+                className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all"
               >
                 Receber Prémio
               </button>

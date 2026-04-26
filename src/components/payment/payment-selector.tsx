@@ -88,9 +88,9 @@ export function PaymentSelector({
     <div className="space-y-3">
       {showLabels && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-[#e0bfb7] uppercase tracking-wider">Método de Pagamento</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Método de Pagamento</p>
           {saldo > 0 && (
-            <p className="text-xs text-[#ff734b]">
+            <p className="text-xs text-primary">
               Saldo: {saldo.toFixed(2)}€
             </p>
           )}
@@ -118,8 +118,8 @@ export function PaymentSelector({
       )}
 
       {availableMethods.length === 0 && (
-        <div className="p-4 rounded-xl bg-[#2e2928] text-center">
-          <p className="text-sm text-[#e0bfb7]">
+        <div className="p-4 rounded-xl bg-surface-container-low text-center">
+          <p className="text-sm text-muted-foreground">
             Inicia sessão para selecionar método de pagamento
           </p>
         </div>

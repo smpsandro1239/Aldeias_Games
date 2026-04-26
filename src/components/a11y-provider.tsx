@@ -100,15 +100,15 @@ export function AccessibilitySettings() {
   const { theme, setTheme, fontSize, setFontSize, prefersReducedMotion } = useA11y();
 
   return (
-    <div className="space-y-6 p-4 bg-[#1f1b19] rounded-xl border border-[#58413b]/20">
-      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+    <div className="space-y-6 p-4 bg-surface-container rounded-xl border border-outline-variant/20">
+      <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
         <span className="text-xl">♿</span>
         Acessibilidade
       </h3>
 
       {/* Theme */}
       <div className="space-y-2">
-        <label className="text-sm text-[#e0bfb7]">Tema</label>
+        <label className="text-sm text-muted-foreground">Tema</label>
         <div className="flex gap-2">
           {(["light", "dark", "system"] as const).map((t) => (
             <button
@@ -116,8 +116,8 @@ export function AccessibilitySettings() {
               onClick={() => setTheme(t)}
               className={`px-4 py-2 rounded-lg text-sm capitalize transition-colors ${
                 theme === t
-                  ? "bg-[#ff734b] text-[#110d0c]"
-                  : "bg-[#2e2928] text-white hover:bg-[#58413b]/30"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-surface-container-low text-foreground hover:bg-muted/30"
               }`}
             >
               {t === "system" ? "Sistema" : t === "light" ? "Claro" : "Escuro"}
@@ -128,7 +128,7 @@ export function AccessibilitySettings() {
 
       {/* Font Size */}
       <div className="space-y-2">
-        <label className="text-sm text-[#e0bfb7]">Tamanho do Texto</label>
+        <label className="text-sm text-muted-foreground">Tamanho do Texto</label>
         <div className="flex gap-2">
           {(["normal", "large", "xlarge"] as const).map((s) => (
             <button
@@ -136,8 +136,8 @@ export function AccessibilitySettings() {
               onClick={() => setFontSize(s)}
               className={`px-4 py-2 rounded-lg text-sm capitalize transition-colors ${
                 fontSize === s
-                  ? "bg-[#ff734b] text-[#110d0c]"
-                  : "bg-[#2e2928] text-white hover:bg-[#58413b]/30"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-surface-container-low text-foreground hover:bg-muted/30"
               }`}
             >
               {s === "normal" ? "Normal" : s === "large" ? "Grande" : "Muito Grande"}
@@ -147,11 +147,11 @@ export function AccessibilitySettings() {
       </div>
 
       {/* Reduced Motion Info */}
-      <div className="flex items-start gap-3 p-3 bg-[#2e2928] rounded-lg">
+      <div className="flex items-start gap-3 p-3 bg-surface-container-low rounded-lg">
         <span className="text-lg">⚙️</span>
         <div>
-          <p className="text-sm text-white font-medium">Movimento Reduzido</p>
-          <p className="text-xs text-[#e0bfb7]">
+          <p className="text-sm text-foreground font-medium">Movimento Reduzido</p>
+          <p className="text-xs text-muted-foreground">
             {prefersReducedMotion
               ? "Ativado nas definições do sistema"
               : "Use as definições do sistema para ativar"}
@@ -161,22 +161,22 @@ export function AccessibilitySettings() {
 
       {/* Keyboard shortcuts info */}
       <details className="group">
-        <summary className="flex items-center justify-between cursor-pointer text-sm text-[#e0bfb7] hover:text-white">
+        <summary className="flex items-center justify-between cursor-pointer text-sm text-muted-foreground hover:text-foreground">
           Atalhos de Teclado
           <span className="transform group-open:rotate-180 transition-transform">▼</span>
         </summary>
         <div className="mt-3 space-y-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-[#e0bfb7]">Abrir menu</span>
-            <kbd className="px-2 py-1 bg-[#2e2928] rounded">Tab</kbd>
+            <span className="text-muted-foreground">Abrir menu</span>
+            <kbd className="px-2 py-1 bg-surface-container-low rounded">Tab</kbd>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#e0bfb7]">Fechar modal</span>
-            <kbd className="px-2 py-1 bg-[#2e2928] rounded">Esc</kbd>
+            <span className="text-muted-foreground">Fechar modal</span>
+            <kbd className="px-2 py-1 bg-surface-container-low rounded">Esc</kbd>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#e0bfb7]">Confirmar ação</span>
-            <kbd className="px-2 py-1 bg-[#2e2928] rounded">Enter</kbd>
+            <span className="text-muted-foreground">Confirmar ação</span>
+            <kbd className="px-2 py-1 bg-surface-container-low rounded">Enter</kbd>
           </div>
         </div>
       </details>
