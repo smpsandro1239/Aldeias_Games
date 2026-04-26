@@ -30,16 +30,17 @@ import {
   Plus,
   Check,
   Banknote,
+  Send,
+  History,
+  Wallet,
 } from "lucide-react";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { POSView } from "./pos-view";
 
 import { useRouter } from "next/navigation";
 import { PedidosCarregamentoInline } from "./pedidos-inline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 
 interface VendedorDashboardProps {
   token: string;
@@ -77,11 +78,20 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("vendas");
   const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
-  const [saldoAngariado, setSaldoAngariado] = useState({
+  const [saldoAngariado, setSaldoAngariado] = useState<{
+    totalAngariado: number;
+    totalEntregue: number;
+    totalSolicitado: number;
+    saldoAEntregar: number;
+    historicoPedidos: any[];
+    historicoEntregas: any[];
+  }>({
     totalAngariado: 0,
     totalEntregue: 0,
     totalSolicitado: 0,
-    saldoAEntregar: 0
+    saldoAEntregar: 0,
+    historicoPedidos: [],
+    historicoEntregas: []
   });
   const [entregaModalOpen, setEntregaModalOpen] = useState(false);
   const [valorEntrega, setValorEntrega] = useState("");

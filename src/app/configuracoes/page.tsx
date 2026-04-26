@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { LayoutHeader } from "@/components/layout-header";
+import { BottomNav } from "@/components/bottom-nav";
 
 interface Aldeia {
   id: string;
@@ -529,14 +530,15 @@ export default function ConfiguracoesPage() {
                 Para maximizar a angariação de fundos, use principalmente <strong>Dinheiro</strong> e <strong>Saldo</strong> 
                 (sem custos). Ative Stripe/MBWay apenas se clientes insistirem, pois as comissões reduzem os fundos angariados.
               </p>
-            </section>
+             </section>
 
-            <Button onClick={() => setAjudaModalOpen(false)} className="w-full">
-              Entendi
-          </Button>
-        </DialogContent>
-      </Dialog>
-      </div>
+             <Button onClick={() => setAjudaModalOpen(false)} className="w-full">
+               Entendi
+             </Button>
+           </div>
+         </DialogContent>
+       </Dialog>
+       </div>
     </LayoutHeader>
   );
 }

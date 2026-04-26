@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LayoutHeader } from "@/components/layout-header";
 import { ArrowLeft, Wallet, Check, X, Clock, User, Phone, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { BottomNav } from "@/components/bottom-nav";
 
 interface Pedido {
   id: string;
@@ -249,7 +250,8 @@ export default function PedidosPage() {
           </div>
           )}
         </main>
-      </LayoutHeader>
-    </div>
+        <BottomNav />
+      </div>
+    </LayoutHeader>
   );
 }

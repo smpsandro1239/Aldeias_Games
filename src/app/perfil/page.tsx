@@ -214,10 +214,10 @@ export default function PerfilPage() {
                <ArrowLeft className="w-5 h-5 text-primary" />
              </button>
              <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">O Teu Perfil</h1>
-           </div>
-         </div>
+            </div>
+          </header>
 
-         <CarregarSaldoModal 
+          <CarregarSaldoModal
            open={carregarSaldoOpen} 
            onOpenChange={setCarregarSaldoOpen}
            aldeiaId={formData.aldeiaId}

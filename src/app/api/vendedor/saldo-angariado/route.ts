@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
       where: {
         vendedorId: user.id,
         estado: 'confirmado'
-      }
+      },
+      include: { user: true }
     });
 
     const totalAngariado = pedidosConfirmados.reduce((acc, p) => acc + p.valor, 0);
@@ -27,7 +28,8 @@ export async function GET(request: NextRequest) {
     const entregas = await prisma.entregaSaldo.findMany({
       where: { vendedorId: user.id },
       orderBy: { createdAt: 'desc' },
-      take: 50
+      take: 50,
+      include: { admin: true }
     });
 
     const totalEntregue = entregas

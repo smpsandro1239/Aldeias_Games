@@ -33,6 +33,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
+import { BottomNav } from "@/components/bottom-nav";
 
 interface Jogo {
   id: string;
@@ -572,10 +573,11 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
         </main>
         <BottomNav />
       </div>
+      </LayoutHeader>
     );
   }
 
-   return (
+  return (
      <LayoutHeader>
        <div className="min-h-screen bg-background text-foreground">
          <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">

@@ -30,6 +30,7 @@ import {
   X
 } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
+import { LayoutHeader } from "@/components/layout-header";
 
 interface Jogo {
   id: string;

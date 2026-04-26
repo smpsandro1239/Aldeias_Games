@@ -84,8 +84,9 @@ export default function TermosPage() {
 
         <p className="text-sm text-gray-500 mt-8">
           Última actualização: {new Date().toLocaleDateString("pt-PT")}
-        </p>
-      </div>
-    </LayoutHeader>
+         </p>
+       </div>
+       </div>
+     </LayoutHeader>
   );
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, Home, Gamepad2, User, LucideIcon } from "lucide-react";
 import { LayoutHeader } from "@/components/layout-header";
 
 const iconMap: Record<string, LucideIcon> = {

@@ -53,24 +53,7 @@ export default function PremiosPage() {
     fetchSaldo();
   }, []);
 
-  const fetchSaldo = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
 
-      const res = await fetch("/api/users/perfil", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.data?.saldo !== undefined) {
-          setSaldo(data.data.saldo);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar saldo:", error);
-    }
-  };
 
   const fetchSaldo = async () => {
     try {
@@ -243,9 +226,8 @@ export default function PremiosPage() {
           </div>
         )}
 
-        {/* Tab: Prémios */}
-        {activeTab === "premios" && (
-          <div>
+        {/* Prémios */}
+        <div>
             <h2 className="font-serif text-lg text-accent mb-4">A Tuas Vitórias</h2>
 
             {loading ? (
@@ -301,10 +283,9 @@ export default function PremiosPage() {
                 </button>
               </div>
             )}
-          </div>
-        )}
+           </div>
 
-        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+         <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
           <h3 className="font-serif text-accent font-bold mb-3">Como Ganhar Prémios?</h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
