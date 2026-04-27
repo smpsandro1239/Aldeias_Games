@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { updateAldeiaSchema } from '@/lib/validations';
 import { saveImage } from '@/lib/storage';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -63,18 +64,33 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       logoUrl = saved.url;
     }
 
-    const updateData: any = { ...data };
-    delete updateData.logoBase64;
-    if (logoUrl) {
-      updateData.logoUrl = logoUrl;
-    }
+     const updateData: any = { ...data };
+     delete updateData.logoBase64;
+     if (logoUrl) {
+       updateData.logoUrl = logoUrl;
+     }
 
-    const aldeia = await prisma.aldeia.update({
-      where: { id },
-      data: updateData,
-    });
+     // Get old values for audit
+     const oldAldeia = await prisma.aldeia.findUnique({ where: { id } });
 
-    return NextResponse.json({ success: true, data: aldeia });
+     const aldeia = await prisma.aldeia.update({
+       where: { id },
+       data: updateData,
+     });
+
+     // Audit log for config change
+     await logAudit(
+       user.id,
+       'update',
+       'aldeia',
+       id,
+       oldAldeia ? { nome: oldAldeia.nome, permitirStripe: oldAldeia.permitirStripe, permitirMBWay: oldAldeia.permitirMBWay } : undefined,
+       { nome: aldeia.nome, permitirStripe: aldeia.permitirStripe, permitirMBWay: aldeia.permitirMBWay },
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true, data: aldeia });
   } catch (error) {
     console.error('Erro ao atualizar aldeia:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
@@ -82,19 +98,37 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
-  try {
-    const { id } = await context.params;
-    const user = await getFullUserFromRequest(request);
+   try {
+     const { id } = await context.params;
+     const user = await getFullUserFromRequest(request);
 
-    // Só superadmin pode eliminar aldeias
-    if (!user || !hasRole(user.role, ['super_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+     // Só superadmin pode eliminar aldeias
+     if (!user || !hasRole(user.role, ['super_admin'])) {
+       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+     }
 
-    await prisma.aldeia.delete({ where: { id } });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Erro ao eliminar aldeia:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
-  }
+     const aldeia = await prisma.aldeia.findUnique({ where: { id } });
+     if (!aldeia) {
+       return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 404 });
+     }
+
+     await prisma.aldeia.delete({ where: { id } });
+
+     // Audit log
+     await logAudit(
+       user.id,
+       'delete',
+       'aldeia',
+       id,
+       { nome: aldeia.nome, slug: aldeia.slug },
+       null,
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true });
+   } catch (error) {
+     console.error('Erro ao eliminar aldeia:', error);
+     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+   }
 }

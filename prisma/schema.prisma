@@ -16,11 +16,13 @@ model User {
   role              UserRole  @default(user)
   emailVerificado   Boolean   @default(false)
   notificacoesEmail Boolean   @default(true)
-  ultimoLogin       DateTime?
-  falhasLogin       Int       @default(0)
-  ultimaFalhaLogin  DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+   ultimoLogin       DateTime?
+   falhasLogin       Int       @default(0)
+   ultimaFalhaLogin  DateTime?
+   deletedAt         DateTime?
+   deletedReason     String?
+   createdAt         DateTime  @default(now())
+   updatedAt         DateTime  @updatedAt
   aldeiaId          String?
   aldeiasPermitidas String?
   saldo             Float     @default(0)
@@ -190,6 +192,36 @@ model LogAcesso {
   @@index([userId])
   @@index([createdAt])
   @@map("logs_acesso")
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String
+  action        String   // "delete", "update", "create", "login", "logout", "payment"
+  resourceType  String   // "evento", "jogo", "user", "pagamento", "config"
+  resourceId    String?
+  oldValue      Json?    // Valores anteriores (JSON)
+  newValue      Json?    // Novos valores (JSON)
+  ip            String
+  userAgent     String
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique // Format: "rl:{endpoint}:{ip}"
+  count     Int      @default(1)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("rate_limits")
 }
 
 model Plano {

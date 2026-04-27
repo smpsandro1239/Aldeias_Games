@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, User as User, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet } from "lucide-react";
+import { ArrowLeft, User as UserIcon, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet, Shield, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
 import { LayoutHeader } from "@/components/layout-header";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface Aldeia {
   id: string;
@@ -376,6 +377,25 @@ export default function PerfilPage() {
             )}
           </div>
         </div>
+
+        <Card className="bg-surface-container/50 border-outline-variant/20">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-accent mb-2 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Privacidade & Dados
+            </h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Exporte os seus dados ou solicite a eliminação da conta conforme RGPD.
+            </p>
+            <a
+              href="/dados-pessoais"
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+            >
+              <FileText className="w-4 h-4" />
+              Aceder ao Portal de Dados
+            </a>
+          </CardContent>
+        </Card>
 
         <button
           onClick={() => setCarregarSaldoOpen(true)}

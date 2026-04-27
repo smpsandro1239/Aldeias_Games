@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -71,13 +72,25 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        updateData.aldeiaId = newAldeiaId;
     }
 
-    const updated = await prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: { id: true, nome: true, email: true, role: true, aldeiaId: true }
-    });
+     const updated = await prisma.user.update({
+       where: { id },
+       data: updateData,
+       select: { id: true, nome: true, email: true, role: true, aldeiaId: true }
+     });
 
-    return NextResponse.json({ success: true, data: updated });
+     // Audit log for user update
+     await logAudit(
+       adminUser.id,
+       'update',
+       'user',
+       id,
+       { nome: targetUser.nome, role: targetUser.role, aldeiaId: targetUser.aldeiaId },
+       { nome: updated.nome, role: updated.role, aldeiaId: updated.aldeiaId },
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
@@ -103,8 +116,21 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Não pode eliminar o próprio utilizador' }, { status: 400 });
     }
 
-    await prisma.user.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+     await prisma.user.delete({ where: { id } });
+
+     // Audit log
+     await logAudit(
+       adminUser.id,
+       'delete',
+       'user',
+       id,
+       { nome: targetUser.nome, email: targetUser.email, role: targetUser.role },
+       null,
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

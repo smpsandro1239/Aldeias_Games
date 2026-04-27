@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { updateEventoSchema } from '@/lib/validations';
 import { saveImage } from '@/lib/storage';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -66,12 +67,24 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updateData.dataFim = d;
     }
 
-    const updated = await prisma.evento.update({
-      where: { id },
-      data: updateData,
-    });
+     const updated = await prisma.evento.update({
+       where: { id },
+       data: updateData,
+     });
 
-    return NextResponse.json({ success: true, data: updated });
+     // Audit log for event update
+     await logAudit(
+       user.id,
+       'update',
+       'evento',
+       id,
+       { nome: evento.nome, estado: evento.estado, dataInicio: evento.dataInicio, dataFim: evento.dataFim },
+       { nome: updated.nome, estado: updated.estado, dataInicio: updated.dataInicio, dataFim: updated.dataFim },
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
@@ -93,8 +106,21 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    await prisma.evento.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+     await prisma.evento.delete({ where: { id } });
+
+     // Audit log
+     await logAudit(
+       user.id,
+       'delete',
+       'evento',
+       id,
+       { nome: evento.nome, aldeiaId: evento.aldeiaId },
+       null,
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

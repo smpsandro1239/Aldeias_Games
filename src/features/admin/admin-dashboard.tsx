@@ -15,6 +15,7 @@ import {
   LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Edit, Trash2, Eye, Play, Trophy, Building2, Power, PowerOff, Globe, BarChart3, Hash, Shield, CreditCard, Sparkles, Grid3X3, Ticket, QrCode, ShoppingCart, Wallet, TrendingUp
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { logAudit, getClientIP } from "@/lib/auditLog";
 import { CreateEventoModal, CreateJogoModal, SorteioModal, ConfirmModal, AldeiaModal, UserModal, ResultadosExternosModal } from "@/components/modals";
 import { GameQuickActions } from "@/components/game-quick-actions";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { updateJogoSchema } from '@/lib/validations';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -47,29 +48,41 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const updateData: any = { ...otherData };
     if (updateData.configuracao) updateData.configuracao = JSON.stringify(updateData.configuracao);
 
-    const updated = await prisma.$transaction(async (tx) => {
-      // Se vierem novos prémios, remover os antigos primeiro
-      if (premiosData) {
-        await tx.premio.deleteMany({
-          where: { jogoId: id } as any
-        });
-      }
+     const updated = await prisma.$transaction(async (tx) => {
+       // Se vierem novos prémios, remover os antigos primeiro
+       if (premiosData) {
+         await tx.premio.deleteMany({
+           where: { jogoId: id } as any
+         });
+       }
 
-      return await tx.jogo.update({
-        where: { id },
-        data: {
-          ...updateData,
-          premios: premiosData ? {
-            create: premiosData.map(p => ({
-              ...p,
-              aldeiaId: jogo.evento.aldeiaId,
-            }))
-          } : undefined
-        },
-      });
-    });
+       return await tx.jogo.update({
+         where: { id },
+         data: {
+           ...updateData,
+           premios: premiosData ? {
+             create: premiosData.map(p => ({
+               ...p,
+               aldeiaId: jogo.evento.aldeiaId,
+             }))
+           } : undefined
+         },
+       });
+     });
 
-    return NextResponse.json({ success: true, data: updated });
+     // Audit log for game update
+     await logAudit(
+       user.id,
+       'update',
+       'jogo',
+       id,
+       { nome: jogo.nome, estado: jogo.estado, preco: jogo.preco, stockAtual: jogo.stockAtual },
+       { nome: updated.nome, estado: updated.estado, preco: updated.preco, stockAtual: updated.stockAtual },
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
@@ -91,8 +104,21 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    await prisma.jogo.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+     await prisma.jogo.delete({ where: { id } });
+
+     // Audit log
+     await logAudit(
+       user.id,
+       'delete',
+       'jogo',
+       id,
+       { nome: jogo.nome, tipo: jogo.tipo, eventoId: jogo.eventoId },
+       null,
+       request.headers.get('x-forwarded-for') || 'unknown',
+       request.headers.get('user-agent') || 'unknown'
+     );
+
+     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao eliminar' }, { status: 500 });
   }
