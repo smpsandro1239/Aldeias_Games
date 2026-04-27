@@ -275,10 +275,10 @@ export default function PremiosPage() {
                 <Heart className="w-16 h-16 text-primary/30 mx-auto mb-4" />
                 <p className="text-muted-foreground">Ainda não ganhaste nenhum prémio</p>
                 <p className="text-sm text-muted-foreground/60 mt-1">A sorte ainda não te sorriu. Participa e tenta a tua sorte!</p>
-                <button
-                  onClick={() => router.push("/jogos")}
-                  className="mt-4 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
-                >
+                 <button
+                   onClick={() => router.push("/jogos")}
+                   className="mt-4 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl w-full sm:w-auto"
+                 >
                   Participar Agora
                 </button>
               </div>

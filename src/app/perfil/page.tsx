@@ -241,11 +241,11 @@ export default function PerfilPage() {
                 <User className="w-12 h-12 text-primary" />
               )}
             </div>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center"
-            >
-              <Camera className="w-4 h-4 text-primary-foreground" />
+             <button 
+               onClick={() => fileInputRef.current?.click()}
+               className="absolute bottom-0 right-0 w-9 h-9 bg-primary rounded-full flex items-center justify-center"
+             >
+               <Camera className="w-4 h-4 text-primary-foreground" />
             </button>
           </div>
           <p className="text-sm text-muted-foreground mt-2">Foto de perfil</p>

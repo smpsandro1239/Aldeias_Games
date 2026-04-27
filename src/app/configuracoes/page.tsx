@@ -446,14 +446,14 @@ export default function ConfiguracoesPage() {
                   placeholder="PT50 0000 0000 0000 0000 00"
                   className="bg-surface-container-low border-outline-variant/20 font-mono"
                 />
-                {formData.iban && (
-                  <button
-                    onClick={copiarIBAN}
-                    className="p-2 bg-surface-container-low rounded-lg hover:bg-muted/30"
-                  >
-                    <Copy className="w-5 h-5 text-primary" />
-                  </button>
-                )}
+                 {formData.iban && (
+                   <button
+                     onClick={copiarIBAN}
+                     className="p-3 bg-surface-container-low rounded-lg hover:bg-muted/30"
+                   >
+                     <Copy className="w-5 h-5 text-primary" />
+                   </button>
+                 )}
               </div>
             </div>
           </div>
