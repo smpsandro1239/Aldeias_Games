@@ -476,7 +476,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
             <div className="h-10 w-24 bg-muted animate-pulse rounded" />
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="h-32">
               <CardContent className="p-6">
@@ -544,19 +544,19 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
              </div>
            </div>
          </div>
-         <div className="flex gap-2">
-           {userRole === "super_admin" && (
-             <Button variant="outline" onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
-               <Plus className="h-4 w-4 mr-2" /> Nova Aldeia
-             </Button>
-           )}
-           <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}>
-             <Plus className="h-4 w-4 mr-2" /> Novo Evento
-           </Button>
-           <Button variant="outline" onClick={() => setResultadosExternosOpen(true)}>
-             <Globe className="h-4 w-4 mr-2" /> Lotaria Externa
-           </Button>
-         </div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:w-auto">
+            {userRole === "super_admin" && (
+              <Button variant="outline" onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Aldeia
+              </Button>
+            )}
+            <Button onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" /> Novo Evento
+            </Button>
+            <Button variant="outline" onClick={() => setResultadosExternosOpen(true)}>
+              <Globe className="h-4 w-4 mr-2" /> Lotaria Externa
+            </Button>
+          </div>
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -587,7 +587,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex flex-wrap">
+        <TabsList className="flex flex-wrap justify-center gap-2">
             <TabsTrigger value="overview"><LayoutDashboard className="h-4 w-4 mr-2" /> Visão Geral</TabsTrigger>
             <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 mr-2" /> Analytics</TabsTrigger>
             <TabsTrigger value="eventos"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
@@ -685,7 +685,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                     <h3 className="font-semibold">{ev.nome}</h3>
                     <p className="text-sm text-muted-foreground">{formatDate(ev.dataInicio)} - {formatDate(ev.dataFim)}</p>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-wrap gap-2 items-center">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -740,7 +740,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                     <h3 className="font-semibold">{jg.nome}</h3>
                     <p className="text-sm text-muted-foreground">{jg.tipo} • {jg.evento?.nome} • {formatCurrency(jg.preco)}</p>
                   </div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-wrap gap-2 items-center">
                        {jg.estado === 'aberto' && (
                         <span className="flex items-center gap-1 text-primary text-xs font-medium">
                           <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
@@ -807,13 +807,13 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                       Data: {formatDate(v.createdAt)}
                     </p>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-wrap gap-2 items-center">
                     {v.premioEntregue ? (
                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                         Prémio Entregue/Convertido
                       </Badge>
                     ) : (
-                      <div className="flex gap-2">
+                       <div className="flex flex-wrap gap-2">
                         <Button 
                           size="sm" 
                           variant="outline"
@@ -867,16 +867,16 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
          <TabsContent value="users" className="space-y-4">
            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
              <h2 className="text-xl font-semibold">Gestão de Utilizadores</h2>
-             <Button onClick={() => { setSelectedUser(null); setUserModalOpen(true); }}>
-               <Plus className="h-4 w-4 mr-2" /> Novo Utilizador
-             </Button>
+              <Button onClick={() => { setSelectedUser(null); setUserModalOpen(true); }} className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" /> Novo Utilizador
+              </Button>
            </div>
 
            {/* Filtros e Paginação */}
            <Card>
              <CardContent className="p-4">
                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                 <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 max-w-md">
                    <Label htmlFor="userSearch" className="sr-only">Pesquisar (nome, email, telemóvel)</Label>
                    <div className="relative">
                      <Input
@@ -907,7 +907,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                          <p className="text-sm text-muted-foreground truncate">{u.email}</p>
                          <p className="text-xs text-muted-foreground">{u.telefone ? `Tlm: ${u.telefone}` : 'Sem telemóvel'} • Perfil: {u.role}</p>
                        </div>
-                       <div className="flex gap-2 items-center self-stretch sm:self-auto">
+                        <div className="flex flex-wrap gap-2 items-center self-stretch sm:self-auto">
                          <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(u); setUserModalOpen(true); }} title="Editar">
                            <Edit className="h-4 w-4" />
                          </Button>
@@ -926,7 +926,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                    <p className="text-sm text-muted-foreground">
                      Mostrando {(userPage - 1) * 50 + 1} a {Math.min(userPage * 50, filteredUsers.length)} de {filteredUsers.length} utilizadores
                    </p>
-                   <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                      <Button
                        variant="outline"
                        size="sm"
@@ -972,7 +972,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                  </CardContent>
                </Card>
              ) : (
-             <div className="grid gap-4">
+             <div className="grid gap-3 md:gap-4">
                 {aldeias.map((al) => (
                  <Card key={al.id}>
                    <CardContent className="p-4 flex items-center justify-between">
@@ -980,7 +980,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                        <h3 className="font-semibold">{al.nome}</h3>
                        <p className="text-sm text-muted-foreground">{al.tipoOrganizacao} • {al.email}</p>
                      </div>
-                     <div className="flex gap-2 items-center">
+                     <div className="flex flex-wrap gap-2 items-center">
                        <Button variant="ghost" size="icon" onClick={() => { setSelectedAldeia(al); setAldeiaModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => requestDelete("aldeia", al.id)}><Trash2 className="h-4 w-4" /></Button>
                      </div>
@@ -1008,12 +1008,12 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                   </CardContent>
                 </Card>
              ) : (
-             <div className="grid gap-4">
+             <div className="grid gap-3 md:gap-4">
                 {transacoes.map((t) => (
                  <Card key={t.id}>
                    <CardContent className="p-4 flex items-center justify-between">
                      <div>
-                       <div className="flex gap-2 items-center">
+                       <div className="flex flex-wrap gap-2 items-center">
                          <h3 className="font-semibold">{t.tipo}</h3>
                          <Badge variant="outline">{t.estado || "concluido"}</Badge>
                        </div>
@@ -1048,12 +1048,12 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                   </CardContent>
                 </Card>
              ) : (
-             <div className="grid gap-4">
+             <div className="grid gap-3 md:gap-4">
                 {logs.map((log) => (
                  <Card key={log.id}>
                    <CardContent className="p-4 flex items-center justify-between">
                      <div>
-                       <div className="flex gap-2 items-center">
+                       <div className="flex flex-wrap gap-2 items-center">
                          <Badge variant={log.sucesso ? "default" : "destructive"}>
                            {log.sucesso ? "Sucesso" : "Falha"}
                          </Badge>
@@ -1090,12 +1090,12 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                 </CardContent>
               </Card>
             ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-3 md:gap-4">
                {vendedoresStats.map((vs) => (
                 <Card key={vs.id}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <div className="flex gap-2 items-center">
+                      <div className="flex flex-wrap gap-2 items-center">
                         <h3 className="font-semibold text-lg">{vs.nome}</h3>
                         <Badge variant="outline">{vs.totalVendas} vendas globais</Badge>
                       </div>
@@ -1115,7 +1115,7 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
                          </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-wrap gap-2 items-center">
                       <Button variant="outline" size="sm" onClick={() => { setSelectedUser(vs); setUserModalOpen(true); }}><Edit className="h-4 w-4 mr-2" /> Editar Perfil</Button>
                     </div>
                   </CardContent>
