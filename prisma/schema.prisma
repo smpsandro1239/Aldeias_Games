@@ -16,20 +16,20 @@ model User {
   role              UserRole  @default(user)
   emailVerificado   Boolean   @default(false)
   notificacoesEmail Boolean   @default(true)
-   ultimoLogin       DateTime?
-   falhasLogin       Int       @default(0)
-   ultimaFalhaLogin  DateTime?
-   deletedAt         DateTime?
-   deletedReason     String?
-   createdAt         DateTime  @default(now())
-   updatedAt         DateTime  @updatedAt
+  ultimoLogin       DateTime?
+  falhasLogin       Int       @default(0)
+  ultimaFalhaLogin  DateTime?
+  deletedAt         DateTime?
+  deletedReason     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   aldeiaId          String?
   aldeiasPermitidas String?
   saldo             Float     @default(0)
-  
-  comissaoPercentual Float     @default(10) // % de comissão por venda
-  comissaoAtiva      Boolean   @default(true) // se comissões estão ativas
-  comissaoTotal      Float     @default(0) // total acumulado em comissões
+
+  comissaoPercentual Float   @default(10) // % de comissão por venda
+  comissaoAtiva      Boolean @default(true) // se comissões estão ativas
+  comissaoTotal      Float   @default(0) // total acumulado em comissões
 
   alteracoes            AlteracaoParticipacao[]
   logsAcesso            LogAcesso[]
@@ -44,6 +44,7 @@ model User {
   aldeiasVendedor       Aldeia[]                @relation("AldeiaVendedores")
   consentimentos        Consentimento[]
   direitosEsquecimento  DireitoEsquecimento[]
+  gameAnalytics         GameAnalytics[]
 
   // Relações corrigidas
   badges     Badge[]     @relation("userBadges")
@@ -54,15 +55,15 @@ model User {
   userAldeiaRoles UserAldeiaRole[]
   userPermissions UserPermission[]
   auditLogs       AuditLog[]
-  
+
   // Relations to carregamento requests
-  vendedorCarregamentos PedidoCarregamento[] @relation("VendedorCarregamentos")
+  vendedorCarregamentos   PedidoCarregamento[] @relation("VendedorCarregamentos")
   confirmacaoCarregamento PedidoCarregamento[] @relation("ConfirmacaoCarregamento")
   autorizacaoCarregamento PedidoCarregamento[] @relation("AutorizacaoCarregamento")
-  pedidosCarregamento PedidoCarregamento[]
+  pedidosCarregamento     PedidoCarregamento[]
 
   // Relations to entrega de saldo
-  entregasVendidas EntregaSaldo[] @relation("VendedorEntregas")
+  entregasVendidas    EntregaSaldo[] @relation("VendedorEntregas")
   entregasConfirmadas EntregaSaldo[] @relation("AdminEntregas")
 
   @@index([email])
@@ -189,22 +190,22 @@ model LogAcesso {
   createdAt DateTime @default(now())
   user      User?    @relation(fields: [userId], references: [id])
 
-   @@index([userId])
-   @@index([createdAt])
-   @@map("logs_acesso")
- }
+  @@index([userId])
+  @@index([createdAt])
+  @@map("logs_acesso")
+}
 
- model RateLimit {
-   id        String   @id @default(cuid())
-   key       String   @unique // Format: "rl:{endpoint}:{ip}"
-   count     Int      @default(1)
-   expiresAt DateTime
-   createdAt DateTime @default(now())
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique // Format: "rl:{endpoint}:{ip}"
+  count     Int      @default(1)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
-   @@map("rate_limits")
- }
+  @@map("rate_limits")
+}
 
- model Plano {
+model Plano {
   id               String   @id @default(cuid())
   nome             String
   descricao        String?
@@ -224,49 +225,49 @@ model LogAcesso {
 }
 
 model Aldeia {
-  id                     String           @id @default(cuid())
-  nome                   String
-  slug                   String           @unique
-  tipoOrganizacao        TipoOrganizacao  @default(aldeia)
-  descricao              String?
-  logoUrl                String?
-  logoBase64             String?
-  permitirStripe         Boolean          @default(false)
-  permitirMBWay          Boolean          @default(false)
-  metodosPagamentoDefault String?         @default("[\"saldo\",\"dinheiro\"]") // JSON array com métodos padrão para jogos
-  iban                   String?
-  nomeTitularConta       String?
-  avisoPagamentosEnviado Boolean          @default(false)
-  nomeEscola             String?
-  codigoEscola           String?
-  nivelEnsino            NivelEnsino?
-  responsavel            String?
-  telefone               String?
-  email                  String?
-  morada                 String?
-  codigoPostal           String?
-  localidade             String?
-  autorizacaoCM          Boolean          @default(false)
-  numeroAlvara           String?
-  documentosVerificados  Boolean          @default(false)
-  ativo                  Boolean          @default(true)
-  verificado             Boolean          @default(false)
-  dataVerificacao        DateTime?
-  planoId                String?
-  dataInicioPlano        DateTime?
-  dataFimPlano           DateTime?
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
-  plano                  Plano?           @relation(fields: [planoId], references: [id])
-  eventos                Evento[]
-  premios                Premio[]
-  users                  User[]           @relation("AldeiaUsers")
-  admins                 User[]           @relation("AldeiaAdmins")
-  vendedores             User[]           @relation("AldeiaVendedores")
-  jogos                  Jogo[]
-  userAldeiaRoles        UserAldeiaRole[]
-  userPermissions        UserPermission[]
-  auditLogs              AuditLog[]
+  id                      String           @id @default(cuid())
+  nome                    String
+  slug                    String           @unique
+  tipoOrganizacao         TipoOrganizacao  @default(aldeia)
+  descricao               String?
+  logoUrl                 String?
+  logoBase64              String?
+  permitirStripe          Boolean          @default(false)
+  permitirMBWay           Boolean          @default(false)
+  metodosPagamentoDefault String?          @default("[\"saldo\",\"dinheiro\"]") // JSON array com métodos padrão para jogos
+  iban                    String?
+  nomeTitularConta        String?
+  avisoPagamentosEnviado  Boolean          @default(false)
+  nomeEscola              String?
+  codigoEscola            String?
+  nivelEnsino             NivelEnsino?
+  responsavel             String?
+  telefone                String?
+  email                   String?
+  morada                  String?
+  codigoPostal            String?
+  localidade              String?
+  autorizacaoCM           Boolean          @default(false)
+  numeroAlvara            String?
+  documentosVerificados   Boolean          @default(false)
+  ativo                   Boolean          @default(true)
+  verificado              Boolean          @default(false)
+  dataVerificacao         DateTime?
+  planoId                 String?
+  dataInicioPlano         DateTime?
+  dataFimPlano            DateTime?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  plano                   Plano?           @relation(fields: [planoId], references: [id])
+  eventos                 Evento[]
+  premios                 Premio[]
+  users                   User[]           @relation("AldeiaUsers")
+  admins                  User[]           @relation("AldeiaAdmins")
+  vendedores              User[]           @relation("AldeiaVendedores")
+  jogos                   Jogo[]
+  userAldeiaRoles         UserAldeiaRole[]
+  userPermissions         UserPermission[]
+  auditLogs               AuditLog[]
 
   @@index([slug])
   @@index([tipoOrganizacao])
@@ -288,19 +289,19 @@ model Evento {
   publico             Boolean      @default(false)
   totalAngariado      Float        @default(0)
   totalParticipacoes  Int          @default(0)
-  
+
   // Template / Recorrência
-  isTemplate          Boolean      @default(false)
-  templateNome        String?      // Nome do template ex: "Festa Junina", "Feira Livro"
+  isTemplate            Boolean      @default(false)
+  templateNome          String? // Nome do template ex: "Festa Junina", "Feira Livro"
   frequenciaRecorrencia Recorrencia? // semanal, quinzenal, mensal
-  diaSemanaRecorrencia Int?        // 0=Domingo, 1=Segunda, etc
-  proximaData         DateTime?     // Próxima data de criação automática
-  
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-  aldeiaId            String
-  aldeia              Aldeia       @relation(fields: [aldeiaId], references: [id])
-  jogos               Jogo[]
+  diaSemanaRecorrencia  Int? // 0=Domingo, 1=Segunda, etc
+  proximaData           DateTime? // Próxima data de criação automática
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  aldeiaId  String
+  aldeia    Aldeia   @relation(fields: [aldeiaId], references: [id])
+  jogos     Jogo[]
 
   @@index([aldeiaId])
   @@index([estado])
@@ -310,7 +311,7 @@ model Evento {
 }
 
 model Jogo {
-  id                      String         @id @default(cuid())
+  id                      String     @id @default(cuid())
   nome                    String
   tipo                    TipoJogo
   descricao               String?
@@ -319,7 +320,7 @@ model Jogo {
   preco                   Float
   stockInicial            Int
   stockAtual              Int
-  limitePorUsuario        Int            @default(10)
+  limitePorUsuario        Int        @default(10)
   custoQuadrado           Float?
   valorPremioVaca         Float?
   custoPremioDinheiro     Float?
@@ -332,34 +333,34 @@ model Jogo {
   lucroLiquidoPrevisto    Float?
   percentagemTotalPremios Float?
   hashVerificacao         String?
-  estado                  EstadoJogo     @default(aberto)
+  estado                  EstadoJogo @default(aberto)
   dataAbertura            DateTime?
   dataFecho               DateTime?
-  
+
   // Campos para jogos recorrentes
-  recorrente              Boolean        @default(false)
-  frequenciaRecorrencia   Recorrencia?   // semanal, quinzenal, mensal
-  proximaDataCriacao     DateTime?
-  jogoPaiId              String?        // se for um jogo cópia de outro
-  ativo                 Boolean        @default(true)
-  
-  totalParticipacoes      Int            @default(0)
-  totalAngariado          Float          @default(0)
-  sorteado                Boolean        @default(false)
-  dataSorteio             DateTime?
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
-  eventoId                String
-  aldeiaId                String?
-  premioId                String?
-  modoSorteio             String         @default("app")
-  detalhesSorteioExterno  String?
-  apostas                 Aposta[]
-  evento                  Evento         @relation(fields: [eventoId], references: [id])
-  aldeia                  Aldeia?        @relation(fields: [aldeiaId], references: [id])
-  participacoes           Participacao[]
-  premios                 Premio[]       @relation("JogoPremios")
-  sorteios                Sorteio[]
+  recorrente            Boolean      @default(false)
+  frequenciaRecorrencia Recorrencia? // semanal, quinzenal, mensal
+  proximaDataCriacao    DateTime?
+  jogoPaiId             String? // se for um jogo cópia de outro
+  ativo                 Boolean      @default(true)
+
+  totalParticipacoes     Int            @default(0)
+  totalAngariado         Float          @default(0)
+  sorteado               Boolean        @default(false)
+  dataSorteio            DateTime?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  eventoId               String
+  aldeiaId               String?
+  premioId               String?
+  modoSorteio            String         @default("app")
+  detalhesSorteioExterno String?
+  apostas                Aposta[]
+  evento                 Evento         @relation(fields: [eventoId], references: [id])
+  aldeia                 Aldeia?        @relation(fields: [aldeiaId], references: [id])
+  participacoes          Participacao[]
+  premios                Premio[]       @relation("JogoPremios")
+  sorteios               Sorteio[]
 
   @@index([eventoId])
   @@index([tipo])
@@ -816,53 +817,53 @@ model PedidoCarregamento {
   id String @id @default(cuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
   vendedorId String?
-  vendedor User? @relation("VendedorCarregamentos", fields: [vendedorId], references: [id])
+  vendedor   User?   @relation("VendedorCarregamentos", fields: [vendedorId], references: [id])
 
   aldeiaId String
-  
+
   valor Float
-  
+
   passwordOneTime String?
-  qrCodeData String? // Dados encriptados do QR
-  
+  qrCodeData      String? // Dados encriptados do QR
+
   expiresAt DateTime?
-  
+
   estado EstadoPedido @default(pendente)
-  
+
   // Controlo antifraude
-  tentativaUsada Boolean @default(false)
-  tentativasErro Int @default(0)
+  tentativaUsada      Boolean   @default(false)
+  tentativasErro      Int       @default(0)
   ultimoErroTimestamp DateTime?
-  ipOrigem String?
-  dispositivo String?
-  
+  ipOrigem            String?
+  dispositivo         String?
+
   // Confirmação
-  pagamentoConfirmado Boolean @default(false)
-  confirmadoPorId String?
-  confirmadoPor User? @relation("ConfirmacaoCarregamento", fields: [confirmadoPorId], references: [id])
-  confirmadoAt DateTime?
-  observacoes String?
-  
+  pagamentoConfirmado Boolean   @default(false)
+  confirmadoPorId     String?
+  confirmadoPor       User?     @relation("ConfirmacaoCarregamento", fields: [confirmadoPorId], references: [id])
+  confirmadoAt        DateTime?
+  observacoes         String?
+
   // Autorização/admin
-  requerAutorizacao Boolean @default(false)
-  autorizado Boolean @default(false)
-  autorizadoPorId String?
-  autorizadoPor User? @relation("AutorizacaoCarregamento", fields: [autorizadoPorId], references: [id])
-  autorizadoAt DateTime?
-  motivoRejeicao String?
-  
+  requerAutorizacao Boolean   @default(false)
+  autorizado        Boolean   @default(false)
+  autorizadoPorId   String?
+  autorizadoPor     User?     @relation("AutorizacaoCarregamento", fields: [autorizadoPorId], references: [id])
+  autorizadoAt      DateTime?
+  motivoRejeicao    String?
+
   // Metadados
   metodoValidacao String? // qr_code, password
   metodoPagamento String? // dinheiro
-  
+
   // Notificações
-  notificadoJogador Boolean @default(false)
+  notificadoJogador  Boolean @default(false)
   notificadoVendedor Boolean @default(false)
-  notificadoAdmin Boolean @default(false)
-  
+  notificadoAdmin    Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -876,18 +877,18 @@ model PedidoCarregamento {
 model PedidoNotificacao {
   id String @id @default(cuid())
 
-  tipo String // email, sms, push
+  tipo         String // email, sms, push
   destinatario String
-  assunto String?
-  mensagem String
-  
-  enviada Boolean @default(false)
+  assunto      String?
+  mensagem     String
+
+  enviada   Boolean   @default(false)
   enviadaAt DateTime?
-  
+
   erro String?
-  
+
   criadoPorId String?
-  
+
   createdAt DateTime @default(now())
 
   @@index([destinatario])
@@ -898,10 +899,10 @@ model EntregaSaldo {
   id String @id @default(cuid())
 
   vendedorId String
-  vendedor User @relation("VendedorEntregas", fields: [vendedorId], references: [id])
+  vendedor   User   @relation("VendedorEntregas", fields: [vendedorId], references: [id])
 
   adminId String
-  admin User @relation("AdminEntregas", fields: [adminId], references: [id])
+  admin   User   @relation("AdminEntregas", fields: [adminId], references: [id])
 
   aldeiaId String
 
@@ -909,11 +910,11 @@ model EntregaSaldo {
 
   estado EstadoEntrega @default(solicitado)
 
-  dataSolicitacao DateTime @default(now())
+  dataSolicitacao DateTime  @default(now())
   dataConfirmacao DateTime?
-  dataConclusao DateTime?
+  dataConclusao   DateTime?
 
-  observacoes String?
+  observacoes     String?
   comprovativoUrl String?
 
   createdAt DateTime @default(now())
@@ -927,26 +928,26 @@ model EntregaSaldo {
 }
 
 model GameAnalytics {
-  id        String   @id @default(cuid())
-  type      String   // tipo de evento: 'game_view', 'game_click', 'participation_start', 'payment_method_selected', 'payment_success', 'payment_failed', 'scratch_start', 'scratch_progress', 'scratch_reveal', 'tutorial_open', 'tutorial_complete', 'tutorial_skip'
-  gameId    String?
-  gameType  String?  // 'raspadinha', 'rifa', 'tombola', 'poio_da_vaca'
-  quantity  Int?
-  method    String?  // método de pagamento
-  amount    Float?   // valor em euros
-  reason    String?  // razão de falha
-  percent   Int?     // percentagem raspada
-  won       Boolean?
+  id         String   @id @default(cuid())
+  type       String // tipo de evento: 'game_view', 'game_click', 'participation_start', 'payment_method_selected', 'payment_success', 'payment_failed', 'scratch_start', 'scratch_progress', 'scratch_reveal', 'tutorial_open', 'tutorial_complete', 'tutorial_skip'
+  gameId     String?
+  gameType   String? // 'raspadinha', 'rifa', 'tombola', 'poio_da_vaca'
+  quantity   Int?
+  method     String? // método de pagamento
+  amount     Float? // valor em euros
+  reason     String? // razão de falha
+  percent    Int? // percentagem raspada
+  won        Boolean?
   prizeValue Float?
-  source    String?  // origem da visualização
-  metadata  Json?    // dados adicionais
+  source     String? // origem da visualização
+  metadata   Json? // dados adicionais
 
   // Relações
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
 
   // Anonimização
-  ipHash    String?  // hash parcial do IP (apenas primeiros octetos)
+  ipHash    String? // hash parcial do IP (apenas primeiros octetos)
   userAgent String?
   sessionId String?
 
