@@ -130,22 +130,14 @@ export function VictoryCelebration({
     onShare?.();
   };
 
-  const handleConvertToBalance = () => {
-    playSound('success');
-    hapticFeedback(20);
-    // Emit event for parent to handle
-    window.dispatchEvent(new CustomEvent('convertPremioToBalance', {
-      detail: { premio }
-    }));
-  };
-
-  const handleConvertToBalance = () => {
-    playSound('success');
-    // Emit event for parent to handle
-    window.dispatchEvent(new CustomEvent('convertPremioToBalance', {
-      detail: { premio }
-    }));
-  };
+   const handleConvertToBalance = () => {
+     playSound('success');
+     hapticFeedback(20);
+     // Emit event for parent to handle
+     window.dispatchEvent(new CustomEvent('convertPremioToBalance', {
+       detail: { premio }
+     }));
+   };
 
   const getJogoIcon = () => {
     switch (tipoJogo) {
