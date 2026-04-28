@@ -38,21 +38,20 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: 1000,
       }),
-      prisma.venda.findMany({
-        where: { vendedorId: user.id },
-        include: { jogo: { include: { evento: true } } },
-        orderBy: { createdAt: 'desc' },
-        take: 1000,
-      }),
+       prisma.venda.findMany({
+         where: { vendedorId: user.id },
+         orderBy: { createdAt: 'desc' },
+         take: 1000,
+       }),
       prisma.userBadge.findMany({
         where: { userId: user.id },
         include: { badge: true },
         orderBy: { conquistadoEm: 'desc' },
       }),
-      prisma.userLevel.findMany({
-        where: { userId: user.id },
-        orderBy: { atribuidoEm: 'desc' },
-      }),
+       prisma.userLevel.findMany({
+         where: { userId: user.id },
+         orderBy: { atualizadoEm: 'desc' },
+       }),
       prisma.pushSubscription.findMany({
         where: { userId: user.id },
       }),
@@ -92,17 +91,17 @@ export async function GET(request: NextRequest) {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
-      participacoes: participacoes.map(p => ({
-        id: p.id,
-        jogoId: p.jogoId,
-        jogoNome: p.jogo?.nome,
-        eventoNome: p.jogo?.evento?.nome,
-        numeros: p.numeros,
-        valor: p.valor,
-        ganhou: p.ganhou,
-        premiado: p.premiado,
-        createdAt: p.createdAt,
-      })),
+       participacoes: participacoes.map(p => ({
+         id: p.id,
+         jogoId: p.jogoId,
+         jogoNome: p.jogo?.nome,
+         eventoNome: p.jogo?.evento?.nome,
+         numeros: p.dadosParticipacao ? JSON.parse(p.dadosParticipacao).numeros || [] : [],
+         valor: p.valorPago,
+         ganhou: p.ganhador,
+         premiado: p.premioEntregue,
+         createdAt: p.createdAt,
+       })),
       transacoes: transacoes.map(t => ({
         id: t.id,
         tipo: t.tipo,
@@ -111,16 +110,13 @@ export async function GET(request: NextRequest) {
         estado: t.estado,
         createdAt: t.createdAt,
       })),
-      vendas: vendas.map(v => ({
-        id: v.id,
-        jogoId: v.jogoId,
-        jogoNome: v.jogo?.nome,
-        eventoNome: v.jogo?.evento?.nome,
-        valor: v.valor,
-        comissao: v.comissao,
-        metodoPagamento: v.metodoPagamento,
-        createdAt: v.createdAt,
-      })),
+       vendas: vendas.map(v => ({
+         id: v.id,
+         valor: v.valor,
+         comissao: v.comissao,
+         metodoPagamento: v.metodoPagamento,
+         createdAt: v.createdAt,
+       })),
       badges: badges.map(ub => ({
         id: ub.id,
         badge: {
@@ -131,11 +127,11 @@ export async function GET(request: NextRequest) {
         },
         conquistadoEm: ub.conquistadoEm,
       })),
-      levels: levels.map(l => ({
-        level: l.level,
-        xpAtual: l.xpAtual,
-        atribuidoEm: l.atribuidoEm,
-      })),
+       levels: levels.map(l => ({
+         level: l.nivel,
+         xpAtual: l.pontos,
+         atribuidoEm: l.atualizadoEm,
+       })),
       pushSubscriptions: pushSubs.map(ps => ({
         endpoint: ps.endpoint,
         p256dh: ps.p256dh,
@@ -163,9 +159,9 @@ export async function GET(request: NextRequest) {
         dataConfirmacao: e.dataConfirmacao,
         dataConclusao: e.dataConclusao,
       })),
-      permissoes: permissoes.map(p => ({
-        permission: p.permission?.nome,
-      })),
+       permissoes: permissoes.map(p => ({
+         permission: p.permission?.key,
+       })),
     };
 
     return NextResponse.json({ data: exportData });
@@ -201,22 +197,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create deletion request
-    const deletionRequest = await prisma.direitoEsquecimento.create({
-      data: {
-        userId: user.id,
-        motivo: motivo || null,
-        estado: 'pendente',
-      },
-    });
+     // Create deletion request
+     const deletionRequest = await prisma.direitoEsquecimento.create({
+       data: {
+         userId: user.id,
+         notas: motivo || null,
+         estado: 'pendente',
+       },
+     });
 
     // Audit log
     await logAudit(
       user.id,
       'delete',
-      'user_account_request',
+      'user',
       user.id,
-      null,
       { requestId: deletionRequest.id, motivo },
       request.headers.get('x-forwarded-for') || 'unknown',
       request.headers.get('user-agent') || 'unknown'

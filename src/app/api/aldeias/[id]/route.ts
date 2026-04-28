@@ -70,27 +70,32 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        updateData.logoUrl = logoUrl;
      }
 
-     // Get old values for audit
-     const oldAldeia = await prisma.aldeia.findUnique({ where: { id } });
+      // Get old values for audit
+      const oldAldeia = await prisma.aldeia.findUnique({ where: { id } });
+      
+      // If aldeia doesn't exist, return error
+      if (!oldAldeia) {
+        return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 404 });
+      }
 
-     const aldeia = await prisma.aldeia.update({
-       where: { id },
-       data: updateData,
-     });
+      const aldeia = await prisma.aldeia.update({
+        where: { id },
+        data: updateData,
+      });
 
-     // Audit log for config change (update)
-     await logAudit(
-       user.id,
-       'update',
-       'aldeia',
-       id,
-       {
-         old: { nome: oldAldeia.nome, permitirStripe: oldAldeia.permitirStripe, permitirMBWay: oldAldeia.permitirMBWay },
-         new: { nome: aldeia.nome, permitirStripe: aldeia.permitirStripe, permitirMBWay: aldeia.permitirMBWay }
-       },
-       request.headers.get('x-forwarded-for') || 'unknown',
-       request.headers.get('user-agent') || 'unknown'
-     );
+      // Audit log for config change (update)
+      await logAudit(
+        user.id,
+        'update',
+        'aldeia',
+        id,
+        {
+          old: { nome: oldAldeia.nome, permitirStripe: oldAldeia.permitirStripe, permitirMBWay: oldAldeia.permitirMBWay },
+          new: { nome: aldeia.nome, permitirStripe: aldeia.permitirStripe, permitirMBWay: aldeia.permitirMBWay }
+        },
+        request.headers.get('x-forwarded-for') || 'unknown',
+        request.headers.get('user-agent') || 'unknown'
+      );
 
      return NextResponse.json({ success: true, data: aldeia });
   } catch (error) {
@@ -116,17 +121,16 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
      await prisma.aldeia.delete({ where: { id } });
 
-     // Audit log
-     await logAudit(
-       user.id,
-       'delete',
-       'aldeia',
-       id,
-       { nome: aldeia.nome, slug: aldeia.slug },
-       null,
-       request.headers.get('x-forwarded-for') || 'unknown',
-       request.headers.get('user-agent') || 'unknown'
-     );
+      // Audit log
+      await logAudit(
+        user.id,
+        'delete',
+        'aldeia',
+        id,
+        { nome: aldeia.nome, slug: aldeia.slug },
+        request.headers.get('x-forwarded-for') || 'unknown',
+        request.headers.get('user-agent') || 'unknown'
+      );
 
      return NextResponse.json({ success: true });
    } catch (error) {

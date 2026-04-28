@@ -70,17 +70,19 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        });
      });
 
-     // Audit log for game update
-     await logAudit(
-       user.id,
-       'update',
-       'jogo',
-       id,
-       { nome: jogo.nome, estado: jogo.estado, preco: jogo.preco, stockAtual: jogo.stockAtual },
-       { nome: updated.nome, estado: updated.estado, preco: updated.preco, stockAtual: updated.stockAtual },
-       request.headers.get('x-forwarded-for') || 'unknown',
-       request.headers.get('user-agent') || 'unknown'
-     );
+      // Audit log for game update
+      await logAudit(
+        user.id,
+        'update',
+        'jogo',
+        id,
+        { 
+          old: { nome: jogo.nome, estado: jogo.estado, preco: jogo.preco, stockAtual: jogo.stockAtual },
+          new: { nome: updated.nome, estado: updated.estado, preco: updated.preco, stockAtual: updated.stockAtual }
+        },
+        request.headers.get('x-forwarded-for') || 'unknown',
+        request.headers.get('user-agent') || 'unknown'
+      );
 
      return NextResponse.json({ success: true, data: updated });
   } catch (error) {
@@ -106,17 +108,16 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
      await prisma.jogo.delete({ where: { id } });
 
-     // Audit log
-     await logAudit(
-       user.id,
-       'delete',
-       'jogo',
-       id,
-       { nome: jogo.nome, tipo: jogo.tipo, eventoId: jogo.eventoId },
-       null,
-       request.headers.get('x-forwarded-for') || 'unknown',
-       request.headers.get('user-agent') || 'unknown'
-     );
+      // Audit log
+      await logAudit(
+        user.id,
+        'delete',
+        'jogo',
+        id,
+        { nome: jogo.nome, tipo: jogo.tipo, eventoId: jogo.eventoId },
+        request.headers.get('x-forwarded-for') || 'unknown',
+        request.headers.get('user-agent') || 'unknown'
+      );
 
      return NextResponse.json({ success: true });
   } catch (error) {

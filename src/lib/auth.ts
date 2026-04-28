@@ -154,19 +154,25 @@ export async function getFullUserFromRequest(request: NextRequest) {
     return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: tokenData.userId },
-    select: {
-      id: true,
-      nome: true,
-      email: true,
-      telefone: true,
-      role: true,
-      aldeiaId: true,
-      saldo: true,
-      aldeia: true,
-    },
-  });
+   const user = await prisma.user.findUnique({
+     where: { id: tokenData.userId },
+     select: {
+       id: true,
+       nome: true,
+       email: true,
+       telefone: true,
+       role: true,
+       aldeiaId: true,
+       saldo: true,
+       comissaoPercentual: true,
+       comissaoTotal: true,
+       emailVerificado: true,
+       notificacoesEmail: true,
+       createdAt: true,
+       updatedAt: true,
+       aldeia: true,
+     },
+   });
 
   return user;
 }
