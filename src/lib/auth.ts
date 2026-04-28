@@ -14,7 +14,7 @@ const secret = new TextEncoder().encode(JWT_SECRET!);
 
 // Cookie config
 const AUTH_COOKIE_NAME = 'auth-token';
-const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 dias em segundos
+const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 dias em segundos
 
 export interface JWTPayload {
   userId: string;
@@ -83,13 +83,13 @@ export async function verifyPassword(
  * Gerar token JWT
  */
 export async function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
-  const token = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d')
-    .sign(secret);
+   const token = await new SignJWT(payload)
+     .setProtectedHeader({ alg: 'HS256' })
+     .setIssuedAt()
+     .setExpirationTime('30d')
+     .sign(secret);
 
-  return token;
+   return token;
 }
 
 /**
