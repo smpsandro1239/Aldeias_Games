@@ -193,16 +193,16 @@ export default function PerfilPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background text-foreground font-body flex flex-col items-center justify-center p-4">
-        <User className="w-16 h-16 text-primary mb-4" />
-        <p className="text-lg mb-4">Precisas de fazer login para ver o teu perfil</p>
-        <button
-          onClick={() => router.push("/")}
-          className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
-        >
-          Voltar ao Início
-        </button>
-      </div>
+       <div className="min-h-screen bg-background text-foreground font-body flex flex-col items-center justify-center p-4">
+         <UserIcon className="w-16 h-16 text-primary mb-4" />
+         <p className="text-lg mb-4">Precisas de fazer login para ver o teu perfil</p>
+         <button
+           onClick={() => router.push("/")}
+           className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
+         >
+           Voltar ao Início
+         </button>
+       </div>
     );
   }
 
@@ -237,10 +237,10 @@ export default function PerfilPage() {
             />
             <div className="w-24 h-24 rounded-full bg-surface-container-low border-2 border-primary flex items-center justify-center overflow-hidden">
               {profileImage ? (
-                <img src={profileImage} alt="Foto de perfil" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-12 h-12 text-primary" />
-              )}
+                 <img src={profileImage} alt="Foto de perfil" className="w-full h-full object-cover" />
+               ) : (
+                 <UserIcon className="w-12 h-12 text-primary" />
+               )}
             </div>
              <button 
                onClick={() => fileInputRef.current?.click()}
@@ -263,26 +263,22 @@ export default function PerfilPage() {
         <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 space-y-4">
           <div className="space-y-2">
             <label className="text-xs text-muted-foreground uppercase tracking-wider">Nome</label>
-            <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-              <User className="w-5 h-5 text-primary" />
-              <input
-                type="text"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                className="flex-1 bg-transparent outline-none text-foreground"
-                placeholder="O teu nome"
-              />
-            </div>
+           <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+             <UserIcon className="w-5 h-5 text-primary" />
+             <span className="flex-1 text-foreground font-medium">
+               {roleLabels[user?.role || ""] || "Jogador"}
+             </span>
+           </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-xs text-muted-foreground uppercase tracking-wider">Perfil</label>
-            <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3 opacity-70">
-              <User className="w-5 h-5 text-primary" />
-              <span className="flex-1 text-foreground font-medium">
-                {roleLabels[user?.role || ""] || "Jogador"}
-              </span>
-            </div>
+               <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3 opacity-70">
+                 <UserIcon className="w-5 h-5 text-primary" />
+                 <span className="flex-1 text-foreground font-medium">
+                   {roleLabels[user?.role || ""] || "Jogador"}
+                 </span>
+               </div>
           </div>
 
           <div className="space-y-2">

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import { Prisma } from '@prisma/client';
 
 export type AuditAction =
   | "create"
@@ -27,7 +28,7 @@ export async function logAudit(
 ): Promise<void> {
   try {
     // Detecta aldeiaId baseado no contexto (opcional - pode ser inferido do user ou resource)
-    letaldeiaId: string | undefined;
+    let aldeiaId: string | undefined;
     // Se o recurso for relacionado a uma aldeia, podemos tentar preencher (ex: evento, jogo)
     // Isso exigiria buscar o recurso; por simplicidade, deixamos null por agora.
     
@@ -39,7 +40,7 @@ export async function logAudit(
         resourceId,
         ip: ip ?? "unknown",
         userAgent: userAgent ?? "unknown",
-        metadata: metadata ? JSON.stringify(metadata) : null,
+        metadata: metadata == null ? Prisma.JsonNull : metadata,
       },
     });
   } catch (error) {
@@ -68,11 +69,11 @@ export async function getUserAuditLogs(
 ): Promise<Array<{
   id: string;
   action: string;
-  resource: string;
-  resourceId?: string;
+  resource: string | null;
+  resourceId: string | null;
   createdAt: Date;
-  ip: string;
-  metadata?: any;
+  ip: string | null;
+  metadata: unknown;
 }>> {
   return await prisma.auditLog.findMany({
     where: { userId },
@@ -89,4 +90,3 @@ export async function getUserAuditLogs(
     },
   });
 }
-

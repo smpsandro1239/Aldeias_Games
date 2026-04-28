@@ -78,17 +78,19 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        select: { id: true, nome: true, email: true, role: true, aldeiaId: true }
      });
 
-     // Audit log for user update
-     await logAudit(
-       adminUser.id,
-       'update',
-       'user',
-       id,
-       { nome: targetUser.nome, role: targetUser.role, aldeiaId: targetUser.aldeiaId },
-       { nome: updated.nome, role: updated.role, aldeiaId: updated.aldeiaId },
-       request.headers.get('x-forwarded-for') || 'unknown',
-       request.headers.get('user-agent') || 'unknown'
-     );
+      // Audit log for user update
+      await logAudit(
+        adminUser.id,
+        'update',
+        'user',
+        id,
+        {
+          old: { nome: targetUser.nome, role: targetUser.role, aldeiaId: targetUser.aldeiaId },
+          new: { nome: updated.nome, role: updated.role, aldeiaId: updated.aldeiaId }
+        },
+        request.headers.get('x-forwarded-for') || 'unknown',
+        request.headers.get('user-agent') || 'unknown'
+      );
 
      return NextResponse.json({ success: true, data: updated });
   } catch (error) {
@@ -118,17 +120,16 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
      await prisma.user.delete({ where: { id } });
 
-     // Audit log
-     await logAudit(
-       adminUser.id,
-       'delete',
-       'user',
-       id,
-       { nome: targetUser.nome, email: targetUser.email, role: targetUser.role },
-       null,
-       request.headers.get('x-forwarded-for') || 'unknown',
-       request.headers.get('user-agent') || 'unknown'
-     );
+      // Audit log
+      await logAudit(
+        adminUser.id,
+        'delete',
+        'user',
+        id,
+        { nome: targetUser.nome, email: targetUser.email, role: targetUser.role },
+        request.headers.get('x-forwarded-for') || 'unknown',
+        request.headers.get('user-agent') || 'unknown'
+      );
 
      return NextResponse.json({ success: true });
   } catch (error) {
