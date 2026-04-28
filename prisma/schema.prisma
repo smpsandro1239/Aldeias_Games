@@ -189,42 +189,22 @@ model LogAcesso {
   createdAt DateTime @default(now())
   user      User?    @relation(fields: [userId], references: [id])
 
-  @@index([userId])
-  @@index([createdAt])
-  @@map("logs_acesso")
-}
+   @@index([userId])
+   @@index([createdAt])
+   @@map("logs_acesso")
+ }
 
-model AuditLog {
-  id            String   @id @default(cuid())
-  userId        String
-  action        String   // "delete", "update", "create", "login", "logout", "payment"
-  resourceType  String   // "evento", "jogo", "user", "pagamento", "config"
-  resourceId    String?
-  oldValue      Json?    // Valores anteriores (JSON)
-  newValue      Json?    // Novos valores (JSON)
-  ip            String
-  userAgent     String
-  createdAt     DateTime @default(now())
+ model RateLimit {
+   id        String   @id @default(cuid())
+   key       String   @unique // Format: "rl:{endpoint}:{ip}"
+   count     Int      @default(1)
+   expiresAt DateTime
+   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+   @@map("rate_limits")
+ }
 
-  @@index([userId])
-  @@index([createdAt])
-  @@index([action])
-  @@map("audit_logs")
-}
-
-model RateLimit {
-  id        String   @id @default(cuid())
-  key       String   @unique // Format: "rl:{endpoint}:{ip}"
-  count     Int      @default(1)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@map("rate_limits")
-}
-
-model Plano {
+ model Plano {
   id               String   @id @default(cuid())
   nome             String
   descricao        String?
@@ -944,6 +924,39 @@ model EntregaSaldo {
   @@index([aldeiaId])
   @@index([estado])
   @@index([createdAt])
+}
+
+model GameAnalytics {
+  id        String   @id @default(cuid())
+  type      String   // tipo de evento: 'game_view', 'game_click', 'participation_start', 'payment_method_selected', 'payment_success', 'payment_failed', 'scratch_start', 'scratch_progress', 'scratch_reveal', 'tutorial_open', 'tutorial_complete', 'tutorial_skip'
+  gameId    String?
+  gameType  String?  // 'raspadinha', 'rifa', 'tombola', 'poio_da_vaca'
+  quantity  Int?
+  method    String?  // método de pagamento
+  amount    Float?   // valor em euros
+  reason    String?  // razão de falha
+  percent   Int?     // percentagem raspada
+  won       Boolean?
+  prizeValue Float?
+  source    String?  // origem da visualização
+  metadata  Json?    // dados adicionais
+
+  // Relações
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  // Anonimização
+  ipHash    String?  // hash parcial do IP (apenas primeiros octetos)
+  userAgent String?
+  sessionId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([gameType])
+  @@index([createdAt])
+  @@map("game_analytics")
 }
 
 enum EstadoEntrega {

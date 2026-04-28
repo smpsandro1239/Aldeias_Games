@@ -165,10 +165,8 @@ export function GameTutorial({ open, onOpenChange, gameType, onComplete }: GameT
   };
 
   const handleComplete = () => {
-    // Save that user has seen tutorial
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`tutorial_${gameType}_seen`, "true");
-    }
+    // Save that user has seen tutorial (SSR-safe)
+    markTutorialSeen(gameType);
     onComplete?.();
     onOpenChange(false);
   };
@@ -312,7 +310,11 @@ export function useTutorialSeen(gameType: string): boolean {
 
 // Helper to mark tutorial as seen
 export function markTutorialSeen(gameType: string): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(`tutorial_${gameType}_seen`, "true");
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      localStorage.setItem(`tutorial_${gameType}_seen`, "true");
+    } catch (e) {
+      // Ignorar erros de localStorage (ex: modo privado)
+    }
   }
 }

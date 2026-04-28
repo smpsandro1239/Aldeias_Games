@@ -5,6 +5,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Trophy, Share2, X, ChevronRight, Sparkles, Gift, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { playSound } from "@/lib/audio-utils";
+
+// Haptic feedback helper
+function hapticFeedback(duration: number = 10): void {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate?.(duration);
+    } catch {
+      // Silenciar erros
+    }
+  }
+}
 
 interface VictoryCelebrationProps {
   open: boolean;
@@ -34,7 +46,19 @@ export function VictoryCelebration({
   useEffect(() => {
     if (open && !hasCelebrated.current) {
       hasCelebrated.current = true;
-      
+
+      // Tocar som de vitória
+      playSound('win');
+
+      // Haptic feedback para dispositivos móveis
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try {
+          navigator.vibrate?.([200, 100, 200]);
+        } catch {
+          // Silenciar erros
+        }
+      }
+
       // Confetti burst
       const duration = 3000;
       const end = Date.now() + duration;
@@ -84,7 +108,10 @@ export function VictoryCelebration({
 
   const handleShare = async () => {
     const shareText = `🏆 Ganhei ${premio.nome} no ${jogoNome}! Aldeias Games - Participate também!`;
-    
+
+    playSound('success');
+    hapticFeedback(20);
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -93,19 +120,30 @@ export function VictoryCelebration({
         });
       } catch (err) {
         // User cancelled or error
+        playSound('error');
       }
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(shareText);
     }
-    
+
     onShare?.();
   };
 
   const handleConvertToBalance = () => {
+    playSound('success');
+    hapticFeedback(20);
     // Emit event for parent to handle
-    window.dispatchEvent(new CustomEvent('convertPremioToBalance', { 
-      detail: { premio } 
+    window.dispatchEvent(new CustomEvent('convertPremioToBalance', {
+      detail: { premio }
+    }));
+  };
+
+  const handleConvertToBalance = () => {
+    playSound('success');
+    // Emit event for parent to handle
+    window.dispatchEvent(new CustomEvent('convertPremioToBalance', {
+      detail: { premio }
     }));
   };
 
@@ -153,14 +191,17 @@ export function VictoryCelebration({
             {/* Glow effect */}
             <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/20 rounded-full blur-[60px]" />
             
-            {/* Close button */}
-            <button
-              onClick={() => onOpenChange(false)}
-              className="absolute top-3 right-3 p-2 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors z-10"
-              aria-label="Fechar"
-            >
-              <X className="w-5 h-5 text-foreground/70" />
-            </button>
+             {/* Close button */}
+             <button
+               onClick={() => {
+                 hapticFeedback(10);
+                 onOpenChange(false);
+               }}
+               className="absolute top-3 right-3 p-2 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors z-10"
+               aria-label="Fechar"
+             >
+               <X className="w-5 h-5 text-foreground/70" />
+             </button>
 
             <div className="relative p-8 text-center">
               {/* Trophy Icon */}
@@ -232,33 +273,33 @@ export function VictoryCelebration({
                 Jogo: {jogoNome}
               </motion.p>
 
-              {/* Actions */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="space-y-3"
-              >
-                {premio.valorDinheiroAlternative && (
-                  <Button
-                    onClick={handleConvertToBalance}
-                    variant="outline"
-                    className="w-full bg-surface-container-low border-primary/30 text-secondary hover:bg-secondary/10 hover:border-secondary/50"
-                  >
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Converter em Saldo
-                  </Button>
-                )}
-                
-                <Button
-                  onClick={handleShare}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Partilhar com Amigos
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              </motion.div>
+               {/* Actions */}
+               <motion.div
+                 initial={{ y: 20, opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 transition={{ delay: 1 }}
+                 className="space-y-3"
+               >
+                 {premio.valorDinheiroAlternative && (
+                   <Button
+                     onClick={handleConvertToBalance}
+                     variant="outline"
+                     className="w-full bg-surface-container-low border-primary/30 text-secondary hover:bg-secondary/10 hover:border-secondary/50"
+                   >
+                     <DollarSign className="w-4 h-4 mr-2" />
+                     Converter em Saldo
+                   </Button>
+                 )}
+
+                 <Button
+                   onClick={handleShare}
+                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                 >
+                   <Share2 className="w-4 h-4 mr-2" />
+                   Partilhar com Amigos
+                   <ChevronRight className="w-4 h-4 ml-2" />
+                 </Button>
+               </motion.div>
 
               {/* Sparkle decorations */}
               <motion.div

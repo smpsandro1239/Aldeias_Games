@@ -1,7 +1,9 @@
 "use client";
 
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import { Ticket, Trophy, Sparkles, ArrowRight, Leaf, Gamepad2, Loader2 } from "lucide-react";
+import { useGameAnalytics } from "@/lib/game-analytics";
 
 export interface Jogo {
   id: string;
@@ -26,6 +28,17 @@ export interface GameListProps {
   showAldeia?: boolean;
 }
 
+// Haptic feedback helper
+function hapticFeedback(duration: number = 10): void {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate?.(duration);
+    } catch {
+      // Ignorar
+    }
+  }
+}
+
 export function GameList({
   jogos,
   onJogoClick,
@@ -35,6 +48,8 @@ export function GameList({
   emptySubtext = "Volte mais tarde!",
   showAldeia = true,
 }: GameListProps) {
+  const { trackGameClick } = useGameAnalytics();
+
   const getGameIcon = (tipo: string) => {
     switch (tipo) {
       case "raspadinha": return Sparkles;
@@ -44,6 +59,30 @@ export function GameList({
       default: return Gamepad2;
     }
   };
+
+  const handleClick = useCallback(
+    (jogo: Jogo) => {
+      hapticFeedback(10);
+      trackGameClick(jogo.id, jogo.tipo);
+      onJogoClick(jogo);
+    },
+    [onJogoClick, trackGameClick]
+  );
+
+  const GameCardSkeleton = () => (
+    <div className="w-full bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-lg animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-xl bg-surface-container-low flex items-center justify-center">
+          <div className="w-7 h-7 bg-muted-foreground/20 rounded" />
+        </div>
+        <div className="flex-1 space-y-2">
+          <div className="h-5 bg-muted-foreground/20 rounded w-3/4" />
+          <div className="h-4 bg-muted-foreground/20 rounded w-1/2" />
+          <div className="h-3 bg-muted-foreground/20 rounded w-1/3" />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="w-full">
@@ -67,8 +106,10 @@ export function GameList({
       </motion.section>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="grid gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <GameCardSkeleton key={i} />
+          ))}
         </div>
       ) : jogos.length === 0 ? (
         <div className="text-center py-12 bg-surface-container rounded-2xl border border-outline-variant/20">
@@ -80,13 +121,21 @@ export function GameList({
           {jogos.map((jogo, index) => {
             const Icon = getGameIcon(jogo.tipo);
             return (
-              <motion.button
+                <motion.button
                 key={jogo.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                onClick={() => onJogoClick(jogo)}
-                className="w-full text-left bg-surface-container rounded-2xl p-5 hover:scale-[1.02] transition-all border border-outline-variant/20 shadow-lg"
+                onClick={() => handleClick(jogo)}
+                className="w-full text-left bg-surface-container rounded-2xl p-5 hover:scale-[1.02] transition-all border border-outline-variant/20 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick(jogo);
+                  }
+                }}
+                aria-label={`Jogo ${jogo.nome}, ${jogo.preco}€, ${jogo.stockAtual} disponíveis`}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-xl bg-surface-container-low flex items-center justify-center">
@@ -102,7 +151,7 @@ export function GameList({
                       {jogo.stockAtual} disponíveis
                     </p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-primary" />
+                  <ArrowRight className="w-5 h-5 text-primary" aria-hidden="true" />
                 </div>
               </motion.button>
             );

@@ -10,8 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ScratchCard } from "@/components/games/ScratchCard";
+import { GameErrorBoundary } from "@/components/games/error-boundary";
 import { Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
+import { playSound } from "@/lib/audio-utils";
 
 interface ScratchCardModalProps {
   open: boolean;
@@ -65,9 +67,21 @@ export function ScratchCardModal({
     setRevealed(true);
     setResult({ ganhou, premio: premioResult });
 
-    // Confetti APENAS se ganhou
+    // Feedback sonoro e visual se ganhou
     if (ganhou) {
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      playSound('win');
+      // Haptic feedback (vibração)
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try {
+          navigator.vibrate?.([100, 50, 100]);
+        } catch {
+          // Silenciar erros
+        }
+      }
+    } else {
+      // Som de feedback mesmo sem prémio
+      playSound('click');
     }
     
     // Chama onReveal apenas uma vez (para props antigas)
@@ -142,13 +156,15 @@ export function ScratchCardModal({
               </div>
             )}
 
-            <ScratchCard
-              key={finalJogoId}
-              premio={finalPremio}
-              jogoId={finalJogoId}
-              onRevelado={handleReveal}
-              skipApiCall={!isNewProps}
-            />
+            <GameErrorBoundary>
+              <ScratchCard
+                key={finalJogoId}
+                premio={finalPremio}
+                jogoId={finalJogoId}
+                onRevelado={handleReveal}
+                skipApiCall={!isNewProps}
+              />
+            </GameErrorBoundary>
           </div>
 
           {/* Resultado Revelado */}

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Smartphone, Wallet } from "lucide-react";
+import { playSound } from "@/lib/audio-utils";
 
 interface PaymentModalProps {
   open: boolean;
@@ -47,7 +48,11 @@ export function PaymentModal({
     setLoading(true);
     try {
       await onMBWayPayment(telefone);
+      playSound('success');
       onOpenChange(false);
+    } catch (error) {
+      playSound('error');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -58,7 +63,11 @@ export function PaymentModal({
     setLoading(true);
     try {
       await onStripePayment();
+      playSound('success');
       onOpenChange(false);
+    } catch (error) {
+      playSound('error');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -69,7 +78,11 @@ export function PaymentModal({
     setLoading(true);
     try {
       await onSaldoPayment();
+      playSound('success');
       onOpenChange(false);
+    } catch (error) {
+      playSound('error');
+      throw error;
     } finally {
       setLoading(false);
     }

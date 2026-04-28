@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,18 @@ import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Sparkles, Ticket, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/audio-utils";
+
+// Haptic feedback simples
+function hapticFeedback(duration: number = 10): void {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate?.(duration);
+    } catch {
+      // Ignorar
+    }
+  }
+}
 
 interface NumberSelectorModalProps {
   open: boolean;
@@ -70,8 +82,11 @@ export function NumberSelectorModal({
 
     if (numerosSelecionados.includes(numero)) {
       onSelect(numerosSelecionados.filter((n) => n !== numero));
+      playSound?.('click'); // Som de deseleção
     } else {
       onSelect([...numerosSelecionados, numero]);
+      playSound?.('success'); // Som de seleção
+      hapticFeedback(8); // Vibração curta
     }
   };
 
@@ -81,6 +96,13 @@ export function NumberSelectorModal({
     if (numerosOcupados.includes(numero)) return "ocupado";
     if (numerosSelecionados.includes(numero)) return "selecionado";
     return "disponivel";
+  };
+
+  const getNumeroAriaLabel = (numero: number): string => {
+    const status = getNumeroColor(numero);
+    if (status === "ocupado") return `Número ${numero}, ocupado`;
+    if (status === "selecionado") return `Número ${numero}, selecionado. Pressione novamente para desmarcar`;
+    return `Número ${numero}, disponível. Pressione para selecionar`;
   };
 
   return (
@@ -120,40 +142,57 @@ export function NumberSelectorModal({
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col p-4 bg-slate-50 dark:bg-slate-900">
-          <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-8 sm:grid-cols-10 gap-2">
-              <AnimatePresence mode="popLayout">
-                {numerosFiltrados.map((numero) => {
-                  const status = getNumeroColor(numero);
-                  return (
-                    <motion.button
-                      key={numero}
-                      layout
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.8, opacity: 0 }}
-                      whileHover={status !== "ocupado" ? { scale: 1.1 } : {}}
-                      whileTap={status !== "ocupado" ? { scale: 0.95 } : {}}
-                      onClick={() => toggleNumero(numero)}
-                      disabled={status === "ocupado"}
-                      className={cn(
-                        "h-12 rounded-xl text-sm font-bold transition-all shadow-sm",
-                        status === "ocupado" && "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed border-2 border-slate-300 dark:border-slate-700",
-                        status === "disponivel" && "bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500",
-                        status === "selecionado" && "bg-gradient-to-r from-pink-500 to-purple-600 text-foreground border-2 border-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.4)]"
-                      )}
-                    >
-                      <span className={cn(
-                        "relative",
-                        status === "selecionado" && "after:content-['✓'] after:absolute after:-top-1 after:-right-1 after:text-xs after:bg-foreground after:rounded-full after:p-0.5"
-                      )}>
-                        {numero}
-                      </span>
-                    </motion.button>
-                  );
-                })}
-              </AnimatePresence>
+          <div className="flex-1 overflow-hidden flex flex-col p-4 bg-slate-50 dark:bg-slate-900">
+            <div className="flex-1 overflow-y-auto">
+              <div
+                className="grid grid-cols-8 sm:grid-cols-10 gap-2"
+                role="grid"
+                aria-label="Seleção de números"
+              >
+                <AnimatePresence mode="popLayout">
+                 {numerosFiltrados.map((numero) => {
+                   const status = getNumeroColor(numero);
+                   const isSelected = status === "selecionado";
+                   const isOccupied = status === "ocupado";
+                   return (
+                     <motion.button
+                       key={numero}
+                       layout
+                       initial={{ scale: 0.8, opacity: 0 }}
+                       animate={{ scale: 1, opacity: 1 }}
+                       exit={{ scale: 0.8, opacity: 0 }}
+                       whileHover={!isOccupied ? { scale: 1.1 } : {}}
+                       whileTap={!isOccupied ? { scale: 0.95 } : {}}
+                       onClick={() => toggleNumero(numero)}
+                       disabled={isOccupied}
+                       aria-label={getNumeroAriaLabel(numero)}
+                       aria-pressed={isSelected}
+                       aria-disabled={isOccupied}
+                       role="gridcell"
+                       tabIndex={isOccupied ? -1 : 0}
+                       className={cn(
+                         "h-12 rounded-xl text-sm font-bold transition-all shadow-sm",
+                         isOccupied && "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed border-2 border-slate-300 dark:border-slate-700",
+                         !isOccupied && !isSelected && "bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500",
+                         isSelected && "bg-gradient-to-r from-pink-500 to-purple-600 text-foreground border-2 border-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.4)]"
+                       )}
+                       onKeyDown={(e) => {
+                         if (e.key === 'Enter' || e.key === ' ') {
+                           e.preventDefault();
+                           toggleNumero(numero);
+                         }
+                       }}
+                     >
+                       <span className={cn(
+                         "relative",
+                         isSelected && "after:content-['✓'] after:absolute after:-top-1 after:-right-1 after:text-xs after:bg-foreground after:rounded-full after:p-0.5"
+                       )}>
+                         {numero}
+                       </span>
+                     </motion.button>
+                   );
+                 })}
+               </AnimatePresence>
             </div>
           </div>
 
@@ -229,7 +268,15 @@ export function NumberSelectorModal({
               Cancelar
             </Button>
             <Button
-              onClick={onConfirmWithPayment || onConfirm}
+              onClick={() => {
+                playSound('success');
+                hapticFeedback(20);
+                if (onConfirmWithPayment) {
+                  onConfirmWithPayment();
+                } else {
+                  onConfirm();
+                }
+              }}
               disabled={numerosSelecionados.length === 0}
               className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-foreground font-bold shadow-lg hover:shadow-xl transition-all"
             >

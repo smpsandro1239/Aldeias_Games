@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
 import { SentryInit } from "@/components/sentry-init";
 import { Toaster } from "@/components/ui/sonner";
+import { AnalyticsInit } from "@/components/analytics-init";
 
 const inter = Inter({ subsets: ["latin"] });
 const notoSerif = Noto_Serif({ 
@@ -82,6 +83,7 @@ export default function RootLayout({
         >
           <ReactQueryProvider>
             <SentryInit />
+            <AnalyticsInit />
             {children}
             <Toaster position="top-right" richColors />
           </ReactQueryProvider>

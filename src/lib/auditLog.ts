@@ -8,17 +8,10 @@ export type AuditAction =
   | "logout"
   | "payment"
   | "config_change"
-  | "export_data";
+  | "export_data"
+  | "permission_change";
 
-export type AuditResource =
-  | "user"
-  | "evento"
-  | "jogo"
-  | "pagamento"
-  | "config"
-  | "aldeia"
-  | "participacao"
-  | "entrega_saldo";
+export type AuditResource = "user" | "evento" | "jogo" | "aldeia" | "pagamento" | "config" | "participacao";
 
 /**
  * Registrar ação de auditoria
@@ -26,24 +19,27 @@ export type AuditResource =
 export async function logAudit(
   userId: string,
   action: AuditAction,
-  resourceType: AuditResource,
+  resource: AuditResource,
   resourceId?: string,
-  oldValue?: Record<string, any>,
-  newValue?: Record<string, any>,
+  metadata?: Record<string, any> | null, // para old/new values, detalhes
   ip?: string,
   userAgent?: string
 ): Promise<void> {
   try {
+    // Detecta aldeiaId baseado no contexto (opcional - pode ser inferido do user ou resource)
+    letaldeiaId: string | undefined;
+    // Se o recurso for relacionado a uma aldeia, podemos tentar preencher (ex: evento, jogo)
+    // Isso exigiria buscar o recurso; por simplicidade, deixamos null por agora.
+    
     await prisma.auditLog.create({
       data: {
         userId,
         action,
-        resourceType,
+        resource,
         resourceId,
-        oldValue: oldValue ? JSON.stringify(oldValue) : null,
-        newValue: newValue ? JSON.stringify(newValue) : null,
         ip: ip ?? "unknown",
         userAgent: userAgent ?? "unknown",
+        metadata: metadata ? JSON.stringify(metadata) : null,
       },
     });
   } catch (error) {
@@ -72,10 +68,11 @@ export async function getUserAuditLogs(
 ): Promise<Array<{
   id: string;
   action: string;
-  resourceType: string;
+  resource: string;
   resourceId?: string;
   createdAt: Date;
   ip: string;
+  metadata?: any;
 }>> {
   return await prisma.auditLog.findMany({
     where: { userId },
@@ -84,10 +81,12 @@ export async function getUserAuditLogs(
     select: {
       id: true,
       action: true,
-      resourceType: true,
+      resource: true,
       resourceId: true,
       createdAt: true,
       ip: true,
+      metadata: true,
     },
   });
 }
+

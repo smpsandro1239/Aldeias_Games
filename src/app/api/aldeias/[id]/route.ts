@@ -78,14 +78,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        data: updateData,
      });
 
-     // Audit log for config change
+     // Audit log for config change (update)
      await logAudit(
        user.id,
        'update',
        'aldeia',
        id,
-       oldAldeia ? { nome: oldAldeia.nome, permitirStripe: oldAldeia.permitirStripe, permitirMBWay: oldAldeia.permitirMBWay } : undefined,
-       { nome: aldeia.nome, permitirStripe: aldeia.permitirStripe, permitirMBWay: aldeia.permitirMBWay },
+       {
+         old: { nome: oldAldeia.nome, permitirStripe: oldAldeia.permitirStripe, permitirMBWay: oldAldeia.permitirMBWay },
+         new: { nome: aldeia.nome, permitirStripe: aldeia.permitirStripe, permitirMBWay: aldeia.permitirMBWay }
+       },
        request.headers.get('x-forwarded-for') || 'unknown',
        request.headers.get('user-agent') || 'unknown'
      );

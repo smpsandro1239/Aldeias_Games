@@ -5,6 +5,56 @@ import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
 
+// Função utilitária para verificar suporte a Haptic Feedback
+function isHapticSupported(): boolean {
+  return typeof navigator !== "undefined" && "vibrate" in navigator;
+}
+
+// Vibração curta (tátil)
+function hapticFeedback(duration: number = 10): void {
+  if (isHapticSupported()) {
+    try {
+      navigator.vibrate?.(duration);
+    } catch {
+      // Ignorar se falhar
+    }
+  }
+}
+
+// Throttle com requestAnimationFrame para performance
+function useThrottledCallback<T extends (...args: unknown[]) => void>(
+  callback: T,
+  delay: number
+): T {
+  const lastCall = useRef(0);
+  const callbackRef = useRef(callback);
+  const frameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      const now = Date.now();
+      if (now - lastCall.current >= delay) {
+        lastCall.current = now;
+        callbackRef.current(...args);
+      } else {
+        // Agendar para o próximo frame se não passou o delay
+        if (frameRef.current === null) {
+          frameRef.current = requestAnimationFrame(() => {
+            lastCall.current = Date.now();
+            callbackRef.current(...args);
+            frameRef.current = null;
+          });
+        }
+      }
+    }) as T,
+    []
+  );
+}
+
 interface ScratchCardProps {
   premio?: {
     id: string;
@@ -28,31 +78,25 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
   };
 
   const finalPremio = premio || defaultPremio;
-  
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [percent, setPercent] = useState(0);
   const [revelado, setRevelado] = useState(false);
   const { playScratch } = useScratchSound();
 
-  const maxPercentRef = useRef(0);
-  const isDraggingRef = useRef(false);
-  const lastX = useRef(0);
-  const lastY = useRef(0);
-  const isRevealingRef = useRef(false);
-  const moveCountRef = useRef(0);
-  const soundThrottleRef = useRef(0);
-  const mountedRef = useRef(false);
-  const revealedCalledRef = useRef(false); // Previne chamada dupla do onRevelado
+  // Refs para controle
+  const isMounted = useRef(true);
+  const isDragging = useRef(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+  const hasRevealed = useRef(false);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
   const W = 420;
   const H = 260;
 
-  // Inicializa a textura prateada - SÓ UMA VEZ
+  // Inicialização do canvas - executa uma vez
   useEffect(() => {
-    if (mountedRef.current) return; // Previne dupla montagem
-    mountedRef.current = true;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -62,18 +106,18 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
     canvas.width = W;
     canvas.height = H;
 
-    // Textura prateada
+    // Desenhar camada prateada
     ctx.fillStyle = "#a8a8a8";
     ctx.fillRect(0, 0, W, H);
-    
-    // Ruído
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
+
+    // Ruído (estático)
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
     for (let i = 0; i < 4000; i++) {
       ctx.fillRect(Math.random() * W, Math.random() * H, 1.5, 1.5);
     }
 
     // Linhas de brilho
-    ctx.strokeStyle = "rgba(180,180,180,0.6)";
+    ctx.strokeStyle = "rgba(180, 180, 180, 0.6)";
     for (let i = 0; i < 20; i++) {
       ctx.beginPath();
       ctx.moveTo(Math.random() * W, Math.random() * H);
@@ -90,23 +134,53 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
     ctx.font = "16px system-ui";
     ctx.fillText("para revelar o seu prémio", W / 2, H / 2 + 20);
 
-    maxPercentRef.current = 0;
+    ctxRef.current = ctx;
+    isMounted.current = true;
 
-    // Cleanup ao desmontar
     return () => {
-      mountedRef.current = false;
+      isMounted.current = false;
+      ctxRef.current = null;
     };
-  }, []); // Array vazio - só executa uma vez
+  }, []);
 
-  // Função de raspagem
+  // Calcula percentagem raspada - otimizada com requestAnimationFrame
+  const calcularPercent = useCallback(() => {
+    if (!isMounted.current || revelado || !ctxRef.current) return;
+
+    const ctx = ctxRef.current;
+    const data = ctx.getImageData(0, 0, W, H).data;
+    let transparent = 0;
+    const totalPixels = W * H;
+
+    // Sample a cada 16 pixels (4x4 blocos) para velocidade
+    for (let i = 3; i < data.length; i += 16) {
+      if (data[i] === 0) transparent++;
+    }
+
+    const p = Math.round((transparent * 4 / totalPixels) * 100);
+    setPercent((prev) => {
+      const newMax = Math.max(prev, p);
+      if (newMax >= 68 && !hasRevealed.current) {
+        hasRevealed.current = true;
+        setTimeout(() => {
+          if (isMounted.current) {
+            setRevelado(true);
+            onRevelado(true, finalPremio);
+          }
+        }, 100);
+      }
+      return newMax;
+    });
+  }, [revelado, jogoId, finalPremio, onRevelado]);
+
+  // Throttled version for performance
+  const throttledCalc = useThrottledCallback(calcularPercent, 200);
+
+  // Raspagem
   const scratch = useCallback((x: number, y: number) => {
-    if (revelado || !mountedRef.current) return;
+    if (revelado || !isMounted.current || !ctxRef.current) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
+    const ctx = ctxRef.current;
 
     ctx.save();
     ctx.globalCompositeOperation = "destination-out";
@@ -114,7 +188,7 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
     ctx.arc(x, y, 30, 0, Math.PI * 2);
     ctx.fill();
 
-    // SPRAY (15 pontos)
+    // Spray (15 pontos)
     for (let i = 0; i < 15; i++) {
       const ox = (Math.random() - 0.5) * 50;
       const oy = (Math.random() - 0.5) * 50;
@@ -124,93 +198,60 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
     }
     ctx.restore();
 
-    // Throttle do som
-    const now = Date.now();
-    if (now - soundThrottleRef.current > 50) {
-      playScratch(0.5);
-      soundThrottleRef.current = now;
-    }
-  }, [revelado, playScratch]);
+    // Som throttleado
+    playScratch(0.5);
+    hapticFeedback?.(5);
 
-  // Calcula percentagem
-  const calcularPercent = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || revelado) return;
+    // Throttle do cálculo
+    throttledCalc();
+  }, [revelado, playScratch, throttledCalc]);
 
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
-
-    const data = ctx.getImageData(0, 0, W, H).data;
-    let transparent = 0;
-    const totalPixels = W * H;
-    
-    for (let i = 3; i < data.length; i += 16) {
-      if (data[i] === 0) transparent++;
-    }
-    
-    const p = Math.round((transparent * 4 / totalPixels) * 100);
-    
-    if (p > maxPercentRef.current) {
-      maxPercentRef.current = p;
-      setPercent(p);
-    }
-
-    if (maxPercentRef.current >= 68 && !revelado && !isRevealingRef.current && !revealedCalledRef.current) {
-      isRevealingRef.current = true;
-      revealedCalledRef.current = true;
-      setRevelado(true);
-      
-      // Revela canvas
-      ctx.save();
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-
-      // Chama callback SÓ UMA VEZ — API handling is done by parent
-      onRevelado(true, finalPremio);
-    }
-  }, [revelado, jogoId, finalPremio, onRevelado, skipApiCall]);
+  // Revelar manualmente (para fallback)
+  const forceReveal = useCallback(() => {
+    if (hasRevealed.current) return;
+    hasRevealed.current = true;
+    setRevelado(true);
+    onRevelado(true, finalPremio);
+  }, [finalPremio, onRevelado]);
 
   // Event handlers
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    let rafId: number | null = null;
+
     const handleStart = (e: MouseEvent | TouchEvent) => {
-      if (!mountedRef.current) return;
-      isDraggingRef.current = true;
+      if (!isMounted.current) return;
+      isDragging.current = true;
       const rect = canvas.getBoundingClientRect();
-      const x = "clientX" in e ? e.clientX - rect.left : e.touches[0].clientX - rect.left;
-      const y = "clientY" in e ? e.clientY - rect.top : e.touches[0].clientY - rect.top;
-      lastX.current = x;
-      lastY.current = y;
+      const x = "clientX" in e ? e.clientX - rect.left : (e as TouchEvent).touches[0].clientX - rect.left;
+      const y = "clientY" in e ? e.clientY - rect.top : (e as TouchEvent).touches[0].clientY - rect.top;
+      lastPos.current = { x, y };
       scratch(x, y);
     };
 
     const handleMove = (e: MouseEvent | TouchEvent) => {
-      if (!isDraggingRef.current || !mountedRef.current) return;
+      if (!isDragging.current || !isMounted.current) return;
       const rect = canvas.getBoundingClientRect();
-      const x = "clientX" in e ? e.clientX - rect.left : e.touches[0].clientX - rect.left;
-      const y = "clientY" in e ? e.clientY - rect.top : e.touches[0].clientY - rect.top;
+      const x = "clientX" in e ? e.clientX - rect.left : (e as TouchEvent).touches[0].clientX - rect.left;
+      const y = "clientY" in e ? e.clientY - rect.top : (e as TouchEvent).touches[0].clientY - rect.top;
 
+      // Interpolação linear
       const steps = 6;
       for (let i = 0; i < steps; i++) {
-        const ix = lastX.current + (x - lastX.current) * (i / steps);
-        const iy = lastY.current + (y - lastY.current) * (i / steps);
+        const ix = lastPos.current.x + (x - lastPos.current.x) * (i / steps);
+        const iy = lastPos.current.y + (y - lastPos.current.y) * (i / steps);
         scratch(ix, iy);
       }
-      lastX.current = x;
-      lastY.current = y;
-
-      moveCountRef.current++;
-      if (moveCountRef.current % 5 === 0) {
-        calcularPercent();
-      }
+      lastPos.current = { x, y };
     };
 
     const handleEnd = () => {
-      isDraggingRef.current = false;
-      calcularPercent();
+      isDragging.current = false;
+      // Calcular no próximo frame
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(calcularPercent);
     };
 
     canvas.addEventListener("mousedown", handleStart);
@@ -221,6 +262,9 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
     canvas.addEventListener("touchmove", handleMove, { passive: false });
     canvas.addEventListener("touchend", handleEnd, { passive: false });
 
+    // Expor forceReveal no elemento canvas para debug/fallback
+    (canvas as any)._forceReveal = forceReveal;
+
     return () => {
       canvas.removeEventListener("mousedown", handleStart);
       canvas.removeEventListener("mousemove", handleMove);
@@ -229,8 +273,16 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
       canvas.removeEventListener("touchstart", handleStart);
       canvas.removeEventListener("touchmove", handleMove);
       canvas.removeEventListener("touchend", handleEnd);
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [scratch, calcularPercent]);
+  }, [scratch, calcularPercent, forceReveal]);
+
+  // Detectar quando o modal é fechado e limpar
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const getPrizeLevel = (prize: string | null | undefined): string => {
     if (!prize) return "bronze";
@@ -257,9 +309,18 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
     : "bronze";
 
   return (
-    <div ref={containerRef} className="relative mx-auto" style={{ width: W, height: H }}>
+    <div
+      ref={containerRef}
+      className="relative mx-auto select-none"
+      style={{ width: W, height: H }}
+      role="img"
+      aria-label="Cartão de raspadinha"
+    >
       {/* Prémio por baixo */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-600 rounded-3xl flex flex-col items-center justify-center p-4 shadow-2xl overflow-hidden">
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-600 rounded-3xl flex flex-col items-center justify-center p-4 shadow-2xl overflow-hidden"
+        aria-hidden="true"
+      >
         {finalPremio.imagemUrl && (
           <img
             src={finalPremio.imagemUrl}
@@ -285,9 +346,11 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
         ref={canvasRef}
         className="absolute inset-0 rounded-3xl shadow-2xl touch-none cursor-crosshair"
         style={{ touchAction: "none" }}
+        aria-label="Raspe a superfície para revelar o prémio"
+        tabIndex={0}
       />
 
-      {/* Percentagem */}
+      {/* Percentagem (opcional) */}
       {percent > 10 && !revelado && (
         <div className="absolute top-4 right-4 bg-black/70 text-foreground text-xs px-3 py-1 rounded-full font-mono">
           {percent}%
@@ -300,10 +363,16 @@ export function ScratchCard({ premio, jogoId, onRevelado, skipApiCall = false }:
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl"
+          role="status"
+          aria-live="polite"
         >
           <div className="text-center">
             <div className="text-5xl mb-2">🎉</div>
-            <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full text-foreground text-sm font-bold bg-gradient-to-r ${getPrizeLevelColor(prizeLevel)}`}>
+            <div
+              className={`inline-flex items-center gap-2 px-4 py-1 rounded-full text-foreground text-sm font-bold bg-gradient-to-r ${getPrizeLevelColor(
+                prizeLevel
+              )}`}
+            >
               {prizeLevel.toUpperCase()}
             </div>
             <p className="text-2xl font-black mt-2 text-foreground">{finalPremio.nome}</p>

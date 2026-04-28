@@ -78,8 +78,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        'update',
        'evento',
        id,
-       { nome: evento.nome, estado: evento.estado, dataInicio: evento.dataInicio, dataFim: evento.dataFim },
-       { nome: updated.nome, estado: updated.estado, dataInicio: updated.dataInicio, dataFim: updated.dataFim },
+       {
+         oldValues: { nome: evento.nome, estado: evento.estado, dataInicio: evento.dataInicio, dataFim: evento.dataFim },
+         newValues: { nome: updated.nome, estado: updated.estado, dataInicio: updated.dataInicio, dataFim: updated.dataFim }
+       },
        request.headers.get('x-forwarded-for') || 'unknown',
        request.headers.get('user-agent') || 'unknown'
      );
@@ -114,8 +116,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
        'delete',
        'evento',
        id,
-       { nome: evento.nome, aldeiaId: evento.aldeiaId },
-       null,
+       { nome: evento.nome, aldeiaId: evento.aldeiaId, estado: evento.estado },
        request.headers.get('x-forwarded-for') || 'unknown',
        request.headers.get('user-agent') || 'unknown'
      );

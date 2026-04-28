@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Leaf, Ticket, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { playSound } from "@/lib/audio-utils";
 
 interface Evento {
   id: string;
@@ -18,9 +19,11 @@ interface GameQuickActionsProps {
 export function GameQuickActions({ eventos, onOpenModal }: GameQuickActionsProps) {
   const handleCreate = (tipo: "poio_da_vaca" | "rifa" | "raspadinha") => {
     if (!eventos.length) {
+      playSound('error');
       toast.error("Crie um evento primeiro");
       return;
     }
+    playSound('success');
     onOpenModal(tipo);
   };
 

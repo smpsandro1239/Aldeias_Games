@@ -14,6 +14,18 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { Grid3X3, Layers, Sparkles, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/audio-utils";
+
+// Haptic feedback simples
+function hapticFeedback(duration: number = 10): void {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate?.(duration);
+    } catch {
+      // Ignorar
+    }
+  }
+}
 
 interface PoioDaVacaModalProps {
   open: boolean;
@@ -79,16 +91,33 @@ export function PoioDaVacaModal({
       const cartaoSelecionado = selecao.filter((s) => s.letra === letra);
       if (cartaoSelecionado.length === numerosPorLetra) {
         setSelecao(selecao.filter((s) => s.letra !== letra));
+        playSound('click');
       } else {
         setSelecao([...selecao.filter((s) => s.letra !== letra), ...cartaoCompleto]);
+        playSound('success');
+        hapticFeedback(8);
       }
     } else {
       if (isSelecionado(letra, numero)) {
         setSelecao(selecao.filter((s) => !(s.letra === letra && s.numero === numero)));
+        playSound('click');
       } else {
         setSelecao([...selecao, { letra, numero }]);
+        playSound('success');
+        hapticFeedback(8);
       }
     }
+  };
+
+  const getNumeroAriaLabel = (letra: string, numero: number): string => {
+    const ocupado = isOcupado(letra, numero);
+    const jogado = isJogadoPorMim(letra, numero);
+    const selecionado = isSelecionado(letra, numero);
+
+    if (jogado) return `Número ${letra}${numero}, já jogado por si`;
+    if (ocupado) return `Número ${letra}${numero}, ocupado`;
+    if (selecionado) return `Número ${letra}${numero}, selecionado. Pressione novamente para desmarcar`;
+    return `Número ${letra}${numero}, disponível`;
   };
 
   const getValorTotal = () => {
@@ -254,8 +283,12 @@ export function PoioDaVacaModal({
                   })}
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
-                  <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
+                 <div className="flex-1 overflow-y-auto">
+                   <div
+                     className="grid grid-cols-5 sm:grid-cols-8 gap-2"
+                     role="grid"
+                     aria-label={`Números da letra ${letraAtiva}`}
+                   >
                     <AnimatePresence mode="popLayout">
                       {Array.from({ length: numerosPorLetra }, (_, i) => i + 1).map((numero) => {
                         const ocupado = isOcupado(letraAtiva, numero);
@@ -266,13 +299,20 @@ export function PoioDaVacaModal({
                         return (
                           <motion.button
                             key={numero}
-                            layout
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            whileHover={!disabled ? { scale: 1.1 } : {}}
+                            whileHover={!disabled ? { scale: 1.15 } : {}}
                             whileTap={!disabled ? { scale: 0.9 } : {}}
                             onClick={() => toggleNumero(letraAtiva, numero)}
                             disabled={disabled}
+                            aria-label={getNumeroAriaLabel(letraAtiva, numero)}
+                            aria-pressed={selecionado}
+                            aria-disabled={disabled}
+                            tabIndex={disabled ? -1 : 0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggleNumero(letraAtiva, numero);
+                              }
+                            }}
                             className={cn(
                               "h-14 rounded-2xl text-base font-bold transition-all shadow-md",
                               jogadoPorMim && "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-not-allowed border-2 border-green-500",
@@ -375,7 +415,11 @@ export function PoioDaVacaModal({
               Cancelar
             </Button>
             <Button
-              onClick={handleConfirm}
+              onClick={() => {
+                playSound('success');
+                hapticFeedback(20);
+                handleConfirm();
+              }}
               disabled={selecao.length === 0}
               className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-foreground font-bold shadow-lg hover:shadow-xl transition-all"
             >
