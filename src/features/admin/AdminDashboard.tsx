@@ -1,0 +1,951 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+
+import { StatCard } from "@/components/ui/StatCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+import {
+  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Globe,
+  BarChart3, Hash, Wallet, TrendingUp, Building2, CreditCard, Shield,
+  Eye, Trophy
+} from "lucide-react";
+
+import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
+
+import {
+  CreateEventoModal,
+  CreateJogoModal,
+  ConfirmModal,
+  AldeiaModal,
+  UserModal,
+  ResultadosExternosModal,
+  QRCodeGenerator,
+  SorteioModal,
+} from "@/components/modals";
+import { VerificarHashModal } from "@/components/verificar-hash-modal";
+
+import { DashboardAnalytics } from "./analytics-dashboard";
+
+import {
+  OverviewTab,
+  EventosTab,
+  JogosTab,
+  VencedoresTab,
+  UsersTab,
+  AldeiasTab,
+  TransacoesTab,
+  AuditoriaTab,
+  ComissoesTab,
+  VerificarTab,
+} from "./components";
+
+import type {
+  Stats,
+  Evento,
+  Jogo,
+  User,
+  Vencedor,
+  Aldeia,
+  Transacao,
+  Log,
+  VendedorStats,
+} from "./components";
+
+interface AdminDashboardProps {
+  token: string;
+  aldeiaId?: string;
+  userRole?: string;
+  aldeia?: {
+    id: string;
+    nome: string;
+    slug: string;
+    tipoOrganizacao: string;
+    logoUrl?: string;
+    metodosPagamentoDefault?: string;
+  };
+}
+
+export default function AdminDashboard({
+  token,
+  aldeiaId,
+  userRole = "aldeia_admin",
+  aldeia,
+}: AdminDashboardProps) {
+  const router = useRouter();
+
+  // Estados principais
+  const [activeTab, setActiveTab] = useState("overview");
+  const [loading, setLoading] = useState(true);
+
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [jogos, setJogos] = useState<Jogo[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [vencedores, setVencedores] = useState<Vencedor[]>([]);
+  const [aldeias, setAldeias] = useState<Aldeia[]>([]);
+  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [vendedoresStats, setVendedoresStats] = useState<VendedorStats[]>([]);
+
+  const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
+  const [entregasPendentesCount, setEntregasPendentesCount] = useState(0);
+
+  // Estados dos modals
+  const [eventoModalOpen, setEventoModalOpen] = useState(false);
+  const [jogoModalOpen, setJogoModalOpen] = useState(false);
+  const [aldeiaModalOpen, setAldeiaModalOpen] = useState(false);
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [convertPrizeOpen, setConvertPrizeOpen] = useState(false);
+  const [confirmEntregaOpen, setConfirmEntregaOpen] = useState(false);
+  const [verificarHashOpen, setVerificarHashOpen] = useState(false);
+  const [qrCodeOpen, setQrCodeOpen] = useState(false);
+  const [resultadosExternosOpen, setResultadosExternosOpen] = useState(false);
+  const [testJogoOpen, setTestJogoOpen] = useState(false);
+
+  // Seleções
+  const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
+  const [selectedJogo, setSelectedJogo] = useState<Jogo | null>(null);
+  const [selectedAldeia, setSelectedAldeia] = useState<Aldeia | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedPremio, setSelectedPremio] = useState<Vencedor | null>(null);
+  const [convertValor, setConvertValor] = useState("25");
+  const [qrCodeData, setQrCodeData] = useState<{ jogoId?: string; eventoId?: string; aldeiaSlug?: string; type: "jogo" | "evento" | "aldeia" } | null>(null);
+  const [testJogo, setTestJogo] = useState<Jogo | null>(null);
+  const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
+
+  const [paymentMethodsDefault, setPaymentMethodsDefault] = useState<string[]>(["saldo", "dinheiro"]);
+  const [selectedEventoIdParaJogo, setSelectedEventoIdParaJogo] = useState("");
+  const [filtroEventoId, setFiltroEventoId] = useState<string | null>(null);
+
+  // ==================== FETCH DATA OTIMIZADO ====================
+  const getApi = useCallback(async (url: string, revalidate: number = 30) => {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        next: { revalidate },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data ?? json;
+      }
+      return null;
+    } catch (error) {
+      console.error("Erro na requisição:", url, error);
+      return null;
+    }
+  }, [token]);
+
+  const fetchPedidosPendentes = useCallback(async () => {
+    try {
+      const q = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=pendente` : "?estado=pendente";
+      const res = await fetch(`/api/admin/pedidos-carregamento${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPedidosPendentesCount(data.data?.length || 0);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar pedidos pendentes:", error);
+    }
+  }, [token, aldeiaId]);
+
+  const fetchEntregasPendentes = useCallback(async () => {
+    try {
+      const q = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=solicitado` : "?estado=solicitado";
+      const res = await fetch(`/api/admin/entregas-saldo${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEntregasPendentesCount(data.data?.length || 0);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar entregas pendentes:", error);
+    }
+  }, [token, aldeiaId]);
+
+  const fetchData = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+
+    try {
+      const q = aldeiaId ? `?aldeiaId=${aldeiaId}` : "";
+
+      // Dados ESSENCIAIS (carregados sempre, revalidate curto)
+      const [st, ev, jg, us, vencedoresData] = await Promise.all([
+        getApi(`/api/dashboard/stats${q}`, 20),
+        getApi(`/api/eventos${q}`, 30),
+        getApi(`/api/jogos${q}`, 30),
+        getApi(`/api/users${q}`, 40),
+        getApi(`/api/participacoes${q}${q ? '&' : '?'}ganhador=true`, 30),
+      ]);
+
+      setStats(st || null);
+      setEventos(ev || []);
+      setJogos(jg || []);
+      setUsers(us || []);
+      setVencedores(vencedoresData || []);
+
+      // Dados SECUNDÁRIOS (apenas para super_admin, revalidate longo)
+      if (userRole === "super_admin") {
+        const [al, tr, lg] = await Promise.all([
+          getApi(`/api/aldeias`, 60),
+          getApi(`/api/admin/transacoes`, 40),
+          getApi(`/api/admin/logs`, 60),
+        ]);
+        setAldeias(al || []);
+        setTransacoes(tr || []);
+        setLogs(lg || []);
+      }
+
+      // Dados específicos para aldeia_admin
+      if (userRole === "aldeia_admin") {
+        const vs = await getApi(`/api/admin/vendedores-stats`, 60);
+        setVendedoresStats(vs || []);
+      }
+
+      // Contadores pendentes
+      await Promise.all([fetchPedidosPendentes(), fetchEntregasPendentes()]);
+
+    } catch (error) {
+      toast.error("Erro ao carregar dados do dashboard");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, aldeiaId, userRole, getApi, fetchPedidosPendentes, fetchEntregasPendentes]);
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Carregar payment methods defaults
+  useEffect(() => {
+    if (aldeia?.metodosPagamentoDefault) {
+      try {
+        const defaults = JSON.parse(aldeia.metodosPagamentoDefault);
+        setPaymentMethodsDefault(defaults);
+      } catch {
+        setPaymentMethodsDefault(["saldo", "dinheiro"]);
+      }
+    }
+  }, [aldeia]);
+
+  // ==================== HANDLERS ====================
+
+  const handleSaveEvento = useCallback(async (data: any) => {
+    const isEditing = !!data.id;
+    const jogosSelecionados = data.jogosSelecionados || [];
+    const eventoData = { ...data };
+    delete eventoData.jogosSelecionados;
+
+    const url = isEditing ? `/api/eventos/${data.id}` : `/api/eventos`;
+    const method = isEditing ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(eventoData),
+      });
+
+      if (res.ok) {
+        const evento = await res.json();
+        const eventoId = evento.data?.id || evento.id;
+
+        // Criar jogos automaticamente se selecionados
+        if (!isEditing && jogosSelecionados.length > 0 && eventoId) {
+          for (const tipoJogo of jogosSelecionados) {
+            const jogoData = {
+              nome: `${data.nome} - ${tipoJogo}`,
+              tipo: tipoJogo,
+              configuracao: "{}",
+              preco: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
+              precoBase: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
+              stockInicial: 100,
+              eventoId,
+              aldeiaId: data.aldeiaId,
+              estado: "aberto",
+            };
+
+            await fetch("/api/jogos", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(jogoData),
+            });
+          }
+          toast.success(`${jogosSelecionados.length} jogo(s) criado(s) para o evento!`);
+        }
+
+        toast.success(`Evento ${isEditing ? "atualizado" : "criado"} com sucesso!`);
+        fetchData();
+        setEventoModalOpen(false);
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || "Erro ao salvar evento");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar evento");
+    }
+  }, [token, fetchData, setEventoModalOpen]);
+
+  const handleSaveJogo = useCallback(async (data: any) => {
+    const isEditing = !!data.id;
+    const url = isEditing ? `/api/jogos/${data.id}` : `/api/jogos`;
+    const method = isEditing ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        toast.success(`Jogo ${isEditing ? "atualizado" : "criado"} com sucesso!`);
+        fetchData();
+        setJogoModalOpen(false);
+      } else {
+        const errorMsg = result.error || result.details?.map((d: any) => d.message).join(', ') || "Erro ao salvar jogo";
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      if (!error.message) {
+        toast.error("Erro ao salvar jogo");
+      }
+      throw error;
+    }
+  }, [token, fetchData, setJogoModalOpen]);
+
+  const handleToggleJogoEstado = useCallback(async (jogo: Jogo) => {
+    const novoEstado = jogo.estado === 'aberto' ? 'fechado' : 'aberto';
+    try {
+      const res = await fetch(`/api/jogos/${jogo.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ estado: novoEstado }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Jogo ${novoEstado === 'aberto' ? 'ativado' : 'desativado'} com sucesso!`);
+        fetchData();
+      } else {
+        toast.error(data.error || "Erro ao alterar estado do jogo");
+      }
+    } catch (error) {
+      toast.error("Erro de conexão ao alterar estado do jogo");
+    }
+  }, [token, fetchData]);
+
+  const handleTestarJogo = useCallback((jogo: Jogo) => {
+    setTestJogo(jogo);
+    setTestJogoOpen(true);
+  }, [setTestJogoOpen]);
+
+  const handleSaveAldeia = useCallback(async (data: any) => {
+    const isEditing = !!data.id;
+    const url = isEditing ? `/api/aldeias/${data.id}` : `/api/aldeias`;
+    const method = isEditing ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        toast.success(`Organização ${isEditing ? "atualizada" : "criada"} com sucesso!`);
+        fetchData();
+        setAldeiaModalOpen(false);
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || "Erro ao salvar organização");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar organização");
+    }
+  }, [token, fetchData, setAldeiaModalOpen]);
+
+  const handleSaveUser = useCallback(async (data: any) => {
+    const isEditing = !!data.id;
+    const url = isEditing ? `/api/users/${data.id}` : `/api/users`;
+    const method = isEditing ? "PUT" : "POST";
+
+    let userData = { ...data };
+
+    if (userRole === "aldeia_admin" && aldeiaId) {
+      userData.aldeiaId = aldeiaId;
+      if (data.role === "aldeia_admin") {
+        throw new Error("Não tem permissão para criar administradores de aldeia");
+      }
+    }
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (res.ok) {
+        toast.success(`Utilizador ${isEditing ? "atualizado" : "criado"} com sucesso!`);
+        fetchData();
+        setUserModalOpen(false);
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || "Erro ao salvar utilizador");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar utilizador");
+    }
+  }, [token, fetchData, setUserModalOpen, userRole, aldeiaId]);
+
+  const handleConvertPrize = useCallback(async (participacaoId: string, valor: number) => {
+    try {
+      const res = await fetch("/api/admin/convert-prize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ participacaoId, valor }),
+      });
+
+      if (res.ok) {
+        toast.success("Prémio convertido em saldo com sucesso!");
+        fetchData();
+        setConvertPrizeOpen(false);
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Erro ao converter prémio");
+      }
+    } catch (error) {
+      toast.error("Erro ao converter prémio");
+    }
+  }, [token, fetchData, setConvertPrizeOpen]);
+
+  const requestDelete = useCallback((type: string, id: string) => {
+    setDeleteData({ type, id });
+    // Abrir modal de confirmação - o estado confirmDeleteOpen não existe, usaremos deleteData não nulo
+    // Vamos usar um modal ConfirmModal que observa deleteData
+  }, [setDeleteData]);
+
+  const executeDelete = useCallback(async () => {
+    if (!deleteData) return;
+
+    const urls: Record<string, string> = {
+      evento: `/api/eventos/${deleteData.id}`,
+      jogo: `/api/jogos/${deleteData.id}`,
+      aldeia: `/api/aldeias/${deleteData.id}`,
+      user: `/api/users/${deleteData.id}`,
+    };
+
+    try {
+      const res = await fetch(urls[deleteData.type], {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        toast.success("Eliminado com sucesso!");
+        fetchData();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Erro ao eliminar");
+      }
+    } catch (error) {
+      toast.error("Erro ao eliminar");
+    } finally {
+      setDeleteData(null);
+    }
+  }, [deleteData, token, fetchData]);
+
+  const getEstadoBadge = useCallback((estado: string) => {
+    const variants: Record<string, any> = {
+      rascunho: "secondary",
+      ativo: "default",
+      aberto: "default",
+      pausado: "warning",
+      fechado: "destructive",
+      finalizado: "outline",
+    };
+    return <Badge variant={variants[estado] || "default"}>{estado}</Badge>;
+  }, []);
+
+  const handleVerJogos = useCallback((eventoId: string) => {
+    setSelectedEventoIdParaJogo(eventoId);
+    setFiltroEventoId(eventoId);
+    setActiveTab("jogos");
+  }, []);
+
+  const handleLimparFiltroJogos = useCallback(() => {
+    setFiltroEventoId(null);
+    setSelectedEventoIdParaJogo("");
+  }, []);
+
+  // ==================== RENDER ====================
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-64 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-28 bg-muted animate-pulse rounded" />
+            <div className="h-10 w-24 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+        <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="h-32">
+              <CardContent className="p-6">
+                <div className="h-4 w-24 bg-muted animate-pulse rounded mb-4" />
+                <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {userRole === "super_admin"
+              ? "Painel Global"
+              : userRole === "aldeia_admin"
+              ? "O Meu Painel"
+              : "Dashboard"}
+          </h1>
+          {userRole === "aldeia_admin" && aldeia && (
+            <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-medium rounded-full">
+              {aldeia.nome}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:w-auto">
+          {userRole === "super_admin" && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedAldeia(null);
+                setAldeiaModalOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Nova Aldeia
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              setSelectedEvento(null);
+              setEventoModalOpen(true);
+            }}
+            className="w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Novo Evento
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setResultadosExternosOpen(true)}
+            className="w-full sm:w-auto"
+          >
+            <Globe className="h-4 w-4 mr-2" /> Lotaria Externa
+          </Button>
+        </div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Angariado"
+          value={formatCurrency(stats?.totalAngariado || 0)}
+          variant="emerald"
+          icon={DollarSign}
+        />
+        <StatCard
+          title="Participações"
+          value={stats?.totalParticipacoes?.toLocaleString() || "0"}
+          variant="blue"
+          icon={Users}
+        />
+        <StatCard
+          title="Eventos Ativos"
+          value={stats?.eventosAtivos || 0}
+          variant="violet"
+          icon={Calendar}
+        />
+        <StatCard
+          title="Jogos Ativos"
+          value={stats?.jogosAtivos || 0}
+          variant="amber"
+          icon={Gamepad2}
+        />
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="flex flex-wrap justify-center gap-2">
+          <TabsTrigger value="overview">
+            <LayoutDashboard className="h-4 w-4 mr-2" /> Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="analytics">
+            <BarChart3 className="h-4 w-4 mr-2" /> Analytics
+          </TabsTrigger>
+          <TabsTrigger value="eventos">
+            <Calendar className="h-4 w-4 mr-2" /> Eventos
+          </TabsTrigger>
+          <TabsTrigger value="jogos">
+            <Gamepad2 className="h-4 w-4 mr-2" /> Jogos
+          </TabsTrigger>
+          <TabsTrigger value="vencedores">
+            <Trophy className="h-4 w-4 mr-2" /> Vencedores
+          </TabsTrigger>
+
+          {/* Pedidos e Entregas (navegação externa) */}
+          <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="relative">
+            <Wallet className="h-4 w-4 mr-2" /> Pedidos
+            {pedidosPendentesCount > 0 && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
+                {pedidosPendentesCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="relative">
+            <TrendingUp className="h-4 w-4 mr-2" /> Entregas
+            {entregasPendentesCount > 0 && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
+                {entregasPendentesCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+
+          <TabsTrigger value="verificar">
+            <Hash className="h-4 w-4 mr-2" /> Verificar
+          </TabsTrigger>
+
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-2" /> Utilizadores
+          </TabsTrigger>
+
+          {userRole === "aldeia_admin" && (
+            <TabsTrigger value="comissoes">
+              <DollarSign className="h-4 w-4 mr-2" /> Comissões
+            </TabsTrigger>
+          )}
+
+          {userRole === "super_admin" && (
+            <>
+              <TabsTrigger value="aldeias">
+                <Building2 className="h-4 w-4 mr-2" /> Aldeias
+              </TabsTrigger>
+              <TabsTrigger value="transacoes">
+                <CreditCard className="h-4 w-4 mr-2" /> Transações
+              </TabsTrigger>
+              <TabsTrigger value="auditoria">
+                <Shield className="h-4 w-4 mr-2" /> Auditoria
+              </TabsTrigger>
+            </>
+          )}
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <OverviewTab
+            stats={stats}
+            eventos={eventos}
+            setEventoModalOpen={() => setEventoModalOpen(true)}
+            setJogoModalOpen={() => setJogoModalOpen(true)}
+            getEstadoBadge={getEstadoBadge}
+            userRole={userRole}
+          />
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics">
+          <DashboardAnalytics token={token} aldeiaId={aldeiaId} />
+        </TabsContent>
+
+        {/* Eventos Tab */}
+        <TabsContent value="eventos">
+          <EventosTab
+            eventos={eventos}
+            setSelectedEvento={setSelectedEvento}
+            setEventoModalOpen={setEventoModalOpen}
+            setJogoModalOpen={setJogoModalOpen}
+            requestDelete={requestDelete}
+            getEstadoBadge={getEstadoBadge}
+            onVerJogos={handleVerJogos}
+          />
+        </TabsContent>
+
+        {/* Jogos Tab */}
+        <TabsContent value="jogos">
+          <JogosTab
+            jogos={jogos}
+            eventos={eventos}
+            userRole={userRole}
+            selectedEventoIdParaJogo={selectedEventoIdParaJogo}
+            setSelectedJogo={setSelectedJogo}
+            setJogoModalOpen={setJogoModalOpen}
+            setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
+            setQrCodeData={setQrCodeData}
+            setQrCodeOpen={setQrCodeOpen}
+            handleTestarJogo={handleTestarJogo}
+            setTestJogoOpen={setTestJogoOpen}
+            requestDelete={requestDelete}
+            getEstadoBadge={getEstadoBadge}
+            onToggleEstado={handleToggleJogoEstado}
+            filtroEventoId={filtroEventoId}
+            onLimparFiltro={handleLimparFiltroJogos}
+          />
+        </TabsContent>
+
+        {/* Vencedores Tab */}
+        <TabsContent value="vencedores">
+          <VencedoresTab
+            vencedores={vencedores}
+            setSelectedPremio={setSelectedPremio}
+            setConvertPrizeOpen={setConvertPrizeOpen}
+            setConfirmEntregaOpen={setConfirmEntregaOpen}
+          />
+        </TabsContent>
+
+        {/* Verificar Tab */}
+        <TabsContent value="verificar">
+          <VerificarTab setVerificarHashOpen={setVerificarHashOpen} />
+        </TabsContent>
+
+        {/* Users Tab */}
+        <TabsContent value="users">
+          <UsersTab
+            users={users}
+            setSelectedUser={setSelectedUser}
+            setUserModalOpen={setUserModalOpen}
+            requestDelete={requestDelete}
+          />
+        </TabsContent>
+
+        {/* Comissões Tab (apenas aldeia_admin) */}
+        {userRole === "aldeia_admin" && (
+          <TabsContent value="comissoes">
+            <ComissoesTab
+              vendedoresStats={vendedoresStats}
+              setSelectedUser={setSelectedUser}
+              setUserModalOpen={setUserModalOpen}
+            />
+          </TabsContent>
+        )}
+
+        {/* Aldeias Tab (apenas super_admin) */}
+        {userRole === "super_admin" && (
+          <TabsContent value="aldeias">
+            <AldeiasTab
+              aldeias={aldeias}
+              setSelectedAldeia={setSelectedAldeia}
+              setAldeiaModalOpen={setAldeiaModalOpen}
+              requestDelete={requestDelete}
+            />
+          </TabsContent>
+        )}
+
+        {/* Transações Tab (apenas super_admin) */}
+        {userRole === "super_admin" && (
+          <TabsContent value="transacoes">
+            <TransacoesTab transacoes={transacoes} />
+          </TabsContent>
+        )}
+
+        {/* Auditoria Tab (apenas super_admin) */}
+        {userRole === "super_admin" && (
+          <TabsContent value="auditoria">
+            <AuditoriaTab logs={logs} />
+          </TabsContent>
+        )}
+      </Tabs>
+
+      {/* ==================== MODALS ==================== */}
+      <CreateEventoModal
+        open={eventoModalOpen}
+        onOpenChange={setEventoModalOpen}
+        onSubmit={handleSaveEvento}
+        aldeiaId={aldeiaId || ""}
+        initialData={selectedEvento}
+        aldeias={userRole === "super_admin" ? aldeias : undefined}
+      />
+
+      <CreateJogoModal
+        open={jogoModalOpen}
+        onOpenChange={setJogoModalOpen}
+        onSubmit={handleSaveJogo}
+        eventoId={selectedEventoIdParaJogo}
+        initialData={selectedJogo as any}
+        userRole={userRole}
+        token={token}
+        aldeiaId={aldeiaId}
+        metodosPagamentoDefault={paymentMethodsDefault}
+      />
+
+      <AldeiaModal
+        open={aldeiaModalOpen}
+        onOpenChange={setAldeiaModalOpen}
+        onSubmit={handleSaveAldeia}
+        initialData={selectedAldeia as any}
+      />
+
+      <UserModal
+        open={userModalOpen}
+        onOpenChange={setUserModalOpen}
+        onSubmit={handleSaveUser}
+        initialData={selectedUser as any}
+        aldeias={aldeia ? [aldeia] : (userRole === "super_admin" ? aldeias : [])}
+        currentUserRole={userRole}
+      />
+
+      <ConfirmModal
+        open={!!deleteData}
+        onOpenChange={() => setDeleteData(null)}
+        title="Confirmar Eliminação"
+        description="Esta ação não pode ser desfeita. Tem a certeza que deseja eliminar?"
+        onConfirm={executeDelete}
+      />
+
+      {/* Outros modais */}
+      <ResultadosExternosModal
+        open={resultadosExternosOpen}
+        onOpenChange={setResultadosExternosOpen}
+        token={token}
+      />
+
+      <VerificarHashModal
+        open={verificarHashOpen}
+        onOpenChange={setVerificarHashOpen}
+        token={token}
+      />
+
+      <QRCodeGenerator
+        open={qrCodeOpen}
+        onOpenChange={setQrCodeOpen}
+        data={qrCodeData || { type: "jogo" }}
+        title="Partilhar Jogo"
+      />
+
+      {/* Modal Converter Prémio em Saldo */}
+      <ConfirmModal
+        open={convertPrizeOpen}
+        onOpenChange={setConvertPrizeOpen}
+        title="Converter Prémio em Saldo"
+        description={
+          <div className="space-y-4">
+            <p>Introduza o valor a creditar na carteira do utilizador:</p>
+            <Input
+              type="number"
+              value={convertValor}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConvertValor(e.target.value)}
+              placeholder="Valor em euros"
+            />
+          </div>
+        }
+        confirmText="Converter"
+        onConfirm={() => {
+          const valor = parseFloat(convertValor);
+          if (selectedPremio && !isNaN(valor) && valor > 0) {
+            handleConvertPrize(selectedPremio.id, valor);
+          }
+        }}
+      />
+
+      {/* Modal Confirmar Entrega */}
+      <ConfirmModal
+        open={confirmEntregaOpen}
+        onOpenChange={setConfirmEntregaOpen}
+        title="Confirmar Entrega"
+        description="Tem a certeza que deseja marcar este prémio como entregue fisicamente?"
+        onConfirm={async () => {
+          if (selectedPremio) {
+            const res = await fetch(`/api/participacoes/${selectedPremio.id}`, {
+              method: 'PUT',
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ premioEntregue: true })
+            });
+            if(res.ok) { toast.success("Marcado como entregue"); fetchData(); }
+          }
+        }}
+      />
+
+      {/* Modal Testar Jogo (Super Admin) */}
+      <Dialog open={testJogoOpen} onOpenChange={setTestJogoOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-secondary" />
+              Testar Jogo: {testJogo?.nome}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground mb-4">
+              Esta funcionalidade permite testar o jogo em modo fictício, sem afectar dados reais.
+            </p>
+            {/* Conteúdo do teste a implementar */}
+            <p className="text-sm text-muted-foreground">
+              Em breve: interface de teste...
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* SorteioModal para executar sorteios */}
+      {testJogo && (
+        <SorteioModal
+          open={testJogoOpen}
+          onOpenChange={setTestJogoOpen}
+          jogoNome={testJogo.nome}
+          totalParticipacoes={0} // TODO: obter número real de participações
+          onExecutarSorteio={async (observacoes?: string) => {
+            // Implementar lógica de teste
+            return { success: false, error: "Não implementado" };
+          }}
+        />
+      )}
+    </div>
+  );
+}
