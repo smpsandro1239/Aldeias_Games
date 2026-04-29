@@ -1,7 +1,7 @@
 "use client";
 
 import { StatCard } from "@/components/ui/StatCard";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,18 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
   const [entregasPendentesCount, setEntregasPendentesCount] = useState(0);
   const [userSearch, setUserSearch] = useState<string>("");
   const [userPage, setUserPage] = useState<number>(1);
+  const [eventoSearch, setEventoSearch] = useState<string>("");
+  const [eventoPage, setEventoPage] = useState<number>(1);
+  const [vencedorSearch, setVencedorSearch] = useState<string>("");
+  const [vencedorPage, setVencedorPage] = useState<number>(1);
+  const [aldeiaSearch, setAlderiaSearch] = useState<string>("");
+  const [aldeiaPage, setAlderiaPage] = useState<number>(1);
+  const [transacaoSearch, setTransacaoSearch] = useState<string>("");
+  const [transacaoPage, setTransacaoPage] = useState<number>(1);
+  const eventosPerPage = 5;
+  const vencedoresPerPage = 5;
+  const aldeiasPerPage = 5;
+  const transacoesPerPage = 5;
 
   // Modals state
   const [eventoModalOpen, setEventoModalOpen] = useState(false);
@@ -210,21 +222,69 @@ export function AdminDashboard({ token, aldeiaId, userRole = "aldeia_admin", ald
     };
 
   // Computed: filtered users based on search
-  const filteredUsers = users.filter((u) => {
+  const filteredUsers = useMemo(() => {
     const searchLower = userSearch.toLowerCase();
-    if (!searchLower) return true;
-    return (
-      u.nome?.toLowerCase().includes(searchLower) ||
-      u.email?.toLowerCase().includes(searchLower) ||
-      u.telefone?.toLowerCase().includes(searchLower)
-    );
-  });
+    return users.filter((u) => {
+      if (!searchLower) return true;
+      return (
+        u.nome?.toLowerCase().includes(searchLower) ||
+        u.email?.toLowerCase().includes(searchLower) ||
+        u.telefone?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [users, userSearch]);
 
   useEffect(() => {
     setUserPage(1);
   }, [userSearch]);
-  
+   
   // --- EVENTOS ---
+  const filteredEventos = useMemo(() => {
+    const searchLower = eventoSearch.toLowerCase();
+    return eventos.filter(ev => 
+      !searchLower || ev.nome?.toLowerCase().includes(searchLower)
+    );
+  }, [eventos, eventoSearch]);
+
+  const filteredVencedores = useMemo(() => {
+    const searchLower = vencedorSearch.toLowerCase();
+    return vencedores.filter(v => {
+      if (!searchLower) return true;
+      return (
+        v.jogo?.nome?.toLowerCase().includes(searchLower) ||
+        v.nomeCliente?.toLowerCase().includes(searchLower) ||
+        v.user?.nome?.toLowerCase().includes(searchLower) ||
+        v.telefoneCliente?.toLowerCase().includes(searchLower) ||
+        v.user?.telefone?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [vencedores, vencedorSearch]);
+
+  const filteredAldeias = useMemo(() => {
+    const searchLower = aldeiaSearch.toLowerCase();
+    return aldeias.filter(al => {
+      if (!searchLower) return true;
+      return (
+        al.nome?.toLowerCase().includes(searchLower) ||
+        al.tipoOrganizacao?.toLowerCase().includes(searchLower) ||
+        al.email?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [aldeias, aldeiaSearch]);
+
+  const filteredTransacoes = useMemo(() => {
+    const searchLower = transacaoSearch.toLowerCase();
+    return transacoes.filter(t => {
+      if (!searchLower) return true;
+      return (
+        t.tipo?.toLowerCase().includes(searchLower) ||
+        t.descricao?.toLowerCase().includes(searchLower) ||
+        t.user?.nome?.toLowerCase().includes(searchLower) ||
+        t.user?.email?.toLowerCase().includes(searchLower) ||
+        (t.metodoPagamento || "").toLowerCase().includes(searchLower)
+      );
+    });
+  }, [transacoes, transacaoSearch]);
   const handleSaveEvento = async (data: any) => {
     const isEditing = !!data.id;
     const jogosSelecionados = data.jogosSelecionados || [];

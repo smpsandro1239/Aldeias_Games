@@ -155,7 +155,7 @@ export default function AdminEntregasPage() {
      .filter(e => e.estado === 'solicitado')
      .reduce((acc, e) => acc + e.valor, 0);
 
-  if (loading || !token) {
+   if (loading || !isAuthenticated) {
     return <LoaderScreen message="A carregar entregas..." />;
   }
 
