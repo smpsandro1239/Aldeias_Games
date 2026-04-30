@@ -7,14 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface UserData {
-  id?: string;
-  nome: string;
-  email: string;
-  password?: string;
-  role: "super_admin" | "aldeia_admin" | "vendedor" | "user";
-  telefone?: string;
-  aldeiaId?: string | null;
+export interface UserData {
+   id?: string;
+   nome: string;
+   email: string;
+   password?: string;
+   role: "super_admin" | "aldeia_admin" | "vendedor" | "user";
+   telefone?: string;
+   aldeiaId?: string | null;
 }
 
 interface UserModalProps {

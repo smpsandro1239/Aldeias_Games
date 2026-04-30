@@ -59,34 +59,34 @@ interface EventoOption {
   aldeiaNome?: string;
 }
 
-interface JogoData {
-  id?: string;
-  nome: string;
-  tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
-  descricao?: string;
-  preco: number;
-  stockInicial: number;
-  limitePorUsuario: number;
-  eventoId: string;
-  configuracao: Record<string, unknown>;
-  modoSorteio?: "app" | "externo";
-  detalhesSorteioExterno?: string;
-  premios?: Array<{
-    nome: string;
-    descricao?: string;
-    valorDinheiroAlternative?: number;
-    percentagem?: number;
-    ordem: number;
-  }>;
-  custoQuadrado?: number;
-  valorMercadoVaca?: number;
-  valorCompraVaca?: number;
-  dimensoesCampo?: string;
-  permitirStripe?: boolean;
-  lucroMinimoPercent?: number;
-  custoMedioPrevisto?: number;
-  receitaEsperada?: number;
-  lucroLiquidoPrevisto?: number;
+export interface JogoData {
+   id?: string;
+   nome: string;
+   tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+   descricao?: string;
+   preco: number;
+   stockInicial: number;
+   limitePorUsuario: number;
+   eventoId: string;
+   configuracao: Record<string, unknown>;
+   modoSorteio?: "app" | "externo";
+   detalhesSorteioExterno?: string;
+   premios?: Array<{
+     nome: string;
+     descricao?: string;
+     valorDinheiroAlternative?: number;
+     percentagem?: number;
+     ordem: number;
+   }>;
+   custoQuadrado?: number;
+   valorMercadoVaca?: number;
+   valorCompraVaca?: number;
+   dimensoesCampo?: string;
+   permitirStripe?: boolean;
+   lucroMinimoPercent?: number;
+   custoMedioPrevisto?: number;
+   receitaEsperada?: number;
+   lucroLiquidoPrevisto?: number;
 }
 
 interface CreateJogoModalProps {
@@ -163,34 +163,34 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
         ? JSON.parse(initialData.configuracao) 
         : initialData.configuracao || {};
       
-      setFormData({
-        nome: initialData.nome || "",
-        tipo: initialData.tipo || "raspadinha",
-        descricao: initialData.descricao || "",
-        preco: initialData.preco?.toString() || "2",
-        stockInicial: initialData.stockInicial?.toString() || "100",
-        limitePorUsuario: initialData.limitePorUsuario?.toString() || "10",
-        numeroInicial: "1",
-        numeroFinal: "1000",
-        modoSorteio: initialData.modoSorteio || "app",
-        detalhesSorteioExterno: initialData.detalhesSorteioExterno || "",
-        raspadinhaTitulo: "RASPADINHA DA SORTE",
-        raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
-        raspadinhaOrganizacao: "",
-        dimensoesX: "10",
-        dimensoesY: "10",
-        custoQuadrado: "5",
-        valorMercadoVaca: "1000",
-        valorCompraVaca: "800",
-        dataSorteio: "",
-        horaSorteio: "",
-        localSorteio: "",
-        numeroBlocos: "1",
-        permitirStripe: config.permitirStripe || false,
-        permitirMBWay: config.permitirMBWay || false,
-        permitirSaldo: config.permitirSaldo !== false,
-        valorPremios: "",
-      });
+    setFormData({
+      nome: initialData.nome || "",
+      tipo: initialData.tipo || "raspadinha",
+      descricao: initialData.descricao || "",
+      preco: initialData.preco?.toString() || "2",
+      stockInicial: initialData.stockInicial?.toString() || "100",
+      limitePorUsuario: initialData.limitePorUsuario?.toString() || "10",
+      numeroInicial: "1",
+      numeroFinal: "1000",
+      modoSorteio: initialData.modoSorteio || "app",
+      detalhesSorteioExterno: initialData.detalhesSorteioExterno || "",
+      raspadinhaTitulo: "RASPADINHA DA SORTE",
+      raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
+      raspadinhaOrganizacao: "",
+      dimensoesX: "10",
+      dimensoesY: "10",
+      custoQuadrado: "5",
+      valorMercadoVaca: "1000",
+      valorCompraVaca: "800",
+      dataSorteio: config.dataSorteio || "",
+      horaSorteio: config.horaSorteio || "",
+      localSorteio: config.localSorteio || "",
+      numeroBlocos: config.numeroBlocos || "1",
+      permitirStripe: config.permitirStripe || false,
+      permitirMBWay: config.permitirMBWay || false,
+      permitirSaldo: config.permitirSaldo !== false,
+      valorPremios: "",
+    });
       
       if (initialData.premios && initialData.premios.length > 0) {
         if (initialData.tipo === "raspadinha") {
@@ -871,12 +871,46 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       />
                       <span className="text-sm">💳 Cartão</span>
                     </label>
-                  </div>
-                  {(!formData.permitirSaldo && !formData.permitirMBWay && !formData.permitirStripe) && (
-                    <p className="text-xs text-destructive">Selecione pelo menos um método de pagamento</p>
-                  )}
-                </div>
-              )}
+                 </div>
+                 {(!formData.permitirSaldo && !formData.permitirMBWay && !formData.permitirStripe) && (
+                     <p className="text-xs text-destructive">Selecione pelo menos um método de pagamento</p>
+                 )}
+             </div>
+         )}
+
+         {/* Data, Hora e Local do Sorteio (comum a todos os tipos de jogo) */}
+         <div className="border-t pt-4 mt-2">
+             <h3 className="text-sm font-semibold">Data, Hora e Local do Sorteio</h3>
+             <div className="grid gap-4">
+                 <div className="grid gap-2">
+                     <Label htmlFor="dataSorteio">Data do Sorteio</Label>
+                     <Input
+                         id="dataSorteio"
+                         type="date"
+                         value={formData.dataSorteio}
+                         onChange={(e) => setFormData({ ...formData, dataSorteio: e.target.value })}
+                     />
+                 </div>
+                 <div className="grid gap-2">
+                     <Label htmlFor="horaSorteio">Hora do Sorteio</Label>
+                     <Input
+                         id="horaSorteio"
+                         type="time"
+                         value={formData.horaSorteio}
+                         onChange={(e) => setFormData({ ...formData, horaSorteio: e.target.value })}
+                     />
+                 </div>
+                 <div className="grid gap-2">
+                     <Label htmlFor="localSorteio">Local do Sorteio</Label>
+                     <Input
+                         id="localSorteio"
+                         placeholder="Ex: Salão Paroquial, Rua Principal, etc."
+                         value={formData.localSorteio}
+                         onChange={(e) => setFormData({ ...formData, localSorteio: e.target.value })}
+                     />
+                 </div>
+             </div>
+         </div>
 
               {formData.tipo === "raspadinha" && (
                 <>

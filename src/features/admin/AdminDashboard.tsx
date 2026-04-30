@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 
 import { StatCard } from "@/components/ui/StatCard";
@@ -12,52 +12,57 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 import {
-  LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Globe,
-  BarChart3, Hash, Wallet, TrendingUp, Building2, CreditCard, Shield,
-  Eye, Trophy
+   LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Globe,
+   BarChart3, Hash, Wallet, TrendingUp, Building2, CreditCard, Shield,
+   Eye, Trophy
 } from "lucide-react";
 
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 
 import {
-  CreateEventoModal,
-  CreateJogoModal,
-  ConfirmModal,
-  AldeiaModal,
-  UserModal,
-  ResultadosExternosModal,
-  QRCodeGenerator,
-  SorteioModal,
+   CreateEventoModal,
+   CreateJogoModal,
+   ConfirmModal,
+   AldeiaModal,
+   UserModal,
+   ResultadosExternosModal,
+   QRCodeGenerator,
+   SorteioModal,
 } from "@/components/modals";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";
 
 import { DashboardAnalytics } from "./analytics-dashboard";
 
 import {
-  OverviewTab,
-  EventosTab,
-  JogosTab,
-  VencedoresTab,
-  UsersTab,
-  AldeiasTab,
-  TransacoesTab,
-  AuditoriaTab,
-  ComissoesTab,
-  VerificarTab,
-} from "./components";
+   OverviewTab,
+   EventosTab,
+   JogosTab,
+   VencedoresTab,
+   UsersTab,
+   ComissoesTab,
+   VerificarTab,
+ } from "./components";
+
+// Lazy load heavy tabs (they are in the components index)
+const AldeiasTab = lazy(() => import("./components").then(mod => ({ default: mod.AldeiasTab })));
+const TransacoesTab = lazy(() => import("./components").then(mod => ({ default: mod.TransacoesTab })));
+const AuditoriaTab = lazy(() => import("./components").then(mod => ({ default: mod.AuditoriaTab })));
 
 import type {
-  Stats,
-  Evento,
-  Jogo,
-  User,
-  Vencedor,
-  Aldeia,
-  Transacao,
-  Log,
-  VendedorStats,
-} from "./components";
+   Stats,
+   Evento,
+   Jogo,
+   User,
+   Vencedor,
+   Aldeia,
+   Transacao,
+   Log,
+   VendedorStats,
+ } from "./components";
+import type { JogoData } from "@/components/modals/create-jogo-modal";
+import type { AldeiaData } from "@/components/modals/aldeia-modal";
+import type { UserData } from "@/components/modals/user-modal";
 
 interface AdminDashboardProps {
   token: string;
@@ -779,26 +784,32 @@ export default function AdminDashboard({
         {/* Aldeias Tab (apenas super_admin) */}
         {userRole === "super_admin" && (
           <TabsContent value="aldeias">
-            <AldeiasTab
-              aldeias={aldeias}
-              setSelectedAldeia={setSelectedAldeia}
-              setAldeiaModalOpen={setAldeiaModalOpen}
-              requestDelete={requestDelete}
-            />
+            <Suspense fallback={<div>Carregando...</div>}>
+              <AldeiasTab
+                aldeias={aldeias}
+                setSelectedAldeia={setSelectedAldeia}
+                setAldeiaModalOpen={setAldeiaModalOpen}
+                requestDelete={requestDelete}
+              />
+            </Suspense>
           </TabsContent>
         )}
 
         {/* Transações Tab (apenas super_admin) */}
         {userRole === "super_admin" && (
           <TabsContent value="transacoes">
-            <TransacoesTab transacoes={transacoes} />
+            <Suspense fallback={<div>Carregando...</div>}>
+              <TransacoesTab transacoes={transacoes} />
+            </Suspense>
           </TabsContent>
         )}
 
         {/* Auditoria Tab (apenas super_admin) */}
         {userRole === "super_admin" && (
           <TabsContent value="auditoria">
-            <AuditoriaTab logs={logs} />
+            <Suspense fallback={<div>Carregando...</div>}>
+              <AuditoriaTab logs={logs} />
+            </Suspense>
           </TabsContent>
         )}
       </Tabs>
@@ -813,33 +824,33 @@ export default function AdminDashboard({
         aldeias={userRole === "super_admin" ? aldeias : undefined}
       />
 
-      <CreateJogoModal
-        open={jogoModalOpen}
-        onOpenChange={setJogoModalOpen}
-        onSubmit={handleSaveJogo}
-        eventoId={selectedEventoIdParaJogo}
-        initialData={selectedJogo as any}
-        userRole={userRole}
-        token={token}
-        aldeiaId={aldeiaId}
-        metodosPagamentoDefault={paymentMethodsDefault}
-      />
+       <CreateJogoModal
+         open={jogoModalOpen}
+         onOpenChange={setJogoModalOpen}
+         onSubmit={handleSaveJogo}
+         eventoId={selectedEventoIdParaJogo}
+         initialData={selectedJogo as unknown as JogoData}
+         userRole={userRole}
+         token={token}
+         aldeiaId={aldeiaId}
+         metodosPagamentoDefault={paymentMethodsDefault}
+       />
 
-      <AldeiaModal
-        open={aldeiaModalOpen}
-        onOpenChange={setAldeiaModalOpen}
-        onSubmit={handleSaveAldeia}
-        initialData={selectedAldeia as any}
-      />
+       <AldeiaModal
+         open={aldeiaModalOpen}
+         onOpenChange={setAldeiaModalOpen}
+         onSubmit={handleSaveAldeia}
+         initialData={selectedAldeia as unknown as AldeiaData}
+       />
 
-      <UserModal
-        open={userModalOpen}
-        onOpenChange={setUserModalOpen}
-        onSubmit={handleSaveUser}
-        initialData={selectedUser as any}
-        aldeias={aldeia ? [aldeia] : (userRole === "super_admin" ? aldeias : [])}
-        currentUserRole={userRole}
-      />
+       <UserModal
+         open={userModalOpen}
+         onOpenChange={setUserModalOpen}
+         onSubmit={handleSaveUser}
+         initialData={selectedUser as unknown as UserData}
+         aldeias={aldeia ? [aldeia] : (userRole === "super_admin" ? aldeias : [])}
+         currentUserRole={userRole}
+       />
 
       <ConfirmModal
         open={!!deleteData}
