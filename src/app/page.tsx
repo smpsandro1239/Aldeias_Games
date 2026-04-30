@@ -169,48 +169,48 @@ export default function Home() {
                 </Button>
               </div>
 
-              {/* Botões de Atalho para Testes (Quick Login) */}
-              <div className="pt-4 border-t border-outline-variant/10 w-full">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={() => setLoginForm({ email: "admin@aldeias.pt", password: "123456" })}
-                  >
-                    Super Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={() => setLoginForm({ email: "admin.valeazinha@aldeias.pt", password: "123456" })}
-                  >
-                    Admin Aldeia
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={() => setLoginForm({ email: "vendedor.valeazinha@aldeias.pt", password: "123456" })}
-                  >
-                    Vendedor
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={() => setLoginForm({ email: "jogador1@email.pt", password: "123456" })}
-                  >
-                    Jogador
-                  </Button>
-                </div>
-              </div>
+               {/* Botões de Atalho para Testes (Quick Login) */}
+               <div className="pt-4 border-t border-outline-variant/10 w-full">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
+                 <div className="grid grid-cols-2 gap-2">
+                   <Button
+                     type="button"
+                     variant="secondary"
+                     size="sm"
+                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                     onClick={() => setLoginForm({ email: "admin@aldeias.pt", password: "123456" })}
+                   >
+                     Super Admin
+                   </Button>
+                   <Button
+                     type="button"
+                     variant="secondary"
+                     size="sm"
+                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                     onClick={() => setLoginForm({ email: "admin.valeazinha@aldeias.pt", password: "123456" })}
+                   >
+                     Admin Aldeia
+                   </Button>
+                   <Button
+                     type="button"
+                     variant="secondary"
+                     size="sm"
+                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                     onClick={() => setLoginForm({ email: "vendedor1@valeazinha.pt", password: "123456" })}
+                   >
+                     Vendedor
+                   </Button>
+                   <Button
+                     type="button"
+                     variant="secondary"
+                     size="sm"
+                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                     onClick={() => setLoginForm({ email: "jogador1@valeazinha.pt", password: "123456" })}
+                   >
+                     Jogador
+                   </Button>
+                 </div>
+               </div>
             </DialogFooter>
           </form>
         </DialogContent>
