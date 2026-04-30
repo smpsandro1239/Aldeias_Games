@@ -144,34 +144,37 @@ export function UsersTab({
             )}
           </div>
 
-          {/* Paginação */}
-          {filteredUsers.length > 50 && (
-            <div className="flex items-center justify-between pt-4 mt-4 border-t">
-              <p className="text-sm text-muted-foreground">
-                Mostrando {(userPage - 1) * 50 + 1} a{" "}
-                {Math.min(userPage * 50, filteredUsers.length)} de{" "}
-                {filteredUsers.length} utilizadores
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={userPage === 1}
-                  onClick={() => setUserPage(userPage - 1)}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={userPage * 50 >= filteredUsers.length}
-                  onClick={() => setUserPage(userPage + 1)}
-                >
-                  Próxima
-                </Button>
-              </div>
-            </div>
-          )}
+           {/* Paginação */}
+           {filteredUsers.length > 50 && (
+             <div className="flex items-center justify-between pt-4 mt-4 border-t">
+               <p className="text-sm text-muted-foreground">
+                 Mostrando {(userPage - 1) * 50 + 1} a{" "}
+                 {Math.min(userPage * 50, filteredUsers.length)} de{" "}
+                 {filteredUsers.length} utilizadores
+               </p>
+               <div className="flex items-center gap-2">
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   disabled={userPage === 1}
+                   onClick={() => setUserPage(userPage - 1)}
+                 >
+                   Anterior
+                 </Button>
+                 <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                   Página {userPage}
+                 </span>
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   disabled={userPage * 50 >= filteredUsers.length}
+                   onClick={() => setUserPage(userPage + 1)}
+                 >
+                   Próxima
+                 </Button>
+               </div>
+             </div>
+           )}
         </CardContent>
       </Card>
     </div>
