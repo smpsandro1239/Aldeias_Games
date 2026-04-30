@@ -45,10 +45,19 @@ export async function POST(request: NextRequest) {
       timestamp: new Date(body.timestamp) || new Date(),
     };
 
-    // Armazenar no banco (tabela GameAnalytics)
-    await prisma.gameAnalytics.create({
-      data: eventData,
-    });
+     // Armazenar no banco (tabela GameAnalytics)
+     try {
+       await prisma.gameAnalytics.create({
+         data: eventData,
+       });
+     } catch (error) {
+       // Se a tabela não existir ou outro erro, não quebrar a aplicação
+       console.error("Analytics: falha ao registar evento (ignorado):", error);
+       return NextResponse.json(
+         { success: true, message: "Evento registado ( analytics desabilitado )" },
+         { status: 201 }
+       );
+     }
 
     return NextResponse.json(
       { success: true, message: "Evento registado" },

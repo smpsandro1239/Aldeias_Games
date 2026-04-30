@@ -94,7 +94,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [activeTab, setActiveTab] = useState("jogos");
   const [saldo, setSaldo] = useState(0);
   const [walletStats, setWalletStats] = useState<any>(null);
-  const [userProfile, setUserProfile] = useState<{ role: string; aldeiaId?: string; aldeia?: { nome: string } } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ role: string; aldeiaId?: string; aldeia?: { nome: string }; nome?: string; email?: string; telefone?: string } | null>(null);
 
   // Modais
   const [numberSelectorOpen, setNumberSelectorOpen] = useState(false);
@@ -114,62 +114,78 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const [victoryOpen, setVictoryOpen] = useState(false);
   const [victoryPremio, setVictoryPremio] = useState<any>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [token]);
+  // Paginação e busca
+  const [searchQuery, setSearchQuery] = useState("");
+  const [jogosPage, setJogosPage] = useState(1);
+  const [participacoesPage, setParticipacoesPage] = useState(1);
+  const [extratoPage, setExtratoPage] = useState(1);
+  const [rankingPage, setRankingPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const fetchData = async () => {
-    if (!token) return;
-    setLoading(true);
+   useEffect(() => {
+     fetchData();
+   }, [token]);
 
-    try {
-      // Fetch participações
-      const partRes = await fetch("/api/participacoes", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (partRes.ok) {
-        const partData = await partRes.json();
-        setParticipacoes(partData.data);
-      }
+   // Resetar páginas quando busca mudar
+   useEffect(() => {
+     setJogosPage(1);
+     setParticipacoesPage(1);
+     setExtratoPage(1);
+     setRankingPage(1);
+   }, [searchQuery]);
 
-      // Fetch jogos disponíveis
-      const jogosRes = await fetch("/api/jogos?ativos=true", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (jogosRes.ok) {
-        const jogosData = await jogosRes.json();
-        setJogos(jogosData.data);
-      }
+   const fetchData = async () => {
+     if (!token) return;
+     setLoading(true);
 
-      // Fetch saldo
-      const walletRes = await fetch("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (walletRes.ok) {
-        const walletData = await walletRes.json();
-        setSaldo(walletData.saldo);
-        setWalletStats(walletData);
-      }
+     try {
+       // Fetch participações
+       const partRes = await fetch("/api/participacoes", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (partRes.ok) {
+         const partData = await partRes.json();
+         setParticipacoes(partData.data);
+       }
 
-      // Fetch perfil do utilizador
-      const perfilRes = await fetch("/api/users/perfil", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (perfilRes.ok) {
-        const perfilData = await perfilRes.json();
-        const profile = perfilData.data;
-        setUserProfile(profile);
+       // Fetch jogos disponíveis
+       const jogosRes = await fetch("/api/jogos?ativos=true", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (jogosRes.ok) {
+         const jogosData = await jogosRes.json();
+         setJogos(jogosData.data);
+       }
 
-        if (profile?.role !== 'super_admin' && !profile?.aldeiaId) {
-          setWizardOpen(true);
-        }
-      }
-    } catch (error) {
-      toast.error("Erro ao carregar dados");
-    } finally {
-      setLoading(false);
-    }
-  };
+       // Fetch saldo
+       const walletRes = await fetch("/api/wallet", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (walletRes.ok) {
+         const walletData = await walletRes.json();
+         setSaldo(walletData.saldo);
+         setWalletStats(walletData);
+       }
+
+       // Fetch perfil do utilizador (inclui nome, email, telefone)
+       const perfilRes = await fetch("/api/users/perfil", {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       if (perfilRes.ok) {
+         const perfilData = await perfilRes.json();
+         const profile = perfilData.data;
+         setUserProfile(profile);
+
+         if (profile?.role !== 'super_admin' && !profile?.aldeiaId) {
+           setWizardOpen(true);
+         }
+       }
+     } catch (error) {
+       toast.error("Erro ao carregar dados");
+     } finally {
+       setLoading(false);
+     }
+   };
 
   const handleJogar = async (jogo: Jogo) => {
     // Verificar se está a jogar noutra aldeia (apenas para não super_admins)
@@ -187,6 +203,33 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   const proceedToJogo = (jogo: Jogo) => {
     router.push(`/jogos`);
   };
+
+  // Filtros e paginação
+  const filteredJogos = useMemo(() => {
+    if (!searchQuery) return jogos;
+    const q = searchQuery.toLowerCase();
+    return jogos.filter(j =>
+      j.nome.toLowerCase().includes(q) ||
+      j.tipo.toLowerCase().includes(q) ||
+      j.evento?.nome?.toLowerCase().includes(q) ||
+      j.evento?.aldeia?.nome?.toLowerCase().includes(q)
+    );
+  }, [jogos, searchQuery]);
+
+  const filteredParticipacoes = useMemo(() => {
+    if (!searchQuery) return participacoes;
+    const q = searchQuery.toLowerCase();
+    return participacoes.filter(p =>
+      p.jogo?.nome?.toLowerCase().includes(q) ||
+      p.jogo?.tipo?.toLowerCase().includes(q) ||
+      p.jogo?.evento?.aldeia?.nome?.toLowerCase().includes(q)
+    );
+  }, [participacoes, searchQuery]);
+
+  const paginatedJogos = filteredJogos.slice((jogosPage - 1) * itemsPerPage, jogosPage * itemsPerPage);
+  const paginatedParticipacoes = filteredParticipacoes.slice((participacoesPage - 1) * itemsPerPage, participacoesPage * itemsPerPage);
+  const extratoItems = walletStats?.transacoes || [];
+  const paginatedExtrato = extratoItems.slice((extratoPage - 1) * itemsPerPage, extratoPage * itemsPerPage);
 
   const handleRevelarRaspadinha = (participacao: Participacao) => {
     setSelectedParticipacao(participacao);
@@ -342,6 +385,30 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         ))}
       </div>
 
+      {/* Busca global */}
+      <div className="relative max-w-md">
+        <Input
+          type="search"
+          placeholder="Procurar em todas as abas..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-surface-container-low border border-outline-variant/30 p-1 grid grid-cols-4 rounded-2xl w-full">
@@ -350,7 +417,6 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold rounded-xl transition-all duration-200 text-muted-foreground text-xs sm:text-sm"
           >
             <Play className="h-3 w-3 mr-1" />
-            <span className="hidden sm:inline"><Play className="h-3 w-3 mr-1" /></span>
             Jogar
           </TabsTrigger>
           <TabsTrigger
@@ -376,225 +442,294 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="jogos" className="space-y-4">
-          {userProfile?.role !== 'super_admin' && !userProfile?.aldeiaId ? (
-            <Card className="p-12 text-center bg-card/50 border-white/10 backdrop-blur-sm">
-              <CardContent className="flex flex-col items-center justify-center space-y-4">
-                <div className="relative">
-                  <MapPin className="h-16 w-16 text-muted-foreground" />
-                  <div className="absolute inset-0 bg-secondary/10 blur-xl rounded-full" />
-                </div>
-                <div>
-                  <p className="text-xl font-gaming font-bold text-foreground">Escolhe a tua Aldeia</p>
-                  <p className="text-sm text-muted-foreground mt-2">Precisas de selecionar uma aldeia para ver os jogos disponíveis.</p>
-                  <Button
-                    onClick={() => setWizardOpen(true)}
-                    className="mt-6 bg-secondary hover:bg-secondary/90"
-                  >
-                    Escolher Aldeia
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <GameList
-              jogos={jogos as any}
-              onJogoClick={(jogo) => handleJogar(jogo as any)}
-              loading={loading}
-              title={userProfile?.role === 'super_admin' ? "Todos os Jogos" : `Jogos de ${userProfile?.aldeia?.nome || "Carregando..."}`}
-              emptyMessage={userProfile?.role === 'super_admin' ? "Nenhum jogo disponível" : "Nenhum jogo disponível na tua aldeia"}
-              emptySubtext={userProfile?.role === 'super_admin' ? "Volte mais tarde!" : "Não há jogos ativos na tua aldeia de momento."}
-              showAldeia={userProfile?.role === 'super_admin'}
-            />
-          )}
-        </TabsContent>
+         <TabsContent value="jogos" className="space-y-4">
+           {userProfile?.role !== 'super_admin' && !userProfile?.aldeiaId ? (
+             <Card className="p-12 text-center bg-card/50 border-white/10 backdrop-blur-sm">
+               <CardContent className="flex flex-col items-center justify-center space-y-4">
+                 <div className="relative">
+                   <MapPin className="h-16 w-16 text-muted-foreground" />
+                   <div className="absolute inset-0 bg-secondary/10 blur-xl rounded-full" />
+                 </div>
+                 <div>
+                   <p className="text-xl font-gaming font-bold text-foreground">Escolhe a tua Aldeia</p>
+                   <p className="text-sm text-muted-foreground mt-2">Precisas de selecionar uma aldeia para ver os jogos disponíveis.</p>
+                   <Button
+                     onClick={() => setWizardOpen(true)}
+                     className="mt-6 bg-secondary hover:bg-secondary/90"
+                   >
+                     Escolher Aldeia
+                   </Button>
+                 </div>
+               </CardContent>
+             </Card>
+           ) : (
+             <>
+               <GameList
+                 jogos={paginatedJogos as any}
+                 onJogoClick={(jogo) => handleJogar(jogo as any)}
+                 loading={loading}
+                 title={userProfile?.role === 'super_admin' ? "Todos os Jogos" : `Jogos de ${userProfile?.aldeia?.nome || "Carregando..."}`}
+                 emptyMessage={userProfile?.role === 'super_admin' ? "Nenhum jogo disponível" : "Nenhum jogo disponível na tua aldeia"}
+                 emptySubtext={userProfile?.role === 'super_admin' ? "Volte mais tarde!" : "Não há jogos ativos na tua aldeia de momento."}
+                 showAldeia={userProfile?.role === 'super_admin'}
+               />
+               {filteredJogos.length > itemsPerPage && (
+                 <div className="flex items-center justify-between pt-4 border-t">
+                   <p className="text-sm text-muted-foreground">
+                     Mostrando {(jogosPage - 1) * itemsPerPage + 1} a {Math.min(jogosPage * itemsPerPage, filteredJogos.length)} de {filteredJogos.length} jogos
+                   </p>
+                   <div className="flex items-center gap-2">
+                     <Button variant="outline" size="sm" disabled={jogosPage === 1} onClick={() => setJogosPage(jogosPage - 1)}>
+                       Anterior
+                     </Button>
+                     <span className="text-sm text-muted-foreground min-w-[80px] text-center">Página {jogosPage}</span>
+                     <Button variant="outline" size="sm" disabled={jogosPage * itemsPerPage >= filteredJogos.length} onClick={() => setJogosPage(jogosPage + 1)}>
+                       Próxima
+                     </Button>
+                   </div>
+                 </div>
+               )}
+             </>
+           )}
+         </TabsContent>
 
-        <TabsContent value="participacoes" className="space-y-4">
-          {participacoes.length === 0 ? (
-            <Card className="p-8 text-center">
-              <CardContent className="flex flex-col items-center justify-center space-y-4">
-                <Ticket className="h-12 w-12 text-muted-foreground" />
-                <div>
-                  <p className="text-lg font-medium">Nenhuma participação</p>
-                  <p className="text-sm text-muted-foreground">Ainda não参加了 nenhum jogo. Escolha um jogo para participar!</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {participacoes.map((participacao) => (
-                <Card key={participacao.id} className="bg-surface-container border-outline-variant/20 rounded-2xl overflow-hidden card-hover">
-                  <CardContent className="p-4 md:p-5">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 md:p-3 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
-                          {getTipoIcon(participacao.jogo?.tipo || "")}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-gaming text-base md:text-lg text-foreground truncate">{participacao.jogo?.nome}</h3>
-                          <p className="text-xs md:text-sm text-muted-foreground/60 truncate mt-0.5 md:mt-1">
-                            {participacao.jogo?.evento?.aldeia?.nome} • {formatDate(participacao.createdAt)}
-                          </p>
-                          <p className="text-sm font-bold text-primary mt-0.5 md:mt-1">
-                            {formatCurrency(participacao.valorPago)}
-                          </p>
+         <TabsContent value="participacoes" className="space-y-4">
+           {participacoes.length === 0 ? (
+             <Card className="p-8 text-center">
+               <CardContent className="flex flex-col items-center justify-center space-y-4">
+                 <Ticket className="h-12 w-12 text-muted-foreground" />
+                 <div>
+                   <p className="text-lg font-medium">Nenhuma participação</p>
+                   <p className="text-sm text-muted-foreground">Ainda não participou em nenhum jogo. Escolha um jogo para participar!</p>
+                 </div>
+               </CardContent>
+             </Card>
+           ) : (
+             <>
+               <div className="grid gap-4">
+                 {paginatedParticipacoes.map((participacao) => (
+                   <Card key={participacao.id} className="bg-surface-container border-outline-variant/20 rounded-2xl overflow-hidden card-hover">
+                     <CardContent className="p-4 md:p-5">
+                       <div className="flex flex-col gap-4">
+                         <div className="flex items-start gap-3">
+                           <div className="p-2 md:p-3 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
+                             {getTipoIcon(participacao.jogo?.tipo || "")}
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <h3 className="font-gaming text-base md:text-lg text-foreground truncate">{participacao.jogo?.nome}</h3>
+                             <p className="text-xs md:text-sm text-muted-foreground/60 truncate mt-0.5 md:mt-1">
+                               {participacao.jogo?.evento?.aldeia?.nome} • {formatDate(participacao.createdAt)}
+                             </p>
+                             <p className="text-sm font-bold text-primary mt-0.5 md:mt-1">
+                               {formatCurrency(participacao.valorPago)}
+                             </p>
 
-                          {/* Números jogados */}
-                          {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
-                            <div className="mt-2">
-                              <p className="text-xs text-muted-foreground/50">Números:</p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {(() => {
-                                  const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
-                                  const numeros = dados.numeros || [];
-                                  return numeros.map((n: number) => (
-                                    <span
-                                      key={n}
-                                      className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
-                                    >
-                                      {n}
-                                    </span>
-                                  ));
-                                })()}
-                              </div>
-                            </div>
-                          ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
-                            <div className="mt-2">
-                              <p className="text-xs text-muted-foreground/50">Coordenadas:</p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {(() => {
-                                  const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
-                                  const coordenadas = dados.coordenadas || dados.selecao || [];
-                                  return coordenadas.map((c: { letra: string; numero: number }) => (
-                                    <span
-                                      key={`${c.letra}${c.numero}`}
-                                      className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
-                                    >
-                                      {c.letra}{c.numero}
-                                    </span>
-                                  ));
-                                })()}
-                              </div>
-                            </div>
-                          ) : null}
+                             {/* Números jogados */}
+                             {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
+                               <div className="mt-2">
+                                 <p className="text-xs text-muted-foreground/50">Números:</p>
+                                 <div className="flex flex-wrap gap-1 mt-1">
+                                   {(() => {
+                                     const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                                     const numeros = dados.numeros || [];
+                                     return numeros.map((n: number) => (
+                                       <span
+                                         key={n}
+                                         className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
+                                       >
+                                         {n}
+                                       </span>
+                                     ));
+                                   })()}
+                                 </div>
+                               </div>
+                             ) : participacao.jogo?.tipo === "poio_da_vaca" ? (
+                               <div className="mt-2">
+                                 <p className="text-xs text-muted-foreground/50">Coordenadas:</p>
+                                 <div className="flex flex-wrap gap-1 mt-1">
+                                   {(() => {
+                                     const dados = JSON.parse(participacao.dadosParticipacao as any || "{}");
+                                     const coordenadas = dados.coordenadas || dados.selecao || [];
+                                     return coordenadas.map((c: { letra: string; numero: number }) => (
+                                       <span
+                                         key={`${c.letra}${c.numero}`}
+                                         className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded"
+                                       >
+                                         {c.letra}{c.numero}
+                                       </span>
+                                     ));
+                                   })()}
+                                 </div>
+                               </div>
+                             ) : null}
 
-                          {/* Resultado do sorteio */}
-                          {participacao.jogo?.sorteado && (
-                            <div className="mt-2">
-                              {participacao.ganhador ? (
-                                <p className="text-sm text-primary font-medium">
-                                  ✓ Ganhou!
-                                </p>
-                              ) : (
-                                <p className="text-xs md:text-sm text-muted-foreground/40">
-                                  Sorteio: não foi sorteado
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {participacao.ganhador && (
-                          <Badge
-                            className="bg-accent cursor-pointer hover:bg-yellow-600 text-xs"
-                            onClick={() => handleVerVitoria(participacao)}
-                          >
-                            <Trophy className="h-3 w-3 mr-1" />
-                            Vencedor
-                          </Badge>
-                        )}
-                        {participacao.jogo?.tipo === "raspadinha" && !participacao.revelado && (
-                          <Button size="sm" className="text-xs" onClick={() => handleRevelarRaspadinha(participacao)}>
-                            <Sparkles className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                            Revelar
-                          </Button>
-                        )}
-                        {participacao.jogo?.tipo === "raspadinha" && participacao.revelado && (
-                          <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"} className="text-xs">
-                            {participacao.resultadoRaspe || "Sem prémio"}
-                          </Badge>
-                        )}
-                        {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
-                          <Button variant="outline" size="sm" className="text-xs">
-                            Prémios
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" className="shrink-0">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
+                             {/* Resultado do sorteio */}
+                             {participacao.jogo?.sorteado && (
+                               <div className="mt-2">
+                                 {participacao.ganhador ? (
+                                   <p className="text-sm text-primary font-medium">
+                                     ✓ Ganhou!
+                                   </p>
+                                 ) : (
+                                   <p className="text-xs md:text-sm text-muted-foreground/40">
+                                     Sorteio: não foi sorteado
+                                   </p>
+                                 )}
+                               </div>
+                             )}
+                           </div>
+                         </div>
+                         <div className="flex flex-wrap items-center gap-2">
+                           {participacao.ganhador && (
+                             <Badge
+                               className="bg-accent cursor-pointer hover:bg-yellow-600 text-xs"
+                               onClick={() => handleVerVitoria(participacao)}
+                             >
+                               <Trophy className="h-3 w-3 mr-1" />
+                               Vencedor
+                             </Badge>
+                           )}
+                           {participacao.jogo?.tipo === "raspadinha" && !participacao.revelado && (
+                             <Button size="sm" className="text-xs" onClick={() => handleRevelarRaspadinha(participacao)}>
+                               <Sparkles className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                               Revelar
+                             </Button>
+                           )}
+                           {participacao.jogo?.tipo === "raspadinha" && participacao.revelado && (
+                             <Badge variant={participacao.resultadoRaspe ? "default" : "secondary"} className="text-xs">
+                               {participacao.resultadoRaspe || "Sem prémio"}
+                             </Badge>
+                           )}
+                           {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
+                             <Button variant="outline" size="sm" className="text-xs">
+                               Prémios
+                             </Button>
+                           )}
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             className="shrink-0"
+                             title="Ver detalhes da participação"
+                             onClick={() => {
+                               // Pode expandir detalhes ou mostrar modal
+                               toast.info(`Participação #${participacao.id.slice(0, 8)}... - ${formatCurrency(participacao.valorPago)}`);
+                             }}
+                           >
+                             <Eye className="h-4 w-4" />
+                           </Button>
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
+                 ))}
+               </div>
+               {filteredParticipacoes.length > itemsPerPage && (
+                 <div className="flex items-center justify-between pt-4 border-t">
+                   <p className="text-sm text-muted-foreground">
+                     Mostrando {(participacoesPage - 1) * itemsPerPage + 1} a {Math.min(participacoesPage * itemsPerPage, filteredParticipacoes.length)} de {filteredParticipacoes.length} bilhetes
+                   </p>
+                   <div className="flex items-center gap-2">
+                     <Button variant="outline" size="sm" disabled={participacoesPage === 1} onClick={() => setParticipacoesPage(participacoesPage - 1)}>
+                       Anterior
+                     </Button>
+                     <span className="text-sm text-muted-foreground min-w-[80px] text-center">Página {participacoesPage}</span>
+                     <Button variant="outline" size="sm" disabled={participacoesPage * itemsPerPage >= filteredParticipacoes.length} onClick={() => setParticipacoesPage(participacoesPage + 1)}>
+                       Próxima
+                     </Button>
+                   </div>
+                 </div>
+               )}
+             </>
+           )}
+         </TabsContent>
 
-        <TabsContent value="extrato" className="space-y-4">
-          <Card className="bg-surface-container border-outline-variant/20">
-            <CardHeader>
-              <CardTitle className="text-foreground flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-secondary" />
-                Extrato de Movimentos
-              </CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Consulte o histórico de carregamentos, prémios convertidos e cashbacks recebidos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!walletStats?.transacoes || walletStats.transacoes.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground flex flex-col items-center gap-2">
-                  <Banknote className="h-10 w-10 opacity-20" />
-                  <p>Sem movimentos recentes</p>
-                </div>
-              ) : (
-                <div className="space-y-0">
-                  {walletStats.transacoes.map((t: any) => (
-                    <div
-                      key={t.id}
-                      className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-foreground/5 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        {t.tipo === "cashback" ? (
-                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                            <Gift className="h-5 w-5 text-primary" />
-                          </div>
-                        ) : t.valor > 0 ? (
-                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                            <ArrowUpRight className="h-5 w-5 text-secondary" />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
-                            <ArrowDownLeft className="h-5 w-5 text-destructive" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {t.descricao || "Transação"}
-                          </p>
-                          <p className="text-xs text-muted-foreground/50 mt-1">
-                            {formatDate(t.createdAt)} • Tipo: {t.tipo?.replace('_', ' ')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className={`font-bold text-lg ${t.valor > 0 ? "text-primary" : "text-foreground"}`}>
-                          {t.valor > 0 ? "+" : ""}{formatCurrency(t.valor)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+         <TabsContent value="extrato" className="space-y-4">
+           <Card className="bg-surface-container border-outline-variant/20">
+             <CardHeader>
+               <CardTitle className="text-foreground flex items-center gap-2">
+                 <Receipt className="h-5 w-5 text-secondary" />
+                 Extrato de Movimentos
+               </CardTitle>
+               <CardDescription className="text-muted-foreground">
+                 Consulte o histórico de carregamentos, prémios convertidos e cashbacks recebidos.
+               </CardDescription>
+             </CardHeader>
+             <CardContent>
+               {!walletStats?.transacoes || walletStats.transacoes.length === 0 ? (
+                 <div className="py-8 text-center text-muted-foreground flex flex-col items-center gap-2">
+                   <Banknote className="h-10 w-10 opacity-20" />
+                   <p>Sem movimentos recentes</p>
+                 </div>
+               ) : (
+                 <>
+                   <div className="space-y-0">
+                     {paginatedExtrato.map((t: any) => (
+                       <div
+                         key={t.id}
+                         className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-foreground/5 transition-colors"
+                       >
+                         <div className="flex items-center gap-4">
+                           {t.tipo === "cashback" ? (
+                             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                               <Gift className="h-5 w-5 text-primary" />
+                             </div>
+                           ) : t.valor > 0 ? (
+                             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                               <ArrowUpRight className="h-5 w-5 text-secondary" />
+                             </div>
+                           ) : (
+                             <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center">
+                               <ArrowDownLeft className="h-5 w-5 text-destructive" />
+                             </div>
+                           )}
+                           <div>
+                             <p className="font-medium text-foreground">
+                               {t.descricao || "Transação"}
+                             </p>
+                             <p className="text-xs text-muted-foreground/50 mt-1">
+                               {formatDate(t.createdAt)} • Tipo: {t.tipo?.replace('_', ' ')}
+                             </p>
+                           </div>
+                         </div>
+                         <div className="text-right">
+                           <span className={`font-bold text-lg ${t.valor > 0 ? "text-primary" : "text-foreground"}`}>
+                             {t.valor > 0 ? "+" : ""}{formatCurrency(t.valor)}
+                           </span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                   {extratoItems.length > itemsPerPage && (
+                     <div className="flex items-center justify-between pt-4 mt-4 border-t">
+                       <p className="text-sm text-muted-foreground">
+                         Mostrando {(extratoPage - 1) * itemsPerPage + 1} a {Math.min(extratoPage * itemsPerPage, extratoItems.length)} de {extratoItems.length} movimentos
+                       </p>
+                       <div className="flex items-center gap-2">
+                         <Button variant="outline" size="sm" disabled={extratoPage === 1} onClick={() => setExtratoPage(extratoPage - 1)}>
+                           Anterior
+                         </Button>
+                         <span className="text-sm text-muted-foreground min-w-[80px] text-center">Página {extratoPage}</span>
+                         <Button variant="outline" size="sm" disabled={extratoPage * itemsPerPage >= extratoItems.length} onClick={() => setExtratoPage(extratoPage + 1)}>
+                           Próxima
+                         </Button>
+                       </div>
+                     </div>
+                   )}
+                 </>
+               )}
+             </CardContent>
+           </Card>
+         </TabsContent>
 
-        <TabsContent value="ranking" className="space-y-4">
-          <LeaderboardList aldeiaId={userProfile?.aldeiaId} />
-        </TabsContent>
+         <TabsContent value="ranking" className="space-y-4">
+           <LeaderboardList
+             aldeiaId={userProfile?.aldeiaId}
+             tipo="all"
+             page={rankingPage}
+             limit={itemsPerPage}
+             onPageChange={setRankingPage}
+           />
+         </TabsContent>
       </Tabs>
 
       {/* Modais */}
@@ -606,7 +741,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           descricao={selectedJogo.nome}
           saldoDisponivel={saldo}
           userRole="stripe_blocked"
-          onMBWayPayment={async () => {
+          telefoneInicial={userProfile?.telefone || undefined}
+          onMBWayPayment={async (telefone) => {
             await handleConfirmarPagamento("mbway");
           }}
           onSaldoPayment={async () => {

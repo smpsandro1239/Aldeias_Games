@@ -23,6 +23,7 @@ interface PaymentModalProps {
   descricao: string;
   saldoDisponivel?: number;
   userRole?: string;
+  telefoneInicial?: string; // Para preenchimento automático
   onMBWayPayment: (telefone: string) => Promise<void>;
   onStripePayment?: () => Promise<void>;
   onSaldoPayment?: () => Promise<void>;
@@ -35,13 +36,21 @@ export function PaymentModal({
   descricao,
   saldoDisponivel = 0,
   userRole = "user",
+  telefoneInicial,
   onMBWayPayment,
   onStripePayment,
   onSaldoPayment,
 }: PaymentModalProps) {
-  const [telefone, setTelefone] = useState("");
+  const [telefone, setTelefone] = useState(telefoneInicial || "");
   const [loading, setLoading] = useState(false);
   const [metodo, setMetodo] = useState(saldoDisponivel >= valor ? "saldo" : "mbway");
+
+  // Preencher telefone quando o modal abrir ou telefoneInicial mudar
+  useEffect(() => {
+    if (open && telefoneInicial) {
+      setTelefone(telefoneInicial);
+    }
+  }, [open, telefoneInicial]);
 
   const handleMBWaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
