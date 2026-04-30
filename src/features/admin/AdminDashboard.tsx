@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 import {
    LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Globe,
@@ -126,6 +128,7 @@ export default function AdminDashboard({
   const [convertValor, setConvertValor] = useState("25");
   const [qrCodeData, setQrCodeData] = useState<{ jogoId?: string; eventoId?: string; aldeiaSlug?: string; type: "jogo" | "evento" | "aldeia" } | null>(null);
   const [testJogo, setTestJogo] = useState<Jogo | null>(null);
+  const [testJogoTotalParticipacoes, setTestJogoTotalParticipacoes] = useState(0);
   const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
 
   const [paymentMethodsDefault, setPaymentMethodsDefault] = useState<string[]>(["saldo", "dinheiro"]);
@@ -369,10 +372,22 @@ export default function AdminDashboard({
     }
   }, [token, fetchData]);
 
-  const handleTestarJogo = useCallback((jogo: Jogo) => {
-    setTestJogo(jogo);
-    setTestJogoOpen(true);
-  }, [setTestJogoOpen]);
+   const handleTestarJogo = useCallback(async (jogo: Jogo) => {
+     setTestJogo(jogo);
+     // Buscar total de participações do jogo
+     try {
+       const res = await fetch(`/api/participacoes?jogoId=${jogo.id}`, {
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       const data = await res.json();
+       const total = data.total || 0;
+       setTestJogoTotalParticipacoes(total);
+     } catch (error) {
+       console.error("Erro ao buscar participações:", error);
+       setTestJogoTotalParticipacoes(0);
+     }
+     setTestJogoOpen(true);
+   }, [token]);
 
   const handleSaveAldeia = useCallback(async (data: any) => {
     const isEditing = !!data.id;
@@ -937,28 +952,58 @@ export default function AdminDashboard({
           <div className="py-4">
             <p className="text-muted-foreground mb-4">
               Esta funcionalidade permite testar o jogo em modo fictício, sem afectar dados reais.
+              O sorteio será executado usando as participações existentes e os vencedores serão determinados aleatoriamente.
             </p>
-            {/* Conteúdo do teste a implementar */}
-            <p className="text-sm text-muted-foreground">
-              Em breve: interface de teste...
-            </p>
+            {testJogoTotalParticipacoes === 0 && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Não há participações para este jogo. Cria participações primeiro para testar.
+                </AlertDescription>
+              </Alert>
+            )}
+            {/* SorteioModal para executar sorteios de teste */}
+            {testJogo && testJogoTotalParticipacoes > 0 && (
+              <SorteioModal
+                open={testJogoOpen}
+                onOpenChange={setTestJogoOpen}
+                jogoNome={testJogo.nome}
+                totalParticipacoes={testJogoTotalParticipacoes}
+                onExecutarSorteio={async (observacoes?: string) => {
+                  try {
+                    const res = await fetch('/api/sorteios/teste', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ jogoId: testJogo.id, observacoes }),
+                    });
+                    const json = await res.json();
+                    if (!res.ok) {
+                      return { success: false, error: json.error || 'Erro ao executar teste' };
+                    }
+                    // Recarregar dados após teste
+                    fetchData();
+                    return {
+                      success: true,
+                      data: {
+                        resultado: json.data.resultado,
+                        vencedores: json.data.vencedores,
+                        hash: json.data.hash,
+                        seed: json.data.seed,
+                      },
+                    };
+                  } catch (error) {
+                    console.error('Erro no teste de sorteio:', error);
+                    return { success: false, error: 'Erro interno do servidor' };
+                  }
+                }}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* SorteioModal para executar sorteios */}
-      {testJogo && (
-        <SorteioModal
-          open={testJogoOpen}
-          onOpenChange={setTestJogoOpen}
-          jogoNome={testJogo.nome}
-          totalParticipacoes={0} // TODO: obter número real de participações
-          onExecutarSorteio={async (observacoes?: string) => {
-            // Implementar lógica de teste
-            return { success: false, error: "Não implementado" };
-          }}
-        />
-      )}
     </div>
   );
 }
