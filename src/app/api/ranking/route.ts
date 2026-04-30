@@ -50,10 +50,10 @@ import { getFullUserFromRequest } from '@/lib/auth';
            totalVendas: venda?._sum?.valor || 0,
            numTransacoes: venda?._count?.id || 0,
          };
-       }).sort((a, b) => b.totalVendas - a.totalVendas);
+        }).sort((a, b) => b.totalVendas - a.totalVendas);
 
-       rankings = [...rankings, ...rankingVendas]);
-     }
+        rankings = [...rankings, ...rankingVendas];
+      }
 
      if (tipo === 'jogos' || tipo === 'all') {
        // ... código idêntico para jogos ...
@@ -67,10 +67,10 @@ import { getFullUserFromRequest } from '@/lib/auth';
            totalJogos: part?._count?.id || 0,
            totalGasto: part?._sum?.valorPago || 0,
          };
-       }).sort((a, b) => b.totalJogos - a.totalJogos);
+        }).sort((a, b) => b.totalJogos - a.totalJogos);
 
-       rankings = [...rankings, ...rankingJogos]);
-     }
+        rankings = [...rankings, ...rankingJogos];
+      }
 
      if (tipo === 'premios' || tipo === 'all') {
        // ... código idêntico para premios ...
@@ -84,10 +84,10 @@ import { getFullUserFromRequest } from '@/lib/auth';
            totalPremios: prem?._count?.id || 0,
            totalGanho: prem?._sum?.valorPago || 0,
          };
-       }).sort((a, b) => b.totalPremios - a.totalPremios);
+        }).sort((a, b) => b.totalPremios - a.totalPremios);
 
-       rankings = [...rankings, ...rankingPremios]);
-     }
+        rankings = [...rankings, ...rankingPremios];
+      }
 
      // Aplicar paginação
      const total = rankings.length;
