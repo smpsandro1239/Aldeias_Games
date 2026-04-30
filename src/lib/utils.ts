@@ -15,7 +15,7 @@ export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-PT', {
     style: 'currency',
     currency: 'EUR',
-  }).format(value);
+  }).format(value).replace(/\u00A0/g, ' ');
 }
 
 /**
@@ -112,8 +112,7 @@ export function getInitials(name: string): string {
     .split(' ')
     .map((n) => n[0])
     .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .toUpperCase();
 }
 
 /**

@@ -48,34 +48,37 @@ export function useAuth() {
     isAuthenticated: false,
   });
 
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const user = localStorage.getItem("user");
-        const hasCookie = document.cookie.includes("auth-token");
+   useEffect(() => {
+     const initAuth = async () => {
+       try {
+         const user = localStorage.getItem("user");
+         const token = localStorage.getItem("token");
+         const hasCookie = document.cookie.includes("auth-token");
 
-        if (user && hasCookie) {
-          const parsedUser = JSON.parse(user);
-          setState({
-            user: parsedUser,
-            token: null,
-            isLoading: false,
-            isAuthenticated: true,
-          });
-        } else if (user && !hasCookie) {
-          localStorage.removeItem("user");
-          setState((prev) => ({ ...prev, isLoading: false, isAuthenticated: false }));
-        } else {
-          setState((prev) => ({ ...prev, isLoading: false }));
-        }
-      } catch {
-        localStorage.removeItem("user");
-        setState((prev) => ({ ...prev, isLoading: false }));
-      }
-    };
+         if (user && token && hasCookie) {
+           const parsedUser = JSON.parse(user);
+           setState({
+             user: parsedUser,
+             token: token,
+             isLoading: false,
+             isAuthenticated: true,
+           });
+         } else if (user && !hasCookie) {
+           localStorage.removeItem("user");
+           localStorage.removeItem("token");
+           setState((prev) => ({ ...prev, isLoading: false, isAuthenticated: false }));
+         } else {
+           setState((prev) => ({ ...prev, isLoading: false }));
+         }
+       } catch {
+         localStorage.removeItem("user");
+         localStorage.removeItem("token");
+         setState((prev) => ({ ...prev, isLoading: false }));
+       }
+     };
 
-    initAuth();
-  }, []);
+     initAuth();
+   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
@@ -179,9 +182,10 @@ export function useAuth() {
     });
   }, []);
 
-  const getAuthHeaders = useCallback(() => {
-    return {};
-  }, []);
+   const getAuthHeaders = useCallback(() => {
+     const token = state.token || localStorage.getItem("token");
+     return token ? { Authorization: `Bearer ${token}` } : {};
+   }, [state.token]);
 
   const isSuperAdmin = state.user?.role === "super_admin";
   const isAldeiaAdmin = state.user?.role === "aldeia_admin";

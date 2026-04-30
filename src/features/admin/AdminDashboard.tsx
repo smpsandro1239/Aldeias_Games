@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { StatCard } from "@/components/ui/StatCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -84,11 +85,12 @@ export default function AdminDashboard({
   userRole = "aldeia_admin",
   aldeia,
 }: AdminDashboardProps) {
-  const router = useRouter();
+   const router = useRouter();
+   const queryClient = useQueryClient();
 
-  // Estados principais
-  const [activeTab, setActiveTab] = useState("overview");
-  const [loading, setLoading] = useState(true);
+   // Estados principais
+   const [activeTab, setActiveTab] = useState("overview");
+   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [eventos, setEventos] = useState<Evento[]>([]);
