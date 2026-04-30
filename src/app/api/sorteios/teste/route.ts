@@ -86,7 +86,12 @@ export async function POST(request: NextRequest) {
 
       vencedoresDetalhes = vencedores.map(v => ({
         posicao: v.posicao,
-        ...v.dados,
+        userId: (v.dados as any).userId,
+        userNome: (v.dados as any).userNome,
+        userEmail: (v.dados as any).userEmail,
+        userTelefone: (v.dados as any).userTelefone,
+        letra: (v.dados as any).letra,
+        numero: (v.dados as any).numero,
       }));
     } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
       const config = JSON.parse(jogo.configuracao);
@@ -115,7 +120,12 @@ export async function POST(request: NextRequest) {
 
       vencedoresDetalhes = vencedores.map(v => ({
         posicao: v.posicao,
-        ...v.dados,
+        userId: (v.dados as any).userId,
+        userNome: (v.dados as any).userNome,
+        userEmail: (v.dados as any).userEmail,
+        userTelefone: (v.dados as any).userTelefone,
+        letra: (v.dados as any).letra,
+        numero: (v.dados as any).numero,
       }));
     } else {
       return NextResponse.json({ error: 'Tipo de jogo não suportado para teste' }, { status: 400 });
