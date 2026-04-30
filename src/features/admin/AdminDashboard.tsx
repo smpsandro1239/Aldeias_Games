@@ -374,14 +374,19 @@ export default function AdminDashboard({
 
    const handleTestarJogo = useCallback(async (jogo: Jogo) => {
      setTestJogo(jogo);
-     // Buscar total de participações do jogo
+     // Buscar total de participações concluídas do jogo (apenas pagamentos confirmados)
      try {
-       const res = await fetch(`/api/participacoes?jogoId=${jogo.id}`, {
+       const res = await fetch(`/api/participacoes?jogoId=${jogo.id}&estadoPagamento=concluido&page=1&limit=1`, {
          headers: { Authorization: `Bearer ${token}` },
        });
-       const data = await res.json();
-       const total = data.total || 0;
-       setTestJogoTotalParticipacoes(total);
+       if (res.ok) {
+         const data = await res.json();
+         const total = data.pagination?.total || 0;
+         setTestJogoTotalParticipacoes(total);
+       } else {
+         console.error("Erro ao buscar participações:", res.status);
+         setTestJogoTotalParticipacoes(0);
+       }
      } catch (error) {
        console.error("Erro ao buscar participações:", error);
        setTestJogoTotalParticipacoes(0);

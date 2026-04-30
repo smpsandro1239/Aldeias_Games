@@ -20,16 +20,21 @@ export async function GET(request: NextRequest) {
     const { page, limit } = getPaginationFromRequest(request);
     const skip = (page - 1) * limit;
 
-    const url = new URL(request.url);
-    const jogoId = url.searchParams.get('jogoId');
-    const userId = url.searchParams.get('userId');
+     const url = new URL(request.url);
+     const jogoId = url.searchParams.get('jogoId');
+     const userId = url.searchParams.get('userId');
+     const estadoPagamento = url.searchParams.get('estadoPagamento') as any || undefined;
 
-    // Construir where
-    let where: Record<string, unknown> = {};
+     // Construir where
+     let where: Record<string, unknown> = {};
 
-    if (jogoId) {
-      where.jogoId = jogoId;
-    }
+     if (jogoId) {
+       where.jogoId = jogoId;
+     }
+
+     if (estadoPagamento) {
+       where.estadoPagamento = estadoPagamento;
+     }
 
     // Filtrar por permissões
     if (user.role === 'super_admin') {
