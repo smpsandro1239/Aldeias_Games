@@ -154,6 +154,7 @@ where.evento = {
               nome: true,
               imagemUrl: true,
               valorDinheiroAlternative: true,
+              percentagem: true,
               ordem: true,
             },
             orderBy: {

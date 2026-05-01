@@ -43,7 +43,7 @@ export function RoleGuard({ allowedRoles, children, redirectPath, panelName }: R
 
       try {
         const user: User = JSON.parse(userStr);
-        
+
         if (!allowedRoles.includes(user.role)) {
           toast.error(`Acesso negado, não tem permissão para aceder ao painel ${panelName}`);
           router.push(redirectPath);
@@ -51,15 +51,21 @@ export function RoleGuard({ allowedRoles, children, redirectPath, panelName }: R
         }
 
         setHasAccess(true);
-      } catch {
-        toast.error("Erro ao verificar permissões");
+      } catch (error) {
+        console.error("Erro ao verificar permissões:", error);
+        toast.error("Erro ao verificar permissões. Faça login novamente.");
+        // Limpar storage corrompido
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         router.push("/");
       } finally {
         setLoading(false);
       }
     };
 
-    checkAccess();
+    // Pequeno delay para garantir que o localStorage está pronto
+    const timeout = setTimeout(checkAccess, 100);
+    return () => clearTimeout(timeout);
   }, [allowedRoles, redirectPath, panelName, router]);
 
   if (loading) {
