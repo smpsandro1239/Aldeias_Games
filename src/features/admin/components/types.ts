@@ -29,7 +29,13 @@ export interface Jogo {
   precoBase?: number;
   eventoId: string;
   evento?: {
+    id?: string;
     nome: string;
+    aldeia?: {
+      id?: string;
+      nome: string;
+      slug?: string;
+    };
   };
   configuracao?: string;
   stockInicial?: number;
