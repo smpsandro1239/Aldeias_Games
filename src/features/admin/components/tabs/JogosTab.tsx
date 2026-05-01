@@ -55,30 +55,35 @@ export function JogosTab({
   filtroEventoId,
   onLimparFiltro,
 }: JogosTabProps) {
-  const [jogoSearch, setJogoSearch] = useState("");
-  const [jogoPage, setJogoPage] = useState(1);
+   const [jogoSearch, setJogoSearch] = useState("");
+   const [jogoPage, setJogoPage] = useState(1);
+   const itemsPerPage = 10;
 
-  const filteredJogos = useMemo(() => {
-    let result = jogos;
-    // Filtro por evento
-    if (filtroEventoId) {
-      result = result.filter(j => j.eventoId === filtroEventoId);
-    }
-    // Filtro por texto
-    const searchLower = jogoSearch.toLowerCase();
-    if (searchLower) {
-      result = result.filter(jg =>
-        jg.nome?.toLowerCase().includes(searchLower) ||
-        jg.tipo?.toLowerCase().includes(searchLower)
-      );
-    }
-    return result;
-  }, [jogos, jogoSearch, filtroEventoId]);
+   const filteredJogos = useMemo(() => {
+     let result = jogos;
+     // Filtro por evento
+     if (filtroEventoId) {
+       result = result.filter(j => j.eventoId === filtroEventoId);
+     }
+     // Filtro por texto
+     const searchLower = jogoSearch.toLowerCase();
+     if (searchLower) {
+       result = result.filter(jg =>
+         jg.nome?.toLowerCase().includes(searchLower) ||
+         jg.tipo?.toLowerCase().includes(searchLower) ||
+         jg.evento?.nome?.toLowerCase().includes(searchLower) ||
+         jg.evento?.aldeia?.nome?.toLowerCase().includes(searchLower)
+       );
+     }
+     return result;
+   }, [jogos, jogoSearch, filtroEventoId]);
 
-  // Resetar página quando filtro ou busca mudar
-  useEffect(() => {
-    setJogoPage(1);
-  }, [filtroEventoId, jogoSearch]);
+   // Resetar página quando filtro ou busca mudar
+   useEffect(() => {
+     setJogoPage(1);
+   }, [filtroEventoId, jogoSearch]);
+
+   const paginatedJogos = filteredJogos.slice((jogoPage - 1) * itemsPerPage, jogoPage * itemsPerPage);
 
   const handleOpenJogoModal = (tipo?: string) => {
     if (!eventos.length) {
@@ -104,23 +109,36 @@ export function JogosTab({
         </Button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex gap-2">
-        <div className="flex-1 max-w-md">
-          <Label htmlFor="jogoSearch" className="sr-only">
-            Pesquisar jogo
-          </Label>
-          <Input
-            id="jogoSearch"
-            placeholder="Pesquisar por nome ou tipo..."
-            value={jogoSearch}
-            onChange={(e) => {
-              setJogoSearch(e.target.value);
-              setJogoPage(1);
-            }}
-          />
-        </div>
-      </div>
+       {/* Filtros */}
+       <div className="flex gap-2">
+         <div className="flex-1 max-w-md">
+           <Label htmlFor="jogoSearch" className="sr-only">
+             Pesquisar jogo
+           </Label>
+           <div className="relative">
+             <Input
+               id="jogoSearch"
+               placeholder="Pesquisar por nome, tipo, evento ou aldeia..."
+               value={jogoSearch}
+               onChange={(e) => setJogoSearch(e.target.value)}
+               className="pl-10"
+             />
+             <svg
+               className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+               fill="none"
+               stroke="currentColor"
+               viewBox="0 0 24 24"
+             >
+               <path
+                 strokeLinecap="round"
+                 strokeLinejoin="round"
+                 strokeWidth={2}
+                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+               />
+             </svg>
+           </div>
+         </div>
+       </div>
 
       {/* Filtro ativo */}
       {filtroEventoId && onLimparFiltro && (
@@ -135,25 +153,23 @@ export function JogosTab({
         </div>
       )}
 
-      {/* Lista */}
-      {filteredJogos.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="rounded-full bg-primary/10 p-4 mb-4">
-              <Gamepad2 className="h-12 w-12 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Sem jogos</h3>
-            <p className="text-muted-foreground text-center max-w-sm mb-6">
-              Crie jogos para os seus eventos e comece a angariar fundos.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {filteredJogos
-            .slice((jogoPage - 1) * 10, jogoPage * 10)
-            .map((jg) => (
-              <Card key={jg.id}>
+       {/* Lista */}
+       {filteredJogos.length === 0 ? (
+         <Card className="border-dashed">
+           <CardContent className="flex flex-col items-center justify-center py-16">
+             <div className="rounded-full bg-primary/10 p-4 mb-4">
+               <Gamepad2 className="h-12 w-12 text-primary" />
+             </div>
+             <h3 className="text-xl font-semibold mb-2">Sem jogos</h3>
+             <p className="text-muted-foreground text-center max-w-sm mb-6">
+               {jogoSearch ? "Nenhum jogo corresponde à pesquisa." : "Crie jogos para os seus eventos e comece a angariar fundos."}
+             </p>
+           </CardContent>
+         </Card>
+       ) : (
+         <div className="grid gap-4">
+           {paginatedJogos.map((jg) => (
+             <Card key={jg.id}>
                 <CardContent className="p-4 flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold">{jg.nome}</h3>
@@ -240,32 +256,35 @@ export function JogosTab({
         </div>
       )}
 
-      {/* Paginação */}
-      {filteredJogos.length > 10 && (
-        <div className="flex items-center justify-between pt-4 border-t">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {(jogoPage - 1) * 10 + 1} a {Math.min(jogoPage * 10, filteredJogos.length)} de {filteredJogos.length}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={jogoPage === 1}
-              onClick={() => setJogoPage(jogoPage - 1)}
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={jogoPage * 10 >= filteredJogos.length}
-              onClick={() => setJogoPage(jogoPage + 1)}
-            >
-              Próxima
-            </Button>
-          </div>
-        </div>
-      )}
+       {/* Paginação */}
+       {filteredJogos.length > itemsPerPage && (
+         <div className="flex items-center justify-between pt-4 border-t">
+           <p className="text-sm text-muted-foreground">
+             Mostrando {(jogoPage - 1) * itemsPerPage + 1} a {Math.min(jogoPage * itemsPerPage, filteredJogos.length)} de {filteredJogos.length} jogos
+           </p>
+           <div className="flex items-center gap-2">
+             <Button
+               variant="outline"
+               size="sm"
+               disabled={jogoPage === 1}
+               onClick={() => setJogoPage(jogoPage - 1)}
+             >
+               Anterior
+             </Button>
+             <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+               Página {jogoPage}
+             </span>
+             <Button
+               variant="outline"
+               size="sm"
+               disabled={jogoPage * itemsPerPage >= filteredJogos.length}
+               onClick={() => setJogoPage(jogoPage + 1)}
+             >
+               Próxima
+             </Button>
+           </div>
+         </div>
+       )}
     </div>
   );
 }
