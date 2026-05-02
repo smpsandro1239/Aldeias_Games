@@ -954,126 +954,10 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                     <div className="bg-surface-container rounded-xl p-4 space-y-4 border border-primary/20">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold text-primary">Prémios e Percentagens</h4>
-<Button type="button" variant="outline" size="sm" onClick={adicionarPremioRaspadinha}>
-  + Prémio
-</Button>
-
-<div className="space-y-3">
-  {rashadinhaPremios.map((premio) => (
-    <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-surface-container-low rounded-lg">
-      <div className="col-span-1 flex items-center justify-center">
-        <Trophy className="h-4 w-4 text-primary" />
-      </div>
-      <div className="col-span-4">
-        <Input
-          placeholder="Nome"
-          value={premio.nome}
-          onChange={(e) => handlePremioRaspadinhaChange(premio.id, "nome", e.target.value)}
-          className="h-8 text-sm"
-        />
-      </div>
-      <div className="col-span-3">
-        <div className="relative">
-          <Euro className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-          <Input
-            type="number"
-            placeholder="Valor"
-            value={premio.valorDinheiroAlternative || ""}
-            onChange={(e) => handlePremioRaspadinhaChange(premio.id, "valorDinheiroAlternative", parseFloat(e.target.value) || 0)}
-            className="h-8 text-sm pl-7"
-          />
-        </div>
-      </div>
-      <div className="col-span-3">
-        <div className="relative">
-          <Percent className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-          <Input
-            type="number"
-            placeholder="%"
-            min="0"
-            max="50"
-            value={premio.percentagem || ""}
-            onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", parseFloat(e.target.value) || 0)}
-            className="h-8 text-sm pl-7"
-          />
-        </div>
-        {premio.percentagem > 0 && (
-          <p className="text-xs text-muted-foreground mt-1">
-            ~{Math.round(stock * premio.percentagem / 100)} prêmios esperados
-          </p>
-        )}
-      </div>
-      <div className="col-span-1 flex justify-center">
-        {rashadinhaPremios.length > 1 && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-destructive"
-            onClick={() => removerPremioRaspadinha(premio.id)}
-          >
-            ✕
-          </Button>
-        )}
-      </div>
-    </div>
-  ))}
-</div>
-      <div className="col-span-4">
-        <Input
-          placeholder="Nome"
-          value={premio.nome}
-          onChange={(e) => handlePremioRaspadinhaChange(premio.id, "nome", e.target.value)}
-          className="h-8 text-sm"
-        />
-      </div>
-      <div className="col-span-3">
-        <div className="relative">
-          <Euro className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-          <Input
-            type="number"
-            placeholder="Valor"
-            value={premio.valorDinheiroAlternative || ""}
-            onChange={(e) => handlePremioRaspadinhaChange(premio.id, "valorDinheiroAlternative", parseFloat(e.target.value) || 0)}
-            className="h-8 text-sm pl-7"
-          />
-        </div>
-      </div>
-      <div className="col-span-3">
-        <div className="relative">
-          <Percent className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-          <Input
-            type="number"
-            placeholder="%"
-            min="0"
-            max="50"
-            value={premio.percentagem || ""}
-            onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", parseFloat(e.target.value) || 0)}
-            className="h-8 text-sm pl-7"
-          />
-        </div>
-        {premio.percentagem > 0 && (
-          <p className="text-xs text-muted-foreground mt-1">
-            ~{Math.round(stock * premio.percentagem / 100)} prêmios esperados
-          </p>
-        )}
-      </div>
-      <div className="col-span-1 flex justify-center">
-        {rashadinhaPremios.length > 1 && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-destructive"
-            onClick={() => removerPremioRaspadinha(premio.id)}
-          >
-            ✕
-          </Button>
-        )}
-      </div>
-    </div>
-  ))}
-</div>
+                        <Button type="button" variant="outline" size="sm" onClick={adicionarPremioRaspadinha}>
+                          + Prémio
+                        </Button>
+                      </div>
 
                       <div className="space-y-3">
                         {rashadinhaPremios.map((premio) => (
@@ -1113,21 +997,33 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                    onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", parseFloat(e.target.value) || 0)}
                                    className="h-8 text-sm pl-7"
                                  />
-                             </div>
-                             <div className="col-span-1 flex justify-center">
-                               {rashadinhaPremios.length > 1 && (
-                                 <Button
-                                   type="button"
-                                   variant="ghost"
-                                   size="sm"
-                                   className="h-8 w-8 p-0 text-destructive"
-                                   onClick={() => removerPremioRaspadinha(premio.id)}
-                                 >
-                                   ✕
-                                 </Button>
+                               </div>
+                               {premio.percentagem > 0 && (
+                                 <p className="text-xs text-muted-foreground mt-1">
+                                   ~{Math.round(stock * premio.percentagem / 100)} prêmios esperados
+                                 </p>
                                )}
                              </div>
-                           </div>
+                               {premio.percentagem > 0 && (
+                                 <p className="text-xs text-muted-foreground mt-1">
+                                   ~{Math.round(stock * premio.percentagem / 100)} prêmios esperados
+                                 </p>
+                               )}
+                             </div>
+                            <div className="col-span-1 flex justify-center">
+                              {rashadinhaPremios.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-destructive"
+                                  onClick={() => removerPremioRaspadinha(premio.id)}
+                                >
+                                  ✕
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         ))}
                       </div>
 
