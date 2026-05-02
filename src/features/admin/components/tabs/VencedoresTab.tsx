@@ -8,16 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   DollarSign,
-  Trophy
+  Trophy,
+  User
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Vencedor } from "../types";
+import { VencedorDetailModal } from "@/components/modals/vencedor-detail-modal";
 
 interface VencedoresTabProps {
   vencedores: Vencedor[];
   setSelectedPremio: (vencedor: Vencedor | null) => void;
   setConvertPrizeOpen: (open: boolean) => void;
   setConfirmEntregaOpen: (open: boolean) => void;
+  token: string;
 }
 
 export function VencedoresTab({
@@ -25,9 +28,12 @@ export function VencedoresTab({
   setSelectedPremio,
   setConvertPrizeOpen,
   setConfirmEntregaOpen,
+  token,
 }: VencedoresTabProps) {
   const [vencedorSearch, setVencedorSearch] = useState("");
   const [vencedorPage, setVencedorPage] = useState(1);
+  const [selectedVencedor, setSelectedVencedor] = useState<Vencedor | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const filteredVencedores = useMemo(() => {
     const searchLower = vencedorSearch.toLowerCase();
@@ -43,9 +49,14 @@ export function VencedoresTab({
     });
   }, [vencedores, vencedorSearch]);
 
+  const handleOpenDetail = (v: Vencedor) => {
+    setSelectedVencedor(v);
+    setDetailOpen(true);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Participações Vencedoras</h2>
       </div>
 
@@ -85,7 +96,11 @@ export function VencedoresTab({
           {filteredVencedores
             .slice((vencedorPage - 1) * 10, vencedorPage * 10)
             .map((v) => (
-              <Card key={v.id}>
+              <Card 
+                key={v.id} 
+                className="cursor-pointer hover:bg-accent/5 transition-colors"
+                onClick={() => handleOpenDetail(v)}
+              >
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="space-y-1">
                     <h3 className="font-semibold">{v.jogo?.nome || "Jogo eliminado"}</h3>
@@ -96,7 +111,7 @@ export function VencedoresTab({
                       Data: {formatDate(v.createdAt)}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div className="flex flex-wrap gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                     {v.premioEntregue ? (
                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                         Prémio Entregue/Convertido
@@ -106,7 +121,8 @@ export function VencedoresTab({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedPremio(v);
                             setConvertPrizeOpen(true);
                           }}
@@ -115,7 +131,8 @@ export function VencedoresTab({
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedPremio(v);
                             setConfirmEntregaOpen(true);
                           }}
@@ -157,6 +174,24 @@ export function VencedoresTab({
           </div>
         </div>
       )}
+
+      {/* Modal de Detalhes do Vencedor */}
+      <VencedorDetailModal
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        vencedor={selectedVencedor}
+        token={token}
+        onConvertPrize={(v) => {
+          setSelectedPremio(v);
+          setConvertPrizeOpen(true);
+          setDetailOpen(false);
+        }}
+        onEntregaPremio={(v) => {
+          setSelectedPremio(v);
+          setConfirmEntregaOpen(true);
+          setDetailOpen(false);
+        }}
+      />
     </div>
   );
 }

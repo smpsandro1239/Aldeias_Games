@@ -321,33 +321,40 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     ]);
   };
 
-  const preco = parseFloat(formData.preco) || 0;
-  const stock = parseInt(formData.stockInicial) || 0;
-  
-  const metricsRaspadinha = useMemo(() => {
-    const totalPercentagem = rashadinhaPremios.reduce((acc, p) => acc + p.percentagem, 0);
-    const lucroMinimo = 100 - totalPercentagem;
-    
-    const custoMedioPorBilhete = rashadinhaPremios.reduce((acc, p) => {
-      return acc + (p.valorDinheiroAlternative * p.percentagem / 100);
-    }, 0);
-    
-    const receitaTotal = preco * stock;
-    const custoTotalEstimado = custoMedioPorBilhete * stock;
-    const lucroEstimado = receitaTotal - custoTotalEstimado;
-    const margemLucro = receitaTotal > 0 ? (lucroEstimado / receitaTotal) * 100 : 0;
-    
-    return {
-      totalPercentagem,
-      lucroMinimo,
-      custoMedioPorBilhete,
-      receitaTotal,
-      custoTotalEstimado,
-      lucroEstimado,
-      margemLucro,
-      isLucrativo: lucroMinimo >= 50
-    };
-  }, [rashadinhaPremios, preco, stock]);
+   const preco = parseFloat(formData.preco) || 0;
+   const stock = parseInt(formData.stockInicial) || 0;
+   
+   const metricsRaspadinha = useMemo(() => {
+     const totalPercentagem = rashadinhaPremios.reduce((acc, p) => acc + p.percentagem, 0);
+     const lucroMinimo = 100 - totalPercentagem;
+     
+     const custoMedioPorBilhete = rashadinhaPremios.reduce((acc, p) => {
+       return acc + (p.valorDinheiroAlternative * p.percentagem / 100);
+     }, 0);
+     
+     // Calcular quantidade esperada de cada prêmio
+     const premiosComQuantidade = rashadinhaPremios.map(p => ({
+       ...p,
+       quantidadeEsperada: p.percentagem > 0 ? Math.round(stock * p.percentagem / 100) : 0
+     }));
+     
+     const receitaTotal = preco * stock;
+     const custoTotalEstimado = custoMedioPorBilhete * stock;
+     const lucroEstimado = receitaTotal - custoTotalEstimado;
+     const margemLucro = receitaTotal > 0 ? (lucroEstimado / receitaTotal) * 100 : 0;
+     
+     return {
+       totalPercentagem,
+       lucroMinimo,
+       custoMedioPorBilhete,
+       receitaTotal,
+       custoTotalEstimado,
+       lucroEstimado,
+       margemLucro,
+       isLucrativo: lucroMinimo >= 50,
+       premiosComQuantidade,
+     };
+   }, [rashadinhaPremios, preco, stock]);
 
   const metricsRifa = useMemo(() => {
     const totalPremios = rifaPremios.reduce((acc, p) => acc + p.valorDinheiroAlternative, 0);
@@ -978,20 +985,31 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                 />
                               </div>
                             </div>
-                            <div className="col-span-3">
-                              <div className="relative">
-                                <Percent className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                                <Input
-                                  type="number"
-                                  placeholder="%"
-                                  min="0"
-                                  max="50"
-                                  value={premio.percentagem || ""}
-                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", parseFloat(e.target.value) || 0)}
-                                  className="h-8 text-sm pl-7"
-                                />
-                              </div>
-                            </div>
+                             <div className="col-span-3">
+                               <div className="relative">
+                                 <Percent className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                 <Input
+                                   type="number"
+                                   placeholder="%"
+                                   min="0"
+                                   max="50"
+                                   value={premio.percentagem || ""}
+                                   onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", parseFloat(e.target.value) || 0)}
+                                   className="h-8 text-sm pl-7"
+                                 />
+                               </div>
+                               {premio.percentagem > 0 && (
+                                 <p className="text-xs text-muted-foreground mt-1">
+                                   ~{Math.round(stock * premio.percentagem / 100)} prêmios esperados
+                                 </p>
+                               )}
+                             </div>
+                               {premio.percentagem > 0 && (
+                                 <p className="text-xs text-muted-foreground mt-1">
+                                   ~{Math.round(stock * premio.percentagem / 100)} prêmios esperados
+                                 </p>
+                               )}
+                             </div>
                             <div className="col-span-1 flex justify-center">
                               {rashadinhaPremios.length > 1 && (
                                 <Button

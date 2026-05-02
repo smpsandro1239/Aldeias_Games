@@ -774,6 +774,7 @@ export default function AdminDashboard({
             setSelectedPremio={setSelectedPremio}
             setConvertPrizeOpen={setConvertPrizeOpen}
             setConfirmEntregaOpen={setConfirmEntregaOpen}
+            token={token}
           />
         </TabsContent>
 
