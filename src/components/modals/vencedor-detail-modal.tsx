@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,8 @@ import {
   Calendar,
   TrendingUp,
   Award,
-  ChevronRight
+  ChevronRight,
+  BarChart2
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
@@ -28,21 +29,28 @@ import { toast } from "sonner";
 interface Vencedor {
   id: string;
   jogo?: {
-    id: string;
-    nome: string;
-    tipo: string;
-    preco: number;
-    evento?: { nome: string };
+    id?: string;
+    nome?: string;
+    tipo?: string;
+    preco?: number;
+    evento?: {
+      id?: string;
+      nome?: string;
+      aldeia?: {
+        id?: string;
+        nome?: string;
+      };
+    };
   };
   nomeCliente?: string;
   telefoneCliente?: string;
   emailCliente?: string;
   user?: {
-    id: string;
-    nome: string;
-    email: string;
+    id?: string;
+    nome?: string;
+    email?: string;
     telefone?: string;
-    saldo: number;
+    saldo?: number;
   };
   participacaoId?: string;
   createdAt: string;
@@ -52,7 +60,7 @@ interface Vencedor {
     userNome?: string;
     userEmail?: string;
     userTelefone?: string;
-    letra?: string;
+    letra?: number;
     numero?: number;
   };
 }
@@ -77,12 +85,75 @@ export function VencedorDetailModal({
   const [activeTab, setActiveTab] = useState("perfil");
   const [participacoes, setParticipacoes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [aldeiaData, setAldeiaData] = useState<any>(null);
+  const [loadingUser, setLoadingUser] = useState(false);
+  const [loadingAldeia, setLoadingAldeia] = useState(false);
+
+  // Limpar dados ao trocar vencedor
+  useEffect(() => {
+    setParticipacoes([]);
+    setUserData(null);
+    setAldeiaData(null);
+  }, [vencedor]);
 
   useEffect(() => {
-    if (open && vencedor && activeTab === "historico") {
-      fetchHistorico();
+    if (open && vencedor && (activeTab === "perfil" || activeTab === "estatisticas")) {
+      fetchUserData();
     }
   }, [open, vencedor, activeTab]);
+
+  const fetchUserData = async () => {
+    if (!vencedor) return;
+    const userId = vencedor.user?.id || vencedor.dadosVencedor?.userId;
+    if (!userId) return;
+
+    setLoadingUser(true);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserData(data.data || null);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário:", error);
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userData?.aldeiaId) {
+      fetchAldeiaData(userData.aldeiaId);
+    } else {
+      setAldeiaData(null);
+    }
+  }, [userData]);
+
+  const fetchAldeiaData = async (aldeiaId: string) => {
+    setLoadingAldeia(true);
+    try {
+      const res = await fetch(`/api/aldeias/${aldeiaId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAldeiaData(data.data || null);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar aldeia:", error);
+    } finally {
+      setLoadingAldeia(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && vencedor && (activeTab === "historico" || activeTab === "estatisticas") && participacoes.length === 0) {
+      fetchHistorico();
+    }
+  }, [open, vencedor, activeTab, participacoes.length]);
 
   const fetchHistorico = async () => {
     if (!vencedor) return;
@@ -106,8 +177,13 @@ export function VencedorDetailModal({
     }
   };
 
-  const totalInvestido = participacoes.reduce((sum, p) => sum + p.valorPago, 0);
-  const totalGanhos = vencedor.premioEntregue ? (vencedor.jogo?.preco || 0) : 0; // Simplificado
+  const estatisticas = useMemo(() => {
+    const total = participacoes.length;
+    const vitorias = participacoes.filter(p => p.ganhador).length;
+    const investido = participacoes.reduce((sum, p) => sum + p.valorPago, 0);
+    const percentual = total > 0 ? ((vitorias / total) * 100).toFixed(1) : "0.0";
+    return { total, vitorias, investido, percentual };
+  }, [participacoes]);
 
   if (!vencedor) return null;
 
@@ -166,7 +242,7 @@ export function VencedorDetailModal({
           </Card>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="perfil">
                 <User className="w-4 h-4 mr-2" />
                 Perfil
@@ -174,6 +250,10 @@ export function VencedorDetailModal({
               <TabsTrigger value="historico">
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Histórico
+              </TabsTrigger>
+              <TabsTrigger value="estatisticas">
+                <BarChart2 className="w-4 h-4 mr-2" />
+                Estatísticas
               </TabsTrigger>
             </TabsList>
 
@@ -196,6 +276,13 @@ export function VencedorDetailModal({
                     <div>
                       <p className="text-sm text-muted-foreground">Jogo</p>
                       <p className="font-medium">{vencedor.jogo?.nome || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Aldeia</p>
+                      <p className="font-medium">
+                        {loadingUser || loadingAldeia ? "A carregar..." :
+                          aldeiaData?.nome || vencedor.jogo?.evento?.aldeia?.nome || "—"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Data do Sorteio</p>
@@ -258,6 +345,32 @@ export function VencedorDetailModal({
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="estatisticas" className="space-y-4 mt-4">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Estatísticas de Participação</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-primary/10 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-primary">{estatisticas.total}</p>
+                      <p className="text-sm text-muted-foreground">Total Participações</p>
+                    </div>
+                    <div className="bg-accent/10 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-accent">{estatisticas.vitorias}</p>
+                      <p className="text-sm text-muted-foreground">Vitórias</p>
+                    </div>
+                    <div className="bg-green-500/10 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-green-600">{estatisticas.percentual}%</p>
+                      <p className="text-sm text-muted-foreground">Taxa de Vitória</p>
+                    </div>
+                    <div className="bg-secondary/10 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold">{formatCurrency(estatisticas.investido)}</p>
+                      <p className="text-sm text-muted-foreground">Total Investido</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
 

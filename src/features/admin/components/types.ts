@@ -55,17 +55,40 @@ export interface User {
 export interface Vencedor {
   id: string;
   jogo?: {
-    nome: string;
+    id?: string;
+    nome?: string;
+    tipo?: string;
+    preco?: number;
+    evento?: {
+      id?: string;
+      nome?: string;
+      aldeia?: {
+        id?: string;
+        nome?: string;
+      };
+    };
   };
   nomeCliente?: string;
   telefoneCliente?: string;
+  emailCliente?: string;
   user?: {
-    nome: string;
+    id?: string;
+    nome?: string;
+    email?: string;
     telefone?: string;
+    saldo?: number;
   };
-  premioEntregue: boolean;
+  participacaoId?: string;
   createdAt: string;
-  // ... outros campos
+  premioEntregue: boolean;
+  dadosVencedor?: {
+    userId?: string;
+    userNome?: string;
+    userEmail?: string;
+    userTelefone?: string;
+    letra?: number;
+    numero?: number;
+  };
 }
 
 export interface Aldeia {
