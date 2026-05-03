@@ -53,16 +53,16 @@ const TransacoesTab = lazy(() => import("./components").then(mod => ({ default: 
 const AuditoriaTab = lazy(() => import("./components").then(mod => ({ default: mod.AuditoriaTab })));
 
 import type {
-   Stats,
-   Evento,
-   Jogo,
-   User,
-   Vencedor,
-   Aldeia,
-   Transacao,
-   Log,
-   VendedorStats,
- } from "./components";
+  Stats,
+  Evento,
+  Jogo,
+  User,
+  Vencedor,
+  Aldeia,
+  Transacao,
+  Log,
+  VendedorStats,
+} from "./components";
 import type { JogoData } from "@/components/modals/create-jogo-modal";
 import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
@@ -121,9 +121,9 @@ export default function AdminDashboard({
 
   // Seleções
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
-  const [selectedJogo, setSelectedJogo] = useState<Jogo | null>(null);
-  const [selectedAldeia, setSelectedAldeia] = useState<Aldeia | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedJogo, setSelectedJogo] = useState<JogoData | null>(null);
+  const [selectedAldeia, setSelectedAldeia] = useState<AldeiaData | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [selectedPremio, setSelectedPremio] = useState<Vencedor | null>(null);
   const [convertValor, setConvertValor] = useState("25");
   const [qrCodeData, setQrCodeData] = useState<{ jogoId?: string; eventoId?: string; aldeiaSlug?: string; type: "jogo" | "evento" | "aldeia" } | null>(null);
@@ -542,6 +542,93 @@ export default function AdminDashboard({
     setSelectedEventoIdParaJogo("");
   }, []);
 
+  // ==================== CONVERSIONS ====================
+  // Convert API types to modal data types for editing
+
+  const convertJogoToJogoData = useCallback((jogo: Jogo): JogoData => {
+    let config: Record<string, unknown> = {};
+    if (jogo.configuracao) {
+      try {
+        config = JSON.parse(jogo.configuracao);
+      } catch {
+        config = {};
+      }
+    }
+    const jogoData: JogoData = {
+      id: jogo.id,
+      nome: jogo.nome,
+      tipo: jogo.tipo as "poio_da_vaca" | "rifa" | "tombola" | "raspadinha",
+      descricao: (jogo as any).descricao,
+      preco: jogo.preco,
+      stockInicial: jogo.stockInicial ?? 100,
+      limitePorUsuario: (config.limitePorUsuario as number) ?? 10,
+      eventoId: jogo.eventoId,
+      configuracao: config,
+    };
+    // Optional fields from config
+    if (config.modoSorteio === "app" || config.modoSorteio === "externo") {
+      jogoData.modoSorteio = config.modoSorteio;
+    }
+    if (typeof config.detalhesSorteioExterno === "string") {
+      jogoData.detalhesSorteioExterno = config.detalhesSorteioExterno;
+    }
+    if (Array.isArray(config.premios)) {
+      jogoData.premios = config.premios;
+    }
+    if (typeof config.custoQuadrado === "number") {
+      jogoData.custoQuadrado = config.custoQuadrado;
+    }
+    if (typeof config.valorMercadoVaca === "number") {
+      jogoData.valorMercadoVaca = config.valorMercadoVaca;
+    }
+    if (typeof config.valorCompraVaca === "number") {
+      jogoData.valorCompraVaca = config.valorCompraVaca;
+    }
+    if (typeof config.dimensoesCampo === "string") {
+      jogoData.dimensoesCampo = config.dimensoesCampo;
+    }
+    if (typeof config.permitirStripe === "boolean") {
+      jogoData.permitirStripe = config.permitirStripe;
+    }
+    return jogoData;
+  }, []);
+
+  const convertAldeiaToAldeiaData = useCallback((aldeia: Aldeia): AldeiaData => {
+    return {
+      id: aldeia.id,
+      nome: aldeia.nome,
+      tipoOrganizacao: aldeia.tipoOrganizacao as "aldeia" | "escola" | "associacao_pais" | "clube",
+      descricao: (aldeia as any).descricao,
+      telefone: (aldeia as any).telefone,
+      email: aldeia.email,
+    };
+  }, []);
+
+  const convertUserToUserData = useCallback((user: User): UserData => {
+    return {
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
+      password: undefined,
+      role: user.role as "super_admin" | "aldeia_admin" | "vendedor" | "user",
+      telefone: user.telefone,
+      aldeiaId: user.aldeiaId,
+    };
+  }, []);
+
+  // Wrapped setters for tabs to convert API types to modal types
+  const handleSetSelectedJogo = useCallback((jogo: Jogo | null) => {
+    setSelectedJogo(jogo ? convertJogoToJogoData(jogo) : null);
+  }, [convertJogoToJogoData]);
+
+  const handleSetSelectedAldeia = useCallback((aldeia: Aldeia | null) => {
+    setSelectedAldeia(aldeia ? convertAldeiaToAldeiaData(aldeia) : null);
+  }, [convertAldeiaToAldeiaData]);
+
+  const handleSetSelectedUser = useCallback((user: User | null) => {
+    setSelectedUser(user ? convertUserToUserData(user) : null);
+  }, [convertUserToUserData]);
+
   // ==================== RENDER ====================
 
   if (loading) {
@@ -746,25 +833,25 @@ export default function AdminDashboard({
         </TabsContent>
 
         {/* Jogos Tab */}
-        <TabsContent value="jogos">
-          <JogosTab
-            jogos={jogos}
-            eventos={eventos}
-            userRole={userRole}
-            selectedEventoIdParaJogo={selectedEventoIdParaJogo}
-            setSelectedJogo={setSelectedJogo}
-            setJogoModalOpen={setJogoModalOpen}
-            setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
-            setQrCodeData={setQrCodeData}
-            setQrCodeOpen={setQrCodeOpen}
-            handleTestarJogo={handleTestarJogo}
-            setTestJogoOpen={setTestJogoOpen}
-            requestDelete={requestDelete}
-            getEstadoBadge={getEstadoBadge}
-            onToggleEstado={handleToggleJogoEstado}
-            filtroEventoId={filtroEventoId}
-            onLimparFiltro={handleLimparFiltroJogos}
-          />
+         <TabsContent value="jogos">
+           <JogosTab
+             jogos={jogos}
+             eventos={eventos}
+             userRole={userRole}
+             selectedEventoIdParaJogo={selectedEventoIdParaJogo}
+             setSelectedJogo={handleSetSelectedJogo}
+             setJogoModalOpen={setJogoModalOpen}
+             setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
+             setQrCodeData={setQrCodeData}
+             setQrCodeOpen={setQrCodeOpen}
+             handleTestarJogo={handleTestarJogo}
+             setTestJogoOpen={setTestJogoOpen}
+             requestDelete={requestDelete}
+             getEstadoBadge={getEstadoBadge}
+             onToggleEstado={handleToggleJogoEstado}
+             filtroEventoId={filtroEventoId}
+             onLimparFiltro={handleLimparFiltroJogos}
+           />
         </TabsContent>
 
         {/* Vencedores Tab */}
@@ -783,40 +870,40 @@ export default function AdminDashboard({
           <VerificarTab setVerificarHashOpen={setVerificarHashOpen} />
         </TabsContent>
 
-        {/* Users Tab */}
-        <TabsContent value="users">
-          <UsersTab
-            users={users}
-            setSelectedUser={setSelectedUser}
-            setUserModalOpen={setUserModalOpen}
-            requestDelete={requestDelete}
-          />
-        </TabsContent>
+         {/* Users Tab */}
+         <TabsContent value="users">
+           <UsersTab
+             users={users}
+             setSelectedUser={handleSetSelectedUser}
+             setUserModalOpen={setUserModalOpen}
+             requestDelete={requestDelete}
+           />
+         </TabsContent>
 
-        {/* Comissões Tab (apenas aldeia_admin) */}
-        {userRole === "aldeia_admin" && (
-          <TabsContent value="comissoes">
-            <ComissoesTab
-              vendedoresStats={vendedoresStats}
-              setSelectedUser={setSelectedUser}
-              setUserModalOpen={setUserModalOpen}
-            />
-          </TabsContent>
-        )}
+         {/* Comissões Tab (apenas aldeia_admin) */}
+         {userRole === "aldeia_admin" && (
+           <TabsContent value="comissoes">
+             <ComissoesTab
+               vendedoresStats={vendedoresStats}
+               setSelectedUser={handleSetSelectedUser}
+               setUserModalOpen={setUserModalOpen}
+             />
+           </TabsContent>
+         )}
 
-        {/* Aldeias Tab (apenas super_admin) */}
-        {userRole === "super_admin" && (
-          <TabsContent value="aldeias">
-            <Suspense fallback={<div>Carregando...</div>}>
-              <AldeiasTab
-                aldeias={aldeias}
-                setSelectedAldeia={setSelectedAldeia}
-                setAldeiaModalOpen={setAldeiaModalOpen}
-                requestDelete={requestDelete}
-              />
-            </Suspense>
-          </TabsContent>
-        )}
+         {/* Aldeias Tab (apenas super_admin) */}
+         {userRole === "super_admin" && (
+           <TabsContent value="aldeias">
+             <Suspense fallback={<div>Carregando...</div>}>
+               <AldeiasTab
+                 aldeias={aldeias}
+                 setSelectedAldeia={handleSetSelectedAldeia}
+                 setAldeiaModalOpen={setAldeiaModalOpen}
+                 requestDelete={requestDelete}
+               />
+             </Suspense>
+           </TabsContent>
+         )}
 
         {/* Transações Tab (apenas super_admin) */}
         {userRole === "super_admin" && (
@@ -847,33 +934,33 @@ export default function AdminDashboard({
         aldeias={userRole === "super_admin" ? aldeias : undefined}
       />
 
-       <CreateJogoModal
-         open={jogoModalOpen}
-         onOpenChange={setJogoModalOpen}
-         onSubmit={handleSaveJogo}
-         eventoId={selectedEventoIdParaJogo}
-         initialData={selectedJogo as unknown as JogoData}
-         userRole={userRole}
-         token={token}
-         aldeiaId={aldeiaId}
-         metodosPagamentoDefault={paymentMethodsDefault}
-       />
+        <CreateJogoModal
+          open={jogoModalOpen}
+          onOpenChange={setJogoModalOpen}
+          onSubmit={handleSaveJogo}
+          eventoId={selectedEventoIdParaJogo}
+          initialData={selectedJogo ?? undefined}
+          userRole={userRole}
+          token={token}
+          aldeiaId={aldeiaId}
+          metodosPagamentoDefault={paymentMethodsDefault}
+        />
 
-       <AldeiaModal
-         open={aldeiaModalOpen}
-         onOpenChange={setAldeiaModalOpen}
-         onSubmit={handleSaveAldeia}
-         initialData={selectedAldeia as unknown as AldeiaData}
-       />
+        <AldeiaModal
+          open={aldeiaModalOpen}
+          onOpenChange={setAldeiaModalOpen}
+          onSubmit={handleSaveAldeia}
+          initialData={selectedAldeia ?? undefined}
+        />
 
-       <UserModal
-         open={userModalOpen}
-         onOpenChange={setUserModalOpen}
-         onSubmit={handleSaveUser}
-         initialData={selectedUser as unknown as UserData}
-         aldeias={aldeia ? [aldeia] : (userRole === "super_admin" ? aldeias : [])}
-         currentUserRole={userRole}
-       />
+        <UserModal
+          open={userModalOpen}
+          onOpenChange={setUserModalOpen}
+          onSubmit={handleSaveUser}
+          initialData={selectedUser ?? undefined}
+          aldeias={aldeia ? [aldeia] : (userRole === "super_admin" ? aldeias : [])}
+          currentUserRole={userRole}
+        />
 
       <ConfirmModal
         open={!!deleteData}

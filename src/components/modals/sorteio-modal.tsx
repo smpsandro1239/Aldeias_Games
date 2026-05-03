@@ -34,6 +34,12 @@ interface SorteioModalProps {
   }>;
 }
 
+type ResultadoSorteio = Record<string, unknown>;
+
+function isResultadoPoio(r: ResultadoSorteio): r is { letraVencedora: string; numeroVencedor: number } {
+  return typeof r.letraVencedora === 'string' && typeof r.numeroVencedor === 'number';
+}
+
 export function SorteioModal({
   open,
   onOpenChange,
@@ -64,6 +70,20 @@ export function SorteioModal({
     setResultado(null);
     setObservacoes("");
     onOpenChange(false);
+  };
+
+  // Helper to compute final result string and animation type
+  const getResultDisplay = (res: Record<string, unknown>) => {
+    if (isResultadoPoio(res)) {
+      return {
+        finalResult: `${res.letraVencedora}${res.numeroVencedor}`,
+        type: "coordinate" as const,
+      };
+    }
+    return {
+      finalResult: `${res.numeroVencedor}`,
+      type: "number" as const,
+    };
   };
 
   return (
@@ -111,15 +131,16 @@ export function SorteioModal({
         ) : (
           <>
             <div className="py-4 space-y-4">
-              <LotteryAnimation 
-                finalResult={
-                  (resultado.resultado as any).letraVencedora 
-                    ? `${(resultado.resultado as any).letraVencedora}${(resultado.resultado as any).numeroVencedor}`
-                    : `${(resultado.resultado as any).numeroVencedor}`
-                }
-                isSpinning={loading}
-                type={(resultado.resultado as any).letraVencedora ? "coordinate" : "number"}
-              />
+              {(() => {
+                const display = getResultDisplay(resultado.resultado);
+                return (
+                  <LotteryAnimation
+                    finalResult={display.finalResult}
+                    isSpinning={loading}
+                    type={display.type}
+                  />
+                );
+              })()}
 
               {/* Detalhes aparecem só depois da animação (simulado pelo loading aqui) */}
               {!loading && (

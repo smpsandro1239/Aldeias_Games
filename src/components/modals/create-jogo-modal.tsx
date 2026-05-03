@@ -347,12 +347,12 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     setShowTransparency(true);
   };
 
-   const construirDadosJogo = (): JogoData => {
-     const eventoId = propEventoId;
-     if (!eventoId) {
-       throw new Error("Selecione um evento antes de criar o jogo");
-     }
-     const config: Record<string, unknown> = {
+  const construirDadosJogo = (): JogoData => {
+    const eventoId = propEventoId;
+    if (!eventoId) {
+      throw new Error("Selecione um evento antes de criar o jogo");
+    }
+    const config: Record<string, unknown> = {
       numeroInicial: parseInt(formData.numeroInicial) || 1,
       numeroFinal: parseInt(formData.numeroFinal) || 1000,
       modoSorteio: formData.modoSorteio,
@@ -383,7 +383,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       config.premios = rashadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
     }
 
-     let premiosData: Array<{nome: string; valorDinheiroAlternative: number; percentagem?: number; ordem: number}> = [];
+    let premiosData: Array<{nome: string; valorDinheiroAlternative: number; percentagem?: number; ordem: number}> = [];
     let metrics = getMetrics();
 
     if (formData.tipo === "raspadinha") {
@@ -423,19 +423,19 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       custoQuadrado: formData.tipo === "poio_da_vaca" ? parseFloat(formData.custoQuadrado) : undefined,
       valorMercadoVaca: formData.tipo === "poio_da_vaca" ? parseFloat(formData.valorMercadoVaca) : undefined,
       valorCompraVaca: formData.tipo === "poio_da_vaca" ? parseFloat(formData.valorCompraVaca) : undefined,
-       lucroMinimoPercent: formData.tipo === "raspadinha"
-         ? metricsRaspadinha.lucroMinimo
-         : (formData.tipo === "rifa" || formData.tipo === "tombola")
-           ? metricsRifa.margemLucro
-           : metricsPoioDaVaca.margemLucro,
+      lucroMinimoPercent: formData.tipo === "raspadinha"
+        ? metricsRaspadinha.lucroMinimo
+        : (formData.tipo === "rifa" || formData.tipo === "tombola")
+          ? metricsRifa.margemLucro
+          : metricsPoioDaVaca.margemLucro,
       receitaEsperada: formData.tipo === "raspadinha" ? metricsRaspadinha.receitaTotal :
                        formData.tipo === "poio_da_vaca" ? metricsPoioDaVaca.receitaTotal :
                        metricsRifa.receitaTotal,
-       lucroLiquidoPrevisto: formData.tipo === "raspadinha"
-         ? metricsRaspadinha.lucroEstimado
-         : formData.tipo === "poio_da_vaca"
-           ? metricsPoioDaVaca.lucroEstimado
-           : metricsRifa.lucroEstimado,
+      lucroLiquidoPrevisto: formData.tipo === "raspadinha"
+        ? metricsRaspadinha.lucroEstimado
+        : formData.tipo === "poio_da_vaca"
+          ? metricsPoioDaVaca.lucroEstimado
+          : metricsRifa.lucroEstimado,
     };
   };
 
