@@ -4,6 +4,7 @@ import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { createParticipacaoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import crypto from 'crypto';
+import { sendTicketEmail } from '@/lib/email';
 
 
 // GET - Listar participações
@@ -506,7 +507,26 @@ export async function POST(request: NextRequest) {
 
 
 
-     return NextResponse.json({
+      // Enviar email de bilhete para pagamentos confirmados (rifa/tombola)
+      if ((jogo.tipo === 'rifa' || jogo.tipo === 'tombola') && result.participacoes.length > 0) {
+        const primeira = result.participacoes[0];
+        if (primeira.estadoPagamento === 'concluido' && primeira.emailCliente) {
+          const numeros = data.dadosParticipacao?.numeros || [];
+          try {
+            await sendTicketEmail(
+              primeira.emailCliente,
+              primeira.nomeCliente || 'Cliente',
+              jogo.nome,
+              numeros.map((n: number) => n.toString()),
+              jogo.evento.nome
+            );
+          } catch (err) {
+            console.error('[Email] Erro ao enviar bilhete:', err);
+          }
+        }
+      }
+
+      return NextResponse.json({
       success: true,
       participacao: data.quantidade === 1 ? (() => {
         const p = result.participacoes[0];
