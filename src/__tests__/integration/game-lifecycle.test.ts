@@ -342,12 +342,13 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
       };
 
       // 2. Simular compras (100 compras, números aleatórios)
-      const compras = Array.from({ length: 100 }, (_, i) => ({
-        id: `compra${i+1}`,
-        userId: `user${i % 10 + 1}`, // 10 utilizadores
-        numero: i + 1,
-        estadoPagamento: 'concluido' as const,
-      }));
+       const compras = Array.from({ length: 100 }, (_, i) => ({
+         id: `compra${i+1}`,
+         userId: `user${i % 10 + 1}`, // 10 utilizadores
+         numero: i + 1,
+         estadoPagamento: 'concluido' as const,
+         premioEntregue: false,
+       }));
 
       // 3. Verificar stock esgotado
       jogo.stockAtual = 0;
@@ -382,12 +383,13 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
       };
 
       // 2. Simular compras
-      const compras = Array.from({ length: 500 }, (_, i) => ({
-        id: `compra${i+1}`,
-        userId: `user${i % 50 + 1}`,
-        dadosParticipacao: JSON.stringify({ letra: 'A', numero: i + 1 }),
-        estadoPagamento: 'concluido' as const,
-      }));
+       const compras = Array.from({ length: 500 }, (_, i) => ({
+         id: `compra${i+1}`,
+         userId: `user${i % 50 + 1}`,
+         dadosParticipacao: JSON.stringify({ letra: 'A', numero: i + 1 }),
+         estadoPagamento: 'concluido' as const,
+         premioEntregue: false,
+       }));
 
       // 3. Fechar jogo
       jogo.stockAtual = 0;
@@ -457,8 +459,8 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
 
   describe('Permissões e Autorização', () => {
     it('deve impedir que aldeia_admin crie jogos para outra aldeia', () => {
-      const userAldeiaId = 'aldeia1';
-      const eventoAldeiaId = 'aldeia2';
+      const userAldeiaId: string = 'aldeia1';
+      const eventoAldeiaId: string = 'aldeia2';
 
       const canCreate = userAldeiaId === eventoAldeiaId;
       expect(canCreate).toBe(false);
@@ -481,7 +483,7 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
         // eventoId: undefined, // Missing
       };
 
-      const isValid = !!jogo.eventoId;
+      const isValid = !!(jogo as any).eventoId;
       expect(isValid).toBe(false);
     });
 

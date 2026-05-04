@@ -1017,7 +1017,7 @@ export default function AdminDashboard({
            ) : undefined
          }
          confirmText={toggleJogoData?.novoEstado === 'fechado' ? 'Desativar' : 'Ativar'}
-         confirmVariant={toggleJogoData?.novoEstado === 'fechado' ? 'destructive' : 'default'}
+         variant={toggleJogoData?.novoEstado === 'fechado' ? 'destructive' : 'default'}
          onConfirm={executeToggleJogoEstado}
        />
 

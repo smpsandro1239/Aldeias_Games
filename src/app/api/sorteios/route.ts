@@ -78,17 +78,17 @@ import { sendWinnerSMS } from '@/lib/sms';
        });
 
        // Log auditoria: commit
-       await logSorteio(
-         user?.id || 'anonymous',
-         jogoId,
-         jogo.nome,
-         'commit',
-         undefined,
-         preCommitHash,
-         undefined,
-         request.headers.get('x-forwarded-for') || request.ip,
-         request.headers.get('user-agent')
-       );
+        await logSorteio(
+          user?.id || 'anonymous',
+          jogoId,
+          jogo.nome,
+          'commit',
+          undefined,
+          preCommitHash,
+          undefined,
+          request.headers.get('x-forwarded-for') ?? undefined,
+          request.headers.get('user-agent') ?? undefined
+        );
 
        return NextResponse.json({
         success: true,
@@ -265,17 +265,17 @@ import { sendWinnerSMS } from '@/lib/sms';
        }
 
        // Log auditoria: reveal (execução do sorteio)
-       await logSorteio(
-         user?.id || 'anonymous',
-         jogoId,
-         jogo.nome,
-         'reveal',
-         seed,
-         hash,
-         vencedores.length,
-         request.headers.get('x-forwarded-for') || request.ip,
-         request.headers.get('user-agent')
-       );
+        await logSorteio(
+          user?.id || 'anonymous',
+          jogoId,
+          jogo.nome,
+          'reveal',
+          seedRevelada,
+          hash,
+          vencedores.length,
+          request.headers.get('x-forwarded-for') ?? undefined,
+          request.headers.get('user-agent') ?? undefined
+        );
 
        return NextResponse.json({
         success: true,

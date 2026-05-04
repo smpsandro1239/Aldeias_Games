@@ -160,8 +160,8 @@ export async function POST(request: NextRequest) {
        seed,
        hash,
        vencedores.length,
-       request.headers.get('x-forwarded-for') || request.ip,
-       request.headers.get('user-agent')
+        request.headers.get('x-forwarded-for') ?? undefined,
+        request.headers.get('user-agent') ?? undefined
      );
 
      // Retornar resultado SIMULADO sem persistir no banco
