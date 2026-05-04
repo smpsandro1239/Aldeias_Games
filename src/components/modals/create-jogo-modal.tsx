@@ -32,6 +32,7 @@ import {
   TrendingUp,
   Calculator
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Premio {
   id: string;
@@ -339,22 +340,40 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     }
   };
 
-   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault();
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
 
-     // Validação específica: soma das percentagens raspadinha <= 100%
-     if (formData.tipo === 'raspadinha' && rashadinhaPremios.length > 0) {
-       const totalPercentagem = rashadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
-       if (totalPercentagem > 100) {
-         toast.error(`A soma das percentagens dos prémios (${totalPercentagem}%) não pode exceder 100%`);
-         return;
-       }
-     }
+      // Validação específica: soma das percentagens raspadinha <= 100%
+      if (formData.tipo === 'raspadinha' && rashadinhaPremios.length > 0) {
+        const totalPercentagem = rashadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
+        if (totalPercentagem > 100) {
+          toast.error(`A soma das percentagens dos prémios (${totalPercentagem}%) não pode exceder 100%`);
+          return;
+        }
+      }
 
-     const jogoData = construirDadosJogo();
-     setSubmittedData(jogoData);
-     setShowTransparency(true);
-   };
+      // Validação específica para rifa/tombola: intervalo numérico
+      if (formData.tipo === 'rifa' || formData.tipo === 'tombola') {
+        const numInicial = parseInt(formData.numeroInicial);
+        const numFinal = parseInt(formData.numeroFinal);
+        const stock = parseInt(formData.stockInicial);
+
+        if (numFinal <= numInicial) {
+          toast.error('Número final deve ser maior que número inicial para rifa/tombola');
+          return;
+        }
+
+        const intervalo = numFinal - numInicial + 1;
+        if (intervalo < stock) {
+          toast.error('Stock inicial excede o intervalo numérico disponível');
+          return;
+        }
+      }
+
+      const jogoData = construirDadosJogo();
+      setSubmittedData(jogoData);
+      setShowTransparency(true);
+    };
 
   const construirDadosJogo = (): JogoData => {
     const eventoId = propEventoId;

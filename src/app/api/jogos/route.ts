@@ -209,9 +209,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = validation.data;
+     const data = validation.data;
 
-    // Verificar se evento existe e pertence à aldeia do admin
+     // Validação defensiva no backend para rifa/tombola
+     if (data.tipo === 'rifa' || data.tipo === 'tombola') {
+       const config = data.configuracao as any;
+       const numeroInicial = config?.numeroInicial;
+       const numeroFinal = config?.numeroFinal;
+
+       if (typeof numeroInicial !== 'number' || typeof numeroFinal !== 'number') {
+         return NextResponse.json(
+           { error: 'Configuração de números inicial/final é obrigatória para rifa/tombola' },
+           { status: 400 }
+         );
+       }
+
+       if (numeroFinal <= numeroInicial) {
+         return NextResponse.json(
+           { error: 'Número final deve ser maior que número inicial para rifa/tombola' },
+           { status: 400 }
+         );
+       }
+
+       const intervalo = numeroFinal - numeroInicial + 1;
+       if (intervalo < data.stockInicial) {
+         return NextResponse.json(
+           { error: 'Stock inicial excede o intervalo numérico disponível' },
+           { status: 400 }
+         );
+       }
+     }
+
+     // Verificar se evento exists
     const evento = await prisma.evento.findUnique({
       where: { id: data.eventoId },
       include: { aldeia: true },
@@ -290,11 +319,10 @@ export async function POST(request: NextRequest) {
     };
     
     // Criar jogo
-    const jogo = await prisma.jogo.create({
-      data: {
-        ...jogoData,
-        // Se vierem prémios no createJogo, criá-los
-        premios: data.premios ? {
+    const createData = {
+      ...jogoData,
+      ...(data.premios && data.premios.length > 0 ? {
+        premios: {
           create: data.premios.map((p: any, idx: number) => ({
             nome: p.nome,
             descricao: p.descricao,
@@ -303,36 +331,42 @@ export async function POST(request: NextRequest) {
             ordem: p.ordem ?? idx,
             aldeiaId: evento.aldeiaId,
           }))
-        } : undefined,
-       },
-       include: {
-         evento: {
-           select: {
-             id: true,
-             nome: true,
-             aldeiaId: true,
-           },
-         },
-         premios: {
-           select: {
-             id: true,
-             nome: true,
-             ordem: true,
-           },
-         },
-       },
-     );
+        }
+      } : {}),
+    };
+
+    const includeData = {
+      evento: {
+        select: {
+          id: true,
+          nome: true,
+          aldeiaId: true,
+        },
+      },
+      premios: {
+        select: {
+          id: true,
+          nome: true,
+          ordem: true,
+        },
+      },
+    };
+
+    const jogo = await prisma.jogo.create({
+      data: createData,
+      include: includeData,
+    });
 
      // Log de auditoria: criação de jogo
-     await logJogoWrite(
-       user?.id || 'anonymous',
-       jogo.id,
-       jogo.nome,
-       'create',
-       undefined,
-       request.headers.get('x-forwarded-for') || request.ip,
-       request.headers.get('user-agent')
-     );
+      await logJogoWrite(
+        user?.id || 'anonymous',
+        jogo.id,
+        jogo.nome,
+        'create',
+        undefined,
+        request.headers.get('x-forwarded-for') ?? undefined,
+        request.headers.get('user-agent') ?? undefined
+      );
 
      return NextResponse.json(
        { success: true, data: jogo },

@@ -114,7 +114,7 @@ export const updateEventoSchema = createEventoSchema.partial().omit({ aldeiaId: 
 // VALIDAÇÕES DE JOGO
 // ============================================
 
-export const createJogoSchema = z.object({
+const baseJogoSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   tipo: z.enum(['poio_da_vaca', 'rifa', 'tombola', 'raspadinha']),
   descricao: z.string().optional(),
@@ -140,21 +140,45 @@ export const createJogoSchema = z.object({
   valorPremioVaca: z.number().optional(),
   custoPremioDinheiro: z.number().optional(),
   premioId: z.string().optional(),
-}).refine((data) => {
-  // Validação específica para raspadinha: soma das percentagens <= 100%
-  if (data.tipo === 'raspadinha' && data.premios && data.premios.length > 0) {
-    const totalPercentagem = data.premios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
-    if (totalPercentagem > 100) {
-      return false;
-    }
-  }
-  return true;
-}, {
-  message: 'A soma das percentagens dos prémios não pode exceder 100%',
-  path: ['premios'], // Aponta para o array de prémios
 });
 
-export const updateJogoSchema = createJogoSchema.partial().omit({ eventoId: true });
+export const createJogoSchema = baseJogoSchema
+  .refine((data) => {
+    // Validação específica para raspadinha: soma das percentagens <= 100%
+    if (data.tipo === 'raspadinha' && data.premios && data.premios.length > 0) {
+      const totalPercentagem = data.premios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
+      if (totalPercentagem > 100) {
+        return false;
+      }
+    }
+    return true;
+  }, {
+    message: 'A soma das percentagens dos prémios não pode exceder 100%',
+    path: ['premios'],
+  })
+  .refine((data) => {
+    // Validação específica para rifa/tombola: intervalo numérico válido
+    if (data.tipo === 'rifa' || data.tipo === 'tombola') {
+      const config = data.configuracao as any;
+      const numeroInicial = config?.numeroInicial;
+      const numeroFinal = config?.numeroFinal;
+      if (typeof numeroInicial === 'number' && typeof numeroFinal === 'number') {
+        if (numeroFinal <= numeroInicial) {
+          return false;
+        }
+        const intervalo = numeroFinal - numeroInicial + 1;
+        if (intervalo < data.stockInicial) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }, {
+    message: 'Para rifa/tombola: número final deve ser maior que inicial e o stock deve caber no intervalo',
+    path: ['configuracao'],
+  });
+
+export const updateJogoSchema = baseJogoSchema.partial().omit({ eventoId: true });
 
 // ============================================
 // VALIDAÇÕES DE PRÉMIO
