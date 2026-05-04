@@ -360,9 +360,10 @@ model Jogo {
   aldeia                 Aldeia?        @relation(fields: [aldeiaId], references: [id])
   participacoes          Participacao[]
   premios                Premio[]       @relation("JogoPremios")
-  sorteios               Sorteio[]
+   sorteios               Sorteio[]
+   numerosVendidos        NumeroVendido[]
 
-  @@index([eventoId])
+   @@index([eventoId])
   @@index([tipo])
   @@index([estado])
   @@index([premioId])
@@ -433,12 +434,27 @@ model Participacao {
   jogo                Jogo                    @relation(fields: [jogoId], references: [id])
   user                User?                   @relation(fields: [userId], references: [id])
   vendedor            User?                   @relation("vendedor", fields: [vendedorId], references: [id])
+  numerosVendidos     NumeroVendido[]         @relation("participacaoNumeros")
 
   @@index([jogoId])
   @@index([userId])
   @@index([estadoPagamento])
   @@index([createdAt])
   @@map("participacoes")
+}
+
+model NumeroVendido {
+  id              String    @id @default(cuid())
+  jogoId          String
+  numero          Int
+  participacaoId  String?
+  createdAt       DateTime  @default(now())
+  jogo            Jogo      @relation(fields: [jogoId], references: [id])
+  participacao    Participacao? @relation("participacaoNumeros", fields: [participacaoId], references: [id])
+
+  @@unique([jogoId, numero])
+  @@index([jogoId])
+  @@map("numeros_vendidos")
 }
 
 model AlteracaoParticipacao {

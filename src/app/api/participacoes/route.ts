@@ -5,6 +5,7 @@ import { createParticipacaoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import crypto from 'crypto';
 
+
 // GET - Listar participações
 export async function GET(request: NextRequest) {
   try {
@@ -230,15 +231,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar isolamento de aldeia para admins
-    if (user && user.role === 'aldeia_admin' && jogo.evento.aldeiaId !== user.aldeiaId) {
-      return NextResponse.json(
-        { error: 'Não pode criar participações para outra aldeia' },
-        { status: 403 }
-      );
-    }
+     // Verificar isolamento de aldeia para admins
+     if (user && user.role === 'aldeia_admin' && jogo.evento.aldeiaId !== user.aldeiaId) {
+       return NextResponse.json(
+         { error: 'Não pode criar participações para outra aldeia' },
+         { status: 403 }
+       );
+     }
 
-    // DEBUG: Log payment method
+     // Validação adicional para rifa/tombola: consistência de números
+     if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
+       const numeros = data.dadosParticipacao?.numeros;
+       if (!Array.isArray(numeros) || numeros.length !== data.quantidade) {
+         return NextResponse.json(
+           { error: 'Quantidade deve corresponder ao número de números selecionados' },
+           { status: 400 }
+         );
+       }
+       if (new Set(numeros).size !== numeros.length) {
+         return NextResponse.json(
+           { error: 'Números duplicados na seleção' },
+           { status: 400 }
+         );
+       }
+     }
+
+     // DEBUG: Log payment method
     console.log('Creating participation with:', {
       metodoPagamento: data.metodoPagamento,
       valorTotal,
@@ -276,8 +294,8 @@ export async function POST(request: NextRequest) {
         throw new Error('Stock insuficiente - operação concorrente');
       }
 
-      // Criar participações (pode ser múltipla)
-      const participacoes = [];
+       // Criar participações (pode ser múltipla)
+       const participacoes: any[] = [];
       
       for (let i = 0; i < data.quantidade; i++) {
         const dados: Record<string, unknown> = {
@@ -387,10 +405,24 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        participacoes.push(participacao);
-      }
+         participacoes.push(participacao);
+       }
 
-      // Atualizar total do evento
+       // Criar registros de números vendidos para rifa/tombola (prevenção de race condition)
+       if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
+         const numerosSelecionados = data.dadosParticipacao?.numeros || [];
+         if (numerosSelecionados.length > 0 && participacoes.length > 0) {
+            await tx.numeroVendido.createMany({
+              data: numerosSelecionados.map((num: number) => ({
+                jogoId: data.jogoId,
+                numero: num,
+                participacaoId: participacoes[0].id,
+              })),
+            });
+         }
+       }
+
+       // Atualizar total do evento
       await tx.evento.update({
         where: { id: jogo.eventoId },
         data: {
@@ -470,9 +502,11 @@ export async function POST(request: NextRequest) {
       }
 
       return { participacoes, valorTotal };
-    });
+     });
 
-    return NextResponse.json({
+
+
+     return NextResponse.json({
       success: true,
       participacao: data.quantidade === 1 ? (() => {
         const p = result.participacoes[0];
