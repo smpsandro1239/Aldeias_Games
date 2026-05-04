@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
+import { logSorteio } from '@/lib/audit';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -9,6 +11,18 @@ export async function POST(request: NextRequest) {
 
     if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+    }
+
+    // RATE LIMITING: limite de testes de sorteio (10/min - mais restritivo)
+    const rateLimitKey = `sorteio-teste:${user.id}`;
+    const rateLimit = checkRateLimit(rateLimitKey, {
+      ...rateLimitConfigs.api,
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit.resetTime);
     }
 
     const body = await request.json();
@@ -131,14 +145,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tipo de jogo não suportado para teste' }, { status: 400 });
     }
 
-    // Gerar hash de auditoria
-    const hash = crypto
-      .createHash('sha256')
-      .update(`${seed}:${JSON.stringify(resultado)}:${Date.now()}`)
-      .digest('hex');
+     // Gerar hash de auditoria
+     const hash = crypto
+       .createHash('sha256')
+       .update(`${seed}:${JSON.stringify(resultado)}:${Date.now()}`)
+       .digest('hex');
 
-    // Retornar resultado SIMULADO sem persistir no banco
-    return NextResponse.json({
+     // Log auditoria: sorteio em modo teste
+     await logSorteio(
+       user?.id || 'anonymous',
+       jogoId,
+       jogo.nome,
+       'teste',
+       seed,
+       hash,
+       vencedores.length,
+       request.headers.get('x-forwarded-for') || request.ip,
+       request.headers.get('user-agent')
+     );
+
+     // Retornar resultado SIMULADO sem persistir no banco
+     return NextResponse.json({
       success: true,
       message: `Teste de sorteio executado com sucesso! (modo simulação - não afeta dados reais)`,
       data: {

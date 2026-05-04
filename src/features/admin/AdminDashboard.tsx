@@ -22,6 +22,7 @@ import {
 
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { logJogoToggle } from "@/lib/audit";
 
 import {
    CreateEventoModal,
@@ -130,6 +131,7 @@ export default function AdminDashboard({
   const [testJogo, setTestJogo] = useState<Jogo | null>(null);
   const [testJogoTotalParticipacoes, setTestJogoTotalParticipacoes] = useState(0);
   const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
+  const [toggleJogoData, setToggleJogoData] = useState<{ jogo: Jogo; novoEstado: 'aberto' | 'fechado' } | null>(null);
 
   const [paymentMethodsDefault, setPaymentMethodsDefault] = useState<string[]>(["saldo", "dinheiro"]);
   const [selectedEventoIdParaJogo, setSelectedEventoIdParaJogo] = useState("");
@@ -349,28 +351,10 @@ export default function AdminDashboard({
     }
   }, [token, fetchData, setJogoModalOpen]);
 
-  const handleToggleJogoEstado = useCallback(async (jogo: Jogo) => {
-    const novoEstado = jogo.estado === 'aberto' ? 'fechado' : 'aberto';
-    try {
-      const res = await fetch(`/api/jogos/${jogo.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ estado: novoEstado }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success(`Jogo ${novoEstado === 'aberto' ? 'ativado' : 'desativado'} com sucesso!`);
-        fetchData();
-      } else {
-        toast.error(data.error || "Erro ao alterar estado do jogo");
-      }
-    } catch (error) {
-      toast.error("Erro de conexão ao alterar estado do jogo");
-    }
-  }, [token, fetchData]);
+   const handleToggleJogoEstado = useCallback((jogo: Jogo) => {
+     const novoEstado = jogo.estado === 'aberto' ? 'fechado' : 'aberto';
+     setToggleJogoData({ jogo, novoEstado });
+   }, []);
 
    const handleTestarJogo = useCallback(async (jogo: Jogo) => {
      setTestJogo(jogo);
@@ -391,8 +375,43 @@ export default function AdminDashboard({
        console.error("Erro ao buscar participações:", error);
        setTestJogoTotalParticipacoes(0);
      }
-     setTestJogoOpen(true);
-   }, [token]);
+      setTestJogoOpen(true);
+    }, [token]);
+
+   const executeToggleJogoEstado = useCallback(async () => {
+     if (!toggleJogoData) return;
+     const { jogo, novoEstado } = toggleJogoData;
+     try {
+       const res = await fetch(`/api/jogos/${jogo.id}`, {
+         method: "PUT",
+         headers: {
+           "Content-Type": "application/json",
+           Authorization: `Bearer ${token}`,
+         },
+         body: JSON.stringify({ estado: novoEstado }),
+       });
+       const data = await res.json();
+       if (res.ok) {
+         toast.success(`Jogo ${novoEstado === 'aberto' ? 'ativado' : 'desativado'} com sucesso!`);
+         fetchData();
+
+         // Log de auditoria (TODO: obter userId real)
+         logJogoToggle(
+           userRole, // usando role como identifier temporário
+           jogo.id,
+           jogo.nome,
+           jogo.estado,
+           novoEstado
+         );
+       } else {
+         toast.error(data.error || "Erro ao alterar estado do jogo");
+       }
+     } catch (error) {
+       toast.error("Erro de conexão ao alterar estado do jogo");
+     } finally {
+       setToggleJogoData(null);
+     }
+   }, [toggleJogoData, token, fetchData, userRole]);
 
   const handleSaveAldeia = useCallback(async (data: any) => {
     const isEditing = !!data.id;
@@ -968,9 +987,41 @@ export default function AdminDashboard({
         title="Confirmar Eliminação"
         description="Esta ação não pode ser desfeita. Tem a certeza que deseja eliminar?"
         onConfirm={executeDelete}
-      />
+       />
 
-      {/* Outros modais */}
+       {/* Confirmação de toggle de estado do jogo */}
+       <ConfirmModal
+         open={!!toggleJogoData}
+         onOpenChange={(open) => {
+           if (!open) setToggleJogoData(null);
+         }}
+         title={toggleJogoData?.novoEstado === 'fechado' ? "Desativar Jogo" : "Ativar Jogo"}
+         description={
+           toggleJogoData ? (
+             <div className="space-y-2">
+               <p>
+                 Tem a certeza que deseja <strong>{toggleJogoData.novoEstado === 'fechado' ? 'DESATIVAR' : 'ATIVAR'}</strong> o jogo:
+               </p>
+               <p className="font-semibold">{toggleJogoData.jogo.nome}</p>
+               {toggleJogoData.novoEstado === 'fechado' && (
+                 <p className="text-sm text-muted-foreground">
+                   Participações futuras serão bloqueadas. Participações existentes mantêm-se.
+                 </p>
+               )}
+               {toggleJogoData.novoEstado === 'aberto' && (
+                 <p className="text-sm text-muted-foreground">
+                   O jogo voltará a aceitar novas participações.
+                 </p>
+               )}
+             </div>
+           ) : undefined
+         }
+         confirmText={toggleJogoData?.novoEstado === 'fechado' ? 'Desativar' : 'Ativar'}
+         confirmVariant={toggleJogoData?.novoEstado === 'fechado' ? 'destructive' : 'default'}
+         onConfirm={executeToggleJogoEstado}
+       />
+
+       {/* Outros modais */}
       <ResultadosExternosModal
         open={resultadosExternosOpen}
         onOpenChange={setResultadosExternosOpen}

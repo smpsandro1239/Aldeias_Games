@@ -140,6 +140,18 @@ export const createJogoSchema = z.object({
   valorPremioVaca: z.number().optional(),
   custoPremioDinheiro: z.number().optional(),
   premioId: z.string().optional(),
+}).refine((data) => {
+  // Validação específica para raspadinha: soma das percentagens <= 100%
+  if (data.tipo === 'raspadinha' && data.premios && data.premios.length > 0) {
+    const totalPercentagem = data.premios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
+    if (totalPercentagem > 100) {
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: 'A soma das percentagens dos prémios não pode exceder 100%',
+  path: ['premios'], // Aponta para o array de prémios
 });
 
 export const updateJogoSchema = createJogoSchema.partial().omit({ eventoId: true });

@@ -9,6 +9,20 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Escapa caracteres HTML especiais para prevenir XSS
+ * Converte: & < > " ' para entidades HTML seguras
+ */
+export function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
  * Formatar valor monetário (EUR)
  */
 export function formatCurrency(value: number): string {

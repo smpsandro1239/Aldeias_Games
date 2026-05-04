@@ -339,13 +339,22 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const jogoData = construirDadosJogo();
-    setSubmittedData(jogoData);
-    setShowTransparency(true);
-  };
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+
+     // Validação específica: soma das percentagens raspadinha <= 100%
+     if (formData.tipo === 'raspadinha' && rashadinhaPremios.length > 0) {
+       const totalPercentagem = rashadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
+       if (totalPercentagem > 100) {
+         toast.error(`A soma das percentagens dos prémios (${totalPercentagem}%) não pode exceder 100%`);
+         return;
+       }
+     }
+
+     const jogoData = construirDadosJogo();
+     setSubmittedData(jogoData);
+     setShowTransparency(true);
+   };
 
   const construirDadosJogo = (): JogoData => {
     const eventoId = propEventoId;

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { executarSorteioSchema, commitSorteioSchema, revealSorteioSchema } from '@/lib/validations';
+import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
+import { logSorteio } from '@/lib/audit';
 import crypto from 'crypto';
 import { sendWinnerEmail } from '@/lib/email';
 import { sendWinnerSMS } from '@/lib/sms';
@@ -9,16 +11,27 @@ import { sendWinnerSMS } from '@/lib/sms';
 // ============================================
 // COMMIT PHASE - Gerar hash ANTES do sorteio
 // ============================================
-export async function PATCH(request: NextRequest) {
-  try {
-    const user = await getFullUserFromRequest(request);
-    
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+ export async function PATCH(request: NextRequest) {
+   try {
+     const user = await getFullUserFromRequest(request);
 
-    const body = await request.json();
-    const action = body.action;
+     if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
+       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+     }
+
+     // RATE LIMITING: limite de sorteios por usuário (20/min)
+     const rateLimitKey = `sorteio:${user.id}`;
+     const rateLimit = checkRateLimit(rateLimitKey, {
+       ...rateLimitConfigs.api,
+       maxRequests: 20, // 20 sorteios por minuto
+     });
+
+     if (!rateLimit.allowed) {
+       return createRateLimitResponse(rateLimit.resetTime);
+     }
+
+     const body = await request.json();
+     const action = body.action;
 
     // COMMIT - Fase 1: Criar hash antes do sorteio
     if (action === 'commit') {
@@ -62,9 +75,22 @@ export async function PATCH(request: NextRequest) {
           commitSalt,
           jogoId,
         },
-      });
+       });
 
-      return NextResponse.json({
+       // Log auditoria: commit
+       await logSorteio(
+         user?.id || 'anonymous',
+         jogoId,
+         jogo.nome,
+         'commit',
+         undefined,
+         preCommitHash,
+         undefined,
+         request.headers.get('x-forwarded-for') || request.ip,
+         request.headers.get('user-agent')
+       );
+
+       return NextResponse.json({
         success: true,
         message: 'Commit criado. Anote o hash para verificação posterior.',
         data: {
@@ -236,9 +262,22 @@ export async function PATCH(request: NextRequest) {
             sendWinnerSMS(dadosVencedor.userTelefone, dadosVencedor.userNome, jogo.nome, premioNome).catch(console.error);
           }
         }
-      }
+       }
 
-      return NextResponse.json({
+       // Log auditoria: reveal (execução do sorteio)
+       await logSorteio(
+         user?.id || 'anonymous',
+         jogoId,
+         jogo.nome,
+         'reveal',
+         seed,
+         hash,
+         vencedores.length,
+         request.headers.get('x-forwarded-for') || request.ip,
+         request.headers.get('user-agent')
+       );
+
+       return NextResponse.json({
         success: true,
         message: 'Sorteio executado e verificado com sucesso!',
         data: {

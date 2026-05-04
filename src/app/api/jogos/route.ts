@@ -4,6 +4,7 @@ import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { createJogoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import { createHash } from 'crypto';
+import { logJogoWrite } from '@/lib/audit';
 
 function gerarHashVerificacao(dados: {
   tipo: string;
@@ -303,29 +304,40 @@ export async function POST(request: NextRequest) {
             aldeiaId: evento.aldeiaId,
           }))
         } : undefined,
-      },
-      include: {
-        evento: {
-          select: {
-            id: true,
-            nome: true,
-            aldeiaId: true,
-          },
-        },
-        premios: {
-          select: {
-            id: true,
-            nome: true,
-            ordem: true,
-          },
-        },
-      },
-    });
+       },
+       include: {
+         evento: {
+           select: {
+             id: true,
+             nome: true,
+             aldeiaId: true,
+           },
+         },
+         premios: {
+           select: {
+             id: true,
+             nome: true,
+             ordem: true,
+           },
+         },
+       },
+     );
 
-    return NextResponse.json(
-      { success: true, data: jogo },
-      { status: 201 }
-    );
+     // Log de auditoria: criação de jogo
+     await logJogoWrite(
+       user?.id || 'anonymous',
+       jogo.id,
+       jogo.nome,
+       'create',
+       undefined,
+       request.headers.get('x-forwarded-for') || request.ip,
+       request.headers.get('user-agent')
+     );
+
+     return NextResponse.json(
+       { success: true, data: jogo },
+       { status: 201 }
+     );
   } catch (error: any) {
     console.error('Erro ao criar jogo:', error);
     console.error('Stack trace:', error.stack);

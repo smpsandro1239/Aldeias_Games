@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { escapeHtml } from './utils';
 
 const createTransporter = () => {
   if (!process.env.SMTP_HOST) {
@@ -54,15 +55,21 @@ export async function sendWinnerEmail(
   jogoNome: string,
   premio: string
 ): Promise<boolean> {
+  // Sanitize user-provided nome to prevent XSS in HTML emails
+  const safeNome = escapeHtml(nome);
+  // jogoNome and premio are from internal system, but sanitize defensively
+  const safeJogoNome = escapeHtml(jogoNome);
+  const safePremio = escapeHtml(premio);
+
   return sendEmail({
     to: email,
     subject: 'Parabéns! Você ganhou! 🎉',
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #16a34a;">Parabéns, ${nome}!</h1>
-        <p>Você foi o vencedor do sorteio <strong>${jogoNome}</strong>!</p>
+        <h1 style="color: #16a34a;">Parabéns, ${safeNome}!</h1>
+        <p>Você foi o vencedor do sorteio <strong>${safeJogoNome}</strong>!</p>
         <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 0; font-size: 18px;"><strong>Prémio: ${premio}</strong></p>
+          <p style="margin: 0; font-size: 18px;"><strong>Prémio: ${safePremio}</strong></p>
         </div>
         <p>Por favor, contacte a organização para receber o seu prémio.</p>
         <p style="color: #666; font-size: 14px;">
@@ -71,7 +78,7 @@ export async function sendWinnerEmail(
         </p>
       </div>
     `,
-    text: `Parabéns, ${nome}! Você ganhou o sorteio ${jogoNome} com o prémio: ${premio}. Contacte a organização para receber o seu prémio.`,
+    text: `Parabéns, ${safeNome}! Você ganhou o sorteio ${safeJogoNome} com o prémio: ${safePremio}. Contacte a organização para receber o seu prémio.`,
   });
 }
 
@@ -82,17 +89,23 @@ export async function sendTicketEmail(
   numeros: string[],
   eventoNome: string
 ): Promise<boolean> {
+  // Sanitize inputs
+  const safeNome = escapeHtml(nome);
+  const safeJogoNome = escapeHtml(jogoNome);
+  const safeEventoNome = escapeHtml(eventoNome);
+  const safeNumeros = numeros.map(n => escapeHtml(n));
+
   return sendEmail({
     to: email,
-    subject: `O seu bilhete para ${jogoNome} 🎫`,
+    subject: `O seu bilhete para ${safeJogoNome} 🎫`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #2563eb;">O seu bilhete</h1>
-        <p>Olá, ${nome}!</p>
-        <p>Aqui está o seu bilhete para <strong>${jogoNome}</strong> do evento <strong>${eventoNome}</strong>.</p>
+        <p>Olá, ${safeNome}!</p>
+        <p>Aqui está o seu bilhete para <strong>${safeJogoNome}</strong> do evento <strong>${safeEventoNome}</strong>.</p>
         <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
           <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">
-            ${numeros.join(' - ')}
+            ${safeNumeros.join(' - ')}
           </p>
         </div>
         <p style="color: #666; font-size: 14px;">
@@ -103,6 +116,6 @@ export async function sendTicketEmail(
         </p>
       </div>
     `,
-    text: `Olá, ${nome}! O seu bilhete para ${jogoNome}: ${numeros.join(', ')}. Boa sorte!`,
+    text: `Olá, ${safeNome}! O seu bilhete para ${safeJogoNome}: ${safeNumeros.join(', ')}. Boa sorte!`,
   });
 }
