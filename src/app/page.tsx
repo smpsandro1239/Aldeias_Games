@@ -72,9 +72,12 @@ export default function Home() {
     }
   }, [mounted, isAuthenticated, user, router]);
 
-  const doLogin = async (email: string, password: string) => {
+    const doLogin = async (email: string, password: string) => {
     try {
+      console.log('[Quick Login] Tentando login para:', email);
       const result = await login({ email, password });
+      console.log('[Quick Login] Resultado:', result);
+      
       if (result.success) {
         setLoginModalOpen(false);
         setLoginForm({ email: "", password: "" });
@@ -85,12 +88,22 @@ export default function Home() {
           "vendedor": "/vendedordashboard",
           "user": "/clientedashboard"
         };
-        router.push(rolePaths[result.data?.user?.role] || "/clientedashboard");
+        const targetPath = rolePaths[result.data?.user?.role] || "/clientedashboard";
+        console.log('[Quick Login] Redirecionando para:', targetPath);
+        
+        // Usar window.location para garantir redirecionamento na Vercel (contorna caching/SSR issues)
+        if (typeof window !== 'undefined') {
+          window.location.href = targetPath;
+        } else {
+          router.push(targetPath);
+        }
+      } else {
+        console.error('[Quick Login] Falha no login:', result.error);
       }
       return result;
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Erro ao fazer login' };
+    } catch (error: any) {
+      console.error('[Quick Login] ERRO:', error);
+      return { success: false, error: error.message || 'Erro ao fazer login' };
     }
   };
 
@@ -188,7 +201,10 @@ export default function Home() {
                       variant="secondary"
                       size="sm"
                       className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                      onClick={() => doLogin("admin@aldeias.pt", "123456")}
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Super Admin clicked');
+                        await doLogin("admin@aldeias.pt", "123456");
+                      }}
                     >
                       Super Admin
                     </Button>
@@ -197,7 +213,10 @@ export default function Home() {
                       variant="secondary"
                       size="sm"
                       className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                      onClick={() => doLogin("admin.valeazinha@aldeias.pt", "123456")}
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Admin Aldeia clicked');
+                        await doLogin("admin.valeazinha@aldeias.pt", "123456");
+                      }}
                     >
                       Admin Aldeia
                     </Button>
@@ -206,7 +225,10 @@ export default function Home() {
                       variant="secondary"
                       size="sm"
                       className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                      onClick={() => doLogin("vendedor1@valeazinha.pt", "123456")}
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Vendedor clicked');
+                        await doLogin("vendedor1@valeazinha.pt", "123456");
+                      }}
                     >
                       Vendedor
                     </Button>
@@ -215,7 +237,10 @@ export default function Home() {
                       variant="secondary"
                       size="sm"
                       className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                      onClick={() => doLogin("jogador1@valeazinha.pt", "123456")}
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Jogador clicked');
+                        await doLogin("jogador1@valeazinha.pt", "123456");
+                      }}
                     >
                       Jogador
                     </Button>
