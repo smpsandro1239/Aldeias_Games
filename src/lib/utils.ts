@@ -10,7 +10,6 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Escapa caracteres HTML especiais para prevenir XSS
- * Converte: & < > " ' para entidades HTML seguras
  */
 export function escapeHtml(text: string | null | undefined): string {
   if (!text) return '';
@@ -18,18 +17,18 @@ export function escapeHtml(text: string | null | undefined): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/\"/g, '&quot;')
+    .replace(/\'/g, '&#039;');
 }
 
 /**
- * Formatar valor monetário (EUR)
+ * Formatar valor monetario (EUR)
  */
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-PT', {
     style: 'currency',
     currency: 'EUR',
-  }).format(value).replace(/\u00A0/g, ' ');
+  }).format(value).replace(/\\u00A0/g, ' ');
 }
 
 /**
@@ -37,7 +36,7 @@ export function formatCurrency(value: number): string {
  */
 export function formatDate(
   date: Date | string | number,
-  options: Intl.DateTimeFormatOptions = {}
+  options: Intl.DateTimeFormatOptions = {},
 ): string {
   const d = new Date(date);
   return new Intl.DateTimeFormat('pt-PT', {
@@ -53,7 +52,7 @@ export function formatDate(
  */
 export function formatDateTime(
   date: Date | string | number,
-  options: Intl.DateTimeFormatOptions = {}
+  options: Intl.DateTimeFormatOptions = {},
 ): string {
   const d = new Date(date);
   return new Intl.DateTimeFormat('pt-PT', {
@@ -67,13 +66,13 @@ export function formatDateTime(
 }
 
 /**
- * Formatar número de telefone
+ * Formatar numero de telefone
  */
 export function formatPhoneNumber(phone: string): string {
   if (phone.startsWith('+351')) {
-    return phone.replace(/(\+351)(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4');
+    return phone.replace(/(\\+351)(\\d{3})(\\d{3})(\\d{3})/, '$1 $2 $3 $4');
   }
-  return phone.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+  return phone.replace(/(\\d{3})(\\d{3})(\\d{3})/, '$1 $2 $3');
 }
 
 /**
@@ -83,16 +82,16 @@ export function generateSlug(text: string): string {
   return text
     .toString()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+    .replace(/[\\u0300-\\u036f]/g, '')
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-') // Espaços para hífens
-    .replace(/[^\w\-]+/g, '') // Remover caracteres especiais
-    .replace(/\-\-+/g, '-'); // Múltiplos hífens para um
+    .replace(/\\s+/g, '-')
+    .replace(/[^\\w\\-]+/g, '')
+    .replace(/\\-\\-+/g, '-');
 }
 
 /**
- * Gerar código aleatório
+ * Gerar codigo aleatorio
  */
 export function generateCode(length: number = 6): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -141,7 +140,7 @@ export function sleep(ms: number): Promise<void> {
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
   return (...args: Parameters<T>) => {
@@ -155,7 +154,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  */
 export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
   return (...args: Parameters<T>) => {
@@ -168,7 +167,7 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
 }
 
 /**
- * Verificar se é dispositivo móvel (user agent)
+ * Verificar se e dispositivo movel
  */
 export function isMobile(userAgent: string): boolean {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
@@ -213,14 +212,14 @@ export function calculatePercentage(value: number, total: number): number {
 }
 
 /**
- * Formatar número com separadores
+ * Formatar numero com separadores
  */
 export function formatNumber(num: number): string {
   return new Intl.NumberFormat('pt-PT').format(num);
 }
 
 /**
- * Verificar se email é válido
+ * Verificar se email e valido
  */
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -228,10 +227,10 @@ export function isValidEmail(email: string): boolean {
 }
 
 /**
- * Verificar se NIF português é válido
+ * Verificar se NIF portugues e valido
  */
 export function isValidNIF(nif: string): boolean {
-  if (!/^\d{9}$/.test(nif)) return false;
+  if (!/^\\d{9}\$/.test(nif)) return false;
   
   const digits = nif.split('').map(Number);
   const checkDigit = digits.pop()!;

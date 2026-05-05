@@ -5,6 +5,7 @@ import { createParticipacaoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import crypto from 'crypto';
 import { sendTicketEmail } from '@/lib/email';
+import { executeWithRetry } from '@/lib/transaction-retry';
 
 
 // GET - Listar participações
@@ -266,8 +267,9 @@ export async function POST(request: NextRequest) {
       effectiveUserId: effectiveUser?.id
     });
 
-    // Usar transação atómica para evitar race conditions
-    const result = await prisma.$transaction(async (tx) => {
+     // Usar transação atómica para evitar race conditions
+     const result = await executeWithRetry(async () => {
+       return await prisma.$transaction(async (tx) => {
       // Verificar stock dentro da transação com locking
       const jogoLocked = await tx.jogo.findUnique({
         where: { id: data.jogoId },
@@ -502,10 +504,9 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      return { participacoes, valorTotal };
+        return { participacoes, valorTotal };
+      });
      });
-
-
 
       // Enviar email de bilhete para pagamentos confirmados (rifa/tombola)
       if ((jogo.tipo === 'rifa' || jogo.tipo === 'tombola') && result.participacoes.length > 0) {

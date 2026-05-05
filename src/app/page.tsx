@@ -72,21 +72,31 @@ export default function Home() {
     }
   }, [mounted, isAuthenticated, user, router]);
 
+  const doLogin = async (email: string, password: string) => {
+    try {
+      const result = await login({ email, password });
+      if (result.success) {
+        setLoginModalOpen(false);
+        setLoginForm({ email: "", password: "" });
+        // Redirecionar para o dashboard correto após login
+        const rolePaths: Record<string, string> = {
+          "super_admin": "/superadmindashboard",
+          "aldeia_admin": "/admindashboard",
+          "vendedor": "/vendedordashboard",
+          "user": "/clientedashboard"
+        };
+        router.push(rolePaths[result.data?.user?.role] || "/clientedashboard");
+      }
+      return result;
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Erro ao fazer login' };
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await login(loginForm);
-    if (result.success) {
-      setLoginModalOpen(false);
-      setLoginForm({ email: "", password: "" });
-      // Redirecionar para o dashboard correto após login
-      const rolePaths: Record<string, string> = {
-        "super_admin": "/superadmindashboard",
-        "aldeia_admin": "/admindashboard",
-        "vendedor": "/vendedordashboard",
-        "user": "/clientedashboard"
-      };
-      router.push(rolePaths[result.data?.user?.role] || "/clientedashboard");
-    }
+    await doLogin(loginForm.email, loginForm.password);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -169,48 +179,48 @@ export default function Home() {
                 </Button>
               </div>
 
-               {/* Botões de Atalho para Testes (Quick Login) */}
-               <div className="pt-4 border-t border-outline-variant/10 w-full">
-                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
-                 <div className="grid grid-cols-2 gap-2">
-                   <Button
-                     type="button"
-                     variant="secondary"
-                     size="sm"
-                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                     onClick={() => setLoginForm({ email: "admin@aldeias.pt", password: "123456" })}
-                   >
-                     Super Admin
-                   </Button>
-                   <Button
-                     type="button"
-                     variant="secondary"
-                     size="sm"
-                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                     onClick={() => setLoginForm({ email: "admin.valeazinha@aldeias.pt", password: "123456" })}
-                   >
-                     Admin Aldeia
-                   </Button>
-                   <Button
-                     type="button"
-                     variant="secondary"
-                     size="sm"
-                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                     onClick={() => setLoginForm({ email: "vendedor1@valeazinha.pt", password: "123456" })}
-                   >
-                     Vendedor
-                   </Button>
-                   <Button
-                     type="button"
-                     variant="secondary"
-                     size="sm"
-                     className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                     onClick={() => setLoginForm({ email: "jogador1@valeazinha.pt", password: "123456" })}
-                   >
-                     Jogador
-                   </Button>
-                 </div>
-               </div>
+                {/* Botões de Atalho para Testes (Quick Login) */}
+                <div className="pt-4 border-t border-outline-variant/10 w-full">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={() => doLogin("admin@aldeias.pt", "123456")}
+                    >
+                      Super Admin
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={() => doLogin("admin.valeazinha@aldeias.pt", "123456")}
+                    >
+                      Admin Aldeia
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={() => doLogin("vendedor1@valeazinha.pt", "123456")}
+                    >
+                      Vendedor
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={() => doLogin("jogador1@valeazinha.pt", "123456")}
+                    >
+                      Jogador
+                    </Button>
+                  </div>
+                </div>
             </DialogFooter>
           </form>
         </DialogContent>
