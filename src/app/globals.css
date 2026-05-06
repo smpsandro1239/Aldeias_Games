@@ -96,10 +96,164 @@
   }
 }
 
-/* Custom scrollbar */
+/* ===== CUSTOM SCROLLBAR ===== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface-container;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-outline rounded-full border border-surface-container-high;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-on-surface-variant;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Scrollable container with indicator shadows */
+.scrollable-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Mobile scroll snap */
+.scroll-snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.scroll-snap-x > * {
+  scroll-snap-align: start;
+}
+
+/* Scroll fade indicators */
+.scroll-fade-left {
+  background: linear-gradient(to left, transparent, hsl(var(--surface)));
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2rem;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scroll-fade-right {
+  background: linear-gradient(to right, transparent, hsl(var(--surface)));
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2rem;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .scroll-fade-left,
+  .scroll-fade-right {
+    display: none;
+  }
+}
+
+/* ===== TABS MOBILE OPTIMIZATION ===== */
+@media (max-width: 640px) {
+  /* Reduce tab padding on mobile */
+  .tabs-mobile .tabs-trigger {
+    @apply px-2 py-1.5 text-xs;
+  }
+  
+  /* Hide labels on very small screens */
+  .tabs-mobile .tabs-trigger .tab-label {
+    @apply hidden sm:inline;
+  }
+  
+  .tabs-mobile .tabs-trigger .tab-icon {
+    @apply mr-1;
+  }
+  
+  /* Reduce gap between tabs */
+  .tabs-mobile .tabs-list {
+    @apply gap-1;
+  }
+  
+  /* Single line text */
+  .tabs-mobile .tabs-trigger span {
+    @apply whitespace-nowrap;
+  }
+}
+
+/* ===== DESKTOP ENHANCEMENTS ===== */
+@media (min-width: 641px) {
+  .tabs-desktop .tabs-list {
+    @apply justify-center;
+  }
+  
+  .tabs-desktop .tabs-trigger {
+    @apply px-4;
+  }
+  
+  /* Show scroll fade indicators on hover */
+  .scrollable-container:hover ~ .scroll-fade-left,
+  .scrollable-container:hover ~ .scroll-fade-right,
+  .scrollable-container:focus-within ~ .scroll-fade-left,
+  .scrollable-container:focus-within ~ .scroll-fade-right {
+    @apply opacity-100;
+    transition: opacity 0.2s;
+  }
+}
+
+/* ===== TAB INDICATORS ===== */
+.tabs-indicator {
+  @apply h-0.5 bg-primary transition-all duration-200;
+  box-shadow: 0 2px 4px hsl(var(--primary) / 0.3);
+}
+
+/* Active tab glow effect */
+[data-state="active"] {
+  position: relative;
+}
+
+[data-state="active"]::after {
+  content: '';
+  @apply absolute bottom-[-2px] left-0 right-0 h-0.5 bg-primary;
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.4);
+  animation: tabGlow 2s ease-in-out infinite;
+}
+
+@keyframes tabGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ===== PENDING BADGE ANIMATION ===== */
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 hsl(var(--destructive) / 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px hsl(var(--destructive) / 0);
+  }
 }
 
 ::-webkit-scrollbar-track {

@@ -3,6 +3,8 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import RbacUserTable from "@/components/rbac/RbacUserTable";
 import { LayoutHeader } from "@/components/layout-header";
 
+export const dynamic = "force-dynamic";
+
 export default async function RbacPage() {
   const [users, roles, aldeias] = await Promise.all([
     prisma.user.findMany({

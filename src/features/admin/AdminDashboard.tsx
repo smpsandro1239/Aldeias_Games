@@ -755,71 +755,106 @@ export default function AdminDashboard({
         />
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex flex-wrap justify-center gap-2">
-          <TabsTrigger value="overview">
-            <LayoutDashboard className="h-4 w-4 mr-2" /> Visão Geral
-          </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <BarChart3 className="h-4 w-4 mr-2" /> Analytics
-          </TabsTrigger>
-          <TabsTrigger value="eventos">
-            <Calendar className="h-4 w-4 mr-2" /> Eventos
-          </TabsTrigger>
-          <TabsTrigger value="jogos">
-            <Gamepad2 className="h-4 w-4 mr-2" /> Jogos
-          </TabsTrigger>
-          <TabsTrigger value="vencedores">
-            <Trophy className="h-4 w-4 mr-2" /> Vencedores
-          </TabsTrigger>
+      {/* Tabs - Divididas em 2 grupos para melhor responsividade */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-5">
 
-          {/* Pedidos e Entregas (navegação externa) */}
-          <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="relative">
-            <Wallet className="h-4 w-4 mr-2" /> Pedidos
-            {pedidosPendentesCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
-                {pedidosPendentesCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="relative">
-            <TrendingUp className="h-4 w-4 mr-2" /> Entregas
-            {entregasPendentesCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
-                {entregasPendentesCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-
-          <TabsTrigger value="verificar">
-            <Hash className="h-4 w-4 mr-2" /> Verificar
-          </TabsTrigger>
-
-          <TabsTrigger value="users">
-            <Users className="h-4 w-4 mr-2" /> Utilizadores
-          </TabsTrigger>
-
-          {userRole === "aldeia_admin" && (
-            <TabsTrigger value="comissoes">
-              <DollarSign className="h-4 w-4 mr-2" /> Comissões
+        {/* ==================== GRUPO 1: TABS PRINCIPAIS ==================== */}
+        <div className="relative">
+          {/* Gradientes indicadores de overflow */}
+          <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-surface to-transparent opacity-0 md:opacity-100 pointer-events-none z-10" aria-hidden="true" />
+          <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-surface to-transparent opacity-0 md:opacity-100 pointer-events-none z-10" aria-hidden="true" />
+          
+          <TabsList className="flex overflow-x-auto pb-2 gap-1 md:gap-2 justify-start md:justify-center whitespace-nowrap scroll-smooth snap-x snap-mandatory">
+            <TabsTrigger value="overview" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <LayoutDashboard className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Visão Geral</span>
+              <span className="sm:hidden">Geral</span>
             </TabsTrigger>
-          )}
+            <TabsTrigger value="analytics" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <BarChart3 className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="eventos" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <Calendar className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Eventos</span>
+            </TabsTrigger>
+            <TabsTrigger value="jogos" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <Gamepad2 className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Jogos</span>
+            </TabsTrigger>
+            <TabsTrigger value="vencedores" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <Trophy className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Vencedores</span>
+            </TabsTrigger>
 
-          {userRole === "super_admin" && (
-            <>
-              <TabsTrigger value="aldeias">
-                <Building2 className="h-4 w-4 mr-2" /> Aldeias
+            {/* Pedidos e Entregas (navegação externa) */}
+            <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="flex-shrink-0 relative text-sm md:text-base px-3 md:px-4 py-2">
+              <Wallet className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Pedidos</span>
+              {pedidosPendentesCount > 0 && (
+                <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
+                  {pedidosPendentesCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="flex-shrink-0 relative text-sm md:text-base px-3 md:px-4 py-2">
+              <TrendingUp className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Entregas</span>
+              {entregasPendentesCount > 0 && (
+                <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
+                  {entregasPendentesCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+
+            <TabsTrigger value="verificar" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <Hash className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Verificar</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* ==================== GRUPO 2: TABS ADMINISTRATIVAS ==================== */}
+        <div className="relative">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2 pl-1">Administração</p>
+          
+          {/* Gradientes indicadores de overflow */}
+          <div className="absolute left-0 top-8 bottom-0 w-4 bg-gradient-to-r from-surface to-transparent opacity-0 md:opacity-100 pointer-events-none z-10" aria-hidden="true" />
+          <div className="absolute right-0 top-8 bottom-0 w-4 bg-gradient-to-l from-surface to-transparent opacity-0 md:opacity-100 pointer-events-none z-10" aria-hidden="true" />
+          
+          <TabsList className="flex overflow-x-auto pb-2 gap-1 md:gap-2 justify-start md:justify-center whitespace-nowrap scroll-smooth">
+            <TabsTrigger value="users" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <Users className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Utilizadores</span>
+              <span className="sm:hidden">Users</span>
+            </TabsTrigger>
+
+            {userRole === "aldeia_admin" && (
+              <TabsTrigger value="comissoes" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+                <DollarSign className="h-4 w-4 mr-1 md:mr-2" />
+                Comissões
               </TabsTrigger>
-              <TabsTrigger value="transacoes">
-                <CreditCard className="h-4 w-4 mr-2" /> Transações
-              </TabsTrigger>
-              <TabsTrigger value="auditoria">
-                <Shield className="h-4 w-4 mr-2" /> Auditoria
-              </TabsTrigger>
-            </>
-          )}
-        </TabsList>
+            )}
+
+            {userRole === "super_admin" && (
+              <>
+                <TabsTrigger value="aldeias" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+                  <Building2 className="h-4 w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Aldeias</span>
+                </TabsTrigger>
+                <TabsTrigger value="transacoes" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+                  <CreditCard className="h-4 w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Transações</span>
+                  <span className="sm:hidden">Trans.</span>
+                </TabsTrigger>
+                <TabsTrigger value="auditoria" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+                  <Shield className="h-4 w-4 mr-1 md:mr-2" />
+                  Auditoria
+                </TabsTrigger>
+              </>
+            )}
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview">
