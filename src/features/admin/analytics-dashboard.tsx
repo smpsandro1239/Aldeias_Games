@@ -36,6 +36,7 @@ import {
   Target,
   Award
 } from "lucide-react";
+import { StatCard } from "@/components/ui/StatCard";
 
 interface DashboardAnalyticsProps {
   token: string;
@@ -179,83 +180,47 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <Card className="border-l-4 border-l-violet-500">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Angariado</p>
-                  <p className="text-2xl font-black text-violet-600">{formatCurrency(stats.totalAngariado)}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-violet-100 flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-violet-600" />
-                </div>
-              </div>
-              <div className={`flex items-center gap-1 mt-2 text-xs ${trend.trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {trend.trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                <span>{trend.label}</span>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Total Angariado"
+            value={formatCurrency(stats.totalAngariado)}
+            variant="violet"
+            icon={DollarSign}
+            trend={{
+              value: trend.trend,
+              label: trend.label,
+              positive: trend.trend >= 0
+            }}
+          />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="border-l-4 border-l-pink-500">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Participações</p>
-                  <p className="text-2xl font-black text-pink-600">{formatNumber(stats.totalParticipacoes)}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-pink-100 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-pink-600" />
-                </div>
-              </div>
-              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                <Activity className="h-3 w-3" />
-                <span>{stats.totalEventos} eventos</span>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Participações"
+            value={formatNumber(stats.totalParticipacoes)}
+            variant="pink"
+            icon={Users}
+            subtext={`${stats.totalEventos} eventos`}
+          />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="border-l-4 border-l-orange-500">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Jogos Ativos</p>
-                  <p className="text-2xl font-black text-accent">{stats.jogosAtivos}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center">
-                  <Gamepad2 className="h-6 w-6 text-accent" />
-                </div>
-              </div>
-              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                <Target className="h-3 w-3" />
-                <span>{stats.totalJogos} total</span>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Jogos Ativos"
+            value={stats.jogosAtivos}
+            variant="orange"
+            icon={Gamepad2}
+            subtext={`${stats.totalJogos} no total`}
+          />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="border-l-4 border-l-emerald-500">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Eventos Ativos</p>
-                  <p className="text-2xl font-black text-emerald-600">{stats.eventosAtivos}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-emerald-600" />
-                </div>
-              </div>
-              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                <Award className="h-3 w-3" />
-                <span>{stats.totalEventos} no total</span>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Eventos Ativos"
+            value={stats.eventosAtivos}
+            variant="emerald"
+            icon={Calendar}
+            subtext={`${stats.totalEventos} no total`}
+          />
         </motion.div>
       </div>
 

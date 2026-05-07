@@ -10,7 +10,10 @@ import {
   Users,
   DollarSign,
   Plus,
-  Eye
+  Eye,
+  Activity,
+  Target,
+  Award
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Evento, Jogo, Stats } from "../types";
@@ -95,26 +98,29 @@ export function OverviewTab({
         <StatCard
           title="Total Angariado"
           value={formatCurrency(stats?.totalAngariado || 0)}
-          variant="emerald"
+          variant="violet"
           icon={DollarSign}
         />
         <StatCard
           title="Participações"
           value={stats?.totalParticipacoes?.toLocaleString() || "0"}
-          variant="blue"
+          variant="pink"
           icon={Users}
+          subtext={`${stats?.totalEventos || 0} eventos`}
         />
         <StatCard
           title="Eventos Ativos"
           value={stats?.eventosAtivos || 0}
-          variant="violet"
+          variant="emerald"
           icon={Calendar}
+          subtext={`${stats?.totalEventos || 0} no total`}
         />
         <StatCard
           title="Jogos Ativos"
           value={stats?.jogosAtivos || 0}
-          variant="amber"
+          variant="orange"
           icon={Gamepad2}
+          subtext={`${stats?.totalJogos || 0} no total`}
         />
       </div>
     </div>
