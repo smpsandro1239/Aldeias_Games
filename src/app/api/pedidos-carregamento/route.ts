@@ -16,16 +16,20 @@ export async function GET(request: NextRequest) {
     // Construir where clause
     let where: Record<string, unknown> = {};
 
-    // Se for vendedor, ver apenas os seus pedidos pendentes
-    if (user.role === 'vendedor') {
+    // Super admin pode ver tudo - sem filtro
+    if (user.role === 'super_admin') {
+      // continua sem filtro
+    }
+    // Se for vendedor, ver apenas os seus pedidos
+    else if (user.role === 'vendedor') {
       where.vendedorId = user.id;
     } 
     // Se for aldeia_admin, ver pedidos da aldeia
     else if (user.role === 'aldeia_admin' && user.aldeiaId) {
       where.aldeiaId = user.aldeiaId;
-    }
-    // Super admin pode ver tudo
-    else if (!hasRole(user.role, ['super_admin'])) {
+    } 
+    // Outros papéis não autorizados
+    else {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 

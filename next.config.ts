@@ -12,6 +12,10 @@ function getDirname() {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  i18n: {
+    locales: ['pt', 'pt-PT'],
+    defaultLocale: 'pt-PT',
+  },
 
   // Usa a função para evitar executar import.meta.url no topo
   outputFileTracingRoot: getDirname(),

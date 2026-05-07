@@ -315,7 +315,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
             Carregar Saldo
           </DialogTitle>
         </DialogHeader>
-        <div className="px-6 pb-6 space-y-4">
+        <div className="px-6 pb-6 space-y-4 overflow-y-auto max-h-[60vh] pr-2">
           <div className="bg-surface-container-high rounded-xl p-4 text-center">
             <p className="text-xs text-on-surface-variant">Saldo Atual</p>
             <p className="font-headline text-3xl text-primary">{saldo.toFixed(2)}€</p>
@@ -477,7 +477,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
           <Button 
             onClick={handleCarregar}
             disabled={loading || !valor || parseFloat(valor) <= 0}
-            className="w-full py-6"
+            className="w-full py-6 sticky bottom-0"
           >
             {loading ? "A processar..." : metodoCarregamento === "vendedor" ? `Pedir ao Vendedor (${valor || "0"}€)` : `Confirmar Carregamento de €${valor || "0"}`}
           </Button>

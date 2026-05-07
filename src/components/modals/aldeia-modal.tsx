@@ -69,8 +69,8 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[60vh]">
+          <div className="grid gap-4 py-4 pr-2">
             <div className="grid gap-2">
               <Label htmlFor="nome">Nome *</Label>
               <Input
@@ -126,7 +126,7 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={loading}>
               {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Organização")}

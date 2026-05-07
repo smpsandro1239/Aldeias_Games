@@ -159,8 +159,8 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[60vh]">
+          <div className="grid gap-4 py-4 pr-2">
             {aldeias && aldeias.length > 0 && !initialData && (
               <div className="grid gap-2">
                 <Label htmlFor="aldeia">Aldeia/Organização *</Label>
@@ -335,7 +335,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>

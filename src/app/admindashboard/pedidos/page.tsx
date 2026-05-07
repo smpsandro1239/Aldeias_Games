@@ -58,35 +58,38 @@ export default function AdminPedidosPage() {
    const [page, setPage] = useState<number>(1);
    const pedidosPerPage = 10;
  
-   useEffect(() => {
-     if (isAuthenticated && user) {
-       fetchPedidos();
-     } else {
-       setLoading(false);
-     }
-   }, [isAuthenticated, user]);
+useEffect(() => {
+      if (isAuthenticated && user) {
+        setLoading(true);
+        fetchPedidos();
+      } else {
+        setLoading(false);
+      }
+    }, [isAuthenticated, user]);
  
    useEffect(() => {
      setPage(1);
    }, [searchTerm, filter]);
  
-   const fetchPedidos = async () => {
-     try {
-       const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`,
-        {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-       
-       if (res.ok) {
-         const data = await res.json();
-         setPedidos(data.data || []);
-       }
-     } catch (error) {
-       console.error("Erro ao buscar pedidos:", error);
-     }
-   };
+const fetchPedidos = async () => {
+      try {
+        const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`,
+         {
+           headers: { 
+             Authorization: `Bearer ${localStorage.getItem("token")}`,
+           },
+         });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setPedidos(data.data || []);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar pedidos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
    const handleConfirmar = async (pedidoId: string) => {
      try {

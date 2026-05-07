@@ -7,25 +7,25 @@ import { SentryInit } from "@/components/sentry-init";
 import { Toaster } from "@/components/ui/sonner";
 import { AnalyticsInit } from "@/components/analytics-init";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin", "latin-ext"] });
 const notoSerif = Noto_Serif({ 
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-noto-serif",
   display: "swap",
 });
 const plusJakartaSans = Plus_Jakarta_Sans({ 
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-plus-jakarta",
   display: "swap",
 });
 const chakraPetch = Chakra_Petch({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-chakra",
   display: "swap",
 });
 const russoOne = Russo_One({
-  subsets: ["latin"],
+  subsets: ["cyrillic", "latin", "latin-ext"],
   weight: "400",
   variable: "--font-russo",
   display: "swap",
@@ -56,6 +56,9 @@ export const metadata: Metadata = {
     apple: "/favicon.svg",
   },
   manifest: "/manifest.json",
+  other: {
+    charset: "utf-8",
+  },
 };
 
 export const viewport: Viewport = {

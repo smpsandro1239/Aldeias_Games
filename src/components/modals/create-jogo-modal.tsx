@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import {
@@ -100,7 +100,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     modoSorteio: "app" as "app" | "externo",
     detalhesSorteioExterno: "",
     raspadinhaTitulo: "RASPADINHA DA SORTE",
-    raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu pr├®mio!",
+    raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu pr�mio!",
     raspadinhaOrganizacao: "",
     dimensoesX: "10",
     dimensoesY: "10",
@@ -122,7 +122,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
   ]);
 
   const [rifaPremios, setRifaPremios] = useState<Premio[]>([
-    { id: "1", nome: "1┬║ Pr├®mio", valorDinheiroAlternative: 0, percentagem: 0 },
+    { id: "1", nome: "1� Pr�mio", valorDinheiroAlternative: 0, percentagem: 0 },
   ]);
 
   useEffect(() => {
@@ -139,7 +139,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
         modoSorteio: initialData.modoSorteio || "app",
         detalhesSorteioExterno: initialData.detalhesSorteioExterno || "",
         raspadinhaTitulo: "RASPADINHA DA SORTE",
-        raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu pr├®mio!",
+        raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu pr�mio!",
         raspadinhaOrganizacao: "",
         dimensoesX: "10",
         dimensoesY: "10",
@@ -189,7 +189,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       modoSorteio: "app",
       detalhesSorteioExterno: "",
       raspadinhaTitulo: "RASPADINHA DA SORTE",
-      raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu pr├®mio!",
+      raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu pr�mio!",
       raspadinhaOrganizacao: "",
       dimensoesX: "10",
       dimensoesY: "10",
@@ -209,7 +209,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       { id: "3", nome: "Valor da Raspadinha", valorDinheiroAlternative: 2, percentagem: 10 },
     ]);
     setRifaPremios([
-      { id: "1", nome: "1┬║ Pr├®mio", valorDinheiroAlternative: 0, percentagem: 0 },
+      { id: "1", nome: "1� Pr�mio", valorDinheiroAlternative: 0, percentagem: 0 },
     ]);
   };
 
@@ -343,29 +343,29 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
-      // Validação específica: soma das percentagens raspadinha <= 100%
+      // Valida��o espec�fica: soma das percentagens raspadinha <= 100%
       if (formData.tipo === 'raspadinha' && rashadinhaPremios.length > 0) {
         const totalPercentagem = rashadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
         if (totalPercentagem > 100) {
-          toast.error(`A soma das percentagens dos prémios (${totalPercentagem}%) não pode exceder 100%`);
+          toast.error(`A soma das percentagens dos pr�mios (${totalPercentagem}%) n�o pode exceder 100%`);
           return;
         }
       }
 
-      // Validação específica para rifa/tombola: intervalo numérico
+      // Valida��o espec�fica para rifa/tombola: intervalo num�rico
       if (formData.tipo === 'rifa' || formData.tipo === 'tombola') {
         const numInicial = parseInt(formData.numeroInicial);
         const numFinal = parseInt(formData.numeroFinal);
         const stock = parseInt(formData.stockInicial);
 
         if (numFinal <= numInicial) {
-          toast.error('Número final deve ser maior que número inicial para rifa/tombola');
+          toast.error('N�mero final deve ser maior que n�mero inicial para rifa/tombola');
           return;
         }
 
         const intervalo = numFinal - numInicial + 1;
         if (intervalo < stock) {
-          toast.error('Stock inicial excede o intervalo numérico disponível');
+          toast.error('Stock inicial excede o intervalo num�rico dispon�vel');
           return;
         }
       }
@@ -492,7 +492,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           premios: rashadinhaPremios
             .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
             .map(p => ({
-              nome: p.nome || "Pr├®mio",
+              nome: p.nome || "Pr�mio",
               valor: p.valorDinheiroAlternative,
               percentagem: p.percentagem
             }))
@@ -507,7 +507,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           premios: rifaPremios
             .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
             .map(p => ({
-              nome: p.nome || "Pr├®mio",
+              nome: p.nome || "Pr�mio",
               valor: p.valorDinheiroAlternative
             }))
         };
@@ -544,36 +544,36 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
         <div className="flex items-center gap-2 mb-3">
           <Calculator className={`w-5 h-5 ${m.isLucrativo ? 'text-green-500' : 'text-red-500'}`} />
           <h4 className={`font-bold ${m.isLucrativo ? 'text-green-500' : 'text-red-500'}`}>
-            {m.isLucrativo ? 'Ô£à Lucrativo' : 'ÔØî N├úo Lucrativo'}
+            {m.isLucrativo ? '?? Lucrativo' : '? N�o Lucrativo'}
           </h4>
         </div>
         
         {formData.tipo === "raspadinha" && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">% Total Pr├®mios:</span>
+              <span className="text-muted-foreground">% Total Pr�mios:</span>
               <span className={metricsRaspadinha.totalPercentagem > 50 ? "text-red-500" : ""}>
                 {metricsRaspadinha.totalPercentagem}%
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Lucro M├¡nimo:</span>
+              <span className="text-muted-foreground">Lucro M�nimo:</span>
               <span className={metricsRaspadinha.lucroMinimo >= 50 ? "text-green-500" : "text-red-500"}>
                 {metricsRaspadinha.lucroMinimo}%
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Custo M├®dio/Bilhete:</span>
-              <span className="font-bold text-[#ff734b]">{metricsRaspadinha.custoMedioPorBilhete.toFixed(2)}Ôé¼</span>
+              <span className="text-muted-foreground">Custo M�dio/Bilhete:</span>
+              <span className="font-bold text-[#ff734b]">{metricsRaspadinha.custoMedioPorBilhete.toFixed(2)}�</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita (100 bilhetes):</span>
-              <span className="font-bold">{metricsRaspadinha.receitaTotal.toFixed(2)}Ôé¼</span>
+              <span className="font-bold">{metricsRaspadinha.receitaTotal.toFixed(2)}�</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro Estimado:</span>
               <span className={metricsRaspadinha.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
-                {metricsRaspadinha.lucroEstimado.toFixed(2)}Ôé¼
+                {metricsRaspadinha.lucroEstimado.toFixed(2)}�
               </span>
             </div>
           </div>
@@ -582,17 +582,17 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
         {(formData.tipo === "rifa" || formData.tipo === "tombola") && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Total Pr├®mios:</span>
-              <span className="font-bold text-[#ff734b]">{metricsRifa.totalPremios.toFixed(2)}Ôé¼</span>
+              <span className="text-muted-foreground">Total Pr�mios:</span>
+              <span className="font-bold text-[#ff734b]">{metricsRifa.totalPremios.toFixed(2)}�</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita Total:</span>
-              <span className="font-bold">{metricsRifa.receitaTotal.toFixed(2)}Ôé¼</span>
+              <span className="font-bold">{metricsRifa.receitaTotal.toFixed(2)}�</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro:</span>
               <span className={metricsRifa.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
-                {metricsRifa.lucroEstimado.toFixed(2)}Ôé¼
+                {metricsRifa.lucroEstimado.toFixed(2)}�
               </span>
             </div>
             <div className="flex justify-between">
@@ -612,16 +612,16 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita Total:</span>
-              <span className="font-bold">{metricsPoioDaVaca.receitaTotal.toFixed(2)}Ôé¼</span>
+              <span className="font-bold">{metricsPoioDaVaca.receitaTotal.toFixed(2)}�</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Custo Vaca:</span>
-              <span className="font-bold text-[#ff734b]">{metricsPoioDaVaca.valorCompraVaca.toFixed(2)}Ôé¼</span>
+              <span className="font-bold text-[#ff734b]">{metricsPoioDaVaca.valorCompraVaca.toFixed(2)}�</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro:</span>
               <span className={metricsPoioDaVaca.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
-                {metricsPoioDaVaca.lucroEstimado.toFixed(2)}Ôé¼
+                {metricsPoioDaVaca.lucroEstimado.toFixed(2)}�
               </span>
             </div>
             <div className="flex justify-between">
@@ -643,7 +643,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           <DialogHeader>
             <DialogTitle>{initialData ? "Editar Jogo" : "Novo Jogo"}</DialogTitle>
             <DialogDescription>
-              {initialData ? "Edite as informa├º├Áes do jogo." : "Crie um novo jogo para este evento."}
+              {initialData ? "Edite as Informa��es do jogo." : "Crie um novo jogo para este evento."}
             </DialogDescription>
           </DialogHeader>
 
@@ -683,7 +683,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
               {(formData.tipo === "rifa" || formData.tipo === "tombola" || formData.tipo === "raspadinha") && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="preco">Pre├ºo (Ôé¼) *</Label>
+                    <Label htmlFor="preco">Pre�o (�) *</Label>
                     <Input
                       id="preco"
                       type="number"
@@ -712,7 +712,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Configura├º├úo da Raspadinha</h3>
+                      <h3 className="text-sm font-semibold">Configura��o da Raspadinha</h3>
                       <Badge variant={isLucrativo ? "default" : "destructive"} className={isLucrativo ? "bg-green-500" : ""}>
                         {isLucrativo ? `${metricsRaspadinha.lucroMinimo}% lucro` : "Lucre baixo!"}
                       </Badge>
@@ -720,7 +720,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
                     <div className="grid gap-3">
                       <div className="grid gap-2">
-                        <Label htmlFor="raspadinhaTitulo">T├¡tulo</Label>
+                        <Label htmlFor="raspadinhaTitulo">T�tulo</Label>
                         <Input
                           id="raspadinhaTitulo"
                           placeholder="Ex: RASPADINHA DA FESTA"
@@ -729,7 +729,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="raspadinhaOrganizacao">Organiza├º├úo</Label>
+                        <Label htmlFor="raspadinhaOrganizacao">Organiza��o</Label>
                         <Input
                           id="raspadinhaOrganizacao"
                           placeholder="Ex: Junta de Freguesia"
@@ -741,9 +741,9 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
                     <div className="bg-[#1f1b19] rounded-xl p-4 space-y-4 border border-[#ff734b]/20">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-[#ff734b]">Pr├®mios e Percentagens</h4>
+                        <h4 className="text-sm font-semibold text-[#ff734b]">Pr�mios e Percentagens</h4>
                         <Button type="button" variant="outline" size="sm" onClick={adicionarPremioRaspadinha}>
-                          + Pr├®mio
+                          + Pr�mio
                         </Button>
                       </div>
 
@@ -788,7 +788,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                               </div>
                               {premio.percentagem > 0 && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  ~{expectedCountMap.get(premio.id) || 0} prêmios esperados
+                                  ~{expectedCountMap.get(premio.id) || 0} pr�mios esperados
                                 </p>
                               )}
                             </div>
@@ -801,7 +801,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                   className="h-8 w-8 p-0 text-red-500"
                                   onClick={() => removerPremioRaspadinha(premio.id)}
                                 >
-                                  Ô£ò
+                                  ԣ�
                                 </Button>
                               )}
                             </div>
@@ -817,7 +817,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
               {(formData.tipo === "rifa" || formData.tipo === "tombola") && (
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
-                    <h3 className="text-sm font-semibold">Pr├®mios</h3>
+                    <h3 className="text-sm font-semibold">Pr�mios</h3>
                     
                     <div className="space-y-3">
                       {rifaPremios.map((premio) => (
@@ -827,7 +827,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                           </div>
                           <div className="col-span-6">
                             <Input
-                              placeholder="Nome do pr├®mio"
+                              placeholder="Nome do Pr�mio"
                               value={premio.nome}
                               onChange={(e) => handlePremioRifaChange(premio.id, "nome", e.target.value)}
                               className="h-8 text-sm"
@@ -853,7 +853,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                               className="h-8 w-8 p-0 text-red-500"
                               onClick={() => removerPremioRifa(premio.id)}
                             >
-                              Ô£ò
+                              ԣ�
                             </Button>
                           </div>
                         </div>
@@ -861,7 +861,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                     </div>
                     
                     <Button type="button" variant="outline" size="sm" onClick={adicionarPremioRifa}>
-                      + Adicionar Pr├®mio
+                      + Adicionar Pr�mio
                     </Button>
                   </div>
                 </>
@@ -869,7 +869,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
               {formData.tipo === "poio_da_vaca" && (
                 <div className="border-t pt-4 mt-2 space-y-4">
-                  <h3 className="text-sm font-semibold">Configura├º├úo do Campo</h3>
+                  <h3 className="text-sm font-semibold">Configura��o do Campo</h3>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
@@ -898,7 +898,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="custoQuadrado">Custo por Quadrado (Ôé¼)</Label>
+                      <Label htmlFor="custoQuadrado">Custo por Quadrado (�)</Label>
                       <Input
                         id="custoQuadrado"
                         type="number"
@@ -909,7 +909,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="valorCompraVaca">Valor da Vaca (Ôé¼)</Label>
+                      <Label htmlFor="valorCompraVaca">Valor da Vaca (�)</Label>
                       <Input
                         id="valorCompraVaca"
                         type="number"
@@ -944,7 +944,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 disabled={loading || !isLucrativo || !formData.nome.trim()}
                 className={isLucrativo ? "bg-green-500 hover:bg-green-600" : ""}
               >
-                {loading ? "A guardar..." : (initialData ? "Guardar Altera├º├Áes" : "Criar Jogo")}
+                {loading ? "A guardar..." : (initialData ? "Guardar Altera+�+�es" : "Criar Jogo")}
               </Button>
             </DialogFooter>
           </form>
@@ -961,3 +961,4 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     </>
   );
 }
+

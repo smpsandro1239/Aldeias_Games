@@ -52,31 +52,34 @@ export default function AdminEntregasPage() {
    const [page, setPage] = useState<number>(1);
    const entregasPerPage = 10;
  
-   useEffect(() => {
-     if (isAuthenticated && user) {
-       fetchEntregas();
-     } else {
-       setLoading(false);
-     }
-   }, [isAuthenticated, user]);
+useEffect(() => {
+      if (isAuthenticated && user) {
+        setLoading(true);
+        fetchEntregas();
+      } else {
+        setLoading(false);
+      }
+    }, [isAuthenticated, user]);
  
    useEffect(() => {
      setPage(1);
    }, [filter]);
 
-   const fetchEntregas = async () => {
-     try {
-       const res = await fetch("/api/admin/entregas-saldo", {
-         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-       });
-      if (res.ok) {
-        const data = await res.json();
-        setEntregas(data.data || []);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar entregas:", error);
-    }
-  };
+const fetchEntregas = async () => {
+      try {
+        const res = await fetch("/api/admin/entregas-saldo", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+       if (res.ok) {
+         const data = await res.json();
+         setEntregas(data.data || []);
+       }
+     } catch (error) {
+       console.error("Erro ao buscar entregas:", error);
+     } finally {
+       setLoading(false);
+     }
+   };
 
   const handleConfirmar = async (entregaId: string) => {
     setProcessing(entregaId);
