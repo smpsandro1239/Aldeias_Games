@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Gift, Star, Award, Gamepad2 } from "lucide-react";
+import { toast } from "sonner";
+import { safeParseFloat } from "@/lib/form-utils";
 
 interface EventoData {
   id?: string;
@@ -87,7 +89,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
     }
   }, [initialData, open, aldeiaId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     const newErrors: Record<string, string> = {};
@@ -115,15 +117,17 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
     setLoading(true);
 
     try {
+      const objectivoAngariacao = formData.objectivoAngariacao 
+        ? safeParseFloat(formData.objectivoAngariacao, 0)
+        : undefined;
+
       await onSubmit({
         id: initialData?.id,
         nome: formData.nome,
         descricao: formData.descricao || undefined,
         dataInicio: formData.dataInicio,
         dataFim: formData.dataFim,
-        objectivoAngariacao: formData.objectivoAngariacao
-          ? parseFloat(formData.objectivoAngariacao)
-          : undefined,
+        objectivoAngariacao,
         publico: formData.publico,
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
@@ -144,10 +148,13 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
       }
       onOpenChange(false);
       setErrors({});
+    } catch (error) {
+      console.error("Erro ao salvar evento:", error);
+      toast.error("Erro ao salvar evento");
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, jogosSelecionados, initialData, aldeiaId, onSubmit, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
