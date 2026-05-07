@@ -78,6 +78,27 @@ interface CreateJogoModalProps {
   metodosPagamentoDefault?: string[];
 }
 
+// Constants for game types to avoid magic strings
+const GAME_TYPES = {
+  RASPADINHA: 'raspadinha',
+  RIFA: 'rifa',
+  TOMBOLA: 'tombola',
+  POIO_DA_VACA: 'poio_da_vaca'
+} as const;
+
+type GameType = typeof GAME_TYPES[keyof typeof GAME_TYPES];
+
+// Safe parsing helper
+const safeParseInt = (val: string, fallback: number = 0): number => {
+  const parsed = parseInt(val);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
+const safeParseFloat = (val: string, fallback: number = 0): number => {
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
 export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEventoId, initialData, userRole, token, aldeiaId, metodosPagamentoDefault }: CreateJogoModalProps) {
   const [loading, setLoading] = useState(false);
   const [showTransparency, setShowTransparency] = useState(false);
@@ -85,7 +106,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
   const [formData, setFormData] = useState({
     nome: "",
-    tipo: "raspadinha" as "poio_da_vaca" | "rifa" | "tombola" | "raspadinha",
+    tipo: GAME_TYPES.RASPADINHA as GameType,
     descricao: "",
     preco: "2",
     stockInicial: "100",
@@ -110,7 +131,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     valorPremios: "",
   });
 
-  const [rashadinhaPremios, setRaspadinhaPremios] = useState<Premio[]>([
+  const [raspadinhaPremios, setRaspadinhaPremios] = useState<Premio[]>([
     { id: "1", nome: "3x Presunto", valorDinheiroAlternative: 50, percentagem: 2 },
     { id: "2", nome: "3x Tabua de Queijos", valorDinheiroAlternative: 25, percentagem: 5 },
     { id: "3", nome: "Valor da Raspadinha", valorDinheiroAlternative: 2, percentagem: 10 },
@@ -124,7 +145,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     if (initialData && open) {
       setFormData({
         nome: initialData.nome || "",
-        tipo: initialData.tipo || "raspadinha",
+        tipo: initialData.tipo || GAME_TYPES.RASPADINHA,
         descricao: initialData.descricao || "",
         preco: initialData.preco?.toString() || "2",
         stockInicial: initialData.stockInicial?.toString() || "100",
@@ -150,7 +171,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       });
 
       if (initialData.premios && initialData.premios.length > 0) {
-        if (initialData.tipo === "raspadinha") {
+        if (initialData.tipo === GAME_TYPES.RASPADINHA) {
           setRaspadinhaPremios(initialData.premios.map((p, i) => ({
             id: String(i + 1),
             nome: p.nome || "",
@@ -174,7 +195,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
   const resetForm = () => {
     setFormData({
       nome: "",
-      tipo: "raspadinha",
+      tipo: GAME_TYPES.RASPADINHA,
       descricao: "",
       preco: "2",
       stockInicial: "100",
@@ -208,23 +229,23 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     ]);
   };
 
-   const preco = parseFloat(formData.preco) || 0;
-   const stock = parseInt(formData.stockInicial) || 0;
+   const preco = safeParseFloat(formData.preco);
+   const stock = safeParseInt(formData.stockInicial);
 
    // Mapa de expectedCount por premioId (otimizado com useMemo)
    const expectedCountMap = useMemo(() => {
      const map = new Map<string, number>();
-     rashadinhaPremios.forEach(p => {
+     raspadinhaPremios.forEach(p => {
        map.set(p.id, Math.round(stock * (p.percentagem || 0) / 100));
      });
      return map;
-   }, [rashadinhaPremios, stock]);
+   }, [raspadinhaPremios, stock]);
 
    const metricsRaspadinha = useMemo(() => {
-    const totalPercentagem = rashadinhaPremios.reduce((acc, p) => acc + p.percentagem, 0);
+    const totalPercentagem = raspadinhaPremios.reduce((acc, p) => acc + p.percentagem, 0);
     const lucroMinimo = 100 - totalPercentagem;
 
-    const custoMedioPorBilhete = rashadinhaPremios.reduce((acc, p) => {
+    const custoMedioPorBilhete = raspadinhaPremios.reduce((acc, p) => {
       return acc + (p.valorDinheiroAlternative * p.percentagem / 100);
     }, 0);
 
@@ -243,7 +264,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       margemLucro,
       isLucrativo: lucroMinimo >= 50
     };
-  }, [rashadinhaPremios, preco, stock]);
+  }, [raspadinhaPremios, preco, stock]);
 
   const metricsRifa = useMemo(() => {
     const totalPremios = rifaPremios.reduce((acc, p) => acc + p.valorDinheiroAlternative, 0);
@@ -261,10 +282,10 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
   }, [rifaPremios, preco, stock]);
 
   const metricsPoioDaVaca = useMemo(() => {
-    const dimensoesX = parseInt(formData.dimensoesX) || 0;
-    const dimensoesY = parseInt(formData.dimensoesY) || 0;
-    const custoQuadrado = parseFloat(formData.custoQuadrado) || 0;
-    const valorCompraVaca = parseFloat(formData.valorCompraVaca) || 0;
+    const dimensoesX = safeParseInt(formData.dimensoesX);
+    const dimensoesY = safeParseInt(formData.dimensoesY);
+    const custoQuadrado = safeParseFloat(formData.custoQuadrado);
+    const valorCompraVaca = safeParseFloat(formData.valorCompraVaca);
 
     const totalQuadrados = dimensoesX * dimensoesY;
     const receitaTotal = totalQuadrados * custoQuadrado;
@@ -283,12 +304,12 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
   const getMetrics = () => {
     switch (formData.tipo) {
-      case "raspadinha":
+      case GAME_TYPES.RASPADINHA:
         return metricsRaspadinha;
-      case "rifa":
-      case "tombola":
+      case GAME_TYPES.RIFA:
+      case GAME_TYPES.TOMBOLA:
         return metricsRifa;
-      case "poio_da_vaca":
+      case GAME_TYPES.POIO_DA_VACA:
         return metricsPoioDaVaca;
       default:
         return { isLucrativo: false };
@@ -324,7 +345,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
   };
 
   const removerPremioRaspadinha = (id: string) => {
-    if (rashadinhaPremios.length > 1) {
+    if (raspadinhaPremios.length > 1) {
       setRaspadinhaPremios(prev => prev.filter(p => p.id !== id));
     }
   };
@@ -339,8 +360,8 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       e.preventDefault();
 
       // Validação específica: soma das percentagens raspadinha <= 100%
-      if (formData.tipo === 'raspadinha' && rashadinhaPremios.length > 0) {
-        const totalPercentagem = rashadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
+      if (formData.tipo === GAME_TYPES.RASPADINHA && raspadinhaPremios.length > 0) {
+        const totalPercentagem = raspadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
         if (totalPercentagem > 100) {
           toast.error(`A soma das percentagens dos prémios (${totalPercentagem}%) não pode exceder 100%`);
           return;
@@ -348,10 +369,10 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       }
 
       // Validação específica para rifa/tombola: intervalo numérico
-      if (formData.tipo === 'rifa' || formData.tipo === 'tombola') {
-        const numInicial = parseInt(formData.numeroInicial);
-        const numFinal = parseInt(formData.numeroFinal);
-        const stock = parseInt(formData.stockInicial);
+      if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) {
+        const numInicial = safeParseInt(formData.numeroInicial, 1);
+        const numFinal = safeParseInt(formData.numeroFinal, 1000);
+        const stock = safeParseInt(formData.stockInicial, 100);
 
         if (numFinal <= numInicial) {
           toast.error('Número final deve ser maior que número inicial para rifa/tombola');
@@ -376,41 +397,41 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       throw new Error("Selecione um evento antes de criar o jogo");
     }
     const config: Record<string, unknown> = {
-      numeroInicial: parseInt(formData.numeroInicial) || 1,
-      numeroFinal: parseInt(formData.numeroFinal) || 1000,
+      numeroInicial: safeParseInt(formData.numeroInicial, 1),
+      numeroFinal: safeParseInt(formData.numeroFinal, 1000),
       modoSorteio: formData.modoSorteio,
       detalhesSorteioExterno: formData.detalhesSorteioExterno,
     };
 
-    if (formData.tipo === "rifa" || formData.tipo === "tombola") {
+    if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) {
       config.dataSorteio = formData.dataSorteio;
       config.horaSorteio = formData.horaSorteio;
       config.localSorteio = formData.localSorteio;
-      config.numeroBlocos = parseInt(formData.numeroBlocos) || 1;
+      config.numeroBlocos = safeParseInt(formData.numeroBlocos, 1);
       config.permitirStripe = formData.permitirStripe;
-      config.valorPremios = formData.valorPremios ? parseFloat(formData.valorPremios) : null;
+      config.valorPremios = formData.valorPremios ? safeParseFloat(formData.valorPremios) : null;
     }
 
-    if (formData.tipo === "poio_da_vaca") {
-      config.dimensoesX = parseInt(formData.dimensoesX) || 10;
-      config.dimensoesY = parseInt(formData.dimensoesY) || 10;
-      config.custoQuadrado = parseFloat(formData.custoQuadrado) || 5;
-      config.valorMercadoVaca = parseFloat(formData.valorMercadoVaca) || 1000;
-      config.valorCompraVaca = parseFloat(formData.valorCompraVaca) || 800;
+    if (formData.tipo === GAME_TYPES.POIO_DA_VACA) {
+      config.dimensoesX = safeParseInt(formData.dimensoesX, 10);
+      config.dimensoesY = safeParseInt(formData.dimensoesY, 10);
+      config.custoQuadrado = safeParseFloat(formData.custoQuadrado, 5);
+      config.valorMercadoVaca = safeParseFloat(formData.valorMercadoVaca, 1000);
+      config.valorCompraVaca = safeParseFloat(formData.valorCompraVaca, 800);
     }
 
-    if (formData.tipo === "raspadinha") {
+    if (formData.tipo === GAME_TYPES.RASPADINHA) {
       config.titulo = formData.raspadinhaTitulo;
       config.subtitulo = formData.raspadinhaSubtitulo;
       config.organizacao = formData.raspadinhaOrganizacao;
-      config.premios = rashadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
+      config.premios = raspadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
     }
 
     let premiosData: Array<{nome: string; valorDinheiroAlternative: number; percentagem?: number; ordem: number}> = [];
     let metrics = getMetrics();
 
-    if (formData.tipo === "raspadinha") {
-      premiosData = rashadinhaPremios
+    if (formData.tipo === GAME_TYPES.RASPADINHA) {
+      premiosData = raspadinhaPremios
         .filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0)
         .map((p, idx) => ({
           nome: p.nome,
@@ -421,7 +442,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
       config.lucroMinimoPercent = metricsRaspadinha.lucroMinimo;
       config.custoMedioPrevisto = metricsRaspadinha.custoMedioPorBilhete;
-    } else if (formData.tipo === "rifa" || formData.tipo === "tombola") {
+    } else if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) {
       premiosData = rifaPremios
         .filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0)
         .map((p, idx) => ({
@@ -435,28 +456,28 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       nome: formData.nome,
       tipo: formData.tipo,
       descricao: formData.descricao,
-      preco: parseFloat(formData.preco) || 0,
-      stockInicial: parseInt(formData.stockInicial) || 100,
-      limitePorUsuario: parseInt(formData.limitePorUsuario) || 10,
+      preco: safeParseFloat(formData.preco, 0),
+      stockInicial: safeParseInt(formData.stockInicial, 100),
+      limitePorUsuario: safeParseInt(formData.limitePorUsuario, 10),
       eventoId,
       configuracao: config,
       modoSorteio: formData.modoSorteio,
       detalhesSorteioExterno: formData.detalhesSorteioExterno,
       premios: premiosData,
-      custoQuadrado: formData.tipo === "poio_da_vaca" ? parseFloat(formData.custoQuadrado) : undefined,
-      valorMercadoVaca: formData.tipo === "poio_da_vaca" ? parseFloat(formData.valorMercadoVaca) : undefined,
-      valorCompraVaca: formData.tipo === "poio_da_vaca" ? parseFloat(formData.valorCompraVaca) : undefined,
-      lucroMinimoPercent: formData.tipo === "raspadinha"
+      custoQuadrado: formData.tipo === GAME_TYPES.POIO_DA_VACA ? safeParseFloat(formData.custoQuadrado) : undefined,
+      valorMercadoVaca: formData.tipo === GAME_TYPES.POIO_DA_VACA ? safeParseFloat(formData.valorMercadoVaca) : undefined,
+      valorCompraVaca: formData.tipo === GAME_TYPES.POIO_DA_VACA ? safeParseFloat(formData.valorCompraVaca) : undefined,
+      lucroMinimoPercent: formData.tipo === GAME_TYPES.RASPADINHA
         ? metricsRaspadinha.lucroMinimo
-        : (formData.tipo === "rifa" || formData.tipo === "tombola")
+        : (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA)
           ? metricsRifa.margemLucro
           : metricsPoioDaVaca.margemLucro,
-      receitaEsperada: formData.tipo === "raspadinha" ? metricsRaspadinha.receitaTotal :
-                       formData.tipo === "poio_da_vaca" ? metricsPoioDaVaca.receitaTotal :
-                       metricsRifa.receitaTotal,
-      lucroLiquidoPrevisto: formData.tipo === "raspadinha"
+      receitaEsperada: formData.tipo === GAME_TYPES.RASPADINHA ? metricsRaspadinha.receitaTotal :
+                        formData.tipo === GAME_TYPES.POIO_DA_VACA ? metricsPoioDaVaca.receitaTotal :
+                        metricsRifa.receitaTotal,
+      lucroLiquidoPrevisto: formData.tipo === GAME_TYPES.RASPADINHA
         ? metricsRaspadinha.lucroEstimado
-        : formData.tipo === "poio_da_vaca"
+        : formData.tipo === GAME_TYPES.POIO_DA_VACA
           ? metricsPoioDaVaca.lucroEstimado
           : metricsRifa.lucroEstimado,
     };
@@ -478,13 +499,13 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
 
   const getTransparencyData = () => {
     switch (formData.tipo) {
-      case "raspadinha":
+      case GAME_TYPES.RASPADINHA:
         return {
-          tipoJogo: "raspadinha",
+          tipoJogo: GAME_TYPES.RASPADINHA,
           nome: formData.nome || "Raspadinha",
-          preco: parseFloat(formData.preco) || 0,
-          stock: parseInt(formData.stockInicial) || 0,
-          premios: rashadinhaPremios
+          preco: safeParseFloat(formData.preco, 0),
+          stock: safeParseInt(formData.stockInicial, 0),
+          premios: raspadinhaPremios
             .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
             .map(p => ({
               nome: p.nome || "Prémio",
@@ -492,13 +513,13 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
               percentagem: p.percentagem
             }))
         };
-      case "rifa":
-      case "tombola":
+      case GAME_TYPES.RIFA:
+      case GAME_TYPES.TOMBOLA:
         return {
           tipoJogo: formData.tipo,
-          nome: formData.nome || (formData.tipo === "tombola" ? "Tombola" : "Rifa"),
-          preco: parseFloat(formData.preco) || 0,
-          stock: parseInt(formData.stockInicial) || 0,
+          nome: formData.nome || (formData.tipo === GAME_TYPES.TOMBOLA ? "Tombola" : "Rifa"),
+          preco: safeParseFloat(formData.preco, 0),
+          stock: safeParseInt(formData.stockInicial, 0),
           premios: rifaPremios
             .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
             .map(p => ({
@@ -506,23 +527,23 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
               valor: p.valorDinheiroAlternative
             }))
         };
-      case "poio_da_vaca":
+      case GAME_TYPES.POIO_DA_VACA:
         return {
-          tipoJogo: "poio_da_vaca",
+          tipoJogo: GAME_TYPES.POIO_DA_VACA,
           nome: formData.nome || "Poio da Vaca",
-          preco: parseFloat(formData.custoQuadrado) || 0,
+          preco: safeParseFloat(formData.custoQuadrado, 0),
           premios: [{
             nome: "Valor da Vaca",
-            valor: parseFloat(formData.valorCompraVaca) || 0
+            valor: safeParseFloat(formData.valorCompraVaca, 0)
           }],
-          dimensoesX: parseInt(formData.dimensoesX) || 0,
-          dimensoesY: parseInt(formData.dimensoesY) || 0,
-          custoQuadrado: parseFloat(formData.custoQuadrado) || 0,
-          valorCompraVaca: parseFloat(formData.valorCompraVaca) || 0
+          dimensoesX: safeParseInt(formData.dimensoesX, 0),
+          dimensoesY: safeParseInt(formData.dimensoesY, 0),
+          custoQuadrado: safeParseFloat(formData.custoQuadrado, 0),
+          valorCompraVaca: safeParseFloat(formData.valorCompraVaca, 0)
         };
       default:
         return {
-          tipoJogo: "raspadinha",
+          tipoJogo: GAME_TYPES.RASPADINHA,
           nome: "Jogo",
           preco: 0,
           stock: 0,
@@ -543,7 +564,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           </h4>
         </div>
 
-        {formData.tipo === "raspadinha" && (
+        {formData.tipo === GAME_TYPES.RASPADINHA && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">% Total Prémios:</span>
@@ -574,7 +595,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           </div>
         )}
 
-        {(formData.tipo === "rifa" || formData.tipo === "tombola") && (
+        {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Prémios:</span>
@@ -599,7 +620,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           </div>
         )}
 
-        {formData.tipo === "poio_da_vaca" && (
+        {formData.tipo === GAME_TYPES.POIO_DA_VACA && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Quadrados:</span>
@@ -648,7 +669,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 <Label htmlFor="tipo">Tipo de Jogo *</Label>
                 <Select
                   value={formData.tipo}
-                  onValueChange={(value: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha") =>
+                  onValueChange={(value: GameType) =>
                     setFormData({ ...formData, tipo: value })
                   }
                 >
@@ -656,10 +677,10 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="raspadinha">Raspadinha</SelectItem>
-                    <SelectItem value="rifa">Rifa</SelectItem>
-                    <SelectItem value="tombola">Tombola</SelectItem>
-                    <SelectItem value="poio_da_vaca">Poio da Vaca</SelectItem>
+                    <SelectItem value={GAME_TYPES.RASPADINHA}>Raspadinha</SelectItem>
+                    <SelectItem value={GAME_TYPES.RIFA}>Rifa</SelectItem>
+                    <SelectItem value={GAME_TYPES.TOMBOLA}>Tombola</SelectItem>
+                    <SelectItem value={GAME_TYPES.POIO_DA_VACA}>Poio da Vaca</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -675,7 +696,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 />
               </div>
 
-              {(formData.tipo === "rifa" || formData.tipo === "tombola" || formData.tipo === "raspadinha") && (
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA || formData.tipo === GAME_TYPES.RASPADINHA) && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="preco">Preço (€) *</Label>
@@ -703,7 +724,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 </div>
               )}
 
-              {formData.tipo === "raspadinha" && (
+              {formData.tipo === GAME_TYPES.RASPADINHA && (
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <div className="flex items-center justify-between">
@@ -743,7 +764,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       </div>
 
                       <div className="space-y-3">
-                        {rashadinhaPremios.map((premio) => (
+                        {raspadinhaPremios.map((premio) => (
                           <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
                             <div className="col-span-1 flex items-center justify-center">
                               <Trophy className="h-4 w-4 text-[#ff734b]" />
@@ -763,7 +784,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                   type="number"
                                   placeholder="Valor"
                                   value={premio.valorDinheiroAlternative || ""}
-                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "valorDinheiroAlternative", parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "valorDinheiroAlternative", safeParseFloat(e.target.value, 0))}
                                   className="h-8 text-sm pl-7"
                                 />
                               </div>
@@ -777,7 +798,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                   min="0"
                                   max="50"
                                   value={premio.percentagem || ""}
-                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", safeParseFloat(e.target.value, 0))}
                                   className="h-8 text-sm pl-7"
                                 />
                               </div>
@@ -788,7 +809,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                               )}
                             </div>
                             <div className="col-span-1 flex justify-center">
-                              {rashadinhaPremios.length > 1 && (
+                              {raspadinhaPremios.length > 1 && (
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -809,7 +830,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 </>
               )}
 
-              {(formData.tipo === "rifa" || formData.tipo === "tombola") && (
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) && (
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <h3 className="text-sm font-semibold">Prémios</h3>
@@ -835,7 +856,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                 type="number"
                                 placeholder="Valor"
                                 value={premio.valorDinheiroAlternative || ""}
-                                onChange={(e) => handlePremioRifaChange(premio.id, "valorDinheiroAlternative", parseFloat(e.target.value) || 0)}
+                                onChange={(e) => handlePremioRifaChange(premio.id, "valorDinheiroAlternative", safeParseFloat(e.target.value, 0))}
                                 className="h-8 text-sm pl-7"
                               />
                             </div>
@@ -862,7 +883,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 </>
               )}
 
-              {formData.tipo === "poio_da_vaca" && (
+              {formData.tipo === GAME_TYPES.POIO_DA_VACA && (
                 <div className="border-t pt-4 mt-2 space-y-4">
                   <h3 className="text-sm font-semibold">Configuração do Campo</h3>
 
@@ -917,13 +938,13 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 </div>
               )}
 
-              {formData.tipo !== "poio_da_vaca" && (
+              {formData.tipo !== GAME_TYPES.POIO_DA_VACA && (
                 <div className="border-t pt-4 mt-2">
                   {renderLucratividadeCard()}
                 </div>
               )}
 
-              {formData.tipo === "poio_da_vaca" && (
+              {formData.tipo === GAME_TYPES.POIO_DA_VACA && (
                 <div className="border-t pt-4 mt-2">
                   {renderLucratividadeCard()}
                 </div>
