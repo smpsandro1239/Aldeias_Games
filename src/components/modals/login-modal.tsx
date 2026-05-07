@@ -90,15 +90,16 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             {/* Quick Login */}
-            <div className="border-t pt-4">
-              <p className="text-xs text-muted-foreground mb-2">Quick Login (Testes):</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="border-t pt-4 mt-2">
+              <p className="text-xs text-muted-foreground mb-3">Quick Login (Testes):</p>
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={(e) => { e.preventDefault(); quickLogin("admin@aldeias.pt", "123456"); }}
                   disabled={loading}
+                  className="h-9"
                 >
                   Super Admin
                 </Button>
@@ -108,6 +109,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   size="sm"
                   onClick={(e) => { e.preventDefault(); quickLogin("admin.valeazinha@aldeias.pt", "123456"); }}
                   disabled={loading}
+                  className="h-9"
                 >
                   Admin Aldeia
                 </Button>
@@ -117,6 +119,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   size="sm"
                   onClick={(e) => { e.preventDefault(); quickLogin("vendedor1@valeazinha.pt", "123456"); }}
                   disabled={loading}
+                  className="h-9"
                 >
                   Vendedor
                 </Button>
@@ -126,6 +129,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   size="sm"
                   onClick={(e) => { e.preventDefault(); quickLogin("jogador1@valeazinha.pt", "123456"); }}
                   disabled={loading}
+                  className="h-9"
                 >
                   Jogador
                 </Button>
