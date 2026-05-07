@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useEffect } from "react";
+import { useState, useReducer, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -160,7 +160,7 @@ function useDadosConta(aldeiaId?: string) {
   return dadosConta;
 }
 
-function useVendedores(aldeiaId?: string, open: boolean) {
+function useVendedores(open: boolean, aldeiaId?: string) {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   useEffect(() => {
     if (!open || !aldeiaId) return;
@@ -187,7 +187,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
   const [user, setUser] = useState<User | null>(null);
   const saldo = useSaldo(user?.id || "");
   const dadosConta = useDadosConta(aldeiaId);
-  const vendedores = useVendedores(aldeiaId, open);
+   const vendedores = useVendedores(open, aldeiaId);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

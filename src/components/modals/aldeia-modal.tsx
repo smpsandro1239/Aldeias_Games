@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+// Constants for organization types
+const TIPO_ORGANIZACAO = {
+  ALDEIA: 'aldeia',
+  ESCOLA: 'escola',
+  ASSOCIACAO_PAIS: 'associacao_pais',
+  CLUBE: 'clube'
+} as const;
+
+type TipoOrganizacao = typeof TIPO_ORGANIZACAO[keyof typeof TIPO_ORGANIZACAO];
+
 export interface AldeiaData {
    id?: string;
    nome: string;
-   tipoOrganizacao: "aldeia" | "escola" | "associacao_pais" | "clube";
+   tipoOrganizacao: TipoOrganizacao;
    descricao?: string;
    telefone?: string;
    email?: string;
@@ -27,7 +37,7 @@ interface AldeiaModalProps {
 export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: AldeiaModalProps) {
   const [formData, setFormData] = useState<AldeiaData>({
     nome: "",
-    tipoOrganizacao: "aldeia",
+    tipoOrganizacao: TIPO_ORGANIZACAO.ALDEIA,
     descricao: "",
     telefone: "",
     email: "",
@@ -40,13 +50,21 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
     } else if (!open) {
       setFormData({
         nome: "",
-        tipoOrganizacao: "aldeia",
+        tipoOrganizacao: TIPO_ORGANIZACAO.ALDEIA,
         descricao: "",
         telefone: "",
         email: "",
       });
     }
   }, [initialData, open]);
+
+  const handleChange = useCallback((field: keyof AldeiaData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleTipoChange = useCallback((value: TipoOrganizacao) => {
+    setFormData(prev => ({ ...prev, tipoOrganizacao: value }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,23 +94,23 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
               <Input
                 id="nome"
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onChange={(e) => handleChange("nome", e.target.value)}
                 required
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="tipo">Tipo de Organização *</Label>
               <Select
                 value={formData.tipoOrganizacao}
-                onValueChange={(value: "aldeia" | "escola" | "associacao_pais" | "clube") => setFormData({ ...formData, tipoOrganizacao: value })}
+                onValueChange={handleTipoChange}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="aldeia">Aldeia</SelectItem>
-                  <SelectItem value="escola">Escola</SelectItem>
-                  <SelectItem value="associacao_pais">Associação de Pais</SelectItem>
-                  <SelectItem value="clube">Clube Desportivo</SelectItem>
+                  <SelectItem value={TIPO_ORGANIZACAO.ALDEIA}>Aldeia</SelectItem>
+                  <SelectItem value={TIPO_ORGANIZACAO.ESCOLA}>Escola</SelectItem>
+                  <SelectItem value={TIPO_ORGANIZACAO.ASSOCIACAO_PAIS}>Associação de Pais</SelectItem>
+                  <SelectItem value={TIPO_ORGANIZACAO.CLUBE}>Clube Desportivo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -103,7 +121,7 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
                 id="email"
                 type="email"
                 value={formData.email || ""}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => handleChange("email", e.target.value)}
               />
             </div>
 
@@ -112,7 +130,7 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
               <Input
                 id="telefone"
                 value={formData.telefone || ""}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                onChange={(e) => handleChange("telefone", e.target.value)}
               />
             </div>
 
@@ -121,7 +139,7 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
               <Textarea
                 id="descricao"
                 value={formData.descricao || ""}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                onChange={(e) => handleChange("descricao", e.target.value)}
               />
             </div>
           </div>
