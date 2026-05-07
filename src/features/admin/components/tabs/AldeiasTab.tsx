@@ -92,42 +92,51 @@ export function AldeiasTab({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {filteredAldeias
-            .slice((aldeiaPage - 1) * 10, aldeiaPage * 10)
-            .map((al) => (
-              <Card key={al.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{al.nome}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {al.tipoOrganizacao} • {al.email}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
+          <div className="grid gap-4">
+            {filteredAldeias
+              .slice((aldeiaPage - 1) * 10, aldeiaPage * 10)
+              .map((al) => (
+                <Card key={al.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div
+                      className="flex-1"
                       onClick={() => {
                         setSelectedAldeia(al);
                         setAldeiaModalOpen(true);
                       }}
                     >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => requestDelete("aldeia", al.id)}
+                      <h3 className="font-semibold">{al.nome}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {al.tipoOrganizacao} • {al.email}
+                      </p>
+                    </div>
+                    <div
+                      className="flex flex-wrap gap-2 items-center"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-        </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedAldeia(al);
+                          setAldeiaModalOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => requestDelete("aldeia", al.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
       )}
 
       {/* Paginação */}

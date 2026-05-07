@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Transacao } from "../types";
+import { TransactionDetailModal } from "@/components/modals/transaction-detail-modal";
 
 interface TransacoesTabProps {
   transacoes: Transacao[];
@@ -17,6 +18,8 @@ interface TransacoesTabProps {
 export function TransacoesTab({ transacoes }: TransacoesTabProps) {
   const [transacaoSearch, setTransacaoSearch] = useState("");
   const [transacaoPage, setTransacaoPage] = useState(1);
+  const [selectedTransacao, setSelectedTransacao] = useState<Transacao | null>(null);
+  const [transactionDetailOpen, setTransactionDetailOpen] = useState(false);
 
   const filteredTransacoes = useMemo(() => {
     const searchLower = transacaoSearch.toLowerCase();
@@ -31,6 +34,11 @@ export function TransacoesTab({ transacoes }: TransacoesTabProps) {
       );
     });
   }, [transacoes, transacaoSearch]);
+
+  const handleOpenTransacao = (t: Transacao) => {
+    setSelectedTransacao(t);
+    setTransactionDetailOpen(true);
+  };
 
   return (
     <div className="space-y-4">
@@ -74,9 +82,12 @@ export function TransacoesTab({ transacoes }: TransacoesTabProps) {
           {filteredTransacoes
             .slice((transacaoPage - 1) * 10, transacaoPage * 10)
             .map((t) => (
-              <Card key={t.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
+              <Card key={t.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
+                <CardContent 
+                  className="p-4 flex items-center justify-between"
+                  onClick={() => handleOpenTransacao(t)}
+                >
+                  <div className="flex-1">
                     <div className="flex flex-wrap gap-2 items-center">
                       <h3 className="font-semibold">{t.tipo}</h3>
                       <Badge variant="outline">{t.estado || "concluido"}</Badge>
@@ -126,6 +137,13 @@ export function TransacoesTab({ transacoes }: TransacoesTabProps) {
           </div>
         </div>
       )}
+
+      {/* Modal de Detalhes */}
+      <TransactionDetailModal
+        transacao={selectedTransacao}
+        open={transactionDetailOpen}
+        onOpenChange={setTransactionDetailOpen}
+      />
     </div>
   );
 }

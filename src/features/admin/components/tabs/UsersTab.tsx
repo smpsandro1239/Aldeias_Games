@@ -101,46 +101,55 @@ export function UsersTab({
                   : "Nenhum utilizador corresponde aos filtros"}
               </p>
             ) : (
-              filteredUsers
-                .slice((userPage - 1) * 50, userPage * 50)
-                .map((u) => (
-                  <div
-                    key={u.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg border"
-                  >
-                    <div className="min-w-0">
-                      <h3 className="font-semibold truncate">{u.nome}</h3>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {u.email}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {u.telefone ? `Tlm: ${u.telefone}` : "Sem telemóvel"} • Perfil: {u.role}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 items-center self-stretch sm:self-auto">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setSelectedUser(u);
-                          setUserModalOpen(true);
-                        }}
-                        title="Editar"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive"
-                        onClick={() => requestDelete("user", u.id)}
-                        title="Eliminar"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
+               filteredUsers
+                 .slice((userPage - 1) * 50, userPage * 50)
+                 .map((u) => (
+                   <div
+                     key={u.id}
+                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg border hover:bg-accent/5 transition-colors cursor-pointer"
+                   >
+                     <div
+                       className="min-w-0 flex-1"
+                       onClick={() => {
+                         setSelectedUser(u);
+                         setUserModalOpen(true);
+                       }}
+                     >
+                       <h3 className="font-semibold truncate">{u.nome}</h3>
+                       <p className="text-sm text-muted-foreground truncate">
+                         {u.email}
+                       </p>
+                       <p className="text-xs text-muted-foreground">
+                         {u.telefone ? `Tlm: ${u.telefone}` : "Sem telemóvel"} • Perfil: {u.role}
+                       </p>
+                     </div>
+                     <div
+                       className="flex flex-wrap gap-2 items-center self-stretch sm:self-auto"
+                       onClick={(e) => e.stopPropagation()}
+                     >
+                       <Button
+                         variant="ghost"
+                         size="icon"
+                         onClick={() => {
+                           setSelectedUser(u);
+                           setUserModalOpen(true);
+                         }}
+                         title="Editar"
+                       >
+                         <Edit className="h-4 w-4" />
+                       </Button>
+                       <Button
+                         variant="ghost"
+                         size="icon"
+                         className="text-destructive"
+                         onClick={() => requestDelete("user", u.id)}
+                         title="Eliminar"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
+                   </div>
+                 ))
             )}
           </div>
 

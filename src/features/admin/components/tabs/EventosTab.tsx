@@ -99,50 +99,59 @@ export function EventosTab({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {filteredEventos
-            .slice((eventoPage - 1) * 10, eventoPage * 10)
-            .map((ev) => (
-              <Card key={ev.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{ev.nome}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(ev.dataInicio)} - {formatDate(ev.dataFim)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onVerJogos?.(ev.id)}
-                    >
-                      <Gamepad2 className="h-4 w-4 mr-1" /> Ver Jogos
-                    </Button>
-                    {getEstadoBadge(ev.estado)}
-                    <Button
-                      variant="ghost"
-                      size="icon"
+          <div className="grid gap-4">
+            {filteredEventos
+              .slice((eventoPage - 1) * 10, eventoPage * 10)
+              .map((ev) => (
+                <Card key={ev.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div
+                      className="flex-1"
                       onClick={() => {
                         setSelectedEvento(ev);
                         setEventoModalOpen(true);
                       }}
                     >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => requestDelete("evento", ev.id)}
+                      <h3 className="font-semibold">{ev.nome}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(ev.dataInicio)} - {formatDate(ev.dataFim)}
+                      </p>
+                    </div>
+                    <div
+                      className="flex flex-wrap gap-2 items-center"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-        </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onVerJogos?.(ev.id)}
+                      >
+                        <Gamepad2 className="h-4 w-4 mr-1" /> Ver Jogos
+                      </Button>
+                      {getEstadoBadge(ev.estado)}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedEvento(ev);
+                          setEventoModalOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => requestDelete("evento", ev.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
       )}
 
       {/* Paginação */}

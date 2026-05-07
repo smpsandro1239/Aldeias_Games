@@ -861,8 +861,9 @@ export default function AdminDashboard({
           <OverviewTab
             stats={stats}
             eventos={eventos}
-            setEventoModalOpen={() => setEventoModalOpen(true)}
-            setJogoModalOpen={() => setJogoModalOpen(true)}
+            setSelectedEvento={setSelectedEvento}
+            setEventoModalOpen={setEventoModalOpen}
+            setJogoModalOpen={setJogoModalOpen}
             getEstadoBadge={getEstadoBadge}
             userRole={userRole}
           />

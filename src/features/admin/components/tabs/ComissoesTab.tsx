@@ -38,26 +38,32 @@ export function ComissoesTab({
             </p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-4">
-          {vendedoresStats.map((vs) => (
-            <Card key={vs.id}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <h3 className="font-semibold text-lg">{vs.nome}</h3>
-                    <Badge variant="outline">{vs.totalVendas} vendas globais</Badge>
-                  </div>
-                  {/* Adicionar mais estatísticas conforme necessário */}
-                </div>
-                <div className="text-right">
-                  {/* Exibir comissões, etc. */}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+       ) : (
+         <div className="grid gap-4">
+           {vendedoresStats.map((vs) => (
+             <Card key={vs.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
+               <CardContent className="p-4 flex items-center justify-between">
+                 <div
+                   className="flex-1"
+                   onClick={() => {
+                     setSelectedUser({ ...vs, role: 'vendedor' } as any);
+                     setUserModalOpen(true);
+                   }}
+                 >
+                   <div className="flex flex-wrap gap-2 items-center">
+                     <h3 className="font-semibold text-lg">{vs.nome}</h3>
+                     <Badge variant="outline">{vs.totalVendas} vendas globais</Badge>
+                   </div>
+                   {/* Adicionar mais estatísticas conforme necessário */}
+                 </div>
+                 <div onClick={(e) => e.stopPropagation()}>
+                   {/* Futuras ações ou info extra */}
+                 </div>
+               </CardContent>
+             </Card>
+           ))}
+         </div>
+       )}
     </div>
   );
 }

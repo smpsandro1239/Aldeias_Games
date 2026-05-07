@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Shield, Search } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Log } from "../types";
+import { AuditLogDetailModal } from "@/components/modals/audit-log-detail-modal";
 
 interface AuditoriaTabProps {
   logs: Log[];
@@ -17,6 +18,8 @@ interface AuditoriaTabProps {
 export function AuditoriaTab({ logs }: AuditoriaTabProps) {
   const [logSearch, setLogSearch] = useState("");
   const [logPage, setLogPage] = useState(1);
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null);
+  const [auditLogDetailOpen, setAuditLogDetailOpen] = useState(false);
 
   const filteredLogs = useMemo(() => {
     const searchLower = logSearch.toLowerCase();
@@ -30,6 +33,11 @@ export function AuditoriaTab({ logs }: AuditoriaTabProps) {
       );
     });
   }, [logs, logSearch]);
+
+  const handleOpenLogDetail = (log: Log) => {
+    setSelectedLog(log);
+    setAuditLogDetailOpen(true);
+  };
 
   return (
     <div className="space-y-4">
@@ -77,24 +85,29 @@ export function AuditoriaTab({ logs }: AuditoriaTabProps) {
           {filteredLogs
             .slice((logPage - 1) * 10, logPage * 10)
             .map((log) => (
-              <Card key={log.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <Badge variant={log.sucesso ? "default" : "destructive"}>
-                        {log.sucesso ? "Sucesso" : "Falha"}
-                      </Badge>
-                      <h3 className="font-semibold">{log.email}</h3>
+              <Card key={log.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
+                <CardContent 
+                  className="p-4"
+                  onClick={() => handleOpenLogDetail(log)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Badge variant={log.sucesso ? "default" : "destructive"}>
+                          {log.sucesso ? "Sucesso" : "Falha"}
+                        </Badge>
+                        <h3 className="font-semibold">{log.email}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        IP: {log.ip} • User Agent: {log.userAgent?.substring(0, 50)}{log.userAgent?.length > 50 ? '...' : ''}
+                      </p>
+                      {log.motivo && (
+                        <p className="text-xs text-muted-foreground">{log.motivo}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(log.createdAt)}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      IP: {log.ip} • User Agent: {log.userAgent?.substring(0, 50)}{log.userAgent?.length > 50 ? '...' : ''}
-                    </p>
-                    {log.motivo && (
-                      <p className="text-xs text-muted-foreground">{log.motivo}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(log.createdAt)}
-                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -128,6 +141,13 @@ export function AuditoriaTab({ logs }: AuditoriaTabProps) {
           </div>
         </div>
       )}
+
+      {/* Modal de Detalhes */}
+      <AuditLogDetailModal
+        log={selectedLog}
+        open={auditLogDetailOpen}
+        onOpenChange={setAuditLogDetailOpen}
+      />
     </div>
   );
 }

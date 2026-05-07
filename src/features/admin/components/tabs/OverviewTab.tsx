@@ -18,8 +18,9 @@ import { Evento, Jogo, Stats } from "../types";
 interface OverviewTabProps {
   stats: Stats | null;
   eventos: Evento[];
-  setEventoModalOpen: () => void;
-  setJogoModalOpen: () => void;
+  setSelectedEvento: (evento: Evento | null) => void;
+  setEventoModalOpen: (open: boolean) => void;
+  setJogoModalOpen: (open: boolean) => void;
   getEstadoBadge: (estado: string) => React.ReactNode;
   userRole?: string;
 }
@@ -27,6 +28,7 @@ interface OverviewTabProps {
 export function OverviewTab({
   stats,
   eventos,
+  setSelectedEvento,
   setEventoModalOpen,
   setJogoModalOpen,
   getEstadoBadge,
@@ -36,10 +38,10 @@ export function OverviewTab({
     <div className="space-y-4">
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <Button onClick={() => setEventoModalOpen()} className="bg-primary hover:bg-primary/90 w-full">
+        <Button onClick={() => setEventoModalOpen(true)} className="bg-primary hover:bg-primary/90 w-full">
           <Plus className="h-4 w-4 mr-2" /> Novo Evento
         </Button>
-        <Button onClick={() => setJogoModalOpen()} variant="outline" className="border-primary/30 w-full">
+        <Button onClick={() => setJogoModalOpen(true)} variant="outline" className="border-primary/30 w-full">
           <Gamepad2 className="h-4 w-4 mr-2" /> Novo Jogo
         </Button>
         <Button variant="outline" className="border-primary/30 w-full" disabled>
@@ -63,7 +65,14 @@ export function OverviewTab({
               </p>
             ) : (
               eventos.slice(0, 3).map((ev) => (
-                <div key={ev.id} className="flex justify-between items-center">
+                <div
+                  key={ev.id}
+                  className="flex justify-between items-center cursor-pointer hover:bg-accent/5 p-2 rounded -mx-2"
+                  onClick={() => {
+                    setSelectedEvento(ev);
+                    setEventoModalOpen(true);
+                  }}
+                >
                   <div>
                     <p className="font-medium">{ev.nome}</p>
                     <p className="text-sm text-muted-foreground">

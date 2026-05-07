@@ -167,17 +167,26 @@ export function JogosTab({
            </CardContent>
          </Card>
        ) : (
-         <div className="grid gap-4">
-           {paginatedJogos.map((jg) => (
-             <Card key={jg.id}>
+          <div className="grid gap-4">
+            {paginatedJogos.map((jg) => (
+              <Card key={jg.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
                 <CardContent className="p-4 flex items-center justify-between">
-                  <div>
+                  <div
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedJogo(jg);
+                      setJogoModalOpen(true);
+                    }}
+                  >
                     <h3 className="font-semibold">{jg.nome}</h3>
                     <p className="text-sm text-muted-foreground">
                       {jg.tipo} • {jg.evento?.nome || "Sem evento"} • {formatCurrency(jg.preco)}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div
+                    className="flex flex-wrap gap-2 items-center"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {jg.estado === 'aberto' && (
                       <span className="flex items-center gap-1 text-primary text-xs font-medium">
                         <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
@@ -220,7 +229,7 @@ export function JogosTab({
                           ? 'text-primary hover:text-destructive'
                           : 'text-muted-foreground hover:text-primary'
                       }
-                       onClick={() => onToggleEstado(jg)}
+                      onClick={() => onToggleEstado(jg)}
                     >
                       {jg.estado === 'aberto' ? (
                         <PowerOff className="h-4 w-4" />
@@ -253,7 +262,7 @@ export function JogosTab({
                 </CardContent>
               </Card>
             ))}
-        </div>
+          </div>
       )}
 
        {/* Paginação */}
