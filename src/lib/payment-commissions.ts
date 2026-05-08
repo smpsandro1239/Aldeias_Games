@@ -82,6 +82,9 @@ export function hasCommission(method: MetodoPagamento): boolean {
 }
 
 export function calculateCommission(amount: number, method: MetodoPagamento): number {
+  if (amount < 0) {
+    throw new Error('Amount cannot be negative');
+  }
   const commission = PAYMENT_COMMISSIONS[method];
   return (amount * commission.percent / 100) + commission.fixed;
 }

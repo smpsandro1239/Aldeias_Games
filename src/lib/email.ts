@@ -1,6 +1,11 @@
 import nodemailer from 'nodemailer';
 import { escapeHtml } from './utils';
 
+// Constants
+const DEFAULT_SMTP_PORT = 587;
+const DEFAULT_FROM_EMAIL = 'noreply@aldeias.pt';
+const EMAIL_SIGNATURE = '\n\nCom os melhores cumprimentos,\nA equipa Aldeias Games';
+
 const createTransporter = () => {
   if (!process.env.SMTP_HOST) {
     console.warn('SMTP_HOST não configurado - emails não serão enviados');
@@ -9,7 +14,7 @@ const createTransporter = () => {
 
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
+    port: parseInt(process.env.SMTP_PORT || DEFAULT_SMTP_PORT.toString(), 10),
     secure: process.env.SMTP_SECURE === 'true',
     auth: {
       user: process.env.SMTP_USER,
@@ -26,8 +31,14 @@ interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  // Validate inputs
+  if (!options.to || !options.subject || !options.html) {
+    console.error('[Email] Missing required fields');
+    return false;
+  }
+
   const transporter = createTransporter();
-  
+
   if (!transporter) {
     console.log('[Email] SMTP não configurado, email não enviado:', options);
     return false;
@@ -35,7 +46,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'noreply@aldeias.pt',
+      from: process.env.SMTP_FROM || DEFAULT_FROM_EMAIL,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -78,7 +89,7 @@ export async function sendWinnerEmail(
         </p>
       </div>
     `,
-    text: `Parabéns, ${safeNome}! Você ganhou o sorteio ${safeJogoNome} com o prémio: ${safePremio}. Contacte a organização para receber o seu prémio.`,
+    text: `Parabéns, ${safeNome}! Você ganhou o sorteio ${safeJogoNome} com o prémio: ${safePremio}. Contacte a organização para receber o seu prémio.${EMAIL_SIGNATURE}`,
   });
 }
 
@@ -116,6 +127,6 @@ export async function sendTicketEmail(
         </p>
       </div>
     `,
-    text: `Olá, ${safeNome}! O seu bilhete para ${safeJogoNome}: ${safeNumeros.join(', ')}. Boa sorte!`,
+    text: `Olá, ${safeNome}! O seu bilhete para ${safeJogoNome}: ${safeNumeros.join(', ')}. Boa sorte!${EMAIL_SIGNATURE}`,
   });
 }

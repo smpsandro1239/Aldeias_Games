@@ -1,14 +1,34 @@
+// Constants
+const MAX_SMS_MESSAGE_LENGTH = 160;
+const SMS_PROVIDERS = ['twilio', 'aws-sns'] as const;
+const ALDEIAS_GAMES_SIGNATURE = ' - Aldeias Games';
+
 interface SMSOptions {
   to: string;
   message: string;
 }
 
 export async function sendSMS(options: SMSOptions): Promise<boolean> {
+  // Validate inputs
+  if (!options.to || typeof options.to !== 'string') {
+    console.error('[SMS] Invalid phone number');
+    return false;
+  }
+  if (!options.message || typeof options.message !== 'string' || options.message.length > MAX_SMS_MESSAGE_LENGTH) {
+    console.error('[SMS] Invalid message');
+    return false;
+  }
+
   const provider = process.env.SMS_PROVIDER;
-  
+
   if (!provider) {
     console.warn('SMS provider não configurado - SMS não serão enviados');
     console.log('[SMS] Não enviado:', options);
+    return false;
+  }
+
+  if (!SMS_PROVIDERS.includes(provider as any)) {
+    console.error('SMS provider desconhecido:', provider);
     return false;
   }
 
@@ -19,7 +39,6 @@ export async function sendSMS(options: SMSOptions): Promise<boolean> {
       case 'aws-sns':
         return await sendAWSSNS(options);
       default:
-        console.error('SMS provider desconhecido:', provider);
         return false;
     }
   } catch (error) {
@@ -71,12 +90,17 @@ export async function sendWinnerSMS(
   premio: string,
   hash?: string
 ): Promise<boolean> {
+  if (!telefone || !nome || !jogoNome || !premio) {
+    console.error('[SMS] Missing required fields for winner SMS');
+    return false;
+  }
+
   let message = `Parabens ${nome}! Voce ganhou o sorteio ${jogoNome} - Premio: ${premio}.`;
   if (hash) {
     message += ` Codigo de verificacao: ${hash}`;
   }
-  message += ` Contacte a organizacao para receber. - Aldeias Games`;
-  return sendSMS({ to: telefone, message: message });
+  message += ` Contacte a organizacao para receber.${ALDEIAS_GAMES_SIGNATURE}`;
+  return sendSMS({ to: telefone, message });
 }
 
 export async function sendTicketSMS(
@@ -86,12 +110,17 @@ export async function sendTicketSMS(
   numeros: string[],
   hash?: string
 ): Promise<boolean> {
+  if (!telefone || !nome || !jogoNome || !numeros || !Array.isArray(numeros)) {
+    console.error('[SMS] Missing required fields for ticket SMS');
+    return false;
+  }
+
   let message = `Ola ${nome}! O seu bilhete para ${jogoNome}: ${numeros.join(', ')}.`;
   if (hash) {
     message += ` Hash: ${hash}`;
   }
-  message += ` Boa sorte! - Aldeias Games`;
-  return sendSMS({ to: telefone, message: message });
+  message += ` Boa sorte!${ALDEIAS_GAMES_SIGNATURE}`;
+  return sendSMS({ to: telefone, message });
 }
 
 export async function sendRaspadinhaSMS(
@@ -101,12 +130,17 @@ export async function sendRaspadinhaSMS(
   resultado: string,
   hash?: string
 ): Promise<boolean> {
+  if (!telefone || !nome || !jogoNome || !resultado) {
+    console.error('[SMS] Missing required fields for raspadinha SMS');
+    return false;
+  }
+
   let message = `Ola ${nome}! Resultado da Raspadinha ${jogoNome}: ${resultado}.`;
   if (hash) {
     message += ` Codigo de verificacao: ${hash}`;
   }
-  message += ` - Aldeias Games`;
-  return sendSMS({ to: telefone, message: message });
+  message += ALDEIAS_GAMES_SIGNATURE;
+  return sendSMS({ to: telefone, message });
 }
 
 export async function sendPoioDaVacaSMS(
@@ -116,11 +150,16 @@ export async function sendPoioDaVacaSMS(
   coordenadas: { letra: string; numero: number }[],
   hash?: string
 ): Promise<boolean> {
+  if (!telefone || !nome || !jogoNome || !coordenadas || !Array.isArray(coordenadas)) {
+    console.error('[SMS] Missing required fields for poio da vaca SMS');
+    return false;
+  }
+
   const coordsStr = coordenadas.map(c => `${c.letra}${c.numero}`).join(', ');
   let message = `Ola ${nome}! Os seus numeros no ${jogoNome}: ${coordsStr}.`;
   if (hash) {
     message += ` Codigo de verificacao: ${hash}`;
   }
-  message += ` Boa sorte! - Aldeias Games`;
-  return sendSMS({ to: telefone, message: message });
+  message += ` Boa sorte!${ALDEIAS_GAMES_SIGNATURE}`;
+  return sendSMS({ to: telefone, message });
 }

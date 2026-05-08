@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, createContext, useContext, ReactNode } from "react";
+import { useState, createContext, useContext, ReactNode, useCallback } from "react";
 import { translations, Language, getTranslation } from "@/lib/i18n/translations";
 
 interface I18nContextType {
@@ -12,9 +12,13 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export function I18nProvider({ children, initialLang = "pt" }: { children: ReactNode; initialLang?: Language }) {
-  const [lang, setLang] = useState<Language>(initialLang);
+  const [lang, setLangState] = useState<Language>(initialLang);
 
-  const t = (key: string) => getTranslation(lang, key);
+  const setLang = useCallback((newLang: Language) => {
+    setLangState(newLang);
+  }, []);
+
+  const t = useCallback((key: string) => getTranslation(lang, key), [lang]);
 
   return (
     <I18nContext.Provider value={{ lang, setLang, t }}>

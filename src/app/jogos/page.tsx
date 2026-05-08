@@ -5,6 +5,17 @@ import { useRouter } from "next/navigation";
 import { LayoutHeader } from "@/components/layout-header";
 import { GameList, Jogo } from "@/components/games/game-list";
 
+// Constants
+const GAME_ROUTES = {
+  raspadinha: "/jogos/raspadinha-premium",
+  poio_da_vaca: "/jogos/poio-da-vaca",
+  rifa: "/jogos/rifa",
+  tombola: "/jogos/rifa",
+  default: "/jogos/raspadinha-premium",
+} as const;
+
+const API_ENDPOINT = "/api/jogos?ativos=true";
+
 export default function JogosPage() {
   const router = useRouter();
   const [jogos, setJogos] = useState<Jogo[]>([]);
@@ -14,40 +25,36 @@ export default function JogosPage() {
     fetchJogos();
   }, []);
 
-  const fetchJogos = async () => {
+  const fetchJogos = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
+      let token: string | null = null;
+      try {
+        token = localStorage.getItem("token");
+      } catch (storageError) {
+        console.warn("Erro ao acessar localStorage:", storageError);
+      }
+
       const headers: HeadersInit = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const res = await fetch("/api/jogos?ativos=true", { headers });
+      const res = await fetch(API_ENDPOINT, { headers });
       if (res.ok) {
         const data = await res.json();
         setJogos(data.data || []);
+      } else {
+        console.error("Erro na resposta da API:", res.status);
       }
     } catch (error) {
       console.error("Erro ao carregar jogos:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleJogoClick = (jogo: Jogo) => {
-    switch (jogo.tipo) {
-      case "raspadinha":
-        router.push(`/jogos/raspadinha-premium?id=${jogo.id}`);
-        break;
-      case "poio_da_vaca":
-        router.push(`/jogos/poio-da-vaca?id=${jogo.id}`);
-        break;
-      case "rifa":
-      case "tombola":
-        router.push(`/jogos/rifa?id=${jogo.id}`);
-        break;
-      default:
-        router.push(`/jogos/raspadinha-premium?id=${jogo.id}`);
-    }
-  };
+  const handleJogoClick = useCallback((jogo: Jogo) => {
+    const route = GAME_ROUTES[jogo.tipo as keyof typeof GAME_ROUTES] || GAME_ROUTES.default;
+    router.push(`${route}?id=${jogo.id}`);
+  }, [router]);
 
   return (
     <LayoutHeader>

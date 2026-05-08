@@ -1,11 +1,49 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+// Constants
+const DEFAULT_CODE_LENGTH = 6;
+const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const PHONE_REGEX_PT = /(\d{3})(\d{3})(\d{3})/;
+const PHONE_REGEX_INTL = /(\+351)(\d{3})(\d{3})(\d{3})/;
+const SLUG_REGEX = /[\u0300-\u036f]/g;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NIF_REGEX = /^\d{9}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{12,}$/;
+
 /**
  * Merge de classes Tailwind
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Safe parse float with validation
+ */
+export function safeParseFloat(value: unknown, defaultValue: number = 0): number {
+  if (typeof value === 'number' && !isNaN(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+  }
+  return defaultValue;
+}
+
+/**
+ * Safe parse int with validation
+ */
+export function safeParseInt(value: unknown, defaultValue: number = 0): number {
+  if (typeof value === 'number' && !isNaN(value)) {
+    return Math.floor(value);
+  }
+  if (typeof value === 'string') {
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? defaultValue : parsed;
+  }
+  return defaultValue;
 }
 
 /**
@@ -32,13 +70,16 @@ export function formatCurrency(value: number): string {
 }
 
 /**
- * Formatar data
+ * Formatar data com validação
  */
 export function formatDate(
   date: Date | string | number,
   options: Intl.DateTimeFormatOptions = {},
 ): string {
   const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    throw new Error('Invalid date provided to formatDate');
+  }
   return new Intl.DateTimeFormat('pt-PT', {
     day: '2-digit',
     month: '2-digit',
@@ -48,13 +89,16 @@ export function formatDate(
 }
 
 /**
- * Formatar data e hora
+ * Formatar data e hora com validação
  */
 export function formatDateTime(
   date: Date | string | number,
   options: Intl.DateTimeFormatOptions = {},
 ): string {
   const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    throw new Error('Invalid date provided to formatDateTime');
+  }
   return new Intl.DateTimeFormat('pt-PT', {
     day: '2-digit',
     month: '2-digit',
@@ -69,9 +113,12 @@ export function formatDateTime(
  * Formatar numero de telefone
  */
 export function formatPhoneNumber(phone: string): string {
+  if (!phone || typeof phone !== 'string') return '';
   if (phone.startsWith('+351')) {
-    return phone.replace(/(\\+351)(\\d{3})(\\d{3})(\\d{3})/, '$1 $2 $3 $4');
+    return phone.replace(PHONE_REGEX_INTL, '$1 $2 $3 $4');
   }
+  return phone.replace(PHONE_REGEX_PT, '$1 $2 $3');
+}
   return phone.replace(/(\\d{3})(\\d{3})(\\d{3})/, '$1 $2 $3');
 }
 
@@ -79,22 +126,23 @@ export function formatPhoneNumber(phone: string): string {
  * Gerar slug a partir de string
  */
 export function generateSlug(text: string): string {
+  if (!text || typeof text !== 'string') return '';
   return text
     .toString()
     .normalize('NFD')
-    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(SLUG_REGEX, '')
     .toLowerCase()
     .trim()
-    .replace(/\\s+/g, '-')
-    .replace(/[^\\w\\-]+/g, '')
-    .replace(/\\-\\-+/g, '-');
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-+/g, '-');
 }
 
 /**
- * Gerar codigo aleatorio
+ * Gerar codigo aleatorio usando crypto seguro
  */
-export function generateCode(length: number = 6): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+export function generateCode(length: number = DEFAULT_CODE_LENGTH): string {
+  const chars = CODE_CHARS;
   let result = '';
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -121,11 +169,14 @@ export function capitalize(text: string): string {
  * Obter iniciais de nome
  */
 export function getInitials(name: string): string {
+  if (!name || typeof name !== 'string') return '';
   return name
     .split(' ')
+    .filter(word => word.length > 0)
     .map((n) => n[0])
     .join('')
-    .toUpperCase();
+    .toUpperCase()
+    .slice(0, 3); // Limit to 3 initials
 }
 
 /**
@@ -204,11 +255,13 @@ export function downloadFile(content: string | Blob, filename: string, type?: st
 }
 
 /**
- * Calcular percentagem
+ * Calcular percentagem com parsing seguro
  */
-export function calculatePercentage(value: number, total: number): number {
-  if (total === 0) return 0;
-  return Math.round((value / total) * 100);
+export function calculatePercentage(value: unknown, total: unknown): number {
+  const safeValue = safeParseFloat(value, 0);
+  const safeTotal = safeParseFloat(total, 0);
+  if (safeTotal === 0) return 0;
+  return Math.round((safeValue / safeTotal) * 100);
 }
 
 /**
@@ -222,23 +275,24 @@ export function formatNumber(num: number): string {
  * Verificar se email e valido
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  if (!email || typeof email !== 'string') return false;
+  return EMAIL_REGEX.test(email);
 }
 
 /**
  * Verificar se NIF portugues e valido
  */
 export function isValidNIF(nif: string): boolean {
-  if (!/^\\d{9}\$/.test(nif)) return false;
-  
+  if (!nif || typeof nif !== 'string') return false;
+  if (!NIF_REGEX.test(nif)) return false;
+
   const digits = nif.split('').map(Number);
   const checkDigit = digits.pop()!;
-  
+
   const sum = digits.reduce((acc, digit, index) => {
     return acc + digit * (9 - index);
   }, 0);
-  
+
   const check = 11 - (sum % 11);
   return check === checkDigit || (check === 10 && checkDigit === 0);
 }

@@ -24,6 +24,11 @@ export type GameAnalyticsEvent =
 export function useGameAnalytics() {
   const track = useCallback(async (event: GameAnalyticsEvent): Promise<void> => {
     try {
+      // Validate event
+      if (!event || typeof event !== 'object' || !event.type) {
+        return; // Silently fail invalid events
+      }
+
       // Enviar para API de analytics (não bloquear UI)
       const payload = {
         ...event,

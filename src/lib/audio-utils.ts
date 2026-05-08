@@ -3,14 +3,19 @@
  * Gera efeitos sonoros em tempo real sem dependências externas
  */
 
+// Constants
+const NOISE_BUFFER_DURATION = 2; // seconds
+const DEFAULT_VOLUME = 0.3;
+const FADE_OUT_VALUE = 0.01;
+
 // Tipos de sons disponíveis
-export type SoundType = 
-  | 'click' 
-  | 'success' 
-  | 'error' 
-  | 'win' 
-  | 'scratch' 
-  | 'notification' 
+export type SoundType =
+  | 'click'
+  | 'success'
+  | 'error'
+  | 'win'
+  | 'scratch'
+  | 'notification'
   | 'hover';
 
 // Configurações de som
@@ -104,7 +109,7 @@ export function toggleSounds(enabled?: boolean): boolean {
  * Criar oscilador de ruído branco (para efeito de raspadinha)
  */
 function createNoiseBuffer(context: AudioContext): AudioBuffer {
-  const bufferSize = context.sampleRate * 2; // 2 segundos de ruído
+  const bufferSize = context.sampleRate * NOISE_BUFFER_DURATION;
   const buffer = context.createBuffer(1, bufferSize, context.sampleRate);
   const output = buffer.getChannelData(0);
 
@@ -191,8 +196,8 @@ export function playSequence(notes: { frequency: number; duration: number }[]): 
       oscillator.type = 'sine';
       oscillator.frequency.setValueAtTime(note.frequency, currentTime);
 
-      gainNode.gain.setValueAtTime(0.3, currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + note.duration);
+      gainNode.gain.setValueAtTime(DEFAULT_VOLUME, currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(FADE_OUT_VALUE, currentTime + note.duration);
 
       oscillator.connect(gainNode);
       gainNode.connect(context.destination);

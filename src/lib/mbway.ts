@@ -7,8 +7,15 @@
 
 import axios, { AxiosInstance } from 'axios';
 
+// Constants
+const MBWAY_API_URL_DEFAULT = 'https://api.mbway.pt/v1';
+const MBWAY_TIMEOUT = 30000;
+const MBWAY_PHONE_REGEX = /^\+3519\d{8}$/;
+const MBWAY_REFERENCE_PREFIX = 'AG';
+const MBWAY_DESCRIPTION_MAX_LENGTH = 50;
+
 // Configurações MBWay
-const MBWAY_API_URL = process.env.MBWAY_API_URL || 'https://api.mbway.pt/v1';
+const MBWAY_API_URL = process.env.MBWAY_API_URL || MBWAY_API_URL_DEFAULT;
 const MBWAY_API_KEY = process.env.MBWAY_API_KEY || '';
 const MBWAY_ENTITY_PHONE = process.env.MBWAY_ENTITY_PHONE || '';
 const MBWAY_ENTITY_CODE = process.env.MBWAY_ENTITY_CODE || '';
@@ -26,7 +33,7 @@ function getMbwayClient(): AxiosInstance {
         'Content-Type': 'application/json',
         'X-Entity-Code': MBWAY_ENTITY_CODE,
       },
-      timeout: 30000, // 30 segundos
+      timeout: MBWAY_TIMEOUT,
     });
   }
   return mbwayClient;
@@ -75,8 +82,7 @@ export function normalizePhoneNumber(phone: string): string {
   }
   
   // Validar formato
-  const mbwayRegex = /^\+3519\d{8}$/;
-  if (!mbwayRegex.test(normalized)) {
+  if (!MBWAY_PHONE_REGEX.test(normalized)) {
     throw new Error('Número de telefone inválido para MBWay. Formato esperado: +3519XXXXXXXX ou 9XXXXXXXX');
   }
   
@@ -89,7 +95,7 @@ export function normalizePhoneNumber(phone: string): string {
 function generateReference(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `AG${timestamp}${random}`;
+  return `${MBWAY_REFERENCE_PREFIX}${timestamp}${random}`;
 }
 
 /**
@@ -134,7 +140,7 @@ export async function initiatePayment(
     const request: MbwayPaymentRequest = {
       phoneNumber: normalizedPhone,
       amount,
-      description: description.slice(0, 50), // MBWay limita descrição
+      description: description.slice(0, MBWAY_DESCRIPTION_MAX_LENGTH),
       reference,
       callbackUrl,
     };

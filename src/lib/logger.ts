@@ -1,5 +1,9 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
+// Constants
+const LOG_LEVELS: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3 };
+const DEFAULT_LOG_LEVEL: LogLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+
 interface LogEntry {
   timestamp: string;
   level: LogLevel;
@@ -41,9 +45,8 @@ function formatLog(level: LogLevel, message: string, meta?: Record<string, unkno
 }
 
 function shouldLog(level: LogLevel): boolean {
-  const levels: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3 };
-  const currentLevel = (process.env.LOG_LEVEL as LogLevel) || (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
-  return levels[level] >= levels[currentLevel];
+  const currentLevel = (process.env.LOG_LEVEL as LogLevel) || DEFAULT_LOG_LEVEL;
+  return LOG_LEVELS[level] >= LOG_LEVELS[currentLevel];
 }
 
 function log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {

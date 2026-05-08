@@ -1,5 +1,18 @@
 import { prisma } from '@/lib/db';
 
+// Constants
+const USER_AGENT_MAX_LENGTH = 500;
+const SEED_HASH_TRUNCATE_LENGTH = 16;
+const AUDIT_ACTIONS = {
+  JOGO_TOGGLE: 'jogo.toggle_estado',
+  SORTEIO_COMMIT: 'sorteio.commit',
+  SORTEIO_REVEAL: 'sorteio.reveal',
+  SORTEIO_TESTE: 'sorteio.teste',
+  PREMIO_CONVERTIDO: 'premio.convertido',
+  JOGO_CREATE: 'jogo.create',
+  JOGO_UPDATE: 'jogo.update',
+} as const;
+
 /**
  * Cria um log de auditoria para ações críticas
  *
@@ -28,6 +41,16 @@ export async function logAudit(options: {
   userAgent?: string;
 }): Promise<void> {
   try {
+    let metadataJson: string | undefined;
+    if (options.metadata) {
+      try {
+        metadataJson = JSON.stringify(options.metadata);
+      } catch (jsonError) {
+        console.warn('[AuditLog] Failed to serialize metadata:', jsonError);
+        metadataJson = JSON.stringify({ error: 'Failed to serialize metadata' });
+      }
+    }
+
     await prisma.auditLog.create({
       data: {
         userId: options.userId,
@@ -35,9 +58,9 @@ export async function logAudit(options: {
         action: options.action,
         resource: options.resource,
         resourceId: options.resourceId,
-        metadata: options.metadata ? JSON.stringify(options.metadata) : undefined,
+        metadata: metadataJson,
         ip: options.ip,
-        userAgent: options.userAgent?.substring(0, 500), // truncate to avoid overflow
+        userAgent: options.userAgent?.substring(0, USER_AGENT_MAX_LENGTH),
         createdAt: new Date(),
       },
     });
@@ -61,7 +84,7 @@ export function logJogoToggle(
 ): void {
   logAudit({
     userId,
-    action: 'jogo.toggle_estado',
+    action: AUDIT_ACTIONS.JOGO_TOGGLE,
     resource: 'jogo',
     resourceId: jogoId,
     metadata: {
@@ -88,16 +111,22 @@ export function logSorteio(
   ip?: string,
   userAgent?: string
 ): void {
+  const actionMap = {
+    commit: AUDIT_ACTIONS.SORTEIO_COMMIT,
+    reveal: AUDIT_ACTIONS.SORTEIO_REVEAL,
+    teste: AUDIT_ACTIONS.SORTEIO_TESTE,
+  };
+
   logAudit({
     userId,
-    action: `sorteio.${tipo}`,
+    action: actionMap[tipo],
     resource: 'sorteio',
     resourceId: jogoId,
     metadata: {
       jogoNome,
       tipo,
-      seed: seed?.substring(0, 16),
-      hash: hash?.substring(0, 16),
+      seed: seed?.substring(0, SEED_HASH_TRUNCATE_LENGTH),
+      hash: hash?.substring(0, SEED_HASH_TRUNCATE_LENGTH),
       vencedoresCount,
     },
     ip,
@@ -118,7 +147,7 @@ export function logPremioConvert(
 ): void {
   logAudit({
     userId,
-    action: 'premio.convertido',
+    action: AUDIT_ACTIONS.PREMIO_CONVERTIDO,
     resource: 'participacao',
     resourceId: participacaoId,
     metadata: { jogoId, valor },
@@ -139,9 +168,11 @@ export function logJogoWrite(
   ip?: string,
   userAgent?: string
 ): void {
+  const action = tipo === 'create' ? AUDIT_ACTIONS.JOGO_CREATE : AUDIT_ACTIONS.JOGO_UPDATE;
+
   logAudit({
     userId,
-    action: `jogo.${tipo}`,
+    action,
     resource: 'jogo',
     resourceId: jogoId,
     metadata: {

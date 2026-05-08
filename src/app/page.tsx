@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useReducer } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutHeader } from "@/components/layout-header";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +13,70 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Zap, Rocket } from "lucide-react";
 
+// Constants
+const ROLE_PATHS = {
+  super_admin: "/superadmindashboard",
+  aldeia_admin: "/admindashboard",
+  vendedor: "/vendedordashboard",
+  user: "/clientedashboard",
+} as const;
+
+const DEFAULT_ROLE = "user";
+
+// Types
+interface Evento {
+  id: string;
+  nome: string;
+  // Add other properties as needed
+}
+
+interface Jogo {
+  id: string;
+  nome: string;
+  tipo: string;
+  // Add other properties as needed
+}
+
+interface Aldeia {
+  id: string;
+  nome: string;
+  // Add other properties as needed
+}
+
+interface LoginFormState {
+  email: string;
+  password: string;
+}
+
+interface RegisterFormState {
+  nome: string;
+  email: string;
+  password: string;
+  telefone: string;
+}
+
+// Reducer for form state
+type FormAction =
+  | { type: 'UPDATE_LOGIN'; field: keyof LoginFormState; value: string }
+  | { type: 'RESET_LOGIN' }
+  | { type: 'UPDATE_REGISTER'; field: keyof RegisterFormState; value: string }
+  | { type: 'RESET_REGISTER' };
+
+function formReducer(state: { login: LoginFormState; register: RegisterFormState }, action: FormAction) {
+  switch (action.type) {
+    case 'UPDATE_LOGIN':
+      return { ...state, login: { ...state.login, [action.field]: action.value } };
+    case 'RESET_LOGIN':
+      return { ...state, login: { email: "", password: "" } };
+    case 'UPDATE_REGISTER':
+      return { ...state, register: { ...state.register, [action.field]: action.value } };
+    case 'RESET_REGISTER':
+      return { ...state, register: { nome: "", email: "", password: "", telefone: "" } };
+    default:
+      return state;
+  }
+}
+
 export default function Home() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, login, register } = useAuth();
@@ -22,17 +86,14 @@ export default function Home() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
-  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [registerForm, setRegisterForm] = useState({
-    nome: "",
-    email: "",
-    password: "",
-    telefone: ""
+  const [formState, dispatchForm] = useReducer(formReducer, {
+    login: { email: "", password: "" },
+    register: { nome: "", email: "", password: "", telefone: "" }
   });
 
-  const [eventos, setEventos] = useState([]);
-  const [jogos, setJogos] = useState([]);
-  const [aldeias, setAldeias] = useState([]);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [jogos, setJogos] = useState<Jogo[]>([]);
+  const [aldeias, setAldeias] = useState<Aldeia[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -62,35 +123,24 @@ export default function Home() {
   // Redirecionamento automático se já estiver logado
   useEffect(() => {
     if (mounted && isAuthenticated && user) {
-      const rolePaths: Record<string, string> = {
-        "super_admin": "/superadmindashboard",
-        "aldeia_admin": "/admindashboard",
-        "vendedor": "/vendedordashboard",
-        "user": "/clientedashboard"
-      };
-      router.push(rolePaths[user.role] || "/clientedashboard");
+      const targetPath = ROLE_PATHS[user.role as keyof typeof ROLE_PATHS] || ROLE_PATHS.user;
+      router.push(targetPath);
     }
   }, [mounted, isAuthenticated, user, router]);
 
-    const doLogin = async (email: string, password: string) => {
+    const doLogin = useCallback(async (email: string, password: string) => {
     try {
       console.log('[Quick Login] Tentando login para:', email);
       const result = await login({ email, password });
       console.log('[Quick Login] Resultado:', result);
-      
+
       if (result.success) {
         setLoginModalOpen(false);
-        setLoginForm({ email: "", password: "" });
+        dispatchForm({ type: 'RESET_LOGIN' });
         // Redirecionar para o dashboard correto após login
-        const rolePaths: Record<string, string> = {
-          "super_admin": "/superadmindashboard",
-          "aldeia_admin": "/admindashboard",
-          "vendedor": "/vendedordashboard",
-          "user": "/clientedashboard"
-        };
-        const targetPath = rolePaths[result.data?.user?.role] || "/clientedashboard";
+        const targetPath = ROLE_PATHS[result.data?.user?.role as keyof typeof ROLE_PATHS] || ROLE_PATHS.user;
         console.log('[Quick Login] Redirecionando para:', targetPath);
-        
+
         // Usar window.location para garantir redirecionamento na Vercel (contorna caching/SSR issues)
         if (typeof window !== 'undefined') {
           window.location.href = targetPath;
@@ -105,23 +155,23 @@ export default function Home() {
       console.error('[Quick Login] ERRO:', error);
       return { success: false, error: error.message || 'Erro ao fazer login' };
     }
-  };
+  }, [login, router]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    await doLogin(loginForm.email, loginForm.password);
-  };
+    await doLogin(formState.login.email, formState.login.password);
+  }, [doLogin, formState.login]);
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await register({ ...registerForm, role: "user" });
+    const result = await register({ ...formState.register, role: DEFAULT_ROLE });
     if (result.success) {
       setRegisterModalOpen(false);
-      setRegisterForm({ nome: "", email: "", password: "", telefone: "" });
+      dispatchForm({ type: 'RESET_REGISTER' });
       // Redirecionar para o dashboard correto após registo
-      router.push("/clientedashboard");
+      router.push(ROLE_PATHS.user);
     }
-  };
+  }, [register, formState.register, router]);
 
   if (!mounted || isLoading) return <LoaderScreen />;
 
@@ -161,8 +211,8 @@ export default function Home() {
                   id="email"
                   type="email"
                   placeholder="teu@email.com"
-                  value={loginForm.email}
-                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                  value={formState.login.email}
+                  onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'email', value: e.target.value })}
                   required
                   className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
@@ -173,8 +223,8 @@ export default function Home() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  value={formState.login.password}
+                  onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'password', value: e.target.value })}
                   required
                   className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />

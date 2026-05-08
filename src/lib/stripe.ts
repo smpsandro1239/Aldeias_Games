@@ -1,5 +1,9 @@
 import Stripe from 'stripe';
 
+// Constants
+const STRIPE_CURRENCY = 'eur';
+const STRIPE_API_VERSION: Stripe.LatestApiVersion = '2025-02-24.acacia';
+
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
 let stripeInstance: Stripe | null = null;
@@ -10,7 +14,7 @@ function getStripe(): Stripe {
       throw new Error('STRIPE_SECRET_KEY é obrigatório em produção');
     }
     stripeInstance = new Stripe(STRIPE_SECRET_KEY || 'sk_test_placeholder', {
-      apiVersion: '2025-02-24.acacia',
+      apiVersion: STRIPE_API_VERSION,
       typescript: true,
     });
   }
@@ -35,14 +39,21 @@ export async function createCheckoutSession(
     cancelUrl: string;
   }
 ) {
+  if (!params.descricao || params.descricao.trim().length === 0) {
+    throw new Error('Descrição é obrigatória para a sessão de checkout');
+  }
+  if (params.valor <= 0) {
+    throw new Error('Valor deve ser maior que 0');
+  }
+
   const session = await stripe.instance.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
       {
         price_data: {
-          currency: 'eur',
+          currency: STRIPE_CURRENCY,
           product_data: {
-            name: params.descricao,
+            name: params.descricao.trim(),
           },
           unit_amount: Math.round(params.valor * 100), // Converter para cêntimos
         },
@@ -68,10 +79,17 @@ export async function createPaymentIntent(
     metadata?: Record<string, string>;
   }
 ) {
+  if (!params.descricao || params.descricao.trim().length === 0) {
+    throw new Error('Descrição é obrigatória para o payment intent');
+  }
+  if (params.valor <= 0) {
+    throw new Error('Valor deve ser maior que 0');
+  }
+
   const paymentIntent = await stripe.instance.paymentIntents.create({
     amount: Math.round(params.valor * 100),
-    currency: 'eur',
-    description: params.descricao,
+    currency: STRIPE_CURRENCY,
+    description: params.descricao.trim(),
     metadata: params.metadata,
     automatic_payment_methods: {
       enabled: true,
