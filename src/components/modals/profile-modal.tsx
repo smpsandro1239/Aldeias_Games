@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,15 +28,42 @@ interface Aldeia {
   nome: string;
 }
 
-function AldeiasPermitidasSection({ 
-  user, 
-  token, 
-  onUpdate 
-}: { 
-  user: User; 
-  token: string; 
-  onUpdate: (data: { aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
-}) {
+interface User {
+  id: string;
+  email: string;
+  nome: string;
+  telefone?: string;
+  role: string;
+  notificacoesEmail: boolean;
+  ultimoLogin?: string;
+  aldeia?: {
+    id: string;
+    nome: string;
+  };
+  aldeiasPermitidas?: {
+    aldeias: Array<{
+      id: string;
+      nome: string;
+      dataAdicao: string;
+    }>;
+  };
+  estatisticas?: {
+    totalParticipacoes: number;
+    totalGasto: number;
+    totalVitorias: number;
+  };
+}
+
+interface ProfileModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: User | null;
+  token: string;
+  onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean; aldeiaId?: string; aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
+}
+
+// Hook customizado para gerenciar aldeias permitidas
+function useAldeiasPermitidas(user: User, token: string, onUpdate: ProfileModalProps['onUpdate']) {
   const [aldeias, setAldeias] = useState<Aldeia[]>([]);
   const [selectedAldeia, setSelectedAldeia] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,11 +73,14 @@ function AldeiasPermitidasSection({
 
   useEffect(() => {
     fetchAldeias();
-  }, []);
+  }, [user]);
 
-  const fetchAldeias = async () => {
+  const fetchAldeias = useCallback(async () => {
     try {
       const res = await fetch("/api/aldeias");
+      if (!res.ok) {
+        throw new Error("Erro ao carregar aldeias");
+      }
       const data = await res.json();
       if (data.data) {
         const aldeiaIds = permittedAldeias.map((a) => a.id);
@@ -65,9 +95,9 @@ function AldeiasPermitidasSection({
     } catch (error) {
       console.error("Erro ao carregar aldeias:", error);
     }
-  };
+  }, [user, permittedAldeias]);
 
-  const handleAddAldeia = async () => {
+  const handleAddAldeia = useCallback(async () => {
     if (!selectedAldeia) return;
     const aldeia = aldeias.find((a) => a.id === selectedAldeia);
     if (!aldeia) return;
@@ -84,9 +114,9 @@ function AldeiasPermitidasSection({
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedAldeia, aldeias, permittedAldeias, onUpdate]);
 
-  const handleRemoveAldeia = async (aldeiaId: string, aldeiaNome: string) => {
+  const handleRemoveAldeia = useCallback(async (aldeiaId: string, aldeiaNome: string) => {
     setLoading(true);
     try {
       const newPermitted = permittedAldeias.filter((a) => a.id !== aldeiaId);
@@ -97,7 +127,41 @@ function AldeiasPermitidasSection({
     } finally {
       setLoading(false);
     }
+  }, [permittedAldeias, onUpdate]);
+
+  return {
+    aldeias,
+    selectedAldeia,
+    setSelectedAldeia,
+    loading,
+    showAddForm,
+    setShowAddForm,
+    permittedAldeias,
+    handleAddAldeia,
+    handleRemoveAldeia,
   };
+}
+
+function AldeiasPermitidasSection({
+  user,
+  token,
+  onUpdate
+}: {
+  user: User;
+  token: string;
+  onUpdate: ProfileModalProps['onUpdate'];
+}) {
+  const {
+    aldeias,
+    selectedAldeia,
+    setSelectedAldeia,
+    loading,
+    showAddForm,
+    setShowAddForm,
+    permittedAldeias,
+    handleAddAldeia,
+    handleRemoveAldeia,
+  } = useAldeiasPermitidas(user, token, onUpdate);
 
   return (
     <div className="space-y-3">
@@ -116,6 +180,7 @@ function AldeiasPermitidasSection({
                   onClick={() => handleRemoveAldeia(aldeia.id, aldeia.nome)}
                   className="text-muted-foreground hover:text-destructive"
                   disabled={loading}
+                  aria-label={`Remover aldeia ${aldeia.nome}`}
                 >
                   ×
                 </button>
@@ -189,40 +254,6 @@ function AldeiasPermitidasSection({
   );
 }
 
-interface User {
-  id: string;
-  email: string;
-  nome: string;
-  telefone?: string;
-  role: string;
-  notificacoesEmail: boolean;
-  ultimoLogin?: string;
-  aldeia?: {
-    id: string;
-    nome: string;
-  };
-  aldeiasPermitidas?: {
-    aldeias: Array<{
-      id: string;
-      nome: string;
-      dataAdicao: string;
-    }>;
-  };
-  estatisticas?: {
-    totalParticipacoes: number;
-    totalGasto: number;
-    totalVitorias: number;
-  };
-}
-
-interface ProfileModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  user: User | null;
-  token: string;
-  onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean; aldeiaId?: string; aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
-}
-
 export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: ProfileModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
@@ -249,7 +280,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
     }
   }, [user, open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -258,11 +289,11 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, onUpdate, onOpenChange]);
 
-  const handlePasswordChange = async () => {
+  const handlePasswordChange = useCallback(async () => {
     const errors: Record<string, string> = {};
-    
+
     if (!passwordData.atual) {
       errors.atual = "Password atual é obrigatória";
     }
@@ -275,12 +306,12 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
     if (passwordData.nova !== passwordData.confirmacao) {
       errors.confirmacao = "As passwords não coincidem";
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setPasswordErrors(errors);
       return;
     }
-    
+
     setPasswordLoading(true);
     try {
       const res = await fetch("/api/users/password", {
@@ -294,14 +325,14 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
           novaPassword: passwordData.nova,
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         toast.error(data.error || "Erro ao alterar password");
         return;
       }
-      
+
       toast.success("Password alterada com sucesso");
       setShowPasswordChange(false);
       setPasswordData({ atual: "", nova: "", confirmacao: "" });
@@ -310,16 +341,16 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
     } finally {
       setPasswordLoading(false);
     }
-  };
+  }, [passwordData, token]);
 
   if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" aria-describedby="profile-modal-description">
         <DialogHeader>
           <DialogTitle>Perfil do Utilizador</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="profile-modal-description">
             Veja e edite as suas informações de perfil.
           </DialogDescription>
         </DialogHeader>
@@ -329,7 +360,8 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
             {/* Informações básicas */}
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" value={user.email} disabled />
+              <Input id="email" value={user.email} disabled aria-describedby="email-disabled" />
+              <p id="email-disabled" className="text-xs text-muted-foreground">Email não pode ser alterado</p>
             </div>
 
             <div className="grid gap-2">
@@ -339,6 +371,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 required
+                aria-describedby="nome-error"
               />
             </div>
 
@@ -349,6 +382,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
                 value={formData.telefone}
                 onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                 placeholder="+351 9XX XXX XXX"
+                aria-describedby="telefone-error"
               />
             </div>
 
@@ -366,7 +400,9 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
                 onCheckedChange={(checked) =>
                   setFormData({ ...formData, notificacoesEmail: checked })
                 }
+                aria-describedby="notificacoes-description"
               />
+              <p id="notificacoes-description" className="sr-only">Ativar ou desativar notificações por email</p>
             </div>
 
             {/* Aldeia Atual */}
@@ -404,7 +440,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
             ) : (
               <div className="rounded-lg border p-4 space-y-4">
                 <h4 className="font-medium">Alterar Password</h4>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="passwordAtual">Password Atual</Label>
                   <Input
@@ -415,10 +451,12 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
                       setPasswordData({ ...passwordData, atual: e.target.value });
                       if (passwordErrors.atual) setPasswordErrors({ ...passwordErrors, atual: "" });
                     }}
+                    aria-describedby={passwordErrors.atual ? "password-atual-error" : "password-atual-description"}
                   />
-                  {passwordErrors.atual && <p className="text-sm text-destructive">{passwordErrors.atual}</p>}
+                  <p id="password-atual-description" className="sr-only">Digite sua password atual</p>
+                  {passwordErrors.atual && <p id="password-atual-error" className="text-sm text-destructive" role="alert">{passwordErrors.atual}</p>}
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="novaPassword">Nova Password</Label>
                   <Input
@@ -429,10 +467,12 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
                       setPasswordData({ ...passwordData, nova: e.target.value });
                       if (passwordErrors.nova) setPasswordErrors({ ...passwordErrors, nova: "" });
                     }}
+                    aria-describedby={passwordErrors.nova ? "password-nova-error" : "password-nova-description"}
                   />
-                  {passwordErrors.nova && <p className="text-sm text-destructive">{passwordErrors.nova}</p>}
+                  <p id="password-nova-description" className="sr-only">Digite sua nova password (mínimo 8 caracteres)</p>
+                  {passwordErrors.nova && <p id="password-nova-error" className="text-sm text-destructive" role="alert">{passwordErrors.nova}</p>}
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="confirmPassword">Confirmar Password</Label>
                   <Input
@@ -443,10 +483,12 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
                       setPasswordData({ ...passwordData, confirmacao: e.target.value });
                       if (passwordErrors.confirmacao) setPasswordErrors({ ...passwordErrors, confirmacao: "" });
                     }}
+                    aria-describedby={passwordErrors.confirmacao ? "password-confirm-error" : "password-confirm-description"}
                   />
-                  {passwordErrors.confirmacao && <p className="text-sm text-destructive">{passwordErrors.confirmacao}</p>}
+                  <p id="password-confirm-description" className="sr-only">Confirme sua nova password</p>
+                  {passwordErrors.confirmacao && <p id="password-confirm-error" className="text-sm text-destructive" role="alert">{passwordErrors.confirmacao}</p>}
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button
                     type="button"

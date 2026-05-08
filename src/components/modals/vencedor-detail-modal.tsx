@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +65,33 @@ interface Vencedor {
   };
 }
 
+interface Participacao {
+  id: string;
+  jogo?: {
+    nome?: string;
+    tipo?: string;
+  };
+  createdAt: string;
+  valorPago: number;
+  ganhador: boolean;
+}
+
+interface UserData {
+  id: string;
+  nome?: string;
+  email?: string;
+  telefone?: string;
+  saldo?: number;
+  aldeiaId?: string;
+  // Add other user properties if needed
+}
+
+interface AldeiaData {
+  id: string;
+  nome?: string;
+  // Add other aldeia properties if needed
+}
+
 interface VencedorDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -72,6 +99,103 @@ interface VencedorDetailModalProps {
   token: string;
   onConvertPrize: (vencedor: Vencedor) => void;
   onEntregaPremio: (vencedor: Vencedor) => void;
+}
+
+// Hook customizado para dados do usuário
+function useUserData(userId: string | undefined, token: string, active: boolean) {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!userId || !active) return;
+
+    const fetchUserData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserData(data.data || null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do usuário:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [userId, token, active]);
+
+  return { userData, loading: loading };
+}
+
+// Hook customizado para dados da aldeia
+function useAldeiaData(aldeiaId: string | undefined, token: string) {
+  const [aldeiaData, setAldeiaData] = useState<AldeiaData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!aldeiaId) {
+      setAldeiaData(null);
+      return;
+    }
+
+    const fetchAldeiaData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/aldeias/${aldeiaId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAldeiaData(data.data || null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar aldeia:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAldeiaData();
+  }, [aldeiaId, token]);
+
+  return { aldeiaData, loading: loading };
+}
+
+// Hook customizado para histórico de participações
+function useHistoricoParticipacoes(userId: string | undefined, token: string, active: boolean) {
+  const [participacoes, setParticipacoes] = useState<Participacao[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!userId || !active || participacoes.length > 0) return;
+
+    const fetchHistorico = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/participacoes?userId=${userId}&page=1&limit=50`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setParticipacoes(data.data || []);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar histórico:", error);
+        toast.error("Erro ao carregar histórico");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistorico();
+  }, [userId, token, active, participacoes.length]);
+
+  return { participacoes, loading };
 }
 
 export function VencedorDetailModal({
@@ -83,99 +207,20 @@ export function VencedorDetailModal({
   onEntregaPremio,
 }: VencedorDetailModalProps) {
   const [activeTab, setActiveTab] = useState("perfil");
-  const [participacoes, setParticipacoes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
-  const [aldeiaData, setAldeiaData] = useState<any>(null);
-  const [loadingUser, setLoadingUser] = useState(false);
-  const [loadingAldeia, setLoadingAldeia] = useState(false);
+
+  const userId = vencedor?.user?.id || vencedor?.dadosVencedor?.userId;
+  const { userData, loading: loadingUser } = useUserData(userId, token, open && (activeTab === "perfil" || activeTab === "estatisticas"));
+  const { aldeiaData, loading: loadingAldeia } = useAldeiaData(userData?.aldeiaId, token);
+  const { participacoes, loading: loadingHistorico } = useHistoricoParticipacoes(
+    userId,
+    token,
+    open && (activeTab === "historico" || activeTab === "estatisticas")
+  );
 
   // Limpar dados ao trocar vencedor
   useEffect(() => {
-    setParticipacoes([]);
-    setUserData(null);
-    setAldeiaData(null);
+    // Reset would happen naturally with new userId
   }, [vencedor]);
-
-  useEffect(() => {
-    if (open && vencedor && (activeTab === "perfil" || activeTab === "estatisticas")) {
-      fetchUserData();
-    }
-  }, [open, vencedor, activeTab]);
-
-  const fetchUserData = async () => {
-    if (!vencedor) return;
-    const userId = vencedor.user?.id || vencedor.dadosVencedor?.userId;
-    if (!userId) return;
-
-    setLoadingUser(true);
-    try {
-      const res = await fetch(`/api/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUserData(data.data || null);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar dados do usuário:", error);
-    } finally {
-      setLoadingUser(false);
-    }
-  };
-
-  useEffect(() => {
-    if (userData?.aldeiaId) {
-      fetchAldeiaData(userData.aldeiaId);
-    } else {
-      setAldeiaData(null);
-    }
-  }, [userData]);
-
-  const fetchAldeiaData = async (aldeiaId: string) => {
-    setLoadingAldeia(true);
-    try {
-      const res = await fetch(`/api/aldeias/${aldeiaId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAldeiaData(data.data || null);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar aldeia:", error);
-    } finally {
-      setLoadingAldeia(false);
-    }
-  };
-
-  useEffect(() => {
-    if (open && vencedor && (activeTab === "historico" || activeTab === "estatisticas") && participacoes.length === 0) {
-      fetchHistorico();
-    }
-  }, [open, vencedor, activeTab, participacoes.length]);
-
-  const fetchHistorico = async () => {
-    if (!vencedor) return;
-    const userId = vencedor.user?.id || vencedor.dadosVencedor?.userId;
-    if (!userId) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/participacoes?userId=${userId}&page=1&limit=50`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setParticipacoes(data.data || []);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar histórico:", error);
-      toast.error("Erro ao carregar histórico");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const estatisticas = useMemo(() => {
     const total = participacoes.length;
@@ -185,6 +230,14 @@ export function VencedorDetailModal({
     return { total, vitorias, investido, percentual };
   }, [participacoes]);
 
+  const handleConvertPrize = useCallback(() => {
+    if (vencedor) onConvertPrize(vencedor);
+  }, [vencedor, onConvertPrize]);
+
+  const handleEntregaPremio = useCallback(() => {
+    if (vencedor) onEntregaPremio(vencedor);
+  }, [vencedor, onEntregaPremio]);
+
   if (!vencedor) return null;
 
   const nomeExibicao = vencedor.nomeCliente || vencedor.user?.nome || vencedor.dadosVencedor?.userNome || "Anónimo";
@@ -193,14 +246,14 @@ export function VencedorDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto" aria-describedby="vencedor-detail-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-accent" />
+            <Trophy className="h-5 w-5 text-accent" aria-hidden="true" />
             Detalhes do Vencedor
           </DialogTitle>
-          <DialogDescription>
-            Informações completas sobre o vencedor e seu histórico
+          <DialogDescription id="vencedor-detail-description">
+            Informações completas sobre o vencedor {nomeExibicao} e seu histórico
           </DialogDescription>
         </DialogHeader>
 
@@ -210,31 +263,33 @@ export function VencedorDetailModal({
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-8 h-8 text-primary" />
+                  <User className="w-8 h-8 text-primary" aria-hidden="true" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg">{nomeExibicao}</h3>
-                  {emailExibicao && <p className="text-sm text-muted-foreground">{emailExibicao}</p>}
-                  {telefoneExibicao && <p className="text-sm text-muted-foreground">{telefoneExibicao}</p>}
+                  {emailExibicao && <p className="text-sm text-muted-foreground" aria-label={`Email: ${emailExibicao}`}>{emailExibicao}</p>}
+                  {telefoneExibicao && <p className="text-sm text-muted-foreground" aria-label={`Telefone: ${telefoneExibicao}`}>{telefoneExibicao}</p>}
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="outline" className="bg-accent/10 text-accent">
-                      <Trophy className="w-3 h-3 mr-1" />
+                      <Trophy className="w-3 h-3 mr-1" aria-hidden="true" />
                       {vencedor.jogo?.nome}
                     </Badge>
                     {vencedor.premioEntregue ? (
-                      <Badge variant="outline" className="bg-green-500/10 text-green-500">
-                        <Award className="w-3 h-3 mr-1" />
+                      <Badge variant="outline" className="bg-green-500/10 text-green-500" aria-label="Prémio entregue ou convertido">
+                        <Award className="w-3 h-3 mr-1" aria-hidden="true" />
                         Prémio Entregue/Convertido
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600">
+                      <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600" aria-label="Prémio pendente">
                         Pendente
                       </Badge>
                     )}
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-primary">{formatCurrency(vencedor.jogo?.preco || 0)}</p>
+                  <p className="text-xl font-bold text-primary" aria-label={`Valor do prémio: ${formatCurrency(vencedor.jogo?.preco || 0)}`}>
+                    {formatCurrency(vencedor.jogo?.preco || 0)}
+                  </p>
                   <p className="text-xs text-muted-foreground">Valor do prémio</p>
                 </div>
               </div>
@@ -243,16 +298,16 @@ export function VencedorDetailModal({
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="perfil">
-                <User className="w-4 h-4 mr-2" />
+              <TabsTrigger value="perfil" aria-label="Ver perfil do vencedor">
+                <User className="w-4 h-4 mr-2" aria-hidden="true" />
                 Perfil
               </TabsTrigger>
-              <TabsTrigger value="historico">
-                <TrendingUp className="w-4 h-4 mr-2" />
+              <TabsTrigger value="historico" aria-label="Ver histórico de participações">
+                <TrendingUp className="w-4 h-4 mr-2" aria-hidden="true" />
                 Histórico
               </TabsTrigger>
-              <TabsTrigger value="estatisticas">
-                <BarChart2 className="w-4 h-4 mr-2" />
+              <TabsTrigger value="estatisticas" aria-label="Ver estatísticas">
+                <BarChart2 className="w-4 h-4 mr-2" aria-hidden="true" />
                 Estatísticas
               </TabsTrigger>
             </TabsList>
@@ -263,34 +318,36 @@ export function VencedorDetailModal({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Nome</p>
-                      <p className="font-medium">{nomeExibicao}</p>
+                      <p className="font-medium" aria-label={`Nome: ${nomeExibicao}`}>{nomeExibicao}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium">{emailExibicao || "—"}</p>
+                      <p className="font-medium" aria-label={`Email: ${emailExibicao || "Não disponível"}`}>{emailExibicao || "—"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Telefone</p>
-                      <p className="font-medium">{telefoneExibicao || "—"}</p>
+                      <p className="font-medium" aria-label={`Telefone: ${telefoneExibicao || "Não disponível"}`}>{telefoneExibicao || "—"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Jogo</p>
-                      <p className="font-medium">{vencedor.jogo?.nome || "—"}</p>
+                      <p className="font-medium" aria-label={`Jogo: ${vencedor.jogo?.nome || "Não disponível"}`}>{vencedor.jogo?.nome || "—"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Aldeia</p>
-                      <p className="font-medium">
+                      <p className="font-medium" aria-label={`Aldeia: ${loadingUser || loadingAldeia ? "A carregar..." : aldeiaData?.nome || vencedor.jogo?.evento?.aldeia?.nome || "Não disponível"}`}>
                         {loadingUser || loadingAldeia ? "A carregar..." :
                           aldeiaData?.nome || vencedor.jogo?.evento?.aldeia?.nome || "—"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Data do Sorteio</p>
-                      <p className="font-medium">{formatDate(vencedor.createdAt)}</p>
+                      <p className="font-medium" aria-label={`Data do sorteio: ${formatDate(vencedor.createdAt)}`}>
+                        {formatDate(vencedor.createdAt)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Estado</p>
-                      <Badge variant={vencedor.premioEntregue ? "default" : "secondary"}>
+                      <Badge variant={vencedor.premioEntregue ? "default" : "secondary"} aria-label={`Estado: ${vencedor.premioEntregue ? "Entregue/Convertido" : "Pendente"}`}>
                         {vencedor.premioEntregue ? "Entregue/Convertido" : "Pendente"}
                       </Badge>
                     </div>
@@ -300,12 +357,12 @@ export function VencedorDetailModal({
             </TabsContent>
 
             <TabsContent value="historico" className="space-y-4 mt-4">
-              {loading ? (
+              {loadingHistorico ? (
                 <p className="text-center text-muted-foreground">A carregar...</p>
               ) : participacoes.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center">
-                    <TrendingUp className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                    <TrendingUp className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" aria-hidden="true" />
                     <p className="text-muted-foreground">Sem histórico de participações</p>
                   </CardContent>
                 </Card>
@@ -332,12 +389,12 @@ export function VencedorDetailModal({
                         </div>
                         <div className="col-span-3">
                           {p.ganhador ? (
-                            <Badge className="bg-accent text-accent-foreground">
-                              <Trophy className="w-3 h-3 mr-1" />
+                            <Badge className="bg-accent text-accent-foreground" aria-label="Ganhou o prémio">
+                              <Trophy className="w-3 h-3 mr-1" aria-hidden="true" />
                               Ganhou
                             </Badge>
                           ) : (
-                            <Badge variant="outline">Não sorteado</Badge>
+                            <Badge variant="outline" aria-label="Não foi sorteado">Não sorteado</Badge>
                           )}
                         </div>
                       </CardContent>
@@ -353,19 +410,27 @@ export function VencedorDetailModal({
                   <h3 className="text-lg font-semibold mb-4">Estatísticas de Participação</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-primary/10 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold text-primary">{estatisticas.total}</p>
+                      <p className="text-2xl font-bold text-primary" aria-label={`${estatisticas.total} participações totais`}>
+                        {estatisticas.total}
+                      </p>
                       <p className="text-sm text-muted-foreground">Total Participações</p>
                     </div>
                     <div className="bg-accent/10 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold text-accent">{estatisticas.vitorias}</p>
+                      <p className="text-2xl font-bold text-accent" aria-label={`${estatisticas.vitorias} vitórias`}>
+                        {estatisticas.vitorias}
+                      </p>
                       <p className="text-sm text-muted-foreground">Vitórias</p>
                     </div>
                     <div className="bg-green-500/10 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold text-green-600">{estatisticas.percentual}%</p>
+                      <p className="text-2xl font-bold text-green-600" aria-label={`${estatisticas.percentual}% taxa de vitória`}>
+                        {estatisticas.percentual}%
+                      </p>
                       <p className="text-sm text-muted-foreground">Taxa de Vitória</p>
                     </div>
                     <div className="bg-secondary/10 rounded-lg p-4 text-center">
-                      <p className="text-2xl font-bold">{formatCurrency(estatisticas.investido)}</p>
+                      <p className="text-2xl font-bold" aria-label={`Total investido: ${formatCurrency(estatisticas.investido)}`}>
+                        {formatCurrency(estatisticas.investido)}
+                      </p>
                       <p className="text-sm text-muted-foreground">Total Investido</p>
                     </div>
                   </div>
@@ -378,18 +443,22 @@ export function VencedorDetailModal({
           {!vencedor.premioEntregue && (
             <div className="flex gap-2 mt-4 pt-4 border-t">
               <Button
+                type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => onConvertPrize(vencedor)}
+                onClick={handleConvertPrize}
+                aria-label="Converter prémio em saldo"
               >
-                <DollarSign className="w-4 h-4 mr-2" />
+                <DollarSign className="w-4 h-4 mr-2" aria-hidden="true" />
                 Converter em Saldo
               </Button>
               <Button
+                type="button"
                 className="flex-1"
-                onClick={() => onEntregaPremio(vencedor)}
+                onClick={handleEntregaPremio}
+                aria-label="Marcar prémio como entregue"
               >
-                <Award className="w-4 h-4 mr-2" />
+                <Award className="w-4 h-4 mr-2" aria-hidden="true" />
                 Entregar Prémio
               </Button>
             </div>

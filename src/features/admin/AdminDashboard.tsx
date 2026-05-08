@@ -985,7 +985,17 @@ export default function AdminDashboard({
         onOpenChange={setEventoModalOpen}
         onSubmit={handleSaveEvento}
         aldeiaId={aldeiaId || ""}
-        initialData={selectedEvento}
+        initialData={selectedEvento ? {
+          id: selectedEvento.id,
+          nome: selectedEvento.nome,
+          descricao: selectedEvento.descricao,
+          dataInicio: selectedEvento.dataInicio,
+          dataFim: selectedEvento.dataFim,
+          objectivoAngariacao: selectedEvento.totalAngariado,
+          publico: selectedEvento.publico || false,
+          aldeiaId: '', // será definido no modal
+          estado: selectedEvento.estado as any,
+        } : undefined}
         aldeias={userRole === "super_admin" ? aldeias : undefined}
       />
 

@@ -18,11 +18,11 @@ export function TransactionDetailModal({ transacao, open, onOpenChange }: Transa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" aria-describedby="transaction-detail-description">
         <DialogHeader>
           <DialogTitle>Detalhes da Transação</DialogTitle>
-          <DialogDescription>
-            Informações completas da transação
+          <DialogDescription id="transaction-detail-description">
+            Informações completas da transação #{transacao.id}
           </DialogDescription>
         </DialogHeader>
 
@@ -30,17 +30,23 @@ export function TransactionDetailModal({ transacao, open, onOpenChange }: Transa
           <div className="grid gap-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Valor</span>
-              <span className="text-lg font-bold">{formatCurrency(transacao.valor)}</span>
+              <span className="text-lg font-bold" aria-label={`Valor da transação: ${formatCurrency(transacao.valor)}`}>
+                {formatCurrency(transacao.valor)}
+              </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Tipo</span>
-              <span className="text-sm capitalize">{transacao.tipo}</span>
+              <span className="text-sm capitalize" aria-label={`Tipo de transação: ${transacao.tipo}`}>
+                {transacao.tipo}
+              </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Estado</span>
-              <Badge variant="outline">{transacao.estado || "concluído"}</Badge>
+              <Badge variant="outline" aria-label={`Estado da transação: ${transacao.estado || "concluído"}`}>
+                {transacao.estado || "concluído"}
+              </Badge>
             </div>
 
             {transacao.descricao && (
@@ -53,28 +59,36 @@ export function TransactionDetailModal({ transacao, open, onOpenChange }: Transa
             {transacao.metodoPagamento && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Método de Pagamento</span>
-                <span className="text-sm capitalize">{transacao.metodoPagamento}</span>
+                <span className="text-sm capitalize" aria-label={`Método de pagamento: ${transacao.metodoPagamento}`}>
+                  {transacao.metodoPagamento}
+                </span>
               </div>
             )}
 
             {transacao.user && (
               <div className="grid gap-2">
                 <span className="text-sm font-medium text-muted-foreground">Utilizador</span>
-                <p className="text-sm">{transacao.user.nome}</p>
-                <p className="text-sm text-muted-foreground">{transacao.user.email}</p>
+                <p className="text-sm" aria-label={`Nome do utilizador: ${transacao.user.nome}`}>
+                  {transacao.user.nome}
+                </p>
+                <p className="text-sm text-muted-foreground" aria-label={`Email do utilizador: ${transacao.user.email}`}>
+                  {transacao.user.email}
+                </p>
               </div>
             )}
 
             <div className="grid gap-2">
               <span className="text-sm font-medium text-muted-foreground">Data/Hora</span>
-              <p className="text-sm">{formatDate(transacao.createdAt)}</p>
+              <p className="text-sm" aria-label={`Data e hora da transação: ${formatDate(transacao.createdAt)}`}>
+                {formatDate(transacao.createdAt)}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="flex justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            <X className="h-4 w-4 mr-2" />
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} aria-label="Fechar modal de detalhes da transação">
+            <X className="h-4 w-4 mr-2" aria-hidden="true" />
             Fechar
           </Button>
         </div>

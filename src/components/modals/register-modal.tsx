@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,10 +20,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Constants for user roles to avoid magic strings
+const USER_ROLES = {
+  USER: 'user',
+  VENDEDOR: 'vendedor',
+  ALDEIA_ADMIN: 'aldeia_admin'
+} as const;
+
+type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
+
+// Constants for organization types
+const TIPO_ORGANIZACAO = {
+  ALDEIA: 'aldeia',
+  ESCOLA: 'escola',
+  ASSOCIACAO_PAIS: 'associacao_pais',
+  CLUBE: 'clube'
+} as const;
+
+type TipoOrganizacao = typeof TIPO_ORGANIZACAO[keyof typeof TIPO_ORGANIZACAO];
+
 interface Aldeia {
   id: string;
   nome: string;
-  tipoOrganizacao: string;
+  tipoOrganizacao?: TipoOrganizacao;
 }
 
 interface RegisterModalProps {
@@ -34,11 +53,39 @@ interface RegisterModalProps {
     email: string;
     password: string;
     telefone?: string;
-    role?: string;
-    tipoOrganizacao?: string;
+    role?: UserRole;
+    tipoOrganizacao?: TipoOrganizacao;
     aldeiaId?: string;
   }) => Promise<void>;
   onLoginClick: () => void;
+}
+
+// Hook customizado para buscar aldeias
+function useAldeias(open: boolean) {
+  const [aldeias, setAldeias] = useState<Aldeia[]>([]);
+
+  const fetchAldeias = useCallback(async () => {
+    try {
+      const response = await fetch("/api/aldeias");
+      if (!response.ok) {
+        throw new Error("Erro ao carregar aldeias");
+      }
+      const data = await response.json();
+      if (data.data) {
+        setAldeias(data.data);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar aldeias:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchAldeias();
+    }
+  }, [open, fetchAldeias]);
+
+  return { aldeias, fetchAldeias };
 }
 
 export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: RegisterModalProps) {
@@ -47,31 +94,30 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
     email: "",
     password: "",
     telefone: "",
-    role: "user",
-    tipoOrganizacao: "",
+    role: USER_ROLES.USER as UserRole,
+    tipoOrganizacao: "" as TipoOrganizacao | "",
     aldeiaId: "",
   });
-  const [aldeias, setAldeias] = useState<Aldeia[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (open) {
-      fetchAldeias();
-    }
-  }, [open]);
+  const { aldeias } = useAldeias(open);
 
-  const fetchAldeias = async () => {
-    try {
-      const response = await fetch("/api/aldeias");
-      const data = await response.json();
-      if (data.data) {
-        setAldeias(data.data);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar aldeias:", error);
-    }
-  };
+  const handleChange = useCallback((field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleRoleChange = useCallback((value: UserRole) => {
+    setFormData(prev => ({ ...prev, role: value, aldeiaId: "", tipoOrganizacao: "" }));
+  }, []);
+
+  const handleTipoOrganizacaoChange = useCallback((value: TipoOrganizacao) => {
+    setFormData(prev => ({ ...prev, tipoOrganizacao: value }));
+  }, []);
+
+  const handleAldeiaChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, aldeiaId: value }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,8 +127,8 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
     try {
       const data = {
         ...formData,
-        tipoOrganizacao: formData.role === "aldeia_admin" ? formData.tipoOrganizacao : undefined,
-        aldeiaId: formData.role !== "aldeia_admin" && formData.aldeiaId ? formData.aldeiaId : undefined,
+        tipoOrganizacao: formData.role === USER_ROLES.ALDEIA_ADMIN && formData.tipoOrganizacao ? formData.tipoOrganizacao : undefined,
+        aldeiaId: formData.role !== USER_ROLES.ALDEIA_ADMIN && formData.aldeiaId ? formData.aldeiaId : undefined,
       };
       await onRegister(data);
       setFormData({
@@ -90,7 +136,7 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
         email: "",
         password: "",
         telefone: "",
-        role: "user",
+        role: USER_ROLES.USER,
         tipoOrganizacao: "",
         aldeiaId: "",
       });
@@ -101,12 +147,17 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
     }
   };
 
+  const handleLoginClick = useCallback(() => {
+    onOpenChange(false);
+    onLoginClick();
+  }, [onOpenChange, onLoginClick]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" aria-describedby="register-modal-description">
         <DialogHeader>
           <DialogTitle>Criar Conta</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="register-modal-description">
             Registe-se para participar nos jogos e campanhas.
           </DialogDescription>
         </DialogHeader>
@@ -119,8 +170,9 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
                 id="nome"
                 placeholder="O seu nome"
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onChange={(e) => handleChange("nome", e.target.value)}
                 required
+                aria-describedby="nome-error"
               />
             </div>
 
@@ -131,8 +183,9 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
                 type="email"
                 placeholder="seu@email.com"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => handleChange("email", e.target.value)}
                 required
+                aria-describedby="email-error"
               />
             </div>
 
@@ -143,9 +196,10 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
                 type="password"
                 placeholder="Mínimo 8 caracteres"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) => handleChange("password", e.target.value)}
                 required
                 minLength={8}
+                aria-describedby="password-error"
               />
             </div>
 
@@ -156,7 +210,8 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
                 type="tel"
                 placeholder="+351 9XX XXX XXX"
                 value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                onChange={(e) => handleChange("telefone", e.target.value)}
+                aria-describedby="telefone-error"
               />
             </div>
 
@@ -164,27 +219,27 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
               <Label htmlFor="role">Tipo de Conta</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value })}
+                onValueChange={handleRoleChange}
               >
-                <SelectTrigger>
+                <SelectTrigger id="role" aria-describedby="role-error">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">Jogador</SelectItem>
-                  <SelectItem value="vendedor">Vendedor</SelectItem>
-                  <SelectItem value="aldeia_admin">Organização</SelectItem>
+                  <SelectItem value={USER_ROLES.USER}>Jogador</SelectItem>
+                  <SelectItem value={USER_ROLES.VENDEDOR}>Vendedor</SelectItem>
+                  <SelectItem value={USER_ROLES.ALDEIA_ADMIN}>Organização</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {formData.role !== "aldeia_admin" && aldeias.length > 0 && (
+            {formData.role !== USER_ROLES.ALDEIA_ADMIN && aldeias.length > 0 && (
               <div className="grid gap-2">
                 <Label htmlFor="aldeia">Aldeia/Organização *</Label>
                 <Select
                   value={formData.aldeiaId}
-                  onValueChange={(value) => setFormData({ ...formData, aldeiaId: value })}
+                  onValueChange={handleAldeiaChange}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="aldeia" aria-describedby="aldeia-error">
                     <SelectValue placeholder="Selecione a aldeia" />
                   </SelectTrigger>
                   <SelectContent>
@@ -198,27 +253,31 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
               </div>
             )}
 
-            {formData.role === "aldeia_admin" && (
+            {formData.role === USER_ROLES.ALDEIA_ADMIN && (
               <div className="grid gap-2">
                 <Label htmlFor="tipoOrganizacao">Tipo de Organização</Label>
                 <Select
                   value={formData.tipoOrganizacao}
-                  onValueChange={(value) => setFormData({ ...formData, tipoOrganizacao: value })}
+                  onValueChange={handleTipoOrganizacaoChange}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="tipoOrganizacao" aria-describedby="tipoOrganizacao-error">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="aldeia">Aldeia</SelectItem>
-                    <SelectItem value="escola">Escola</SelectItem>
-                    <SelectItem value="associacao_pais">Associação de Pais</SelectItem>
-                    <SelectItem value="clube">Clube</SelectItem>
+                    <SelectItem value={TIPO_ORGANIZACAO.ALDEIA}>Aldeia</SelectItem>
+                    <SelectItem value={TIPO_ORGANIZACAO.ESCOLA}>Escola</SelectItem>
+                    <SelectItem value={TIPO_ORGANIZACAO.ASSOCIACAO_PAIS}>Associação de Pais</SelectItem>
+                    <SelectItem value={TIPO_ORGANIZACAO.CLUBE}>Clube</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p id="nome-error email-error password-error telefone-error role-error aldeia-error tipoOrganizacao-error" className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            )}
           </div>
 
           <DialogFooter className="flex-col gap-2">
@@ -229,11 +288,9 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
               Já tem conta?{" "}
               <button
                 type="button"
-                onClick={() => {
-                  onOpenChange(false);
-                  onLoginClick();
-                }}
+                onClick={handleLoginClick}
                 className="text-primary hover:underline"
+                aria-label="Ir para página de login"
               >
                 Entre aqui
               </button>
