@@ -5,14 +5,18 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { LoaderScreen } from "@/components/loader-screen";
 import { UserMenuModal } from "@/components/user-menu-modal";
+import { useCallback } from "react";
 import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users } from "lucide-react";
 
-interface LayoutHeaderProps {
-  children: React.ReactNode;
-}
+// Constants
+const ROLE_PATHS = {
+  super_admin: "/superadmindashboard",
+  aldeia_admin: "/admindashboard",
+  vendedor: "/vendedordashboard",
+  user: "/clientedashboard",
+} as const;
 
-// Navigation items by role
-const navItems = {
+const NAV_ITEMS = {
   super_admin: [
     { icon: Compass, label: "Painel", path: "/superadmindashboard" },
     { icon: Building2, label: "Aldeias", path: "/superadmindashboard?tab=aldeias" },
@@ -35,7 +39,13 @@ const navItems = {
     { icon: Ticket, label: "Prémios", path: "/premios" },
     { icon: User, label: "Perfil", path: "/perfil" },
   ],
-};
+} as const;
+
+interface LayoutHeaderProps {
+  children: React.ReactNode;
+}
+
+
 
 export function LayoutHeader({ children }: LayoutHeaderProps) {
   const router = useRouter();
@@ -53,18 +63,22 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
     return <LoaderScreen />;
   }
 
-  const handleNavClick = (path: string) => {
+  const handleNavClick = useCallback((path: string) => {
     setMobileMenuOpen(false);
     if (path === "/") {
-      localStorage.clear();
+      try {
+        localStorage.clear();
+      } catch (error) {
+        console.warn("Error clearing localStorage:", error);
+      }
     }
     router.push(path);
-  };
+  }, [router]);
 
-  const getRoleNavItems = () => {
-    if (!isAuthenticated || !user?.role) return navItems.user;
-    return navItems[user.role as keyof typeof navItems] || navItems.user;
-  };
+  const getRoleNavItems = useCallback(() => {
+    if (!isAuthenticated || !user?.role) return NAV_ITEMS.user;
+    return NAV_ITEMS[user.role as keyof typeof NAV_ITEMS] || NAV_ITEMS.user;
+  }, [isAuthenticated, user?.role]);
 
   return (
     <>
