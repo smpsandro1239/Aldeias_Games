@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -18,20 +19,49 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+// Constants for game types to avoid magic strings
+const GAME_TYPES = {
+  RASPADINHA: 'raspadinha',
+  RIFA: 'rifa',
+  TOMBOLA: 'tombola',
+  POIO_DA_VACA: 'poio_da_vaca'
+} as const;
+
+type GameType = typeof GAME_TYPES[keyof typeof GAME_TYPES];
+
+// Constants for profitability thresholds
+const PROFITABILITY_THRESHOLDS = {
+  MIN_LUCRO_PERCENTAGEM: 50,
+  MIN_MARGEM_LUCRO: 50,
+} as const;
+
+interface Premio {
+  nome: string;
+  valor: number;
+  percentagem?: number;
+}
+
 interface RentabilidadeData {
-  tipoJogo: string;
+  tipoJogo: GameType;
   nome: string;
   preco: number;
   stock?: number;
-  premios: Array<{
-    nome: string;
-    valor: number;
-    percentagem?: number;
-  }>;
+  premios: Premio[];
   dimensoesX?: number;
   dimensoesY?: number;
   custoQuadrado?: number;
   valorCompraVaca?: number;
+}
+
+interface RentabilidadeMetrics {
+  receitaTotal: number;
+  custoTotalPremios: number;
+  lucroLiquido: number;
+  margemLucro: number;
+  lucroMinimo: number;
+  percentagemTotal: number;
+  isLucrativo: boolean;
+  totalQuadrados: number;
 }
 
 interface TransparencyModalProps {
@@ -42,43 +72,44 @@ interface TransparencyModalProps {
   loading?: boolean;
 }
 
-export function TransparencyModal({ 
-  open, 
-  onOpenChange, 
-  onConfirm, 
+export function TransparencyModal({
+  open,
+  onOpenChange,
+  onConfirm,
   data,
-  loading 
+  loading
 }: TransparencyModalProps) {
-  
-  const calcularRentabilidade = () => {
+
+  const metrics = useMemo((): RentabilidadeMetrics => {
     let receitaTotal = 0;
     let custoTotalPremios = 0;
     let percentagemTotal = 0;
-    
-    if (data.tipoJogo === "raspadinha" && data.stock) {
+
+    if (data.tipoJogo === GAME_TYPES.RASPADINHA && data.stock) {
       receitaTotal = data.preco * data.stock;
       data.premios.forEach(p => {
         if (p.percentagem) {
-          custoTotalPremios += p.valor * (p.percentagem / 100) * data.stock!;
+          custoTotalPremios += p.valor * (p.percentagem / 100) * data.stock;
           percentagemTotal += p.percentagem;
         }
       });
-    } else if (data.tipoJogo === "rifa" || data.tipoJogo === "tombola") {
+    } else if (data.tipoJogo === GAME_TYPES.RIFA || data.tipoJogo === GAME_TYPES.TOMBOLA) {
       receitaTotal = data.preco * (data.stock || 0);
       custoTotalPremios = data.premios.reduce((acc, p) => acc + p.valor, 0);
-    } else if (data.tipoJogo === "poio_da_vaca") {
+    } else if (data.tipoJogo === GAME_TYPES.POIO_DA_VACA) {
       const totalQuadrados = (data.dimensoesX || 0) * (data.dimensoesY || 0);
       receitaTotal = totalQuadrados * (data.custoQuadrado || 0);
       custoTotalPremios = data.valorCompraVaca || 0;
     }
-    
+
     const lucroLiquido = receitaTotal - custoTotalPremios;
     const margemLucro = receitaTotal > 0 ? (lucroLiquido / receitaTotal) * 100 : 0;
-    const lucroMinimo = data.tipoJogo === "raspadinha" 
-      ? 100 - percentagemTotal 
+    const lucroMinimo = data.tipoJogo === GAME_TYPES.RASPADINHA
+      ? 100 - percentagemTotal
       : margemLucro;
-    const isLucrativo = lucroMinimo >= 50 || margemLucro >= 50;
-    
+    const isLucrativo = lucroMinimo >= PROFITABILITY_THRESHOLDS.MIN_LUCRO_PERCENTAGEM ||
+                        margemLucro >= PROFITABILITY_THRESHOLDS.MIN_MARGEM_LUCRO;
+
     return {
       receitaTotal,
       custoTotalPremios,
@@ -89,11 +120,9 @@ export function TransparencyModal({
       isLucrativo,
       totalQuadrados: (data.dimensoesX || 0) * (data.dimensoesY || 0)
     };
-  };
+  }, [data]);
   
-  const metrics = calcularRentabilidade();
-  
-  const gerarHash = () => {
+  const gerarHash = useCallback(async () => {
     const texto = JSON.stringify({
       tipo: data.tipoJogo,
       nome: data.nome,
@@ -115,20 +144,27 @@ export function TransparencyModal({
     return `AG-${Math.abs(hash).toString(16).toUpperCase().padStart(8, '0')}-${Date.now().toString(36).toUpperCase()}`;
   };
   
-  const verificationHash = gerarHash();
-  
-  const copyHash = () => {
-    navigator.clipboard.writeText(verificationHash);
-    toast.success("Hash copiado!");
-  };
-  
-  const generateWhatsAppMessage = () => {
-    const tipoJogoNome = {
-      "raspadinha": "Raspadinha",
-      "rifa": "Rifa",
-      "tombola": "Tombola",
-      "poio_da_vaca": "Poio da Vaca"
-    }[data.tipoJogo] || data.tipoJogo;
+  const verificationHash = useMemo(() => gerarHash(), [gerarHash, data, metrics]);
+
+  const copyHash = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(verificationHash);
+      toast.success("Hash copiado!");
+    } catch (error) {
+      console.error("Erro ao copiar hash:", error);
+      toast.error("Erro ao copiar hash");
+    }
+  }, [verificationHash]);
+
+  const gameTypeLabels = useMemo(() => ({
+    [GAME_TYPES.RASPADINHA]: "Raspadinha",
+    [GAME_TYPES.RIFA]: "Rifa",
+    [GAME_TYPES.TOMBOLA]: "Tombola",
+    [GAME_TYPES.POIO_DA_VACA]: "Poio da Vaca"
+  }), []);
+
+  const generateWhatsAppMessage = useCallback(() => {
+    const tipoJogoNome = gameTypeLabels[data.tipoJogo] || data.tipoJogo;
     
     let message = `🏆 *ALDÉIAS GAMES - JOGO CRIADO*\n\n`;
     message += `📋 *${data.nome}*\n`;
@@ -162,12 +198,17 @@ export function TransparencyModal({
     return encodeURIComponent(message);
   };
   
-  const shareWhatsApp = () => {
-    const url = `https://wa.me/?text=${generateWhatsAppMessage()}`;
-    window.open(url, '_blank');
-  };
-  
-  const printSummary = () => {
+  const shareWhatsApp = useCallback(() => {
+    try {
+      const url = `https://wa.me/?text=${encodeURIComponent(generateWhatsAppMessage())}`;
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error("Erro ao compartilhar no WhatsApp:", error);
+      toast.error("Erro ao compartilhar");
+    }
+  }, [generateWhatsAppMessage]);
+
+  const printSummary = useCallback(() => {
     const printContent = `
       <html>
         <head>
@@ -367,9 +408,15 @@ export function TransparencyModal({
                     <h4 className="text-sm font-semibold text-accent flex items-center gap-2">
                       <Hash className="w-4 h-4" /> Hash de Verificação
                     </h4>
-                    <Button variant="ghost" size="sm" onClick={copyHash} className="h-7 text-xs">
-                      <Copy className="w-3 h-3 mr-1" /> Copiar
-                    </Button>
+                     <Button
+                       variant="ghost"
+                       size="sm"
+                       onClick={copyHash}
+                       className="h-7 text-xs"
+                       aria-label="Copiar hash de verificação para área de transferência"
+                     >
+                       <Copy className="w-3 h-3 mr-1" aria-hidden="true" /> Copiar
+                     </Button>
                   </div>
                   <p className="font-mono text-sm bg-surface-container-highest p-2 rounded-lg text-secondary break-all">
                     {verificationHash}
@@ -379,14 +426,26 @@ export function TransparencyModal({
                   </p>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={shareWhatsApp} className="flex-1 bg-primary/10 border-green-500/30 text-primary hover:bg-primary/20">
-                    <Share2 className="w-4 h-4 mr-2" /> WhatsApp
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={printSummary} className="flex-1">
-                    <Printer className="w-4 h-4 mr-2" /> Imprimir
-                  </Button>
-                </div>
+                 <div className="flex gap-2" role="group" aria-label="Opções de compartilhamento">
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={shareWhatsApp}
+                     className="flex-1 bg-primary/10 border-green-500/30 text-primary hover:bg-primary/20"
+                     aria-label="Compartilhar análise no WhatsApp"
+                   >
+                     <Share2 className="w-4 h-4 mr-2" aria-hidden="true" /> WhatsApp
+                   </Button>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={printSummary}
+                     className="flex-1"
+                     aria-label="Imprimir resumo da análise de rentabilidade"
+                   >
+                     <Printer className="w-4 h-4 mr-2" aria-hidden="true" /> Imprimir
+                   </Button>
+                 </div>
               </div>
 
               <div className="p-6 pt-0 flex gap-3">
@@ -398,10 +457,12 @@ export function TransparencyModal({
                 >
                   Cancelar
                 </Button>
-                <Button 
+                <Button
+                  type="button"
                   onClick={onConfirm}
                   disabled={loading || !metrics.isLucrativo}
                   className={`flex-1 ${metrics.isLucrativo ? 'bg-primary hover:bg-primary' : ''}`}
+                  aria-label={metrics.isLucrativo ? "Confirmar criação do jogo" : "Jogo não é lucrativo, revise os parâmetros"}
                 >
                   {loading ? "A criar..." : "✅ Confirmar e Criar"}
                 </Button>
