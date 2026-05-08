@@ -1,19 +1,18 @@
 import { z } from 'zod';
 
-// Validação de telefone português com regex E.164
-const telefoneRegex = /^(?:(?:\+|00)351)?[2-9][0-9]{8}$/;
-
-export const telefoneSchema = z.string()
-  .regex(telefoneRegex, 'Número de telefone inválido (deve ser um número português válido)')
-  .optional()
-  .or(z.literal(''));
-
-// Validação de password forte: min 12 chars, 1 maiúscula, 1 minúscula, 1 número, 1 especial
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{12,}$/;
+// Constants for validation
+const TELEFONE_REGEX = /^(?:(?:\+|00)351)?[2-9][0-9]{8}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{12,}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const passwordSchema = z.string()
   .min(12, 'Password deve ter pelo menos 12 caracteres')
-  .regex(passwordRegex, 'Password deve conter pelo menos: 1 maiúscula, 1 minúscula, 1 número e 1 carácter especial');
+  .regex(PASSWORD_REGEX, 'Password deve conter pelo menos: 1 maiúscula, 1 minúscula, 1 número e 1 carácter especial');
+
+export const telefoneSchema = z.string()
+  .regex(TELEFONE_REGEX, 'Número de telefone inválido (deve ser um número português válido)')
+  .optional()
+  .or(z.literal(''));
 
 // ============================================
 // VALIDAÇÕES DE UTILIZADOR

@@ -4,6 +4,11 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from './db';
 
+// Constants
+const AUTH_COOKIE_NAME = 'auth-token';
+const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 dias em segundos
+const JWT_EXPIRATION = '30d';
+
 const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
 
 if (!JWT_SECRET && !process.env.NEXT_PHASE?.includes('build')) {
@@ -11,10 +16,6 @@ if (!JWT_SECRET && !process.env.NEXT_PHASE?.includes('build')) {
 }
 
 const secret = new TextEncoder().encode(JWT_SECRET!);
-
-// Cookie config
-const AUTH_COOKIE_NAME = 'auth-token';
-const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 dias em segundos
 
 export interface JWTPayload {
   userId: string;
@@ -86,7 +87,7 @@ export async function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): P
    const token = await new SignJWT(payload)
      .setProtectedHeader({ alg: 'HS256' })
      .setIssuedAt()
-     .setExpirationTime('30d')
+     .setExpirationTime(JWT_EXPIRATION)
      .sign(secret);
 
    return token;

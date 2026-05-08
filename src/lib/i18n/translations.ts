@@ -107,15 +107,43 @@ export const translations = {
 };
 
 export type Language = keyof typeof translations;
-export type TranslationKey = keyof typeof translations.pt;
+
+// Type-safe translation keys
+type TranslationPaths<T> = T extends (string | number | boolean)
+  ? []
+  : T extends Record<string, any>
+  ? {
+      [K in keyof T]: [K, ...TranslationPaths<T[K]>];
+    }[keyof T]
+  : [];
+
+type Join<T extends string[], D extends string> = T extends []
+  ? never
+  : T extends [infer F]
+  ? F
+  : T extends [infer F, ...infer R]
+  ? F extends string
+    ? `${F}${D}${Join<R, D>}`
+    : never
+  : string;
+
+export type TranslationKey = Join<TranslationPaths<typeof translations.pt>, ".">;
 
 export function getTranslation(lang: Language, key: string): string {
+  if (!key || typeof key !== 'string') {
+    return key;
+  }
+
   const keys = key.split(".");
   let value: any = translations[lang];
-  
+
   for (const k of keys) {
-    value = value?.[k];
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      return key; // Fallback to key if not found
+    }
   }
-  
-  return value || key;
+
+  return typeof value === 'string' ? value : key;
 }
