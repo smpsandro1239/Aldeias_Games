@@ -25,9 +25,30 @@ import {
   Percent,
   Trophy
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useCallback } from "react";
 import { toast } from "sonner";
 import { TransparencyModal } from "./transparency-modal";
+
+// Constants for game types to avoid magic strings
+const GAME_TYPES = {
+  POIO_DA_VACA: 'poio_da_vaca',
+  RIFA: 'rifa',
+  TOMBOLA: 'tombola',
+  RASPADINHA: 'raspadinha'
+} as const;
+
+type GameType = typeof GAME_TYPES[keyof typeof GAME_TYPES];
+
+// Safe parsing helpers
+const safeParseFloat = (val: string | number, fallback: number = 0): number => {
+  const parsed = typeof val === 'number' ? val : parseFloat(val);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
+const safeParseInt = (val: string | number, fallback: number = 0): number => {
+  const parsed = typeof val === 'number' ? val : parseInt(val.toString());
+  return isNaN(parsed) ? fallback : parsed;
+};
 
 interface Premio {
   id: string;
@@ -36,10 +57,49 @@ interface Premio {
   percentagem: number;
 }
 
+interface JogoFormData {
+  nome: string;
+  tipo: GameType;
+  descricao: string;
+  preco: string;
+  stockInicial: string;
+  limitePorUsuario: string;
+  numeroInicial: string;
+  numeroFinal: string;
+  modoSorteio: "app" | "externo";
+  detalhesSorteioExterno: string;
+  raspadinhaTitulo: string;
+  raspadinhaSubtitulo: string;
+  raspadinhaOrganizacao: string;
+  dimensoesX: string;
+  dimensoesY: string;
+  custoQuadrado: string;
+  valorMercadoVaca: string;
+  valorCompraVaca: string;
+  dataSorteio: string;
+  horaSorteio: string;
+  localSorteio: string;
+  numeroBlocos: string;
+  permitirStripe: boolean;
+  valorPremios: string;
+}
+
+interface JogoMetrics {
+  isLucrativo: boolean;
+  totalPercentagem?: number;
+  lucroMinimo?: number;
+  custoMedioPorBilhete?: number;
+  receitaTotal?: number;
+  lucroEstimado?: number;
+  margemLucro?: number;
+  totalPremios?: number;
+  totalQuadrados?: number;
+}
+
 export interface JogoData {
   id?: string;
   nome: string;
-  tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+  tipo: GameType;
   descricao?: string;
   preco: number;
   stockInicial: number;
@@ -78,22 +138,32 @@ interface CreateJogoModalProps {
   metodosPagamentoDefault?: string[];
 }
 
-export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEventoId, initialData, userRole, token, aldeiaId, metodosPagamentoDefault }: CreateJogoModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [showTransparency, setShowTransparency] = useState(false);
-  const [submittedData, setSubmittedData] = useState<JogoData | null>(null);
+// Reducer actions
+type Action =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_SHOW_TRANSPARENCY'; payload: boolean }
+  | { type: 'SET_SUBMITTED_DATA'; payload: JogoData | null }
+  | { type: 'UPDATE_FORM_DATA'; payload: Partial<JogoFormData> }
+  | { type: 'SET_RASPADINHA_PREMIOS'; payload: Premio[] }
+  | { type: 'SET_RIFA_PREMIOS'; payload: Premio[] }
+  | { type: 'RESET_FORM' };
 
-  const [formData, setFormData] = useState({
-    nome: "",
-    tipo: "raspadinha" as "poio_da_vaca" | "rifa" | "tombola" | "raspadinha",
-    descricao: "",
-    preco: "2",
-    stockInicial: "100",
-    limitePorUsuario: "10",
+// Initial state
+const getInitialState = (initialData?: JogoData) => ({
+  loading: false,
+  showTransparency: false,
+  submittedData: null as JogoData | null,
+  formData: {
+    nome: initialData?.nome || "",
+    tipo: (initialData?.tipo || GAME_TYPES.RASPADINHA) as GameType,
+    descricao: initialData?.descricao || "",
+    preco: initialData?.preco?.toString() || "2",
+    stockInicial: initialData?.stockInicial?.toString() || "100",
+    limitePorUsuario: initialData?.limitePorUsuario?.toString() || "10",
     numeroInicial: "1",
     numeroFinal: "1000",
-    modoSorteio: "app" as "app" | "externo",
-    detalhesSorteioExterno: "",
+    modoSorteio: (initialData?.modoSorteio || "app") as "app" | "externo",
+    detalhesSorteioExterno: initialData?.detalhesSorteioExterno || "",
     raspadinhaTitulo: "RASPADINHA DA SORTE",
     raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
     raspadinhaOrganizacao: "",
@@ -108,126 +178,101 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
     numeroBlocos: "1",
     permitirStripe: false,
     valorPremios: "",
-  });
+  } as JogoFormData,
+  raspadinhaPremios: initialData?.premios && initialData.tipo === GAME_TYPES.RASPADINHA
+    ? initialData.premios.map((p, i) => ({
+        id: String(i + 1),
+        nome: p.nome || "",
+        valorDinheiroAlternative: p.valorDinheiroAlternative || 0,
+        percentagem: p.percentagem || 0,
+      }))
+    : [
+        { id: "1", nome: "3x Presunto", valorDinheiroAlternative: 50, percentagem: 2 },
+        { id: "2", nome: "3x Tabua de Queijos", valorDinheiroAlternative: 25, percentagem: 5 },
+        { id: "3", nome: "Valor da Raspadinha", valorDinheiroAlternative: 2, percentagem: 10 },
+      ],
+  rifaPremios: initialData?.premios && initialData.tipo !== GAME_TYPES.RASPADINHA
+    ? initialData.premios.map((p, i) => ({
+        id: String(i + 1),
+        nome: p.nome || "",
+        valorDinheiroAlternative: p.valorDinheiroAlternative || 0,
+        percentagem: 0,
+      }))
+    : [{ id: "1", nome: "1º Prémio", valorDinheiroAlternative: 0, percentagem: 0 }],
+});
 
-  const [rashadinhaPremios, setRaspadinhaPremios] = useState<Premio[]>([
-    { id: "1", nome: "3x Presunto", valorDinheiroAlternative: 50, percentagem: 2 },
-    { id: "2", nome: "3x Tabua de Queijos", valorDinheiroAlternative: 25, percentagem: 5 },
-    { id: "3", nome: "Valor da Raspadinha", valorDinheiroAlternative: 2, percentagem: 10 },
-  ]);
+// Reducer function
+function jogoFormReducer(state: ReturnType<typeof getInitialState>, action: Action): ReturnType<typeof getInitialState> {
+  switch (action.type) {
+    case 'SET_LOADING':
+      return { ...state, loading: action.payload };
+    case 'SET_SHOW_TRANSPARENCY':
+      return { ...state, showTransparency: action.payload };
+    case 'SET_SUBMITTED_DATA':
+      return { ...state, submittedData: action.payload };
+    case 'UPDATE_FORM_DATA':
+      return { ...state, formData: { ...state.formData, ...action.payload } };
+    case 'SET_RASPADINHA_PREMIOS':
+      return { ...state, raspadinhaPremios: action.payload };
+    case 'SET_RIFA_PREMIOS':
+      return { ...state, rifaPremios: action.payload };
+    case 'RESET_FORM':
+      return getInitialState();
+    default:
+      return state;
+  }
+}
 
-  const [rifaPremios, setRifaPremios] = useState<Premio[]>([
-    { id: "1", nome: "1º Prémio", valorDinheiroAlternative: 0, percentagem: 0 },
-  ]);
+// Hook customizado para gerenciar estado do jogo
+function useJogoForm(initialData?: JogoData) {
+  const [state, dispatch] = useReducer(jogoFormReducer, getInitialState(initialData));
 
-  useEffect(() => {
-    if (initialData && open) {
-      setFormData({
-        nome: initialData.nome || "",
-        tipo: initialData.tipo || "raspadinha",
-        descricao: initialData.descricao || "",
-        preco: initialData.preco?.toString() || "2",
-        stockInicial: initialData.stockInicial?.toString() || "100",
-        limitePorUsuario: initialData.limitePorUsuario?.toString() || "10",
-        numeroInicial: "1",
-        numeroFinal: "1000",
-        modoSorteio: initialData.modoSorteio || "app",
-        detalhesSorteioExterno: initialData.detalhesSorteioExterno || "",
-        raspadinhaTitulo: "RASPADINHA DA SORTE",
-        raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
-        raspadinhaOrganizacao: "",
-        dimensoesX: "10",
-        dimensoesY: "10",
-        custoQuadrado: "5",
-        valorMercadoVaca: "1000",
-        valorCompraVaca: "800",
-        dataSorteio: "",
-        horaSorteio: "",
-        localSorteio: "",
-        numeroBlocos: "1",
-        permitirStripe: false,
-        valorPremios: "",
-      });
+  const updateFormData = useCallback((updates: Partial<JogoFormData>) => {
+    dispatch({ type: 'UPDATE_FORM_DATA', payload: updates });
+  }, []);
 
-      if (initialData.premios && initialData.premios.length > 0) {
-        if (initialData.tipo === "raspadinha") {
-          setRaspadinhaPremios(initialData.premios.map((p, i) => ({
-            id: String(i + 1),
-            nome: p.nome || "",
-            valorDinheiroAlternative: p.valorDinheiroAlternative || 0,
-            percentagem: p.percentagem || 0,
-          })));
-        } else {
-          setRifaPremios(initialData.premios.map((p, i) => ({
-            id: String(i + 1),
-            nome: p.nome || "",
-            valorDinheiroAlternative: p.valorDinheiroAlternative || 0,
-            percentagem: 0,
-          })));
-        }
-      }
-    } else if (!open) {
-      resetForm();
-    }
-  }, [initialData, open]);
+  const setRaspadinhaPremios = useCallback((premios: Premio[]) => {
+    dispatch({ type: 'SET_RASPADINHA_PREMIOS', payload: premios });
+  }, []);
 
-  const resetForm = () => {
-    setFormData({
-      nome: "",
-      tipo: "raspadinha",
-      descricao: "",
-      preco: "2",
-      stockInicial: "100",
-      limitePorUsuario: "10",
-      numeroInicial: "1",
-      numeroFinal: "1000",
-      modoSorteio: "app",
-      detalhesSorteioExterno: "",
-      raspadinhaTitulo: "RASPADINHA DA SORTE",
-      raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
-      raspadinhaOrganizacao: "",
-      dimensoesX: "10",
-      dimensoesY: "10",
-      custoQuadrado: "5",
-      valorMercadoVaca: "1000",
-      valorCompraVaca: "800",
-      dataSorteio: "",
-      horaSorteio: "",
-      localSorteio: "",
-      numeroBlocos: "1",
-      permitirStripe: false,
-      valorPremios: "",
+  const setRifaPremios = useCallback((premios: Premio[]) => {
+    dispatch({ type: 'SET_RIFA_PREMIOS', payload: premios });
+  }, []);
+
+  const setLoading = useCallback((loading: boolean) => {
+    dispatch({ type: 'SET_LOADING', payload: loading });
+  }, []);
+
+  const setShowTransparency = useCallback((show: boolean) => {
+    dispatch({ type: 'SET_SHOW_TRANSPARENCY', payload: show });
+  }, []);
+
+  const setSubmittedData = useCallback((data: JogoData | null) => {
+    dispatch({ type: 'SET_SUBMITTED_DATA', payload: data });
+  }, []);
+
+  const resetForm = useCallback(() => {
+    dispatch({ type: 'RESET_FORM' });
+  }, []);
+
+  // Cálculos memoizados
+  const preco = useMemo(() => safeParseFloat(state.formData.preco), [state.formData.preco]);
+  const stock = useMemo(() => safeParseInt(state.formData.stockInicial), [state.formData.stockInicial]);
+
+  const expectedCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    state.raspadinhaPremios.forEach(p => {
+      map.set(p.id, Math.round(stock * (p.percentagem || 0) / 100));
     });
-    setRaspadinhaPremios([
-      { id: "1", nome: "3x Presunto", valorDinheiroAlternative: 50, percentagem: 2 },
-      { id: "2", nome: "3x Tabua de Queijos", valorDinheiroAlternative: 25, percentagem: 5 },
-      { id: "3", nome: "Valor da Raspadinha", valorDinheiroAlternative: 2, percentagem: 10 },
-    ]);
-    setRifaPremios([
-      { id: "1", nome: "1º Prémio", valorDinheiroAlternative: 0, percentagem: 0 },
-    ]);
-  };
+    return map;
+  }, [state.raspadinhaPremios, stock]);
 
-   const preco = parseFloat(formData.preco) || 0;
-   const stock = parseInt(formData.stockInicial) || 0;
-
-   // Mapa de expectedCount por premioId (otimizado com useMemo)
-   const expectedCountMap = useMemo(() => {
-     const map = new Map<string, number>();
-     rashadinhaPremios.forEach(p => {
-       map.set(p.id, Math.round(stock * (p.percentagem || 0) / 100));
-     });
-     return map;
-   }, [rashadinhaPremios, stock]);
-
-   const metricsRaspadinha = useMemo(() => {
-    const totalPercentagem = rashadinhaPremios.reduce((acc, p) => acc + p.percentagem, 0);
+  const metricsRaspadinha = useMemo(() => {
+    const totalPercentagem = state.raspadinhaPremios.reduce((acc, p) => acc + p.percentagem, 0);
     const lucroMinimo = 100 - totalPercentagem;
-
-    const custoMedioPorBilhete = rashadinhaPremios.reduce((acc, p) => {
+    const custoMedioPorBilhete = state.raspadinhaPremios.reduce((acc, p) => {
       return acc + (p.valorDinheiroAlternative * p.percentagem / 100);
     }, 0);
-
     const receitaTotal = preco * stock;
     const custoTotalEstimado = custoMedioPorBilhete * stock;
     const lucroEstimado = receitaTotal - custoTotalEstimado;
@@ -243,10 +288,10 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       margemLucro,
       isLucrativo: lucroMinimo >= 50
     };
-  }, [rashadinhaPremios, preco, stock]);
+  }, [state.raspadinhaPremios, preco, stock]);
 
   const metricsRifa = useMemo(() => {
-    const totalPremios = rifaPremios.reduce((acc, p) => acc + p.valorDinheiroAlternative, 0);
+    const totalPremios = state.rifaPremios.reduce((acc, p) => acc + p.valorDinheiroAlternative, 0);
     const receitaTotal = preco * stock;
     const lucroEstimado = receitaTotal - totalPremios;
     const margemLucro = receitaTotal > 0 ? (lucroEstimado / receitaTotal) * 100 : 0;
@@ -258,13 +303,13 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       margemLucro,
       isLucrativo: margemLucro >= 50
     };
-  }, [rifaPremios, preco, stock]);
+  }, [state.rifaPremios, preco, stock]);
 
   const metricsPoioDaVaca = useMemo(() => {
-    const dimensoesX = parseInt(formData.dimensoesX) || 0;
-    const dimensoesY = parseInt(formData.dimensoesY) || 0;
-    const custoQuadrado = parseFloat(formData.custoQuadrado) || 0;
-    const valorCompraVaca = parseFloat(formData.valorCompraVaca) || 0;
+    const dimensoesX = safeParseInt(state.formData.dimensoesX);
+    const dimensoesY = safeParseInt(state.formData.dimensoesY);
+    const custoQuadrado = safeParseFloat(state.formData.custoQuadrado);
+    const valorCompraVaca = safeParseFloat(state.formData.valorCompraVaca);
 
     const totalQuadrados = dimensoesX * dimensoesY;
     const receitaTotal = totalQuadrados * custoQuadrado;
@@ -279,190 +324,301 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       margemLucro,
       isLucrativo: margemLucro >= 50
     };
-  }, [formData.dimensoesX, formData.dimensoesY, formData.custoQuadrado, formData.valorCompraVaca]);
+  }, [state.formData.dimensoesX, state.formData.dimensoesY, state.formData.custoQuadrado, state.formData.valorCompraVaca]);
 
-  const getMetrics = () => {
-    switch (formData.tipo) {
-      case "raspadinha":
+  const getMetrics = useCallback((): JogoMetrics => {
+    switch (state.formData.tipo) {
+      case GAME_TYPES.RASPADINHA:
         return metricsRaspadinha;
-      case "rifa":
-      case "tombola":
+      case GAME_TYPES.RIFA:
+      case GAME_TYPES.TOMBOLA:
         return metricsRifa;
-      case "poio_da_vaca":
+      case GAME_TYPES.POIO_DA_VACA:
         return metricsPoioDaVaca;
       default:
         return { isLucrativo: false };
     }
-  };
+  }, [state.formData.tipo, metricsRaspadinha, metricsRifa, metricsPoioDaVaca]);
 
   const isLucrativo = getMetrics().isLucrativo;
 
-  const handlePremioRaspadinhaChange = (id: string, field: keyof Premio, value: string | number) => {
-    setRaspadinhaPremios(prev =>
-      prev.map(p => p.id === id ? { ...p, [field]: value } : p)
+  // Handlers
+  const handlePremioRaspadinhaChange = useCallback((id: string, field: keyof Premio, value: string | number) => {
+    setRaspadinhaPremios(
+      state.raspadinhaPremios.map(p => p.id === id ? { ...p, [field]: value } : p)
     );
-  };
+  }, [state.raspadinhaPremios, setRaspadinhaPremios]);
 
-  const handlePremioRifaChange = (id: string, field: keyof Premio, value: string | number) => {
-    setRifaPremios(prev =>
-      prev.map(p => p.id === id ? { ...p, [field]: value } : p)
+  const handlePremioRifaChange = useCallback((id: string, field: keyof Premio, value: string | number) => {
+    setRifaPremios(
+      state.rifaPremios.map(p => p.id === id ? { ...p, [field]: value } : p)
     );
-  };
+  }, [state.rifaPremios, setRifaPremios]);
 
-  const adicionarPremioRaspadinha = () => {
-    setRaspadinhaPremios(prev => [
-      ...prev,
+  const adicionarPremioRaspadinha = useCallback(() => {
+    setRaspadinhaPremios([
+      ...state.raspadinhaPremios,
       { id: Date.now().toString(), nome: "", valorDinheiroAlternative: 0, percentagem: 0 }
     ]);
-  };
+  }, [state.raspadinhaPremios, setRaspadinhaPremios]);
 
-  const adicionarPremioRifa = () => {
-    setRifaPremios(prev => [
-      ...prev,
+  const adicionarPremioRifa = useCallback(() => {
+    setRifaPremios([
+      ...state.rifaPremios,
       { id: Date.now().toString(), nome: "", valorDinheiroAlternative: 0, percentagem: 0 }
     ]);
-  };
+  }, [state.rifaPremios, setRifaPremios]);
 
-  const removerPremioRaspadinha = (id: string) => {
-    if (rashadinhaPremios.length > 1) {
-      setRaspadinhaPremios(prev => prev.filter(p => p.id !== id));
+  const removerPremioRaspadinha = useCallback((id: string) => {
+    if (state.raspadinhaPremios.length > 1) {
+      setRaspadinhaPremios(state.raspadinhaPremios.filter(p => p.id !== id));
     }
-  };
+  }, [state.raspadinhaPremios, setRaspadinhaPremios]);
 
-  const removerPremioRifa = (id: string) => {
-    if (rifaPremios.length > 1) {
-      setRifaPremios(prev => prev.filter(p => p.id !== id));
+  const removerPremioRifa = useCallback((id: string) => {
+    if (state.rifaPremios.length > 1) {
+      setRifaPremios(state.rifaPremios.filter(p => p.id !== id));
     }
-  };
+  }, [state.rifaPremios, setRifaPremios]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      // Validação específica: soma das percentagens raspadinha <= 100%
-      if (formData.tipo === 'raspadinha' && rashadinhaPremios.length > 0) {
-        const totalPercentagem = rashadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
-        if (totalPercentagem > 100) {
-          toast.error(`A soma das percentagens dos prémios (${totalPercentagem}%) não pode exceder 100%`);
-          return;
-        }
+    // Validação específica: soma das percentagens raspadinha <= 100%
+    if (state.formData.tipo === GAME_TYPES.RASPADINHA && state.raspadinhaPremios.length > 0) {
+      const totalPercentagem = state.raspadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
+      if (totalPercentagem > 100) {
+        toast.error(`A soma das percentagens dos prémios (${totalPercentagem}%) não pode exceder 100%`);
+        return;
+      }
+    }
+
+    // Validação específica para rifa/tombola: intervalo numérico
+    if (state.formData.tipo === GAME_TYPES.RIFA || state.formData.tipo === GAME_TYPES.TOMBOLA) {
+      const numInicial = safeParseInt(state.formData.numeroInicial, 1);
+      const numFinal = safeParseInt(state.formData.numeroFinal, 1000);
+      const stock = safeParseInt(state.formData.stockInicial, 100);
+
+      if (numFinal <= numInicial) {
+        toast.error('Número final deve ser maior que número inicial para rifa/tombola');
+        return;
       }
 
-      // Validação específica para rifa/tombola: intervalo numérico
-      if (formData.tipo === 'rifa' || formData.tipo === 'tombola') {
-        const numInicial = parseInt(formData.numeroInicial);
-        const numFinal = parseInt(formData.numeroFinal);
-        const stock = parseInt(formData.stockInicial);
-
-        if (numFinal <= numInicial) {
-          toast.error('Número final deve ser maior que número inicial para rifa/tombola');
-          return;
-        }
-
-        const intervalo = numFinal - numInicial + 1;
-        if (intervalo < stock) {
-          toast.error('Stock inicial excede o intervalo numérico disponível');
-          return;
-        }
+      const intervalo = numFinal - numInicial + 1;
+      if (intervalo < stock) {
+        toast.error('Stock inicial excede o intervalo numérico disponível');
+        return;
       }
-
-      const jogoData = construirDadosJogo();
-      setSubmittedData(jogoData);
-      setShowTransparency(true);
-    };
-
-  const construirDadosJogo = (): JogoData => {
-    const eventoId = propEventoId;
-    if (!eventoId) {
-      throw new Error("Selecione um evento antes de criar o jogo");
-    }
-    const config: Record<string, unknown> = {
-      numeroInicial: parseInt(formData.numeroInicial) || 1,
-      numeroFinal: parseInt(formData.numeroFinal) || 1000,
-      modoSorteio: formData.modoSorteio,
-      detalhesSorteioExterno: formData.detalhesSorteioExterno,
-    };
-
-    if (formData.tipo === "rifa" || formData.tipo === "tombola") {
-      config.dataSorteio = formData.dataSorteio;
-      config.horaSorteio = formData.horaSorteio;
-      config.localSorteio = formData.localSorteio;
-      config.numeroBlocos = parseInt(formData.numeroBlocos) || 1;
-      config.permitirStripe = formData.permitirStripe;
-      config.valorPremios = formData.valorPremios ? parseFloat(formData.valorPremios) : null;
     }
 
-    if (formData.tipo === "poio_da_vaca") {
-      config.dimensoesX = parseInt(formData.dimensoesX) || 10;
-      config.dimensoesY = parseInt(formData.dimensoesY) || 10;
-      config.custoQuadrado = parseFloat(formData.custoQuadrado) || 5;
-      config.valorMercadoVaca = parseFloat(formData.valorMercadoVaca) || 1000;
-      config.valorCompraVaca = parseFloat(formData.valorCompraVaca) || 800;
-    }
+    const jogoData = buildJogoData(state.formData, state.raspadinhaPremios, state.rifaPremios, "");
+    setSubmittedData(jogoData);
+    setShowTransparency(true);
+  }, [state.formData, state.raspadinhaPremios, state.rifaPremios, setSubmittedData, setShowTransparency]);
 
-    if (formData.tipo === "raspadinha") {
-      config.titulo = formData.raspadinhaTitulo;
-      config.subtitulo = formData.raspadinhaSubtitulo;
-      config.organizacao = formData.raspadinhaOrganizacao;
-      config.premios = rashadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
-    }
+  return {
+    ...state,
+    updateFormData,
+    setRaspadinhaPremios,
+    setRifaPremios,
+    setLoading,
+    setShowTransparency,
+    setSubmittedData,
+    resetForm,
+    preco,
+    stock,
+    expectedCountMap,
+    metricsRaspadinha,
+    metricsRifa,
+    metricsPoioDaVaca,
+    getMetrics,
+    isLucrativo,
+    handlePremioRaspadinhaChange,
+    handlePremioRifaChange,
+    adicionarPremioRaspadinha,
+    adicionarPremioRifa,
+    removerPremioRaspadinha,
+    removerPremioRifa,
+    handleSubmit,
+  };
+}
 
-    let premiosData: Array<{nome: string; valorDinheiroAlternative: number; percentagem?: number; ordem: number}> = [];
-    let metrics = getMetrics();
-
-    if (formData.tipo === "raspadinha") {
-      premiosData = rashadinhaPremios
-        .filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0)
-        .map((p, idx) => ({
-          nome: p.nome,
-          valorDinheiroAlternative: p.valorDinheiroAlternative,
-          percentagem: p.percentagem,
-          ordem: idx
-        }));
-
-      config.lucroMinimoPercent = metricsRaspadinha.lucroMinimo;
-      config.custoMedioPrevisto = metricsRaspadinha.custoMedioPorBilhete;
-    } else if (formData.tipo === "rifa" || formData.tipo === "tombola") {
-      premiosData = rifaPremios
-        .filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0)
-        .map((p, idx) => ({
-          nome: p.nome,
-          valorDinheiroAlternative: p.valorDinheiroAlternative,
-          ordem: idx
-        }));
-    }
-
-    return {
-      nome: formData.nome,
-      tipo: formData.tipo,
-      descricao: formData.descricao,
-      preco: parseFloat(formData.preco) || 0,
-      stockInicial: parseInt(formData.stockInicial) || 100,
-      limitePorUsuario: parseInt(formData.limitePorUsuario) || 10,
-      eventoId,
-      configuracao: config,
-      modoSorteio: formData.modoSorteio,
-      detalhesSorteioExterno: formData.detalhesSorteioExterno,
-      premios: premiosData,
-      custoQuadrado: formData.tipo === "poio_da_vaca" ? parseFloat(formData.custoQuadrado) : undefined,
-      valorMercadoVaca: formData.tipo === "poio_da_vaca" ? parseFloat(formData.valorMercadoVaca) : undefined,
-      valorCompraVaca: formData.tipo === "poio_da_vaca" ? parseFloat(formData.valorCompraVaca) : undefined,
-      lucroMinimoPercent: formData.tipo === "raspadinha"
-        ? metricsRaspadinha.lucroMinimo
-        : (formData.tipo === "rifa" || formData.tipo === "tombola")
-          ? metricsRifa.margemLucro
-          : metricsPoioDaVaca.margemLucro,
-      receitaEsperada: formData.tipo === "raspadinha" ? metricsRaspadinha.receitaTotal :
-                       formData.tipo === "poio_da_vaca" ? metricsPoioDaVaca.receitaTotal :
-                       metricsRifa.receitaTotal,
-      lucroLiquidoPrevisto: formData.tipo === "raspadinha"
-        ? metricsRaspadinha.lucroEstimado
-        : formData.tipo === "poio_da_vaca"
-          ? metricsPoioDaVaca.lucroEstimado
-          : metricsRifa.lucroEstimado,
-    };
+// Função auxiliar para construir dados do jogo
+function buildJogoData(
+  formData: JogoFormData,
+  raspadinhaPremios: Premio[],
+  rifaPremios: Premio[],
+  eventoId: string
+): JogoData {
+  if (!eventoId) {
+    throw new Error("Selecione um evento antes de criar o jogo");
+  }
+  const config: Record<string, unknown> = {
+    numeroInicial: safeParseInt(formData.numeroInicial, 1),
+    numeroFinal: safeParseInt(formData.numeroFinal, 1000),
+    modoSorteio: formData.modoSorteio,
+    detalhesSorteioExterno: formData.detalhesSorteioExterno,
   };
 
-  const handleConfirmCreate = async () => {
+  if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) {
+    config.dataSorteio = formData.dataSorteio;
+    config.horaSorteio = formData.horaSorteio;
+    config.localSorteio = formData.localSorteio;
+    config.numeroBlocos = safeParseInt(formData.numeroBlocos, 1);
+    config.permitirStripe = formData.permitirStripe;
+    config.valorPremios = formData.valorPremios ? safeParseFloat(formData.valorPremios) : null;
+  }
+
+  if (formData.tipo === GAME_TYPES.POIO_DA_VACA) {
+    config.dimensoesX = safeParseInt(formData.dimensoesX, 10);
+    config.dimensoesY = safeParseInt(formData.dimensoesY, 10);
+    config.custoQuadrado = safeParseFloat(formData.custoQuadrado, 5);
+    config.valorMercadoVaca = safeParseFloat(formData.valorMercadoVaca, 1000);
+    config.valorCompraVaca = safeParseFloat(formData.valorCompraVaca, 800);
+  }
+
+  if (formData.tipo === GAME_TYPES.RASPADINHA) {
+    config.titulo = formData.raspadinhaTitulo;
+    config.subtitulo = formData.raspadinhaSubtitulo;
+    config.organizacao = formData.raspadinhaOrganizacao;
+    config.premios = raspadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
+  }
+
+  let premiosData: Array<{nome: string; valorDinheiroAlternative: number; percentagem?: number; ordem: number}> = [];
+  let metrics = {} as JogoMetrics;
+
+  if (formData.tipo === GAME_TYPES.RASPADINHA) {
+    premiosData = raspadinhaPremios
+      .filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0)
+      .map((p, idx) => ({
+        nome: p.nome,
+        valorDinheiroAlternative: p.valorDinheiroAlternative,
+        percentagem: p.percentagem,
+        ordem: idx
+      }));
+  } else if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) {
+    premiosData = rifaPremios
+      .filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0)
+      .map((p, idx) => ({
+        nome: p.nome,
+        valorDinheiroAlternative: p.valorDinheiroAlternative,
+        ordem: idx
+      }));
+  }
+
+  return {
+    nome: formData.nome,
+    tipo: formData.tipo,
+    descricao: formData.descricao,
+    preco: safeParseFloat(formData.preco, 0),
+    stockInicial: safeParseInt(formData.stockInicial, 100),
+    limitePorUsuario: safeParseInt(formData.limitePorUsuario, 10),
+    eventoId,
+    configuracao: config,
+    modoSorteio: formData.modoSorteio,
+    detalhesSorteioExterno: formData.detalhesSorteioExterno,
+    premios: premiosData,
+    custoQuadrado: formData.tipo === GAME_TYPES.POIO_DA_VACA ? safeParseFloat(formData.custoQuadrado) : undefined,
+    valorMercadoVaca: formData.tipo === GAME_TYPES.POIO_DA_VACA ? safeParseFloat(formData.valorMercadoVaca) : undefined,
+    valorCompraVaca: formData.tipo === GAME_TYPES.POIO_DA_VACA ? safeParseFloat(formData.valorCompraVaca) : undefined,
+  };
+}
+
+// Função auxiliar para dados de transparência
+function getTransparencyData(formData: JogoFormData, raspadinhaPremios: Premio[], rifaPremios: Premio[]) {
+  switch (formData.tipo) {
+    case GAME_TYPES.RASPADINHA:
+      return {
+        tipoJogo: GAME_TYPES.RASPADINHA,
+        nome: formData.nome || "Raspadinha",
+        preco: safeParseFloat(formData.preco, 0),
+        stock: safeParseInt(formData.stockInicial, 0),
+        premios: raspadinhaPremios
+          .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
+          .map(p => ({
+            nome: p.nome || "Prémio",
+            valor: p.valorDinheiroAlternative,
+            percentagem: p.percentagem
+          }))
+      };
+    case GAME_TYPES.RIFA:
+    case GAME_TYPES.TOMBOLA:
+      return {
+        tipoJogo: formData.tipo,
+        nome: formData.nome || (formData.tipo === GAME_TYPES.TOMBOLA ? "Tombola" : "Rifa"),
+        preco: safeParseFloat(formData.preco, 0),
+        stock: safeParseInt(formData.stockInicial, 0),
+        premios: rifaPremios
+          .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
+          .map(p => ({
+            nome: p.nome || "Prémio",
+            valor: p.valorDinheiroAlternative
+          }))
+      };
+    case GAME_TYPES.POIO_DA_VACA:
+      return {
+        tipoJogo: GAME_TYPES.POIO_DA_VACA,
+        nome: formData.nome || "Poio da Vaca",
+        preco: safeParseFloat(formData.custoQuadrado, 0),
+        premios: [{
+          nome: "Valor da Vaca",
+          valor: safeParseFloat(formData.valorCompraVaca, 0)
+        }],
+        dimensoesX: safeParseInt(formData.dimensoesX, 0),
+        dimensoesY: safeParseInt(formData.dimensoesY, 0),
+        custoQuadrado: safeParseFloat(formData.custoQuadrado, 0),
+        valorCompraVaca: safeParseFloat(formData.valorCompraVaca, 0)
+      };
+    default:
+      return {
+        tipoJogo: GAME_TYPES.RASPADINHA,
+        nome: "Jogo",
+        preco: 0,
+        stock: 0,
+        premios: []
+      };
+  }
+}
+
+export function CreateJogoModal({
+  open,
+  onOpenChange,
+  onSubmit,
+  eventoId: propEventoId,
+  initialData,
+  userRole,
+  token,
+  aldeiaId,
+  metodosPagamentoDefault
+}: CreateJogoModalProps) {
+  const {
+    formData,
+    raspadinhaPremios,
+    rifaPremios,
+    loading,
+    showTransparency,
+    submittedData,
+    updateFormData,
+    setRaspadinhaPremios,
+    setRifaPremios,
+    setLoading,
+    setShowTransparency,
+    setSubmittedData,
+    resetForm,
+    expectedCountMap,
+    metricsRaspadinha,
+    getMetrics,
+    isLucrativo,
+    handlePremioRaspadinhaChange,
+    handlePremioRifaChange,
+    adicionarPremioRaspadinha,
+    adicionarPremioRifa,
+    removerPremioRaspadinha,
+    removerPremioRifa,
+    handleSubmit,
+  } = useJogoForm(initialData);
+
+  const handleConfirmCreate = useCallback(async () => {
     if (!submittedData) return;
 
     setLoading(true);
@@ -471,67 +627,22 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
       setShowTransparency(false);
       onOpenChange(false);
       resetForm();
+    } catch (error) {
+      console.error("Erro ao criar jogo:", error);
+      toast.error("Erro ao criar jogo");
     } finally {
       setLoading(false);
     }
-  };
+  }, [submittedData, onSubmit, setLoading, setShowTransparency, onOpenChange, resetForm]);
 
-  const getTransparencyData = () => {
-    switch (formData.tipo) {
-      case "raspadinha":
-        return {
-          tipoJogo: "raspadinha",
-          nome: formData.nome || "Raspadinha",
-          preco: parseFloat(formData.preco) || 0,
-          stock: parseInt(formData.stockInicial) || 0,
-          premios: rashadinhaPremios
-            .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
-            .map(p => ({
-              nome: p.nome || "Prémio",
-              valor: p.valorDinheiroAlternative,
-              percentagem: p.percentagem
-            }))
-        };
-      case "rifa":
-      case "tombola":
-        return {
-          tipoJogo: formData.tipo,
-          nome: formData.nome || (formData.tipo === "tombola" ? "Tombola" : "Rifa"),
-          preco: parseFloat(formData.preco) || 0,
-          stock: parseInt(formData.stockInicial) || 0,
-          premios: rifaPremios
-            .filter(p => p.nome.trim() || p.valorDinheiroAlternative > 0)
-            .map(p => ({
-              nome: p.nome || "Prémio",
-              valor: p.valorDinheiroAlternative
-            }))
-        };
-      case "poio_da_vaca":
-        return {
-          tipoJogo: "poio_da_vaca",
-          nome: formData.nome || "Poio da Vaca",
-          preco: parseFloat(formData.custoQuadrado) || 0,
-          premios: [{
-            nome: "Valor da Vaca",
-            valor: parseFloat(formData.valorCompraVaca) || 0
-          }],
-          dimensoesX: parseInt(formData.dimensoesX) || 0,
-          dimensoesY: parseInt(formData.dimensoesY) || 0,
-          custoQuadrado: parseFloat(formData.custoQuadrado) || 0,
-          valorCompraVaca: parseFloat(formData.valorCompraVaca) || 0
-        };
-      default:
-        return {
-          tipoJogo: "raspadinha",
-          nome: "Jogo",
-          preco: 0,
-          stock: 0,
-          premios: []
-        };
+  // Reset form quando modal fecha
+  useEffect(() => {
+    if (!open) {
+      resetForm();
     }
-  };
+  }, [open, resetForm]);
 
-  const renderLucratividadeCard = () => {
+  const renderLucratividadeCard = useCallback(() => {
     const m = getMetrics();
 
     return (
@@ -543,63 +654,63 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
           </h4>
         </div>
 
-        {formData.tipo === "raspadinha" && (
+        {formData.tipo === GAME_TYPES.RASPADINHA && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">% Total Prémios:</span>
-              <span className={metricsRaspadinha.totalPercentagem > 50 ? "text-red-500" : ""}>
+              <span className={metricsRaspadinha.totalPercentagem! > 50 ? "text-red-500" : ""}>
                 {metricsRaspadinha.totalPercentagem}%
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro Mínimo:</span>
-              <span className={metricsRaspadinha.lucroMinimo >= 50 ? "text-green-500" : "text-red-500"}>
+              <span className={metricsRaspadinha.lucroMinimo! >= 50 ? "text-green-500" : "text-red-500"}>
                 {metricsRaspadinha.lucroMinimo}%
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Custo Médio/Bilhete:</span>
-              <span className="font-bold text-[#ff734b]">{metricsRaspadinha.custoMedioPorBilhete.toFixed(2)}€</span>
+              <span className="font-bold text-[#ff734b]">{metricsRaspadinha.custoMedioPorBilhete!.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita (100 bilhetes):</span>
-              <span className="font-bold">{metricsRaspadinha.receitaTotal.toFixed(2)}€</span>
+              <span className="font-bold">{metricsRaspadinha.receitaTotal!.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro Estimado:</span>
-              <span className={metricsRaspadinha.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
-                {metricsRaspadinha.lucroEstimado.toFixed(2)}€
+              <span className={metricsRaspadinha.lucroEstimado! >= 0 ? "text-green-500" : "text-red-500"}>
+                {metricsRaspadinha.lucroEstimado!.toFixed(2)}€
               </span>
             </div>
           </div>
         )}
 
-        {(formData.tipo === "rifa" || formData.tipo === "tombola") && (
+        {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Prémios:</span>
-              <span className="font-bold text-[#ff734b]">{metricsRifa.totalPremios.toFixed(2)}€</span>
+              <span className="font-bold text-[#ff734b]">{metricsRifa.totalPremios!.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita Total:</span>
-              <span className="font-bold">{metricsRifa.receitaTotal.toFixed(2)}€</span>
+              <span className="font-bold">{metricsRifa.receitaTotal!.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro:</span>
-              <span className={metricsRifa.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
-                {metricsRifa.lucroEstimado.toFixed(2)}€
+              <span className={metricsRifa.lucroEstimado! >= 0 ? "text-green-500" : "text-red-500"}>
+                {metricsRifa.lucroEstimado!.toFixed(2)}€
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Margem:</span>
-              <span className={metricsRifa.margemLucro >= 50 ? "text-green-500" : "text-red-500"}>
-                {metricsRifa.margemLucro.toFixed(1)}%
+              <span className={metricsRifa.margemLucro! >= 50 ? "text-green-500" : "text-red-500"}>
+                {metricsRifa.margemLucro!.toFixed(1)}%
               </span>
             </div>
           </div>
         )}
 
-        {formData.tipo === "poio_da_vaca" && (
+        {formData.tipo === GAME_TYPES.POIO_DA_VACA && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Quadrados:</span>
@@ -607,37 +718,37 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Receita Total:</span>
-              <span className="font-bold">{metricsPoioDaVaca.receitaTotal.toFixed(2)}€</span>
+              <span className="font-bold">{metricsPoioDaVaca.receitaTotal!.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Custo Vaca:</span>
-              <span className="font-bold text-[#ff734b]">{metricsPoioDaVaca.valorCompraVaca.toFixed(2)}€</span>
+              <span className="font-bold text-[#ff734b]">{metricsPoioDaVaca.valorCompraVaca!.toFixed(2)}€</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Lucro:</span>
-              <span className={metricsPoioDaVaca.lucroEstimado >= 0 ? "text-green-500" : "text-red-500"}>
-                {metricsPoioDaVaca.lucroEstimado.toFixed(2)}€
+              <span className={metricsPoioDaVaca.lucroEstimado! >= 0 ? "text-green-500" : "text-red-500"}>
+                {metricsPoioDaVaca.lucroEstimado!.toFixed(2)}€
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Margem:</span>
-              <span className={metricsPoioDaVaca.margemLucro >= 50 ? "text-green-500" : "text-red-500"}>
-                {metricsPoioDaVaca.margemLucro.toFixed(1)}%
+              <span className={metricsPoioDaVaca.margemLucro! >= 50 ? "text-green-500" : "text-red-500"}>
+                {metricsPoioDaVaca.margemLucro!.toFixed(1)}%
               </span>
             </div>
           </div>
         )}
       </div>
     );
-  };
+  }, [formData.tipo, getMetrics, metricsRaspadinha, metricsRifa, metricsPoioDaVaca]);
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto" aria-describedby="create-jogo-description">
           <DialogHeader>
             <DialogTitle>{initialData ? "Editar Jogo" : "Novo Jogo"}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="create-jogo-description">
               {initialData ? "Edite as Informações do jogo." : "Crie um novo jogo para este evento."}
             </DialogDescription>
           </DialogHeader>
@@ -648,18 +759,18 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 <Label htmlFor="tipo">Tipo de Jogo *</Label>
                 <Select
                   value={formData.tipo}
-                  onValueChange={(value: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha") =>
-                    setFormData({ ...formData, tipo: value })
+                  onValueChange={(value: GameType) =>
+                    updateFormData({ tipo: value })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="raspadinha">Raspadinha</SelectItem>
-                    <SelectItem value="rifa">Rifa</SelectItem>
-                    <SelectItem value="tombola">Tombola</SelectItem>
-                    <SelectItem value="poio_da_vaca">Poio da Vaca</SelectItem>
+                    <SelectItem value={GAME_TYPES.RASPADINHA}>Raspadinha</SelectItem>
+                    <SelectItem value={GAME_TYPES.RIFA}>Rifa</SelectItem>
+                    <SelectItem value={GAME_TYPES.TOMBOLA}>Tombola</SelectItem>
+                    <SelectItem value={GAME_TYPES.POIO_DA_VACA}>Poio da Vaca</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -670,12 +781,12 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                   id="nome"
                   placeholder="Ex: Rifa da Festa"
                   value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  onChange={(e) => updateFormData({ nome: e.target.value })}
                   required
                 />
               </div>
 
-              {(formData.tipo === "rifa" || formData.tipo === "tombola" || formData.tipo === "raspadinha") && (
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA || formData.tipo === GAME_TYPES.RASPADINHA) && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="preco">Preço (€) *</Label>
@@ -685,7 +796,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       min="0.5"
                       step="0.01"
                       value={formData.preco}
-                      onChange={(e) => setFormData({ ...formData, preco: e.target.value })}
+                      onChange={(e) => updateFormData({ preco: e.target.value })}
                       required
                     />
                   </div>
@@ -696,14 +807,14 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       type="number"
                       min="1"
                       value={formData.stockInicial}
-                      onChange={(e) => setFormData({ ...formData, stockInicial: e.target.value })}
+                      onChange={(e) => updateFormData({ stockInicial: e.target.value })}
                       required
                     />
                   </div>
                 </div>
               )}
 
-              {formData.tipo === "raspadinha" && (
+              {formData.tipo === GAME_TYPES.RASPADINHA && (
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <div className="flex items-center justify-between">
@@ -720,7 +831,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                           id="raspadinhaTitulo"
                           placeholder="Ex: RASPADINHA DA FESTA"
                           value={formData.raspadinhaTitulo}
-                          onChange={(e) => setFormData({ ...formData, raspadinhaTitulo: e.target.value })}
+                          onChange={(e) => updateFormData({ raspadinhaTitulo: e.target.value })}
                         />
                       </div>
                       <div className="grid gap-2">
@@ -729,7 +840,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                           id="raspadinhaOrganizacao"
                           placeholder="Ex: Junta de Freguesia"
                           value={formData.raspadinhaOrganizacao}
-                          onChange={(e) => setFormData({ ...formData, raspadinhaOrganizacao: e.target.value })}
+                          onChange={(e) => updateFormData({ raspadinhaOrganizacao: e.target.value })}
                         />
                       </div>
                     </div>
@@ -743,7 +854,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                       </div>
 
                       <div className="space-y-3">
-                        {rashadinhaPremios.map((premio) => (
+                        {raspadinhaPremios.map((premio) => (
                           <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
                             <div className="col-span-1 flex items-center justify-center">
                               <Trophy className="h-4 w-4 text-[#ff734b]" />
@@ -763,7 +874,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                   type="number"
                                   placeholder="Valor"
                                   value={premio.valorDinheiroAlternative || ""}
-                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "valorDinheiroAlternative", parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "valorDinheiroAlternative", safeParseFloat(e.target.value, 0))}
                                   className="h-8 text-sm pl-7"
                                 />
                               </div>
@@ -777,7 +888,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                   min="0"
                                   max="50"
                                   value={premio.percentagem || ""}
-                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => handlePremioRaspadinhaChange(premio.id, "percentagem", safeParseFloat(e.target.value, 0))}
                                   className="h-8 text-sm pl-7"
                                 />
                               </div>
@@ -788,7 +899,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                               )}
                             </div>
                             <div className="col-span-1 flex justify-center">
-                              {rashadinhaPremios.length > 1 && (
+                              {raspadinhaPremios.length > 1 && (
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -809,7 +920,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 </>
               )}
 
-              {(formData.tipo === "rifa" || formData.tipo === "tombola") && (
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) && (
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <h3 className="text-sm font-semibold">Prémios</h3>
@@ -835,7 +946,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                                 type="number"
                                 placeholder="Valor"
                                 value={premio.valorDinheiroAlternative || ""}
-                                onChange={(e) => handlePremioRifaChange(premio.id, "valorDinheiroAlternative", parseFloat(e.target.value) || 0)}
+                                onChange={(e) => handlePremioRifaChange(premio.id, "valorDinheiroAlternative", safeParseFloat(e.target.value, 0))}
                                 className="h-8 text-sm pl-7"
                               />
                             </div>
@@ -862,7 +973,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                 </>
               )}
 
-              {formData.tipo === "poio_da_vaca" && (
+              {formData.tipo === GAME_TYPES.POIO_DA_VACA && (
                 <div className="border-t pt-4 mt-2 space-y-4">
                   <h3 className="text-sm font-semibold">Configuração do Campo</h3>
 
@@ -875,7 +986,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         min="2"
                         max="20"
                         value={formData.dimensoesX}
-                        onChange={(e) => setFormData({ ...formData, dimensoesX: e.target.value })}
+                        onChange={(e) => updateFormData({ dimensoesX: e.target.value })}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -886,7 +997,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         min="2"
                         max="20"
                         value={formData.dimensoesY}
-                        onChange={(e) => setFormData({ ...formData, dimensoesY: e.target.value })}
+                        onChange={(e) => updateFormData({ dimensoesY: e.target.value })}
                       />
                     </div>
                   </div>
@@ -900,7 +1011,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         min="1"
                         step="0.5"
                         value={formData.custoQuadrado}
-                        onChange={(e) => setFormData({ ...formData, custoQuadrado: e.target.value })}
+                        onChange={(e) => updateFormData({ custoQuadrado: e.target.value })}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -910,20 +1021,20 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
                         type="number"
                         min="0"
                         value={formData.valorCompraVaca}
-                        onChange={(e) => setFormData({ ...formData, valorCompraVaca: e.target.value })}
+                        onChange={(e) => updateFormData({ valorCompraVaca: e.target.value })}
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              {formData.tipo !== "poio_da_vaca" && (
+              {formData.tipo !== GAME_TYPES.POIO_DA_VACA && (
                 <div className="border-t pt-4 mt-2">
                   {renderLucratividadeCard()}
                 </div>
               )}
 
-              {formData.tipo === "poio_da_vaca" && (
+              {formData.tipo === GAME_TYPES.POIO_DA_VACA && (
                 <div className="border-t pt-4 mt-2">
                   {renderLucratividadeCard()}
                 </div>
@@ -950,7 +1061,7 @@ export function CreateJogoModal({ open, onOpenChange, onSubmit, eventoId: propEv
         open={showTransparency}
         onOpenChange={setShowTransparency}
         onConfirm={handleConfirmCreate}
-        data={getTransparencyData()}
+        data={getTransparencyData(formData, raspadinhaPremios, rifaPremios)}
         loading={loading}
       />
     </>

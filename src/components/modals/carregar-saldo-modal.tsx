@@ -1,13 +1,28 @@
 "use client";
 
-import { useState, useReducer, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useReducer, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Euro, Wallet, Phone, Building2, AlertTriangle, Check, Copy, Mail, MessageCircle, User, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+
+// Constants for payment methods to avoid magic strings
+const PAYMENT_METHODS = {
+  DINHEIRO: 'dinheiro',
+  MBWAY: 'mbway',
+  TRANSFERENCIA: 'transferencia',
+  VENDEDOR: 'vendedor'
+} as const;
+
+type PaymentMethod = typeof PAYMENT_METHODS[keyof typeof PAYMENT_METHODS];
+
+// Safe parsing helpers
+const safeParseFloat = (val: string, fallback: number = 0): number => {
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? fallback : parsed;
+};
 
 interface CarregarSaldoModalProps {
   open: boolean;
@@ -20,7 +35,6 @@ interface CarregarSaldoModalProps {
 
 interface User {
   id: string;
-  // Add other user properties if needed
 }
 
 interface DadosConta {
@@ -47,54 +61,39 @@ interface PedidoResult {
   descricao: string;
 }
 
-interface State {
-  loading: boolean;
-  saldo: number;
-  user: User | null;
-  dadosConta: DadosConta;
-  metodoCarregamento: "dinheiro" | "mbway" | "transferencia" | "vendedor";
-  valor: string;
-  descricao: string;
-  comprovativo: string | null;
-  carregamentoResult: CarregamentoResult | null;
-  vendedores: Vendedor[];
-  selectedVendedor: Vendedor | null;
-  vendedorDropdownOpen: boolean;
-  pedidoResult: PedidoResult | null;
-}
-
+// Reducer actions
 type Action =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_SALDO'; payload: number }
   | { type: 'SET_USER'; payload: User | null }
   | { type: 'SET_DADOS_CONTA'; payload: DadosConta }
-  | { type: 'SET_METODO'; payload: "dinheiro" | "mbway" | "transferencia" | "vendedor" }
+  | { type: 'SET_METODO'; payload: PaymentMethod }
   | { type: 'SET_VALOR'; payload: string }
   | { type: 'SET_DESCRICAO'; payload: string }
-  | { type: 'SET_COMPROVATIVO'; payload: string | null }
   | { type: 'SET_CARREGAMENTO_RESULT'; payload: CarregamentoResult | null }
   | { type: 'SET_VENDEDORES'; payload: Vendedor[] }
   | { type: 'SET_SELECTED_VENDEDOR'; payload: Vendedor | null }
   | { type: 'SET_VENDEDOR_DROPDOWN_OPEN'; payload: boolean }
   | { type: 'SET_PEDIDO_RESULT'; payload: PedidoResult | null };
 
-const initialState: State = {
+// Initial state
+const initialState = {
   loading: false,
   saldo: 0,
-  user: null,
-  dadosConta: {},
-  metodoCarregamento: "dinheiro",
+  user: null as User | null,
+  dadosConta: {} as DadosConta,
+  metodoCarregamento: PAYMENT_METHODS.DINHEIRO as PaymentMethod,
   valor: "",
   descricao: "",
-  comprovativo: null,
-  carregamentoResult: null,
-  vendedores: [],
-  selectedVendedor: null,
+  carregamentoResult: null as CarregamentoResult | null,
+  vendedores: [] as Vendedor[],
+  selectedVendedor: null as Vendedor | null,
   vendedorDropdownOpen: false,
-  pedidoResult: null,
+  pedidoResult: null as PedidoResult | null,
 };
 
-function reducer(state: State, action: Action): State {
+// Reducer
+function reducer(state: typeof initialState, action: Action): typeof initialState {
   switch (action.type) {
     case 'SET_LOADING': return { ...state, loading: action.payload };
     case 'SET_SALDO': return { ...state, saldo: action.payload };
@@ -103,7 +102,6 @@ function reducer(state: State, action: Action): State {
     case 'SET_METODO': return { ...state, metodoCarregamento: action.payload };
     case 'SET_VALOR': return { ...state, valor: action.payload };
     case 'SET_DESCRICAO': return { ...state, descricao: action.payload };
-    case 'SET_COMPROVATIVO': return { ...state, comprovativo: action.payload };
     case 'SET_CARREGAMENTO_RESULT': return { ...state, carregamentoResult: action.payload };
     case 'SET_VENDEDORES': return { ...state, vendedores: action.payload };
     case 'SET_SELECTED_VENDEDOR': return { ...state, selectedVendedor: action.payload };
@@ -113,8 +111,10 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+// Hook customizado para gerenciar saldo
 function useSaldo(userId: string) {
   const [saldo, setSaldo] = useState(0);
+
   useEffect(() => {
     const fetchSaldo = async () => {
       const token = localStorage.getItem("token");
@@ -124,7 +124,7 @@ function useSaldo(userId: string) {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        if (data.saldo !== undefined) {
+        if (typeof data.saldo === 'number') {
           setSaldo(data.saldo);
         }
       } catch (e) {
@@ -133,16 +133,22 @@ function useSaldo(userId: string) {
     };
     fetchSaldo();
   }, [userId]);
-  return saldo;
+
+  return { saldo, setSaldo };
 }
 
+// Hook customizado para dados da conta
 function useDadosConta(aldeiaId?: string) {
   const [dadosConta, setDadosConta] = useState<DadosConta>({});
+
   useEffect(() => {
     if (!aldeiaId) return;
     const fetchDadosConta = async () => {
       try {
         const res = await fetch(`/api/aldeias/${aldeiaId}`);
+        if (!res.ok) {
+          throw new Error("Erro ao buscar dados da conta");
+        }
         const data = await res.json();
         if (data.data) {
           setDadosConta({
@@ -157,16 +163,22 @@ function useDadosConta(aldeiaId?: string) {
     };
     fetchDadosConta();
   }, [aldeiaId]);
+
   return dadosConta;
 }
 
+// Hook customizado para vendedores
 function useVendedores(open: boolean, aldeiaId?: string) {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+
   useEffect(() => {
     if (!open || !aldeiaId) return;
     const fetchVendedores = async () => {
       try {
         const res = await fetch(`/api/vendedores?aldeiaId=${aldeiaId}`);
+        if (!res.ok) {
+          throw new Error("Erro ao buscar vendedores");
+        }
         const data = await res.json();
         if (data.data) {
           setVendedores(data.data);
@@ -177,30 +189,40 @@ function useVendedores(open: boolean, aldeiaId?: string) {
     };
     fetchVendedores();
   }, [open, aldeiaId]);
+
   return vendedores;
 }
 
-export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, eventoId, eventoNome }: CarregarSaldoModalProps) {
-  const router = useRouter();
+export function CarregarSaldoModal({
+  open,
+  onOpenChange,
+  aldeiaId,
+  aldeiaNome,
+  eventoId,
+  eventoNome
+}: CarregarSaldoModalProps) {
   const [state, dispatch] = useReducer(reducer, initialState);
-
   const [user, setUser] = useState<User | null>(null);
-  const saldo = useSaldo(user?.id || "");
-  const dadosConta = useDadosConta(aldeiaId);
-   const vendedores = useVendedores(open, aldeiaId);
 
+  const { saldo, setSaldo } = useSaldo(user?.id || "");
+  const dadosConta = useDadosConta(aldeiaId);
+  const vendedores = useVendedores(open, aldeiaId);
+
+  // Efeito para inicializar dados do usuário
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
-        const userData: User = JSON.parse(storedUser);
+        const userData = JSON.parse(storedUser);
         setUser(userData);
-      } catch (e) {
-        console.error("Erro ao parsear user:", e);
+      } catch (error) {
+        console.error("Erro ao parsear dados do usuário:", error);
+        toast.error("Erro ao carregar dados do usuário");
       }
     }
   }, []);
 
+  // Atualizar estado com dados externos
   useEffect(() => {
     dispatch({ type: 'SET_SALDO', payload: saldo });
   }, [saldo]);
@@ -213,9 +235,9 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
     dispatch({ type: 'SET_VENDEDORES', payload: vendedores });
   }, [vendedores]);
 
-  const handleCarregar = async () => {
-    const valorNum = parseFloat(state.valor);
-    if (isNaN(valorNum) || valorNum <= 0) {
+  const handleCarregar = useCallback(async () => {
+    const valorNum = safeParseFloat(state.valor);
+    if (valorNum <= 0) {
       toast.error("Insira um valor válido");
       return;
     }
@@ -226,7 +248,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
     }
 
     // Para pedido ao vendedor, validar seleção
-    if (state.metodoCarregamento === "vendedor") {
+    if (state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR) {
       if (!state.selectedVendedor) {
         toast.error("Selecione um vendedor");
         return;
@@ -234,6 +256,10 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
         const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Sessão expirada");
+          return;
+        }
         const res = await fetch("/api/wallet/carregar", {
           method: "POST",
           headers: {
@@ -242,7 +268,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
           },
           body: JSON.stringify({
             valor: valorNum,
-            metodoCarregamento: "vendedor",
+            metodoCarregamento: PAYMENT_METHODS.VENDEDOR,
             vendedorId: state.selectedVendedor.id,
             descricao: state.descricao || `Pedido de carregamento para ${eventoNome || aldeiaNome}`,
             eventoId,
@@ -279,6 +305,10 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Sessão expirada");
+        return;
+      }
       const res = await fetch("/api/wallet/carregar", {
         method: "POST",
         headers: {
@@ -305,7 +335,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
       }
 
       dispatch({ type: 'SET_CARREGAMENTO_RESULT', payload: data.data });
-      dispatch({ type: 'SET_SALDO', payload: data.data.saldoAtual });
+      setSaldo(data.data.saldoAtual);
       toast.success("Saldo carregado com sucesso!");
 
     } catch (error) {
@@ -314,15 +344,46 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
+  }, [state, eventoNome, aldeiaNome, eventoId, aldeiaId, setSaldo]);
 
-  const copiarIBAN = () => {
-    if (state.dadosConta.iban) {
+  const copiarIBAN = useCallback(() => {
+    if (state.dadosConta.iban && navigator.clipboard) {
       navigator.clipboard.writeText(state.dadosConta.iban);
       toast.success("IBAN copiado!");
+    } else {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = state.dadosConta.iban || "";
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast.success("IBAN copiado!");
     }
-  };
+  }, [state.dadosConta.iban]);
 
+  const handleMetodoChange = useCallback((metodo: PaymentMethod) => {
+    dispatch({ type: 'SET_METODO', payload: metodo });
+  }, []);
+
+  const handleValorChange = useCallback((valor: string) => {
+    dispatch({ type: 'SET_VALOR', payload: valor });
+  }, []);
+
+  const handleDescricaoChange = useCallback((descricao: string) => {
+    dispatch({ type: 'SET_DESCRICAO', payload: descricao });
+  }, []);
+
+  const toggleVendedorDropdown = useCallback(() => {
+    dispatch({ type: 'SET_VENDEDOR_DROPDOWN_OPEN', payload: !state.vendedorDropdownOpen });
+  }, [state.vendedorDropdownOpen]);
+
+  const handleVendedorSelect = useCallback((vendedor: Vendedor) => {
+    dispatch({ type: 'SET_SELECTED_VENDEDOR', payload: vendedor });
+    dispatch({ type: 'SET_VENDEDOR_DROPDOWN_OPEN', payload: false });
+  }, []);
+
+  // Renderização condicional baseada no resultado
   if (state.pedidoResult) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -393,8 +454,7 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
                 Importante
               </p>
               <p className="text-xs text-accent/80 mt-1">
-                Todos os administradores foram notificados. O regis
-                to detalhado foi guardado no sistema.
+                Todos os administradores foram notificados. O registro detalhado foi guardado no sistema.
               </p>
             </div>
 
@@ -424,12 +484,13 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 overflow-hidden" aria-describedby="carregar-saldo-description">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="font-headline text-xl flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-primary" />
+            <Wallet className="w-5 h-5 text-primary" aria-hidden="true" />
             Carregar Saldo
           </DialogTitle>
+          <p id="carregar-saldo-description" className="sr-only">Modal para carregar saldo usando diferentes métodos de pagamento</p>
         </DialogHeader>
         <div className="px-6 pb-6 space-y-4 overflow-y-auto max-h-[60vh] pr-2">
           <div className="bg-surface-container-high rounded-xl p-4 text-center">
@@ -438,36 +499,37 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
           </div>
 
           <div className="space-y-2">
-            <Label>Valor a Carregar</Label>
+            <Label htmlFor="valor">Valor a Carregar *</Label>
             <div className="relative">
               <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" aria-hidden="true" />
               <Input
+                id="valor"
                 type="number"
                 min="1"
                 step="0.50"
                 value={state.valor}
-                onChange={(e) => dispatch({ type: 'SET_VALOR', payload: e.target.value })}
+                onChange={(e) => handleValorChange(e.target.value)}
                 placeholder="0.00"
                 className="pl-10 text-xl"
-                aria-label="Valor a carregar"
+                aria-describedby="valor-error"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Método de Recebimento</Label>
-            <div className="grid gap-2">
+            <Label>Método de Recebimento *</Label>
+            <div className="grid gap-2" role="radiogroup" aria-label="Selecionar método de pagamento">
               <button
                 type="button"
-                onClick={() => dispatch({ type: 'SET_METODO', payload: "dinheiro" })}
+                onClick={() => handleMetodoChange(PAYMENT_METHODS.DINHEIRO)}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === "dinheiro"
+                  state.metodoCarregamento === PAYMENT_METHODS.DINHEIRO
                     ? "bg-primary/20 text-green-400 border border-green-600/30"
                     : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
                 role="radio"
-                aria-checked={state.metodoCarregamento === "dinheiro"}
-                aria-label="Método Dinheiro"
+                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.DINHEIRO}
+                aria-label="Método Dinheiro - Recebido presencialmente"
               >
                 <Euro className="w-5 h-5" aria-hidden="true" />
                 <div className="text-left">
@@ -478,15 +540,15 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
 
               <button
                 type="button"
-                onClick={() => dispatch({ type: 'SET_METODO', payload: "mbway" })}
+                onClick={() => handleMetodoChange(PAYMENT_METHODS.MBWAY)}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === "mbway"
+                  state.metodoCarregamento === PAYMENT_METHODS.MBWAY
                     ? "bg-purple-600/20 text-primary border border-purple-600/30"
                     : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
                 role="radio"
-                aria-checked={state.metodoCarregamento === "mbway"}
-                aria-label="Método MBWay"
+                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.MBWAY}
+                aria-label="Método MBWay - Recebido via MBWay"
               >
                 <Phone className="w-5 h-5" aria-hidden="true" />
                 <div className="text-left">
@@ -497,15 +559,15 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
 
               <button
                 type="button"
-                onClick={() => dispatch({ type: 'SET_METODO', payload: "transferencia" })}
+                onClick={() => handleMetodoChange(PAYMENT_METHODS.TRANSFERENCIA)}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === "transferencia"
+                  state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA
                     ? "bg-blue-600/20 text-primary border border-blue-600/30"
                     : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
                 role="radio"
-                aria-checked={state.metodoCarregamento === "transferencia"}
-                aria-label="Método Transferência"
+                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA}
+                aria-label="Método Transferência - Transferência bancária"
               >
                 <Building2 className="w-5 h-5" aria-hidden="true" />
                 <div className="text-left">
@@ -516,15 +578,15 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
 
               <button
                 type="button"
-                onClick={() => dispatch({ type: 'SET_METODO', payload: "vendedor" })}
+                onClick={() => handleMetodoChange(PAYMENT_METHODS.VENDEDOR)}
                 className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === "vendedor"
+                  state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR
                     ? "bg-accent/20 text-orange-400 border border-orange-600/30"
                     : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                 }`}
                 role="radio"
-                aria-checked={state.metodoCarregamento === "vendedor"}
-                aria-label="Método Pedir ao Vendedor"
+                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR}
+                aria-label="Método Pedir ao Vendedor - O vendedor traz o dinheiro"
               >
                 <User className="w-5 h-5" aria-hidden="true" />
                 <div className="text-left">
@@ -535,31 +597,29 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
             </div>
           </div>
 
-          {state.metodoCarregamento === "vendedor" && (
+          {state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR && (
             <div className="space-y-2">
-              <Label>Escolher Vendedor</Label>
+              <Label htmlFor="vendedor-select">Escolher Vendedor *</Label>
               <div className="relative">
                 <button
+                  id="vendedor-select"
                   type="button"
-                  onClick={() => dispatch({ type: 'SET_VENDEDOR_DROPDOWN_OPEN', payload: !state.vendedorDropdownOpen })}
+                  onClick={toggleVendedorDropdown}
                   className="w-full p-4 rounded-xl bg-surface-container-low text-left flex items-center justify-between"
                   aria-expanded={state.vendedorDropdownOpen}
                   aria-haspopup="listbox"
-                  aria-label="Selecionar vendedor"
+                  aria-describedby="vendedor-error"
                 >
                   <span>{state.selectedVendedor?.nome || "Selecione um vendedor"}</span>
                   <ChevronDown className="w-5 h-5" aria-hidden="true" />
                 </button>
                 {state.vendedorDropdownOpen && (
-                  <div className="absolute z-10 w-full bg-surface-container-high border border-outline-variant/10 rounded-xl mt-1 max-h-48 overflow-y-auto" role="listbox">
+                  <div className="absolute z-10 w-full bg-surface-container-high border border-outline-variant/10 rounded-xl mt-1 max-h-48 overflow-y-auto" role="listbox" aria-labelledby="vendedor-select">
                     {state.vendedores.map((v) => (
                       <button
                         key={v.id}
                         type="button"
-                        onClick={() => {
-                          dispatch({ type: 'SET_SELECTED_VENDEDOR', payload: v });
-                          dispatch({ type: 'SET_VENDEDOR_DROPDOWN_OPEN', payload: false });
-                        }}
+                        onClick={() => handleVendedorSelect(v)}
                         className="w-full p-3 text-left hover:bg-surface-container-low flex items-center gap-2"
                         role="option"
                         aria-selected={state.selectedVendedor?.id === v.id}
@@ -570,16 +630,21 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
                     ))}
                   </div>
                 )}
+                {state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR && !state.selectedVendedor && (
+                  <p id="vendedor-error" className="text-sm text-red-500 mt-1" role="alert">
+                    Selecione um vendedor
+                  </p>
+                )}
               </div>
             </div>
           )}
 
-          {state.metodoCarregamento === "transferencia" && state.dadosConta.iban && (
+          {state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA && state.dadosConta.iban && (
             <div className="bg-secondary/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
               <p className="text-xs text-primary font-medium">Dados para Transferência:</p>
               <div className="flex items-center justify-between bg-surface-container-low p-2 rounded-lg">
                 <span className="text-xs font-mono">{state.dadosConta.iban}</span>
-                <button onClick={copiarIBAN} className="p-1 hover:bg-surface-container-high rounded" aria-label="Copiar IBAN">
+                <button onClick={copiarIBAN} className="p-1 hover:bg-surface-container-high rounded" aria-label="Copiar IBAN para área de transferência">
                   <Copy className="w-4 h-4 text-primary" aria-hidden="true" />
                 </button>
               </div>
@@ -590,18 +655,18 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
           )}
 
           <div className="space-y-2">
-            <Label>Descrição (opcional)</Label>
+            <Label htmlFor="descricao">Descrição (opcional)</Label>
             <Input
+              id="descricao"
               value={state.descricao}
-              onChange={(e) => dispatch({ type: 'SET_DESCRICAO', payload: e.target.value })}
+              onChange={(e) => handleDescricaoChange(e.target.value)}
               placeholder="Ex: Venda na festa de São João"
-              aria-label="Descrição opcional"
             />
           </div>
 
           <div className="bg-destructive/10 border border-red-500/20 rounded-xl p-3">
             <p className="text-xs text-red-400 font-medium flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className="w-4 h-4" aria-hidden="true" />
               Transparência Obrigatória
             </p>
             <p className="text-xs text-red-400/80 mt-1">
@@ -611,11 +676,11 @@ export function CarregarSaldoModal({ open, onOpenChange, aldeiaId, aldeiaNome, e
 
           <Button
             onClick={handleCarregar}
-            disabled={state.loading || !state.valor || parseFloat(state.valor) <= 0}
+            disabled={state.loading || !state.valor || safeParseFloat(state.valor) <= 0}
             className="w-full py-6 sticky bottom-0"
-            aria-label={state.metodoCarregamento === "vendedor" ? `Pedir ao vendedor ${state.valor || "0"} euros` : `Confirmar carregamento de ${state.valor || "0"} euros`}
+            aria-label={state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR ? `Pedir ao vendedor ${state.valor || "0"} euros` : `Confirmar carregamento de ${state.valor || "0"} euros`}
           >
-            {state.loading ? "A processar..." : state.metodoCarregamento === "vendedor" ? `Pedir ao Vendedor (${state.valor || "0"}€)` : `Confirmar Carregamento de €${state.valor || "0"}`}
+            {state.loading ? "A processar..." : state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR ? `Pedir ao Vendedor (${state.valor || "0"}€)` : `Confirmar Carregamento de €${state.valor || "0"}`}
           </Button>
         </div>
       </DialogContent>
