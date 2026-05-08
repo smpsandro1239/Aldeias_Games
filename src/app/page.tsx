@@ -318,8 +318,8 @@ export default function Home() {
                 <Input
                   id="nome"
                   placeholder="O teu nome"
-                  value={registerForm.nome}
-                  onChange={(e) => setRegisterForm({ ...registerForm, nome: e.target.value })}
+                  value={formState.register.nome}
+                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'nome', value: e.target.value })}
                   required
                   className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
@@ -330,8 +330,8 @@ export default function Home() {
                   id="register-email"
                   type="email"
                   placeholder="teu@email.com"
-                  value={registerForm.email}
-                  onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                  value={formState.register.email}
+                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'email', value: e.target.value })}
                   required
                   className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
@@ -342,8 +342,8 @@ export default function Home() {
                   id="register-password"
                   type="password"
                   placeholder="Mínimo 8 caracteres"
-                  value={registerForm.password}
-                  onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                  value={formState.register.password}
+                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'password', value: e.target.value })}
                   required
                   minLength={8}
                   className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
@@ -355,8 +355,8 @@ export default function Home() {
                   id="telefone"
                   type="tel"
                   placeholder="+351 9XX XXX XXX"
-                  value={registerForm.telefone}
-                  onChange={(e) => setRegisterForm({ ...registerForm, telefone: e.target.value })}
+                  value={formState.register.telefone}
+                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'telefone', value: e.target.value })}
                   className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
               </div>
