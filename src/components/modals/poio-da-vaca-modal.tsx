@@ -34,16 +34,7 @@ const SELECTION_STATES = {
 
 type SelectionState = typeof SELECTION_STATES[keyof typeof SELECTION_STATES];
 
-// Haptic feedback helper
-const hapticFeedback = useCallback((duration: number = 10): void => {
-  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-    try {
-      navigator.vibrate?.(duration);
-    } catch {
-      // Ignorar erros de haptic feedback
-    }
-  }
-}, []);
+
 
 interface NumeroCoordenada {
   letra: string;
@@ -122,6 +113,17 @@ export function PoioDaVacaModal({
   onSaldoPayment,
 }: PoioDaVacaModalProps) {
   const [state, dispatch] = useReducer(poioDaVacaReducer, getInitialState(letras));
+
+  // Haptic feedback helper
+  const hapticFeedback = useCallback((duration: number = 10): void => {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate?.(duration);
+      } catch {
+        // Ignorar erros de haptic feedback
+      }
+    }
+  }, []);
 
   // Hook customizado para verificar estado dos números
   const useNumeroState = useCallback((letra: string, numero: number): SelectionState => {

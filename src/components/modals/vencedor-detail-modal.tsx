@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VerificarHashModal } from "@/components/verificar-hash-modal";
 import {
   User,
   Trophy,
@@ -207,6 +208,8 @@ export function VencedorDetailModal({
   onEntregaPremio,
 }: VencedorDetailModalProps) {
   const [activeTab, setActiveTab] = useState("perfil");
+  const [verificarHashOpen, setVerificarHashOpen] = useState(false);
+  const [hashVerificado, setHashVerificado] = useState(false);
 
   const userId = vencedor?.user?.id || vencedor?.dadosVencedor?.userId;
   const { userData, loading: loadingUser } = useUserData(userId, token, open && (activeTab === "perfil" || activeTab === "estatisticas"));
@@ -234,9 +237,19 @@ export function VencedorDetailModal({
     if (vencedor) onConvertPrize(vencedor);
   }, [vencedor, onConvertPrize]);
 
+  const handleVerificacaoSucesso = useCallback(() => {
+    setHashVerificado(true);
+    setVerificarHashOpen(false);
+  }, []);
+
   const handleEntregaPremio = useCallback(() => {
+    if (!hashVerificado) {
+      // Abrir modal de verificação se hash não foi verificado
+      setVerificarHashOpen(true);
+      return;
+    }
     if (vencedor) onEntregaPremio(vencedor);
-  }, [vencedor, onEntregaPremio]);
+  }, [vencedor, onEntregaPremio, hashVerificado]);
 
   if (!vencedor) return null;
 
@@ -439,31 +452,69 @@ export function VencedorDetailModal({
             </TabsContent>
           </Tabs>
 
-          {/* Ações */}
+          {/* Status de Verificação */}
           {!vencedor.premioEntregue && (
-            <div className="flex gap-2 mt-4 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={handleConvertPrize}
-                aria-label="Converter prémio em saldo"
-              >
-                <DollarSign className="w-4 h-4 mr-2" aria-hidden="true" />
-                Converter em Saldo
-              </Button>
-              <Button
-                type="button"
-                className="flex-1"
-                onClick={handleEntregaPremio}
-                aria-label="Marcar prémio como entregue"
-              >
-                <Award className="w-4 h-4 mr-2" aria-hidden="true" />
-                Entregar Prémio
-              </Button>
+            <div className="mt-4 pt-4 border-t space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${hashVerificado ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className="text-sm font-medium">
+                    Verificação: {hashVerificado ? '✅ Validada' : '❌ Pendente'}
+                  </span>
+                </div>
+                {!hashVerificado && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setVerificarHashOpen(true)}
+                  >
+                    Verificar Hash
+                  </Button>
+                )}
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <strong>⚠️ Obrigatório:</strong> A entrega de prêmios só pode ser realizada após verificação do hash de autenticidade.
+                  {!hashVerificado && " Clique em 'Verificar Hash' para validar a participação."}
+                </p>
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleConvertPrize}
+                  aria-label="Converter prémio em saldo"
+                >
+                  <DollarSign className="w-4 h-4 mr-2" aria-hidden="true" />
+                  Converter em Saldo
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={handleEntregaPremio}
+                  disabled={!hashVerificado}
+                  aria-label="Marcar prémio como entregue"
+                >
+                  <Award className="w-4 h-4 mr-2" aria-hidden="true" />
+                  {hashVerificado ? 'Entregar Prémio' : 'Verificar Primeiro'}
+                </Button>
+              </div>
             </div>
           )}
         </div>
+
+        {/* Modal de Verificação de Hash */}
+        <VerificarHashModal
+          open={verificarHashOpen}
+          onOpenChange={setVerificarHashOpen}
+          token={token}
+        />
+
       </DialogContent>
     </Dialog>
   );

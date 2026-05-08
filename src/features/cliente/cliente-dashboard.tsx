@@ -31,6 +31,7 @@ import { WalletCard } from "@/components/wallet/wallet-card";
 import { GameList } from "@/components/games/game-list";
 import { AldeiaWizardModal } from "@/components/modals/aldeia-wizard-modal";
 import { LeaderboardList } from "@/components/leaderboard/leaderboard-list";
+import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 
 interface ClienteDashboardProps {
   token: string;
@@ -114,6 +115,10 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   // Celebração de vitória
   const [victoryOpen, setVictoryOpen] = useState(false);
   const [victoryPremio, setVictoryPremio] = useState<any>(null);
+
+  // Modal de detalhes da participação
+  const [detalhesParticipacaoOpen, setDetalhesParticipacaoOpen] = useState(false);
+  const [participacaoDetalhes, setParticipacaoDetalhes] = useState<any>(null);
 
   // Paginação e busca
   const [searchQuery, setSearchQuery] = useState("");
@@ -606,16 +611,16 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                                Prémios
                              </Button>
                            )}
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             className="shrink-0"
-                             title="Ver detalhes da participação"
-                             onClick={() => {
-                               // Pode expandir detalhes ou mostrar modal
-                               toast.info(`Participação #${participacao.id.slice(0, 8)}... - ${formatCurrency(participacao.valorPago)}`);
-                             }}
-                           >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0"
+                              title="Ver detalhes da participação"
+                              onClick={() => {
+                                setParticipacaoDetalhes(participacao);
+                                setDetalhesParticipacaoOpen(true);
+                              }}
+                            >
                              <Eye className="h-4 w-4" />
                            </Button>
                          </div>
@@ -859,6 +864,14 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           tipoJogo={victoryPremio.tipoJogo}
         />
       )}
+
+      {/* Modal de Detalhes da Participação */}
+      <ParticipacaoConfirmacaoModal
+        open={detalhesParticipacaoOpen}
+        onOpenChange={setDetalhesParticipacaoOpen}
+        participacao={participacaoDetalhes}
+      />
+
     </div>
   );
 }

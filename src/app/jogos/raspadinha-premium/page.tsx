@@ -11,6 +11,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { PaymentSelector } from "@/components/payment";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 
 function RaspadinhaLoading() {
   return (
@@ -108,6 +109,8 @@ function RaspadinhaPremiumContent() {
   const { playScratch } = useScratchSound();
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [confirmacaoModalOpen, setConfirmacaoModalOpen] = useState(false);
+  const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
   const [pagamentoPendente, setPagamentoPendente] = useState<any>(null);
   const [participante, setParticipante] = useState({
     nome: "",
@@ -336,19 +339,28 @@ function RaspadinhaPremiumContent() {
         body: JSON.stringify(payload)
       });
 
-      if (response.ok) {
+        if (response.ok) {
         const data = await response.json();
         const participacao = data.participacao;
 
         if (participacao?.id && participacao?.grid) {
           setParticipacaoId(participacao.id);
           initSlotsFromGrid(participacao.grid);
-          
+
           sessionStorage.setItem(`raspadinha_${jogoId}`, JSON.stringify({
             participacaoId: participacao.id,
             grid: participacao.grid,
             jogoId,
           }));
+
+          // Definir a participação criada para mostrar no modal
+          setParticipacaoCriada({
+            ...participacao,
+            jogo: jogo,
+            valorPago: jogo.preco,
+            hashRaspe: participacao.hashRaspe || participacao.hashParticipacao
+          });
+          setConfirmacaoModalOpen(true);
 
           setPaymentModalOpen(false);
           setShowPurchaseAnimation(true);
@@ -359,12 +371,14 @@ function RaspadinhaPremiumContent() {
 
           if (participante.notificacao === "whatsapp" && participante.telefone) {
             const telLimpo = participante.telefone.replace(/\D/g, "");
-            const msg = encodeURIComponent(`🎉 Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\nObrigado por participar!`);
+            const hash = participacao.hashRaspe || participacao.hashParticipacao;
+            const msg = encodeURIComponent(`🎉 Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nCódigo de Verificação: ${hash ? hash.substring(0, 16) + '...' : 'Consulte seu perfil'}\n\nObrigado por participar!`);
             const whatsappUrl = `https://wa.me/351${telLimpo}?text=${msg}`;
             window.open(whatsappUrl, "_blank");
           } else if (participante.notificacao === "email" && participante.email) {
+            const hash = participacao.hashRaspe || participacao.hashParticipacao;
             const subject = encodeURIComponent(`Raspadinha Registada - ${jogo.nome}`);
-            const body = encodeURIComponent(`🎉 Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nObrigado por participar!\n\nAldeias Games`);
+            const body = encodeURIComponent(`🎉 Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nCódigo de Verificação: ${hash || 'Consulte seu perfil'}\n\nObrigado por participar!\n\nAldeias Games`);
             window.open(`mailto:${participante.email}?subject=${subject}&body=${body}`);
           }
           
@@ -1249,6 +1263,14 @@ function RaspadinhaPremiumContent() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Confirmação de Participação */}
+      <ParticipacaoConfirmacaoModal
+        open={confirmacaoModalOpen}
+        onOpenChange={setConfirmacaoModalOpen}
+        participacao={participacaoCriada}
+      />
+
     </div>
   );
 }
