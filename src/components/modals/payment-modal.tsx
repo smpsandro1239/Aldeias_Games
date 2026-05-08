@@ -167,7 +167,8 @@ export function PaymentModal({
     dispatch({ type: 'SET_TELEFONE', payload: value });
   }, []);
 
-  const handleMetodoChange = useCallback((metodo: PaymentMethod) => {
+  const handleMetodoChange = useCallback((value: string) => {
+    const metodo = value as PaymentMethod;
     dispatch({ type: 'SET_METODO', payload: metodo });
   }, []);
 

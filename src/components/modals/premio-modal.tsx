@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useReducer } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -199,8 +199,6 @@ export function PremioModal({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(premioData),
-          jogoId,
-        }),
       });
 
       if (res.ok) {
@@ -217,7 +215,7 @@ export function PremioModal({
     } finally {
       setSaving(false);
     }
-  };
+  }, [formData, validateForm, premio?.id, token, onSave, onOpenChange, aldeiaId, jogoId]);
 
   const handleDelete = useCallback(async () => {
     if (!premio?.id) return;

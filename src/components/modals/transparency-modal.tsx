@@ -88,7 +88,7 @@ export function TransparencyModal({
     if (data.tipoJogo === GAME_TYPES.RASPADINHA && data.stock) {
       receitaTotal = data.preco * data.stock;
       data.premios.forEach(p => {
-        if (p.percentagem) {
+        if (p.percentagem && data.stock) {
           custoTotalPremios += p.valor * (p.percentagem / 100) * data.stock;
           percentagemTotal += p.percentagem;
         }
@@ -122,7 +122,7 @@ export function TransparencyModal({
     };
   }, [data]);
   
-  const gerarHash = useCallback(async () => {
+  const gerarHash = useCallback(() => {
     const texto = JSON.stringify({
       tipo: data.tipoJogo,
       nome: data.nome,
@@ -134,7 +134,7 @@ export function TransparencyModal({
       custo: metrics.custoTotalPremios,
       lucro: metrics.lucroLiquido
     });
-    
+
     let hash = 0;
     for (let i = 0; i < texto.length; i++) {
       const char = texto.charCodeAt(i);
@@ -142,9 +142,9 @@ export function TransparencyModal({
       hash = hash & hash;
     }
     return `AG-${Math.abs(hash).toString(16).toUpperCase().padStart(8, '0')}-${Date.now().toString(36).toUpperCase()}`;
-  };
-  
-  const verificationHash = useMemo(() => gerarHash(), [gerarHash, data, metrics]);
+  }, [data, metrics]);
+
+  const verificationHash = useMemo(() => gerarHash(), [gerarHash]);
 
   const copyHash = useCallback(async () => {
     try {
@@ -196,11 +196,12 @@ export function TransparencyModal({
     message += `✨ Aldeias Games - Transparência Total\n`;
     
     return encodeURIComponent(message);
-  };
+  }, [gameTypeLabels, data, metrics, verificationHash]);
   
   const shareWhatsApp = useCallback(() => {
     try {
-      const url = `https://wa.me/?text=${encodeURIComponent(generateWhatsAppMessage())}`;
+      const message = generateWhatsAppMessage();
+      const url = `https://wa.me/?text=${message}`;
       window.open(url, '_blank');
     } catch (error) {
       console.error("Erro ao compartilhar no WhatsApp:", error);
@@ -252,7 +253,7 @@ export function TransparencyModal({
       printWindow.document.close();
       printWindow.print();
     }
-  };
+  }, [data, metrics, verificationHash]);
 
   const getTipoJogoNome = () => {
     const nomes: Record<string, string> = {
