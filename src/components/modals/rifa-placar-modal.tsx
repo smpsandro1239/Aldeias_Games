@@ -18,6 +18,29 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Loader2, ShoppingCart, Eye, CheckCircle2, XCircle, Trash2 } from "lucide-react";
 
+// Constants for purchase modes to avoid magic strings
+const PURCHASE_MODES = {
+  SEQUENCIAL: 'sequencial',
+  ESCOLHER: 'escolher'
+} as const;
+
+type PurchaseMode = typeof PURCHASE_MODES[keyof typeof PURCHASE_MODES];
+
+// Constants for tab values
+const TAB_VALUES = {
+  COMPRAR: 'comprar',
+  MINHAS: 'minhas'
+} as const;
+
+type TabValue = typeof TAB_VALUES[keyof typeof TAB_VALUES];
+
+// Constants for block size and validation
+const GAME_CONSTANTS = {
+  BLOCO_SIZE: 20,
+  MIN_QUANTIDADE: 1,
+  MAX_QUANTIDADE_RAPIDA: 10,
+} as const;
+
 interface RifaComprada {
   id: string;
   numero: number;
@@ -32,12 +55,10 @@ interface RifaPlacarModalProps {
   numeroFinal: number;
   numerosOcupados: number[];
   rifasCompradas?: RifaComprada[];
-  onComprar: (quantidade: number, modo: 'sequencial' | 'escolher', numeros?: number[]) => Promise<void>;
+  onComprar: (quantidade: number, modo: PurchaseMode, numeros?: number[]) => Promise<void>;
   preco: number;
   loading?: boolean;
 }
-
-const BLOCO_SIZE = 20;
 
 export function RifaPlacarModal({
   open,
@@ -50,7 +71,7 @@ export function RifaPlacarModal({
   preco,
   loading = false,
 }: RifaPlacarModalProps) {
-  const [activeTab, setActiveTab] = useState("comprar");
+  const [activeTab, setActiveTab] = useState<TabValue>(TAB_VALUES.COMPRAR);
   const [quantidadeRapida, setQuantidadeRapida] = useState<number | 'bloco' | null>(null);
   const [numerosSelecionados, setNumerosSelecionados] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,13 +96,13 @@ export function RifaPlacarModal({
   );
 
   const totalBlocos = useMemo(() =>
-    Math.ceil(numerosDisponiveis.length / BLOCO_SIZE),
+    Math.ceil(numerosDisponiveis.length / GAME_CONSTANTS.BLOCO_SIZE),
     [numerosDisponiveis.length]
   );
 
   const getBlocoInfo = useCallback((blocoIndex: number) => {
-    const inicio = blocoIndex * BLOCO_SIZE;
-    const fim = Math.min(inicio + BLOCO_SIZE, numerosDisponiveis.length);
+    const inicio = blocoIndex * GAME_CONSTANTS.BLOCO_SIZE;
+    const fim = Math.min(inicio + GAME_CONSTANTS.BLOCO_SIZE, numerosDisponiveis.length);
     const blocosNumeros = numerosDisponiveis.slice(inicio, fim);
     const ocupadosNoBloco = blocosNumeros.filter(n => numerosOcupados.includes(n)).length;
     return {
@@ -109,8 +130,8 @@ export function RifaPlacarModal({
   const handleCompraRapida = useCallback(async (quantidade: number | 'bloco') => {
     setLoadingCompra(true);
     try {
-      const qtd = quantidade === 'bloco' ? BLOCO_SIZE : quantidade;
-      await onComprar(qtd, 'sequencial');
+      const qtd = quantidade === 'bloco' ? GAME_CONSTANTS.BLOCO_SIZE : quantidade;
+      await onComprar(qtd, PURCHASE_MODES.SEQUENCIAL);
       setQuantidadeRapida(null);
     } finally {
       setLoadingCompra(false);
@@ -121,7 +142,7 @@ export function RifaPlacarModal({
     if (numerosSelecionados.length === 0) return;
     setLoadingCompra(true);
     try {
-      await onComprar(numerosSelecionados.length, 'escolher', numerosSelecionados);
+      await onComprar(numerosSelecionados.length, PURCHASE_MODES.ESCOLHER, numerosSelecionados);
       setNumerosSelecionados([]);
       onOpenChange(false);
     } finally {
@@ -140,7 +161,7 @@ export function RifaPlacarModal({
   const rifasPorBloco = useMemo(() => {
     const blocos: Record<number, RifaComprada[]> = {};
     rifasCompradas.forEach(r => {
-      const blocoIndex = Math.floor((r.numero - numeroInicial) / BLOCO_SIZE);
+      const blocoIndex = Math.floor((r.numero - numeroInicial) / GAME_CONSTANTS.BLOCO_SIZE);
       if (!blocos[blocoIndex]) blocos[blocoIndex] = [];
       blocos[blocoIndex].push(r);
     });
@@ -166,12 +187,12 @@ export function RifaPlacarModal({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-2">
-            <TabsTrigger value="comprar" aria-label="Comprar rifas">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid grid-cols-2" aria-label="Opções de rifa">
+            <TabsTrigger value={TAB_VALUES.COMPRAR} aria-label="Comprar rifas">
               Comprar
             </TabsTrigger>
-            <TabsTrigger value="minhas" aria-label={`Ver minhas rifas (${rifasCompradas.length})`}>
+            <TabsTrigger value={TAB_VALUES.MINHAS} aria-label={`Ver minhas rifas (${rifasCompradas.length})`}>
               Minhas Rifas ({rifasCompradas.length})
             </TabsTrigger>
           </TabsList>
@@ -216,11 +237,11 @@ export function RifaPlacarModal({
                   variant="default"
                   size="sm"
                   onClick={() => handleCompraRapida('bloco')}
-                  disabled={loadingCompra || numerosDisponiveis.length < BLOCO_SIZE}
-                  aria-label={`Comprar 1 bloco de ${BLOCO_SIZE} rifas`}
+                  disabled={loadingCompra || numerosDisponiveis.length < GAME_CONSTANTS.BLOCO_SIZE}
+                  aria-label={`Comprar 1 bloco de ${GAME_CONSTANTS.BLOCO_SIZE} rifas`}
                 >
                   <ShoppingCart className="h-4 w-4 mr-1" aria-hidden="true" />
-                  1 Bloco ({BLOCO_SIZE} Rifas - {(BLOCO_SIZE * preco).toFixed(2)}€)
+                  1 Bloco ({GAME_CONSTANTS.BLOCO_SIZE} Rifas - {(GAME_CONSTANTS.BLOCO_SIZE * preco).toFixed(2)}€)
                 </Button>
               </div>
             </div>
