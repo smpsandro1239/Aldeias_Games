@@ -96,20 +96,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Recorrência - Temporariamente desabilitado para debug
     console.log('PUT /api/eventos/[id] - Skipping recurrence processing for debug');
 
-            if (data.recurrenceFrequency !== 'mensal') {
-              nextOccurrence.setDate(nextOccurrence.getDate() + daysToAdd);
-            }
-
-            updateData.proximaData = nextOccurrence;
-            console.log('PUT /api/eventos/[id] - Next occurrence calculated:', nextOccurrence);
-  } catch (error) {
-    console.error('PUT /api/eventos/[id] - Error updating event:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
-  }
-
     console.log('PUT /api/eventos/[id] - Updating event in database');
     const updated = await prisma.evento.update({
       where: { id },
