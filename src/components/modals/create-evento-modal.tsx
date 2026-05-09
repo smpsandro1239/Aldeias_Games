@@ -193,10 +193,8 @@ export function CreateEventoModal({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('CreateEventoModal handleSubmit called');
 
     const newErrors = validateForm();
-    console.log('Validation errors:', newErrors);
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -224,7 +222,6 @@ export function CreateEventoModal({
         recurrenceTime: isRecurring ? recurrenceTime : undefined,
         maxOccurrences: isRecurring ? maxOccurrences : undefined,
       };
-      console.log('Submitting data:', submitData);
 
       await onSubmit(submitData);
 
@@ -243,6 +240,8 @@ export function CreateEventoModal({
       }
       onOpenChange(false);
       setErrors({});
+    } catch (error) {
+      console.error('Erro ao salvar evento:', error);
     } finally {
       setLoading(false);
     }

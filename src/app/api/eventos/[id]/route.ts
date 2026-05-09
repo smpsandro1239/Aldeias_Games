@@ -9,6 +9,77 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
+// Função robusta para calcular próxima data de recorrência
+function calculateNextRecurrenceDate(
+  frequency: 'semanal' | 'quinzenal' | 'mensal',
+  dayOfWeek: number, // 0=Domingo, 6=Sábado
+  time: string // formato HH:MM
+): Date {
+  const now = new Date();
+  const [hours, minutes] = time.split(':').map(Number);
+
+  if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    throw new Error('Horário inválido');
+  }
+
+  let nextDate = new Date(now);
+
+  if (frequency === 'semanal') {
+    // Próxima ocorrência da semana
+    const currentDay = now.getDay();
+    const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;
+
+    if (daysUntilTarget === 0) {
+      // Mesmo dia da semana - verificar se já passou
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const targetTime = hours * 60 + minutes;
+
+      if (currentTime >= targetTime) {
+        // Já passou hoje, próxima semana
+        nextDate.setDate(now.getDate() + 7);
+      }
+    } else {
+      // Próximo dia da semana
+      nextDate.setDate(now.getDate() + daysUntilTarget);
+    }
+  } else if (frequency === 'quinzenal') {
+    // A cada duas semanas
+    const currentDay = now.getDay();
+    const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;
+
+    if (daysUntilTarget === 0) {
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const targetTime = hours * 60 + minutes;
+
+      if (currentTime >= targetTime) {
+        // Já passou, próxima quinzena
+        nextDate.setDate(now.getDate() + 14);
+      }
+    } else {
+      nextDate.setDate(now.getDate() + daysUntilTarget);
+    }
+  } else if (frequency === 'mensal') {
+    // Todo mês no mesmo dia da semana
+    const currentDay = now.getDay();
+    const targetDay = dayOfWeek;
+
+    // Encontrar o próximo mês
+    nextDate.setMonth(now.getMonth() + 1);
+    nextDate.setDate(1); // Primeiro dia do próximo mês
+
+    // Encontrar o dia da semana correto
+    const firstDayOfMonth = nextDate.getDay();
+    const daysToAdd = (targetDay - firstDayOfMonth + 7) % 7;
+
+    nextDate.setDate(nextDate.getDate() + daysToAdd);
+  }
+
+  // Definir horário
+  nextDate.setHours(hours, minutes, 0, 0);
+
+  return nextDate;
+}
+
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -24,44 +95,31 @@ export async function GET(request: NextRequest, context: RouteContext) {
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
-  console.log('PUT /api/eventos/[id] - Function called');
   try {
-    console.log('PUT /api/eventos/[id] - Starting update for event:', await context.params);
-
     const { id } = await context.params;
     const user = await getFullUserFromRequest(request);
 
     if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      console.log('PUT /api/eventos/[id] - Unauthorized user:', user?.role);
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
     const evento = await prisma.evento.findUnique({ where: { id } });
     if (!evento) {
-      console.log('PUT /api/eventos/[id] - Event not found:', id);
       return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
     }
 
     if (user.role === 'aldeia_admin' && user.aldeiaId !== evento.aldeiaId) {
-      console.log('PUT /api/eventos/[id] - User not authorized for this aldeia:', user.aldeiaId, evento.aldeiaId);
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    console.log('PUT /api/eventos/[id] - About to read request body');
     const body = await request.json();
-    console.log('PUT /api/eventos/[id] - Received body:', body);
-
-    console.log('PUT /api/eventos/[id] - About to validate');
     const validation = updateEventoSchema.safeParse(body);
-    console.log('PUT /api/eventos/[id] - Validation result:', validation.success);
 
     if (!validation.success) {
-      console.log('PUT /api/eventos/[id] - Validation failed:', validation.error.errors);
       return NextResponse.json({ error: 'Dados inválidos', details: validation.error.errors }, { status: 400 });
     }
 
     const data = validation.data;
-    console.log('PUT /api/eventos/[id] - Validated data:', data);
     let imagemUrl = undefined;
     if (data.imagemBase64) {
       const saved = await saveImage(data.imagemBase64, 'eventos');
@@ -71,13 +129,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const updateData: any = { ...data };
     delete updateData.imagemBase64;
 
-    console.log('PUT /api/eventos/[id] - Preparing updateData:', updateData);
-
     if (imagemUrl) updateData.imagemUrl = imagemUrl;
     if (data.dataInicio) {
       const d = new Date(data.dataInicio);
       if (isNaN(d.getTime())) {
-        console.log('PUT /api/eventos/[id] - Invalid start date:', data.dataInicio);
         return NextResponse.json({ error: 'Data de início inválida' }, { status: 400 });
       }
       updateData.dataInicio = d;
@@ -85,24 +140,39 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (data.dataFim) {
       const d = new Date(data.dataFim);
       if (isNaN(d.getTime())) {
-        console.log('PUT /api/eventos/[id] - Invalid end date:', data.dataFim);
         return NextResponse.json({ error: 'Data de fim inválida' }, { status: 400 });
       }
       updateData.dataFim = d;
     }
 
-    console.log('PUT /api/eventos/[id] - Final updateData:', updateData);
+    // Processamento de recorrência robusto
+    if (data.isRecurring !== undefined) {
+      updateData.isTemplate = data.isRecurring;
 
-    // Recorrência - Temporariamente desabilitado para debug
-    console.log('PUT /api/eventos/[id] - Skipping recurrence processing for debug');
+      if (data.isRecurring && data.recurrenceFrequency && data.recurrenceDayOfWeek !== undefined && data.recurrenceTime) {
+        try {
+          const proximaData = calculateNextRecurrenceDate(
+            data.recurrenceFrequency,
+            data.recurrenceDayOfWeek,
+            data.recurrenceTime
+          );
+          updateData.proximaData = proximaData;
+          updateData.frequenciaRecorrencia = data.recurrenceFrequency;
+          updateData.diaSemanaRecorrencia = data.recurrenceDayOfWeek;
+        } catch (error) {
+          return NextResponse.json({ error: 'Erro ao calcular próxima recorrência' }, { status: 400 });
+        }
+      } else if (!data.isRecurring) {
+        updateData.frequenciaRecorrencia = null;
+        updateData.diaSemanaRecorrencia = null;
+        updateData.proximaData = null;
+      }
+    }
 
-    console.log('PUT /api/eventos/[id] - Updating event in database');
     const updated = await prisma.evento.update({
       where: { id },
       data: updateData,
     });
-
-    console.log('PUT /api/eventos/[id] - Event updated successfully:', updated.id);
 
     // Audit log for event update
     await logAudit(
@@ -118,12 +188,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       request.headers.get('user-agent') || 'unknown'
     );
 
-    console.log('PUT /api/eventos/[id] - Audit log created, returning success');
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    console.error('PUT /api/eventos/[id] - Catch block reached with error:', error);
-    console.error('PUT /api/eventos/[id] - Error stack:', error?.stack);
-    return NextResponse.json({ error: 'Erro interno do servidor', details: error?.message }, { status: 500 });
+    console.error('Erro ao atualizar evento:', error);
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
 
