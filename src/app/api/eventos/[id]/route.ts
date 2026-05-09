@@ -95,18 +95,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Recorrência - Temporariamente desabilitado para debug
     console.log('PUT /api/eventos/[id] - Skipping recurrence processing for debug');
-              }
-            } else {
-              if (data.recurrenceFrequency === 'quinzenal') {
-                daysToAdd += 7;
-              } else if (data.recurrenceFrequency === 'mensal') {
-                nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
-                nextOccurrence.setDate(1);
-                while (nextOccurrence.getDay() !== targetDay) {
-                  nextOccurrence.setDate(nextOccurrence.getDate() + 1);
-                }
-              }
-            }
 
             if (data.recurrenceFrequency !== 'mensal') {
               nextOccurrence.setDate(nextOccurrence.getDate() + daysToAdd);
