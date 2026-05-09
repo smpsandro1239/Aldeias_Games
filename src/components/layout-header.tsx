@@ -49,10 +49,10 @@ interface LayoutHeaderProps {
 export function LayoutHeader({ children }: LayoutHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   // Todos os hooks devem ser chamados sempre na mesma ordem, antes de qualquer condição
   useEffect(() => {
