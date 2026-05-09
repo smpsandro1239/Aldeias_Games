@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
+  console.log('PUT /api/eventos/[id] - Function called');
   try {
     console.log('PUT /api/eventos/[id] - Starting update for event:', await context.params);
 
@@ -46,10 +47,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
+    console.log('PUT /api/eventos/[id] - About to read request body');
     const body = await request.json();
     console.log('PUT /api/eventos/[id] - Received body:', body);
 
+    console.log('PUT /api/eventos/[id] - About to validate');
     const validation = updateEventoSchema.safeParse(body);
+    console.log('PUT /api/eventos/[id] - Validation result:', validation.success);
+
     if (!validation.success) {
       console.log('PUT /api/eventos/[id] - Validation failed:', validation.error.errors);
       return NextResponse.json({ error: 'Dados inválidos', details: validation.error.errors }, { status: 400 });
