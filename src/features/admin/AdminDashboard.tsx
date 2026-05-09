@@ -308,31 +308,80 @@ export default function AdminDashboard({
         const evento = await res.json();
         const eventoId = evento.data?.id || evento.id;
 
-        // Criar jogos automaticamente se selecionados
-        if (!isEditing && jogosSelecionados.length > 0 && eventoId) {
-          for (const tipoJogo of jogosSelecionados) {
-            const jogoData = {
-              nome: `${data.nome} - ${tipoJogo}`,
-              tipo: tipoJogo,
-              configuracao: "{}",
-              preco: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
-              precoBase: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
-              stockInicial: 100,
-              eventoId,
-              aldeiaId: data.aldeiaId,
-              estado: "aberto",
-            };
-
-            await fetch("/api/jogos", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(jogoData),
+        // Gerenciar jogos automaticamente se selecionados
+        if (jogosSelecionados.length > 0 && eventoId) {
+          try {
+            // Buscar jogos existentes do evento
+            const jogosRes = await fetch(`/api/jogos?eventoId=${eventoId}`, {
+              headers: { Authorization: `Bearer ${token}` },
             });
+
+            let jogosExistentes: any[] = [];
+            if (jogosRes.ok) {
+              const jogosData = await jogosRes.json();
+              jogosExistentes = jogosData.data || [];
+            }
+
+            // Identificar jogos a criar e remover
+            const jogosExistentesTipos = jogosExistentes.map((j: any) => j.tipo);
+            const jogosParaCriar = jogosSelecionados.filter((tipo: string) => !jogosExistentesTipos.includes(tipo));
+            const jogosParaRemover = jogosExistentes.filter((j: any) => !jogosSelecionados.includes(j.tipo));
+
+            // Criar novos jogos
+            for (const tipoJogo of jogosParaCriar) {
+              const jogoData = {
+                nome: `${data.nome} - ${tipoJogo}`,
+                tipo: tipoJogo,
+                configuracao: "{}",
+                preco: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
+                stockInicial: 100,
+                eventoId,
+                aldeiaId: data.aldeiaId,
+                estado: "aberto",
+              };
+
+              await fetch("/api/jogos", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(jogoData),
+              });
+            }
+
+            // Remover jogos não selecionados (apenas se estiverem vazios)
+            for (const jogo of jogosParaRemover) {
+              // Verificar se o jogo tem participações
+              const participacoesRes = await fetch(`/api/participacoes?jogoId=${jogo.id}&limit=1`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+
+              if (participacoesRes.ok) {
+                const participacoesData = await participacoesRes.json();
+                const totalParticipacoes = participacoesData.pagination?.total || 0;
+
+                // Só remover se não tiver participações
+                if (totalParticipacoes === 0) {
+                  await fetch(`/api/jogos/${jogo.id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                }
+              }
+            }
+
+            const mensagem = isEditing
+              ? `${jogosParaCriar.length} jogo(s) adicionado(s) e ${jogosParaRemover.length} jogo(s) removido(s)`
+              : `${jogosSelecionados.length} jogo(s) criado(s)`;
+
+            if (jogosParaCriar.length > 0 || jogosParaRemover.length > 0) {
+              toast.success(mensagem);
+            }
+          } catch (error) {
+            console.error("Erro ao gerenciar jogos:", error);
+            toast.error("Erro ao gerenciar jogos do evento");
           }
-          toast.success(`${jogosSelecionados.length} jogo(s) criado(s) para o evento!`);
         }
 
         toast.success(`Evento ${isEditing ? "atualizado" : "criado"} com sucesso!`);
@@ -1033,6 +1082,8 @@ export default function AdminDashboard({
           publico: selectedEvento.publico || false,
           aldeiaId: aldeiaId || "",
           estado: selectedEvento.estado as any,
+          // Jogos associados ao evento
+          jogosSelecionados: (selectedEvento as any).jogos?.map((jogo: any) => jogo.tipo) || [],
           // Recorrência
           isRecurring: selectedEvento.isTemplate || false,
           recurrenceFrequency: selectedEvento.frequenciaRecorrencia || 'semanal',

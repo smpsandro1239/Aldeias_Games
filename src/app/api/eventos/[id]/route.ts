@@ -85,7 +85,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const evento = await prisma.evento.findUnique({
       where: { id },
-      include: { aldeia: true }
+      include: {
+        aldeia: true,
+        jogos: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+            preco: true,
+            stockInicial: true,
+            estado: true
+          }
+        }
+      }
     });
     if (!evento) return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
     return NextResponse.json({ data: evento });
