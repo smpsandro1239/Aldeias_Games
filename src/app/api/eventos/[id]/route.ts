@@ -121,12 +121,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     console.log('PUT /api/eventos/[id] - Audit log created, returning success');
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    console.error('PUT /api/eventos/[id] - Catch block reached with error:', error);
+    console.error('PUT /api/eventos/[id] - Error stack:', error?.stack);
+    return NextResponse.json({ error: 'Erro interno do servidor', details: error?.message }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
-    try {
+  try {
     const { id } = await context.params;
     const user = await getFullUserFromRequest(request);
     
