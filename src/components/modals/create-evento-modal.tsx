@@ -259,7 +259,7 @@ export function CreateEventoModal({
       <DialogContent className="sm:max-w-[500px]" aria-describedby="create-evento-description">
         <DialogHeader>
           <DialogTitle>{initialData ? "Editar Evento" : "Novo Evento"}</DialogTitle>
-          <DialogDescription id="create-evento-description">
+          <DialogDescription>
             {initialData ? "Edite as informações do evento." : "Crie um novo evento de angariação de fundos."}
           </DialogDescription>
         </DialogHeader>
