@@ -50,13 +50,13 @@ export function exportParticipacoesPDF(
 ): void {
   const doc = new jsPDF();
 
-  doc.setFontSize(20);
-  doc.setTextColor(...PRIMARY_COLOR);
-  doc.text(options.titulo, 14, 22);
+   doc.setFontSize(20);
+   doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
+   doc.text(options.titulo, 14, 22);
 
   if (options.subtitulo) {
     doc.setFontSize(12);
-    doc.setTextColor(...SECONDARY_COLOR);
+    doc.setTextColor(SECONDARY_COLOR[0], SECONDARY_COLOR[1], SECONDARY_COLOR[2]);
     doc.text(options.subtitulo, 14, 30);
   }
 
@@ -69,11 +69,11 @@ export function exportParticipacoesPDF(
   doc.text(`Exportado em: ${new Date().toLocaleDateString('pt-PT')}`, 14, options.aldeia ? 44 : 38);
 
   const tableData = participacoes.map((p, index) => {
-    const dados = safeJsonParse(p.dadosParticipacao, {});
+    const dados = safeJsonParse(p.dadosParticipacao, {}) as any;
     return [
       (index + 1).toString(),
       p.jogo?.nome || '-',
-      dados.numero || `${dados.letra || ''}${dados.numero || ''}` || '-',
+      dados?.numero || `${dados?.letra || ''}${dados?.numero || ''}` || '-',
       p.nomeCliente || p.emailCliente || p.telefoneCliente || 'Anónimo',
       `${p.valorPago.toFixed(2)}€`,
       new Date(p.createdAt).toLocaleDateString('pt-PT'),
@@ -90,7 +90,7 @@ export function exportParticipacoesPDF(
       cellPadding: 3,
     },
     headStyles: {
-      fillColor: PRIMARY_COLOR,
+      fillColor: [PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]],
       textColor: 255,
       fontStyle: 'bold',
     },
@@ -104,7 +104,7 @@ export function exportParticipacoesPDF(
   const finalY = (doc as any).lastAutoTable.finalY + 10;
 
   doc.setFontSize(11);
-  doc.setTextColor(...DARK_GRAY);
+  doc.setTextColor(DARK_GRAY[0], DARK_GRAY[1], DARK_GRAY[2]);
   doc.text(`Total de participantes: ${participacoes.length}`, 14, finalY);
   doc.text(`Valor total angariado: ${total.toFixed(2)}€`, 14, finalY + 6);
 
@@ -128,7 +128,7 @@ export function exportVendasExcel(
     ...vendas.map((v, index) => [
       index + 1,
       v.vendedor?.nome || '-',
-      v.dadosCliente ? safeJsonParse(v.dadosCliente, {}).nome || '-' : '-',
+      v.dadosCliente ? (safeJsonParse(v.dadosCliente, {}) as any)?.nome || '-' : '-',
       v.valor.toFixed(2),
       v.comissao.toFixed(2),
       v.metodoPagamento,
@@ -149,10 +149,10 @@ export function exportBilhetePDF(
   contacto?: string
 ): void {
   const doc = new jsPDF();
-  const dados = safeJsonParse(participacao.dadosParticipacao, {});
-  const numero = dados.numero || `${dados.letra || ''}${dados.numero || ''}` || 'N/A';
+  const dados = safeJsonParse(participacao.dadosParticipacao, {}) as any;
+  const numero = dados?.numero || `${dados?.letra || ''}${dados?.numero || ''}` || 'N/A';
 
-  doc.setFillColor(...PRIMARY_COLOR);
+  doc.setFillColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
   doc.rect(0, 0, 210, 40, 'F');
 
   doc.setFontSize(24);
@@ -163,16 +163,16 @@ export function exportBilhetePDF(
   doc.text(participacao.jogo?.nome || 'Sorteio', 105, 30, { align: 'center' });
 
   doc.setFontSize(48);
-  doc.setTextColor(...PRIMARY_COLOR);
+  doc.setTextColor(PRIMARY_COLOR[0], PRIMARY_COLOR[1], PRIMARY_COLOR[2]);
   doc.text(numero, 105, 80, { align: 'center' });
 
   doc.setFontSize(12);
-  doc.setTextColor(...SECONDARY_COLOR);
+  doc.setTextColor(SECONDARY_COLOR[0], SECONDARY_COLOR[1], SECONDARY_COLOR[2]);
   doc.text(`Evento: ${participacao.evento?.nome}`, 105, 95, { align: 'center' });
   doc.text(`Organização: ${aldeiaNome}`, 105, 102, { align: 'center' });
 
   doc.setFontSize(10);
-  doc.setTextColor(...MUTED_GRAY);
+  doc.setTextColor(MUTED_GRAY[0], MUTED_GRAY[1], MUTED_GRAY[2]);
   doc.text(`Data: ${new Date(participacao.createdAt).toLocaleDateString('pt-PT')}`, 105, 115, { align: 'center' });
   doc.text(`ID: ${participacao.id.slice(0, 8)}`, 105, 120, { align: 'center' });
 
@@ -182,7 +182,7 @@ export function exportBilhetePDF(
   }
 
   doc.setFontSize(8);
-  doc.setTextColor(...MUTED_GRAY);
+  doc.setTextColor(MUTED_GRAY[0], MUTED_GRAY[1], MUTED_GRAY[2]);
   doc.text('Guarde este comprovativo até ao sorteio', 105, 280, { align: 'center' });
 
   doc.save(`bilhete-${numero}-${Date.now()}.pdf`);

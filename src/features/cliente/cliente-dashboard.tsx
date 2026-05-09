@@ -746,7 +746,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           valor={selectedJogo.preco}
           descricao={selectedJogo.nome}
           saldoDisponivel={saldo}
-          userRole="stripe_blocked"
+          userRole="user"
           telefoneInicial={userProfile?.telefone || undefined}
           onMBWayPayment={async (telefone) => {
             await handleConfirmarPagamento("mbway");

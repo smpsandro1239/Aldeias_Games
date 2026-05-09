@@ -35,7 +35,7 @@ export function requireRole(user: UserWithPermissions | null | undefined, expect
  * @throws Error com status 403 se a verificação falhar
  */
 export function requireAnyPermission(user: UserWithPermissions | null | undefined, permissions: string[]): void {
-  if (!user || !user.permissions || !permissions.some(p => user.permissions.includes(p))) {
+  if (!user || !user.permissions || !permissions.some(p => user.permissions!.includes(p))) {
     const error = new Error(`Não autorizado - Nenhuma das permissões necessárias: ${permissions.join(', ')}`);
     (error as any).status = UNAUTHORIZED_STATUS;
     throw error;
@@ -49,8 +49,8 @@ export function requireAnyPermission(user: UserWithPermissions | null | undefine
  * @throws Error com status 403 se a verificação falhar
  */
 export function requireAllPermissions(user: UserWithPermissions | null | undefined, permissions: string[]): void {
-  if (!user || !user.permissions || !permissions.every(p => user.permissions.includes(p))) {
-    const missingPermissions = permissions.filter(p => !user.permissions?.includes(p));
+  if (!user || !user.permissions || !permissions.every(p => user.permissions!.includes(p))) {
+    const missingPermissions = permissions.filter(p => !user!.permissions?.includes(p));
     const error = new Error(`Não autorizado - Faltam as seguintes permissões: ${missingPermissions.join(', ')}`);
     (error as any).status = UNAUTHORIZED_STATUS;
     throw error;

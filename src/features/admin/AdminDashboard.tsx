@@ -101,11 +101,7 @@ export default function AdminDashboard({
     totalJogos: 0,
     jogosAtivos: 0,
     totalParticipacoes: 0,
-    totalAngariado: 0,
-    evolucaoMensal: [],
-    topVendedores: [],
-    jogosPorTipo: {},
-    vendasPorMetodo: {}
+    totalAngariado: 0
   });
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [jogos, setJogos] = useState<Jogo[]>([]);

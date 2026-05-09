@@ -117,17 +117,8 @@ type TranslationPaths<T> = T extends (string | number | boolean)
     }[keyof T]
   : [];
 
-type Join<T extends string[], D extends string> = T extends []
-  ? never
-  : T extends [infer F]
-  ? F
-  : T extends [infer F, ...infer R]
-  ? F extends string
-    ? `${F}${D}${Join<R, D>}`
-    : never
-  : string;
-
-export type TranslationKey = Join<TranslationPaths<typeof translations.pt>, ".">;
+// Simplified translation key type
+export type TranslationKey = string;
 
 export function getTranslation(lang: Language, key: string): string {
   if (!key || typeof key !== 'string') {
