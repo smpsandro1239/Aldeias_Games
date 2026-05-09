@@ -273,60 +273,85 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">A Minha Área</h1>
-        <p className="text-muted-foreground">Regista as tuas vendas e acompanha o teu desempenho</p>
+      <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 rounded-3xl p-6 border border-primary/10">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center">
+            <ShoppingCart className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-serif font-bold text-accent">A Minha Área</h1>
+            <p className="text-muted-foreground font-medium">Regista as tuas vendas e acompanha o teu desempenho</p>
+          </div>
+        </div>
+        <div className="absolute top-4 right-4 opacity-10">
+          <TrendingUp className="w-16 h-16 text-primary" />
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/20 border-blue-200/50 dark:border-blue-800/50">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-200/20 rounded-full -translate-y-8 translate-x-8"></div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Hoje</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-semibold text-blue-900 dark:text-blue-100">Vendas Hoje</CardTitle>
+            <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.vendasHoje || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">{stats?.vendasHoje || 0}</div>
+            <p className="text-sm text-blue-700/80 dark:text-blue-300/80 font-medium">
               {formatCurrency(stats?.valorHoje || 0)}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/50 dark:to-green-900/20 border-green-200/50 dark:border-green-800/50">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-green-200/20 rounded-full -translate-y-8 translate-x-8"></div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-semibold text-green-900 dark:text-green-100">Vendas Totais</CardTitle>
+            <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.vendasTotal || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-green-900 dark:text-green-100">{stats?.vendasTotal || 0}</div>
+            <p className="text-sm text-green-700/80 dark:text-green-300/80 font-medium">
               {formatCurrency(stats?.valorTotal || 0)}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/50 dark:to-purple-900/20 border-purple-200/50 dark:border-purple-800/50">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-purple-200/20 rounded-full -translate-y-8 translate-x-8"></div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Comissão</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-semibold text-purple-900 dark:text-purple-100">Comissão</CardTitle>
+            <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats?.comissaoTotal || 0)}</div>
+            <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">{formatCurrency(stats?.comissaoTotal || 0)}</div>
+            <p className="text-sm text-purple-700/80 dark:text-purple-300/80 font-medium">
+              Ganho total
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200 bg-orange-50/50">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/50 dark:to-orange-900/20 border-orange-200/50 dark:border-orange-800/50">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-orange-200/20 rounded-full -translate-y-8 translate-x-8"></div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-800">Saldo a Entregar</CardTitle>
-            <Banknote className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-semibold text-orange-900 dark:text-orange-100">Saldo a Entregar</CardTitle>
+            <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <Banknote className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-700">
+            <div className="text-3xl font-bold text-orange-900 dark:text-orange-100">
               {formatCurrency(stats?.aEntregar || 0)}
             </div>
-            <p className="text-xs text-accent/80 mt-1">
-              Dinheiro vivo retido menos a sua comissão
+            <p className="text-sm text-orange-700/80 dark:text-orange-300/80 font-medium">
+              Dinheiro vivo retido
             </p>
           </CardContent>
         </Card>
@@ -334,20 +359,48 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="pos">POS Mobile</TabsTrigger>
-          <TabsTrigger value="vendas">Venda Desktop</TabsTrigger>
-          <TabsTrigger value="pedidos" className="relative">
-            Pedidos
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto p-1 bg-surface-container-low rounded-2xl">
+          <TabsTrigger value="pos" className="flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <div className="w-5 h-5 mb-1">
+              📱
+            </div>
+            <span className="text-xs font-medium">POS Mobile</span>
+          </TabsTrigger>
+          <TabsTrigger value="vendas" className="flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <div className="w-5 h-5 mb-1">
+              💻
+            </div>
+            <span className="text-xs font-medium">Venda Desktop</span>
+          </TabsTrigger>
+          <TabsTrigger value="pedidos" className="relative flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             {pedidosPendentesCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-destructive text-foreground text-xs z-10">
                 {pedidosPendentesCount}
               </Badge>
             )}
+            <div className="w-5 h-5 mb-1">
+              📋
+            </div>
+            <span className="text-xs font-medium">Pedidos</span>
           </TabsTrigger>
-          <TabsTrigger value="verificar">Verificar</TabsTrigger>
-          <TabsTrigger value="angariacao">Angariação</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
+          <TabsTrigger value="verificar" className="flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <div className="w-5 h-5 mb-1">
+              🔍
+            </div>
+            <span className="text-xs font-medium">Verificar</span>
+          </TabsTrigger>
+          <TabsTrigger value="angariacao" className="flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <div className="w-5 h-5 mb-1">
+              💰
+            </div>
+            <span className="text-xs font-medium">Angariação</span>
+          </TabsTrigger>
+          <TabsTrigger value="historico" className="flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <div className="w-5 h-5 mb-1">
+              📊
+            </div>
+            <span className="text-xs font-medium">Histórico</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pos">
@@ -368,21 +421,30 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         </TabsContent>
 
         <TabsContent value="vendas" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Nova Venda</CardTitle>
-              <CardDescription>Registe uma nova participação para um cliente</CardDescription>
+          <Card className="bg-gradient-to-br from-surface-container to-surface-container-low border-primary/10">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-serif">Nova Venda</CardTitle>
+                  <CardDescription className="text-base">Registe uma nova participação para um cliente</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleNovaVenda} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="jogo">Jogo *</Label>
+            <CardContent className="space-y-6">
+              <form onSubmit={handleNovaVenda} className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label htmlFor="jogo" className="text-sm font-semibold flex items-center gap-2">
+                      🎮 Jogo *
+                    </Label>
                     <Select
                       value={novaVenda.jogoId}
                       onValueChange={(value) => setNovaVenda({ ...novaVenda, jogoId: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-12 bg-surface-container-low border-outline-variant/30">
                         <SelectValue placeholder="Selecione o jogo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -395,8 +457,10 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="quantidade">Quantidade *</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="quantidade" className="text-sm font-semibold flex items-center gap-2">
+                      🔢 Quantidade *
+                    </Label>
                     <Input
                       id="quantidade"
                       type="number"
@@ -405,83 +469,102 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                       onChange={(e) =>
                         setNovaVenda({ ...novaVenda, quantidade: parseInt(e.target.value) || 1 })
                       }
+                      className="h-12 bg-surface-container-low border-outline-variant/30"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="metodo">Método de Pagamento *</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="metodo" className="text-sm font-semibold flex items-center gap-2">
+                    💳 Método de Pagamento *
+                  </Label>
                   <Select
                     value={novaVenda.metodoPagamento}
                     onValueChange={(value: "mbway" | "dinheiro" | "stripe" | "transferencia") =>
                       setNovaVenda({ ...novaVenda, metodoPagamento: value })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 bg-surface-container-low border-outline-variant/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="mbway">MBWay</SelectItem>
-                      <SelectItem value="transferencia">Transferência</SelectItem>
+                      <SelectItem value="dinheiro">💵 Dinheiro</SelectItem>
+                      <SelectItem value="mbway">📱 MBWay</SelectItem>
+                      <SelectItem value="transferencia">🏦 Transferência</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="nomeCliente">Nome do Cliente *</Label>
-                    <Input
-                      id="nomeCliente"
-                      placeholder="Nome obrigatório"
-                      value={novaVenda.nomeCliente}
-                      onChange={(e) =>
-                        setNovaVenda({ ...novaVenda, nomeCliente: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
- 
-                  <div className="space-y-2">
-                    <Label htmlFor="telefoneCliente">Telefone do Cliente</Label>
-                    <Input
-                      id="telefoneCliente"
-                      placeholder="Pelo menos um contacto"
-                      value={novaVenda.telefoneCliente}
-                      onChange={(e) =>
-                        setNovaVenda({ ...novaVenda, telefoneCliente: e.target.value })
-                      }
-                    />
-                  </div>
+                <div className="bg-surface-container-low/50 rounded-2xl p-4 border border-outline-variant/20">
+                  <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                    👤 Dados do Cliente
+                  </h4>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="nomeCliente" className="text-xs font-medium">Nome *</Label>
+                      <Input
+                        id="nomeCliente"
+                        placeholder="Nome obrigatório"
+                        value={novaVenda.nomeCliente}
+                        onChange={(e) =>
+                          setNovaVenda({ ...novaVenda, nomeCliente: e.target.value })
+                        }
+                        required
+                        className="bg-background border-outline-variant/30"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="emailCliente">Email do Cliente</Label>
-                    <Input
-                      id="emailCliente"
-                      type="email"
-                      placeholder="Pelo menos um contacto"
-                      value={novaVenda.emailCliente}
-                      onChange={(e) =>
-                        setNovaVenda({ ...novaVenda, emailCliente: e.target.value })
-                      }
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="telefoneCliente" className="text-xs font-medium">Telefone</Label>
+                      <Input
+                        id="telefoneCliente"
+                        placeholder="Pelo menos um contacto"
+                        value={novaVenda.telefoneCliente}
+                        onChange={(e) =>
+                          setNovaVenda({ ...novaVenda, telefoneCliente: e.target.value })
+                        }
+                        className="bg-background border-outline-variant/30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="emailCliente" className="text-xs font-medium">Email</Label>
+                      <Input
+                        id="emailCliente"
+                        type="email"
+                        placeholder="Pelo menos um contacto"
+                        value={novaVenda.emailCliente}
+                        onChange={(e) =>
+                          setNovaVenda({ ...novaVenda, emailCliente: e.target.value })
+                        }
+                        className="bg-background border-outline-variant/30"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {novaVenda.jogoId && (
-                  <div className="bg-muted p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground">Total da Venda:</p>
-                    <p className="text-2xl font-bold">
-                      {formatCurrency(
-                        (jogos.find((j) => j.id === novaVenda.jogoId)?.preco || 0) *
-                          novaVenda.quantidade
-                      )}
-                    </p>
+                  <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-2xl border border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground font-medium">Total da Venda</p>
+                        <p className="text-3xl font-bold text-primary">
+                          {formatCurrency(
+                            (jogos.find((j) => j.id === novaVenda.jogoId)?.preco || 0) *
+                              novaVenda.quantidade
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">Quantidade</p>
+                        <p className="text-lg font-semibold">{novaVenda.quantidade}x</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={!novaVenda.jogoId}>
-                  <Check className="h-4 w-4 mr-2" />
+                <Button type="submit" className="w-full h-14 text-lg font-semibold rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" disabled={!novaVenda.jogoId}>
+                  <Check className="h-5 w-5 mr-3" />
                   Registar Venda
                 </Button>
               </form>
@@ -528,51 +611,59 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         <TabsContent value="angariacao" className="space-y-4">
           {/* Resumo Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="bg-surface-container-low">
-              <CardHeader className="py-3">
-                <CardTitle className="text-xs text-muted-foreground">Total Angariado</CardTitle>
+            <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/50 dark:to-green-900/20 border-green-200/50 dark:border-green-800/50">
+              <CardHeader className="py-4">
+                <CardTitle className="text-sm font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
+                  💰 Total Angariado
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-primary">
+                <p className="text-3xl font-bold text-green-900 dark:text-green-100">
                   {formatCurrency(saldoAngariado.totalAngariado)}
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-surface-container-low">
-              <CardHeader className="py-3">
-                <CardTitle className="text-xs text-muted-foreground">Entregue</CardTitle>
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/20 border-blue-200/50 dark:border-blue-800/50">
+              <CardHeader className="py-4">
+                <CardTitle className="text-sm font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                  ✅ Entregue
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-secondary">
+                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">
                   {formatCurrency(saldoAngariado.totalEntregue)}
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-surface-container-low">
-              <CardHeader className="py-3">
-                <CardTitle className="text-xs text-muted-foreground">Solicitado</CardTitle>
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/50 dark:to-orange-900/20 border-orange-200/50 dark:border-orange-800/50">
+              <CardHeader className="py-4">
+                <CardTitle className="text-sm font-semibold text-orange-900 dark:text-orange-100 flex items-center gap-2">
+                  ⏳ Solicitado
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-orange-500">
+                <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">
                   {formatCurrency(saldoAngariado.totalSolicitado)}
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-surface-container-low border-primary/30">
-              <CardHeader className="py-3">
-                <CardTitle className="text-xs text-muted-foreground">A Entregar</CardTitle>
+            <Card className="bg-gradient-to-br from-primary/10 to-primary/20 dark:from-primary/5 dark:to-primary/10 border-primary/30">
+              <CardHeader className="py-4">
+                <CardTitle className="text-sm font-semibold text-primary flex items-center gap-2">
+                  🎯 A Entregar
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-primary">
+              <CardContent className="space-y-3">
+                <p className="text-3xl font-bold text-primary">
                   {formatCurrency(saldoAngariado.saldoAEntregar)}
                 </p>
                 {saldoAngariado.saldoAEntregar > 0 && (
                   <Button
                     size="sm"
-                    className="w-full mt-2"
+                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                     onClick={() => setEntregaModalOpen(true)}
                   >
-                    <Send className="w-4 h-4 mr-1" /> Entregar
+                    <Send className="w-4 h-4 mr-2" /> Solicitar Entrega
                   </Button>
                 )}
               </CardContent>
