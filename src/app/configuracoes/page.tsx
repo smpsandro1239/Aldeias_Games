@@ -38,6 +38,7 @@ export default function ConfiguracoesPage() {
   const [user, setUser] = useState<any>(null);
   const [aldeia, setAldeia] = useState<Aldeia | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [ajudaModalOpen, setAjudaModalOpen] = useState(false);
 
@@ -71,6 +72,9 @@ export default function ConfiguracoesPage() {
   const fetchAldeia = async (aldeiaId: string) => {
     try {
       const response = await fetch(`/api/aldeias/${aldeiaId}`);
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       if (data.data) {
         setAldeia(data.data);
@@ -81,7 +85,7 @@ export default function ConfiguracoesPage() {
           iban: data.data.iban || "",
           nomeTitularConta: data.data.nomeTitularConta || "",
         });
-        
+
         // Parse default methods
         try {
           const defaultArr = JSON.parse(data.data.metodosPagamentoDefault || '["saldo","dinheiro"]');
@@ -95,9 +99,12 @@ export default function ConfiguracoesPage() {
         } catch (e) {
           console.error("Erro ao parsear métodos padrão:", e);
         }
+      } else {
+        throw new Error("Dados da aldeia não encontrados");
       }
     } catch (error) {
       console.error("Erro ao buscar aldeia:", error);
+      setError(error instanceof Error ? error.message : "Erro desconhecido");
     } finally {
       setLoading(false);
     }
@@ -160,6 +167,33 @@ export default function ConfiguracoesPage() {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-primary">A carregar...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-red-500">Erro ao carregar configurações</div>
+          <div className="text-sm text-muted-foreground">{error}</div>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!aldeia) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-red-500">Aldeia não encontrada</div>
+          <Button onClick={() => router.push('/')} variant="outline">
+            Voltar ao início
+          </Button>
+        </div>
       </div>
     );
   }
