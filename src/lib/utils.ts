@@ -119,8 +119,6 @@ export function formatPhoneNumber(phone: string): string {
   }
   return phone.replace(PHONE_REGEX_PT, '$1 $2 $3');
 }
-  return phone.replace(/(\\d{3})(\\d{3})(\\d{3})/, '$1 $2 $3');
-}
 
 /**
  * Gerar slug a partir de string

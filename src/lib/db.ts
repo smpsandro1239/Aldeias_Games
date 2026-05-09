@@ -11,14 +11,6 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Middleware for error handling
-prisma.$use(async (params, next) => {
-  try {
-    return await next(params);
-  } catch (error) {
-    console.error(`Prisma error in ${params.model}.${params.action}:`, error);
-    throw error;
-  }
-});
+// Middleware for error handling removed - $use deprecated in Prisma v5
 
 export default prisma;
