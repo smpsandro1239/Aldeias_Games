@@ -607,6 +607,8 @@ export function CreateJogoModal({
     resetForm,
     expectedCountMap,
     metricsRaspadinha,
+    metricsRifa,
+    metricsPoioDaVaca,
     getMetrics,
     isLucrativo,
     handlePremioRaspadinhaChange,

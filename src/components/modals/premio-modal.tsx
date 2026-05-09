@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, useReducer } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Gift, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Image, 
+import {
+  Gift,
+  Plus,
+  Edit,
+  Trash2,
+  Image,
   Euro,
   ArrowUp,
   ArrowDown,
@@ -23,12 +23,35 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+// Constants for form validation to avoid magic strings
+const FORM_VALIDATION = {
+  MIN_NOME_LENGTH: 2,
+  MAX_DESCRICAO_LENGTH: 500,
+  MAX_IMAGEM_URL_LENGTH: 2048,
+} as const;
+
+// Constants for drag directions
+const DRAG_DIRECTIONS = {
+  UP: 'up',
+  DOWN: 'down'
+} as const;
+
+type DragDirection = typeof DRAG_DIRECTIONS[keyof typeof DRAG_DIRECTIONS];
+
 interface Premio {
   id?: string;
   nome: string;
   descricao?: string;
   imagemUrl?: string;
   valorDinheiroAlternative?: number;
+  ordem: number;
+}
+
+interface PremioFormData {
+  nome: string;
+  descricao: string;
+  imagemUrl: string;
+  valorDinheiroAlternative: number;
   ordem: number;
 }
 
@@ -43,43 +66,117 @@ interface PremioModalProps {
   onDelete?: (id: string) => void;
 }
 
-export function PremioModal({ 
-  open, 
-  onOpenChange, 
-  premio, 
-  aldeiaId, 
+interface PremioListProps {
+  premios: Premio[];
+  onEdit: (premio: Premio) => void;
+  onDelete: (id: string) => void;
+  onReorder: (premios: Premio[]) => void;
+}
+
+// Reducer actions for form state management
+type Action =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_DELETING'; payload: boolean }
+  | { type: 'UPDATE_FORM_DATA'; payload: Partial<PremioFormData> }
+  | { type: 'RESET_FORM' };
+
+// Initial state
+const getInitialFormState = (): PremioFormData => ({
+  nome: "",
+  descricao: "",
+  imagemUrl: "",
+  valorDinheiroAlternative: 0,
+  ordem: 0,
+});
+
+// Reducer
+function premioFormReducer(state: PremioFormData, action: Action): PremioFormData {
+  switch (action.type) {
+    case 'SET_LOADING':
+    case 'SET_DELETING':
+      return state; // Loading states are separate
+    case 'UPDATE_FORM_DATA':
+      return { ...state, ...action.payload };
+    case 'RESET_FORM':
+      return getInitialFormState();
+    default:
+      return state;
+  }
+}
+
+export function PremioModal({
+  open,
+  onOpenChange,
+  premio,
+  aldeiaId,
   jogoId,
   token,
   onSave,
-  onDelete 
+  onDelete
 }: PremioModalProps) {
-  const [formData, setFormData] = useState<Premio>({
-    nome: "",
-    descricao: "",
-    imagemUrl: "",
-    valorDinheiroAlternative: 0,
-    ordem: 0,
-  });
+  const [formData, dispatch] = useReducer(premioFormReducer, getInitialFormState());
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Form validation
+  const validateForm = useCallback((): string[] => {
+    const errors: string[] = [];
+
+    if (!formData.nome.trim()) {
+      errors.push("Nome do prémio é obrigatório");
+    } else if (formData.nome.trim().length < FORM_VALIDATION.MIN_NOME_LENGTH) {
+      errors.push(`Nome deve ter pelo menos ${FORM_VALIDATION.MIN_NOME_LENGTH} caracteres`);
+    }
+
+    if (formData.descricao && formData.descricao.length > FORM_VALIDATION.MAX_DESCRICAO_LENGTH) {
+      errors.push(`Descrição deve ter no máximo ${FORM_VALIDATION.MAX_DESCRICAO_LENGTH} caracteres`);
+    }
+
+    if (formData.imagemUrl && formData.imagemUrl.length > FORM_VALIDATION.MAX_IMAGEM_URL_LENGTH) {
+      errors.push(`URL da imagem deve ter no máximo ${FORM_VALIDATION.MAX_IMAGEM_URL_LENGTH} caracteres`);
+    }
+
+    if (formData.valorDinheiroAlternative && formData.valorDinheiroAlternative < 0) {
+      errors.push("Valor alternativo não pode ser negativo");
+    }
+
+    return errors;
+  }, [formData]);
+
+  // Reset form when modal opens/closes or premio changes
   useEffect(() => {
     if (premio) {
-      setFormData(premio);
+      dispatch({ type: 'UPDATE_FORM_DATA', payload: premio });
     } else {
-      setFormData({
-        nome: "",
-        descricao: "",
-        imagemUrl: "",
-        valorDinheiroAlternative: 0,
-        ordem: 0,
-      });
+      dispatch({ type: 'RESET_FORM' });
     }
   }, [premio, open]);
 
-  const handleSave = async () => {
-    if (!formData.nome.trim()) {
-      toast.error("Nome do prémio é obrigatório");
+  // Form field update handlers
+  const updateFormField = useCallback((field: keyof PremioFormData, value: string | number) => {
+    dispatch({ type: 'UPDATE_FORM_DATA', payload: { [field]: value } });
+  }, []);
+
+  const handleNomeChange = useCallback((value: string) => {
+    updateFormField('nome', value);
+  }, [updateFormField]);
+
+  const handleDescricaoChange = useCallback((value: string) => {
+    updateFormField('descricao', value);
+  }, [updateFormField]);
+
+  const handleImagemUrlChange = useCallback((value: string) => {
+    updateFormField('imagemUrl', value);
+  }, [updateFormField]);
+
+  const handleValorChange = useCallback((value: number) => {
+    updateFormField('valorDinheiroAlternative', value);
+  }, [updateFormField]);
+
+  const handleSave = useCallback(async () => {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      errors.forEach(error => toast.error(error));
       return;
     }
 
@@ -89,17 +186,19 @@ export function PremioModal({
       const url = premio?.id ? `/api/premios/${premio.id}` : "/api/premios";
       const method = premio?.id ? "PUT" : "POST";
 
+      const premioData = {
+        ...formData,
+        aldeiaId,
+        jogoId: jogoId || null,
+      };
+
       const res = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          aldeiaId,
-          jogoId,
-        }),
+        body: JSON.stringify(premioData),
       });
 
       if (res.ok) {
@@ -116,9 +215,9 @@ export function PremioModal({
     } finally {
       setSaving(false);
     }
-  };
+  }, [formData, validateForm, premio?.id, token, onSave, onOpenChange, aldeiaId, jogoId]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!premio?.id) return;
 
     setDeleting(true);
@@ -140,11 +239,12 @@ export function PremioModal({
         toast.error(err.error || "Erro ao eliminar prémio");
       }
     } catch (error) {
+      console.error("Erro ao eliminar prémio:", error);
       toast.error("Erro ao eliminar prémio");
     } finally {
       setDeleting(false);
     }
-  };
+  }, [premio?.id, token, onDelete, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,11 +268,15 @@ export function PremioModal({
               Nome do Prémio *
             </Label>
             <Input
+              id="premio-nome"
               placeholder="Ex: Vale de 50€"
               value={formData.nome}
-              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              onChange={(e) => handleNomeChange(e.target.value)}
               className="bg-surface-container-low border-transparent text-foreground"
+              aria-describedby="nome-description"
+              required
             />
+            <p id="nome-description" className="sr-only">Nome obrigatório do prémio (mínimo 2 caracteres)</p>
           </div>
 
           {/* Descrição */}
@@ -181,11 +285,15 @@ export function PremioModal({
               Descrição
             </Label>
             <Input
+              id="premio-descricao"
               placeholder="Descrição do prémio"
               value={formData.descricao}
-              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              onChange={(e) => handleDescricaoChange(e.target.value)}
               className="bg-surface-container-low border-transparent text-foreground"
+              aria-describedby="descricao-description"
+              maxLength={FORM_VALIDATION.MAX_DESCRICAO_LENGTH}
             />
+            <p id="descricao-description" className="sr-only">Descrição opcional do prémio (máximo 500 caracteres)</p>
           </div>
 
           {/* Valor em Dinheiro */}
@@ -200,13 +308,10 @@ export function PremioModal({
                 min="0"
                 step="0.01"
                 placeholder="0.00"
+                id="premio-valor"
                 value={formData.valorDinheiroAlternative || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    valorDinheiroAlternative: parseFloat(e.target.value) || 0,
-                  })
-                }
+                onChange={(e) => handleValorChange(parseFloat(e.target.value) || 0)}
+                aria-describedby="valor-description"
                 className="pl-10 bg-surface-container-low border-transparent text-foreground"
               />
             </div>
@@ -221,14 +326,18 @@ export function PremioModal({
               URL da Imagem
             </Label>
             <div className="relative">
-              <Image className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+              <Image className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" aria-hidden="true" />
               <Input
+                id="premio-imagem"
                 placeholder="https://..."
                 value={formData.imagemUrl}
-                onChange={(e) => setFormData({ ...formData, imagemUrl: e.target.value })}
+                onChange={(e) => handleImagemUrlChange(e.target.value)}
                 className="pl-10 bg-surface-container-low border-transparent text-foreground"
+                aria-describedby="imagem-description"
+                maxLength={FORM_VALIDATION.MAX_IMAGEM_URL_LENGTH}
               />
             </div>
+            <p id="imagem-description" className="sr-only">URL opcional da imagem do prémio</p>
           </div>
 
           {/* Preview */}
@@ -263,23 +372,28 @@ export function PremioModal({
               onClick={handleDelete}
               disabled={deleting}
               className="border-red-500/30 text-destructive hover:bg-destructive/10"
+              aria-label={`Eliminar prémio "${premio.nome}"`}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
               {deleting ? "A eliminar..." : "Eliminar"}
             </Button>
           )}
           <div className="flex-1" />
           <Button
+            type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             className="border-primary/30 text-primary"
+            aria-label="Cancelar e fechar modal"
           >
             Cancelar
           </Button>
           <Button
+            type="button"
             onClick={handleSave}
             disabled={saving}
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+            aria-label={premio?.id ? `Guardar alterações do prémio "${premio.nome}"` : "Criar novo prémio"}
           >
             {saving ? "A guardar..." : premio?.id ? "Guardar" : "Criar Prémio"}
           </Button>
@@ -301,19 +415,29 @@ export function PremioList({ premios, onEdit, onDelete, onReorder }: PremioListP
   const [editingOrdem, setEditingOrdem] = useState<string | null>(null);
   const [tempOrdem, setTempOrdem] = useState(0);
 
-  const handleMoveUp = (index: number) => {
+  const handleMoveUp = useCallback((index: number) => {
     if (index === 0) return;
     const newList = [...premios];
     [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
     onReorder(newList);
-  };
+  }, [premios, onReorder]);
 
-  const handleMoveDown = (index: number) => {
+  const handleMoveDown = useCallback((index: number) => {
     if (index === premios.length - 1) return;
     const newList = [...premios];
     [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
     onReorder(newList);
-  };
+  }, [premios, onReorder]);
+
+  const handleEdit = useCallback((premio: Premio) => {
+    onEdit(premio);
+  }, [onEdit]);
+
+  const handleDelete = useCallback((id: string, nome: string) => {
+    if (window.confirm(`Tem certeza que deseja eliminar o prémio "${nome}"?`)) {
+      onDelete(id);
+    }
+  }, [onDelete]);
 
   return (
     <div className="space-y-2">
@@ -364,32 +488,43 @@ export function PremioList({ premios, onEdit, onDelete, onReorder }: PremioListP
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" role="group" aria-label={`Ações para prémio ${premio.nome}`}>
               <button
+                type="button"
                 onClick={() => handleMoveUp(index)}
                 disabled={index === 0}
                 className="p-2 rounded-lg hover:bg-surface-container-low disabled:opacity-30 transition-colors"
+                aria-label={`Mover prémio "${premio.nome}" para cima`}
+                aria-disabled={index === 0}
               >
-                <ArrowUp className="h-4 w-4 text-muted-foreground" />
+                <ArrowUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               </button>
               <button
+                type="button"
                 onClick={() => handleMoveDown(index)}
                 disabled={index === premios.length - 1}
                 className="p-2 rounded-lg hover:bg-surface-container-low disabled:opacity-30 transition-colors"
+                aria-label={`Mover prémio "${premio.nome}" para baixo`}
+                aria-disabled={index === premios.length - 1}
               >
-                <ArrowDown className="h-4 w-4 text-muted-foreground" />
+                <ArrowDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               </button>
               <button
-                onClick={() => onEdit(premio)}
+                type="button"
+                onClick={() => handleEdit(premio)}
                 className="p-2 rounded-lg hover:bg-surface-container-low transition-colors"
+                aria-label={`Editar prémio "${premio.nome}"`}
               >
-                <Edit className="h-4 w-4 text-secondary" />
+                <Edit className="h-4 w-4 text-secondary" aria-hidden="true" />
               </button>
               <button
-                onClick={() => premio.id && onDelete(premio.id)}
+                type="button"
+                onClick={() => premio.id && handleDelete(premio.id, premio.nome)}
                 className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                aria-label={`Eliminar prémio "${premio.nome}"`}
+                disabled={!premio.id}
               >
-                <Trash2 className="h-4 w-4 text-destructive" />
+                <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
               </button>
             </div>
           </motion.div>

@@ -41,6 +41,7 @@ import { POSView } from "./pos-view";
 import { useRouter } from "next/navigation";
 import { PedidosCarregamentoInline } from "./pedidos-inline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { VerificarHashModal } from "@/components/verificar-hash-modal";
 
 interface VendedorDashboardProps {
   token: string;
@@ -94,6 +95,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
     historicoEntregas: []
   });
   const [entregaModalOpen, setEntregaModalOpen] = useState(false);
+  const [verificarHashOpen, setVerificarHashOpen] = useState(false);
   const [valorEntrega, setValorEntrega] = useState("");
 
   // Handler para redirecionar para página de pedidos
@@ -332,7 +334,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="pos">POS Mobile</TabsTrigger>
           <TabsTrigger value="vendas">Venda Desktop</TabsTrigger>
           <TabsTrigger value="pedidos" className="relative">
@@ -343,6 +345,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="verificar">Verificar</TabsTrigger>
           <TabsTrigger value="angariacao">Angariação</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
@@ -488,6 +491,38 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
         <TabsContent value="pedidos" className="space-y-4">
           <PedidosCarregamentoInline token={token} />
+        </TabsContent>
+
+        <TabsContent value="verificar" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-lg">🔍</span>
+                Verificar Participação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Verifique a autenticidade de bilhetes apresentando o hash de verificação.
+                Esta validação é obrigatória antes de entregar qualquer prêmio.
+              </p>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2">⚠️ Importante para Vendedores</h4>
+                <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                  <li>• Sempre verifique o hash antes de entregar prêmios</li>
+                  <li>• Compare os dados do cliente com as informações mostradas</li>
+                  <li>• Em caso de dúvidas, consulte um administrador</li>
+                  <li>• Registre todas as verificações realizadas</li>
+                </ul>
+              </div>
+
+              <Button onClick={() => setVerificarHashOpen(true)} className="w-full">
+                <span className="text-lg mr-2">🔍</span>
+                Verificar Hash
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="angariacao" className="space-y-4">
@@ -698,6 +733,14 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Verificação de Hash */}
+      <VerificarHashModal
+        open={verificarHashOpen}
+        onOpenChange={setVerificarHashOpen}
+        token={token}
+      />
+
     </div>
   );
 }

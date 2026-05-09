@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { LoaderScreen } from "@/components/loader-screen";
 import { UserMenuModal } from "@/components/user-menu-modal";
-import { useCallback } from "react";
 import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users } from "lucide-react";
 
 // Constants
@@ -50,18 +49,15 @@ interface LayoutHeaderProps {
 export function LayoutHeader({ children }: LayoutHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
+  // Todos os hooks devem ser chamados sempre na mesma ordem, antes de qualquer condição
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  if (!isMounted || isLoading) {
-    return <LoaderScreen />;
-  }
 
   const handleNavClick = useCallback((path: string) => {
     setMobileMenuOpen(false);
@@ -75,10 +71,15 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
     router.push(path);
   }, [router]);
 
-  const getRoleNavItems = useCallback(() => {
+  const roleNavItems = useMemo(() => {
     if (!isAuthenticated || !user?.role) return NAV_ITEMS.user;
     return NAV_ITEMS[user.role as keyof typeof NAV_ITEMS] || NAV_ITEMS.user;
   }, [isAuthenticated, user?.role]);
+
+  // Early return APÓS todos os hooks serem chamados
+  if (!isMounted || isLoading) {
+    return <LoaderScreen />;
+  }
 
   return (
     <>
@@ -148,7 +149,7 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-primary/10 shadow-lg z-50">
             <nav className="px-4 py-6 space-y-1">
-              {getRoleNavItems().map((item) => {
+              {roleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.path.split('?')[0];
                 return (

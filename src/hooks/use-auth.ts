@@ -48,37 +48,32 @@ export function useAuth() {
     isAuthenticated: false,
   });
 
-   useEffect(() => {
-     const initAuth = async () => {
-       try {
-         const user = localStorage.getItem("user");
-         const token = localStorage.getItem("token");
-         const hasCookie = document.cookie.includes("auth-token");
+    useEffect(() => {
+      const initAuth = async () => {
+        try {
+          const user = localStorage.getItem("user");
+          const token = localStorage.getItem("token");
 
-         if (user && token && hasCookie) {
-           const parsedUser = JSON.parse(user);
-           setState({
-             user: parsedUser,
-             token: token,
-             isLoading: false,
-             isAuthenticated: true,
-           });
-         } else if (user && !hasCookie) {
-           localStorage.removeItem("user");
-           localStorage.removeItem("token");
-           setState((prev) => ({ ...prev, isLoading: false, isAuthenticated: false }));
-         } else {
-           setState((prev) => ({ ...prev, isLoading: false }));
-         }
-       } catch {
-         localStorage.removeItem("user");
-         localStorage.removeItem("token");
-         setState((prev) => ({ ...prev, isLoading: false }));
-       }
-     };
+          if (user && token) {
+            const parsedUser = JSON.parse(user);
+            setState({
+              user: parsedUser,
+              token: token,
+              isLoading: false,
+              isAuthenticated: true,
+            });
+          } else {
+            setState((prev) => ({ ...prev, isLoading: false }));
+          }
+        } catch {
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+          setState((prev) => ({ ...prev, isLoading: false }));
+        }
+      };
 
-     initAuth();
-   }, []);
+      initAuth();
+    }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {

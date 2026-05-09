@@ -95,7 +95,14 @@ export default function AdminDashboard({
    const [activeTab, setActiveTab] = useState("overview");
    const [loading, setLoading] = useState(true);
 
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<Stats | null>({
+    totalEventos: 0,
+    eventosAtivos: 0,
+    totalJogos: 0,
+    jogosAtivos: 0,
+    totalParticipacoes: 0,
+    totalAngariado: 0
+  });
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -731,25 +738,25 @@ export default function AdminDashboard({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Angariado"
-          value={formatCurrency(stats?.totalAngariado || 0)}
+          value={stats?.totalAngariado ? formatCurrency(stats.totalAngariado) : "0,00 €"}
           variant="emerald"
           icon={DollarSign}
         />
         <StatCard
           title="Participações"
-          value={stats?.totalParticipacoes?.toLocaleString() || "0"}
+          value={stats?.totalParticipacoes?.toLocaleString('pt-PT') || "0"}
           variant="blue"
           icon={Users}
         />
         <StatCard
           title="Eventos Ativos"
-          value={stats?.eventosAtivos || 0}
+          value={stats?.eventosAtivos?.toString() || "0"}
           variant="violet"
           icon={Calendar}
         />
         <StatCard
           title="Jogos Ativos"
-          value={stats?.jogosAtivos || 0}
+          value={stats?.jogosAtivos?.toString() || "0"}
           variant="amber"
           icon={Gamepad2}
         />
@@ -985,7 +992,17 @@ export default function AdminDashboard({
         onOpenChange={setEventoModalOpen}
         onSubmit={handleSaveEvento}
         aldeiaId={aldeiaId || ""}
-        initialData={selectedEvento}
+        initialData={selectedEvento ? {
+          id: selectedEvento.id,
+          nome: selectedEvento.nome,
+          descricao: selectedEvento.descricao,
+          dataInicio: selectedEvento.dataInicio,
+          dataFim: selectedEvento.dataFim,
+          objectivoAngariacao: selectedEvento.totalAngariado,
+          publico: selectedEvento.publico || false,
+          aldeiaId: '', // será definido no modal
+          estado: selectedEvento.estado as any,
+        } : undefined}
         aldeias={userRole === "super_admin" ? aldeias : undefined}
       />
 

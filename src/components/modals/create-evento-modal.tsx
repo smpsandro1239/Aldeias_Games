@@ -16,8 +16,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Gift, Star, Award, Gamepad2 } from "lucide-react";
-import { toast } from "sonner";
-import { safeParseFloat } from "@/lib/form-utils";
+
+// Constants for game types to avoid magic strings
+const GAME_TYPES = [
+  { id: "raspadinha", nome: "Raspadinha", descricao: "Jogo de raspar instantâneo", icon: Gift },
+  { id: "rifa", nome: "Rifa", descricao: "Sorteio de números", icon: Star },
+  { id: "tombola", nome: "Tombola", descricao: "Lotaria tradicional", icon: Award },
+  { id: "poio_vaca", nome: "Poio da Vaca", descricao: "Jogo rápido", icon: Gamepad2 },
+] as const;
+
+// Constants for event states
+const EVENT_STATES = {
+  RASCUNHO: 'rascunho',
+  ATIVO: 'ativo',
+  FECHADO: 'fechado',
+  FINALIZADO: 'finalizado'
+} as const;
+
+type EventState = typeof EVENT_STATES[keyof typeof EVENT_STATES];
+
+// Safe parsing helpers
+const safeParseFloat = (val: string, fallback: number = 0): number => {
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
+interface Aldeia {
+  id: string;
+  nome: string;
+}
 
 interface EventoData {
   id?: string;
@@ -28,27 +55,27 @@ interface EventoData {
   objectivoAngariacao?: number;
   publico: boolean;
   aldeiaId: string;
-  estado: "rascunho" | "ativo" | "fechado" | "finalizado";
-  jogosSelecionados?: string[]; // tipos de jogos para criar: raspadinha, rifa, tombola, poio_vaca
+  estado: EventState;
+  jogosSelecionados?: string[];
 }
-
-const TIPOS_JOGOS = [
-  { id: "raspadinha", nome: "Raspadinha", descricao: "Jogo de raspar instantâneo", icon: Gift },
-  { id: "rifa", nome: "Rifa", descricao: "Sorteio de números", icon: Star },
-  { id: "tombola", nome: "Tombola", descricao: "Lotaria tradicional", icon: Award },
-  { id: "poio_vaca", nome: "Poio da Vaca", descricao: "Jogo rápido", icon: Gamepad2 },
-];
 
 interface CreateEventoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EventoData) => Promise<void>;
   aldeiaId?: string;
-  initialData?: any;
-  aldeias?: any[];
+  initialData?: EventoData;
+  aldeias?: Aldeia[];
 }
 
-export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, initialData, aldeias }: CreateEventoModalProps) {
+export function CreateEventoModal({
+  open,
+  onOpenChange,
+  onSubmit,
+  aldeiaId,
+  initialData,
+  aldeias
+}: CreateEventoModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
@@ -57,7 +84,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
     objectivoAngariacao: "",
     publico: false,
     aldeiaId: aldeiaId || "",
-    estado: "rascunho" as "rascunho" | "ativo" | "fechado" | "finalizado",
+    estado: EVENT_STATES.RASCUNHO as EventState,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,8 +100,9 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         objectivoAngariacao: initialData.objectivoAngariacao ? String(initialData.objectivoAngariacao) : "",
         publico: initialData.publico || false,
         aldeiaId: initialData.aldeiaId || aldeiaId || "",
-        estado: initialData.estado || "rascunho",
+        estado: initialData.estado || EVENT_STATES.RASCUNHO,
       });
+      setJogosSelecionados(initialData.jogosSelecionados || []);
     } else if (!open) {
       setFormData({
         nome: "",
@@ -84,15 +112,35 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
         objectivoAngariacao: "",
         publico: false,
         aldeiaId: aldeiaId || "",
-        estado: "rascunho",
+        estado: EVENT_STATES.RASCUNHO,
       });
+      setJogosSelecionados([]);
     }
   }, [initialData, open, aldeiaId]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleChange = useCallback((field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleEstadoChange = useCallback((value: EventState) => {
+    setFormData(prev => ({ ...prev, estado: value }));
+  }, []);
+
+  const handleAldeiaChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, aldeiaId: value }));
+  }, []);
+
+  const toggleJogoSelecionado = useCallback((jogoId: string) => {
+    setJogosSelecionados(prev =>
+      prev.includes(jogoId)
+        ? prev.filter(id => id !== jogoId)
+        : [...prev, jogoId]
+    );
+  }, []);
+
+  const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
+
     if (!formData.nome || formData.nome.length < 2) {
       newErrors.nome = "Nome deve ter pelo menos 2 caracteres";
     }
@@ -108,26 +156,31 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
     if (!formData.aldeiaId) {
       newErrors.aldeiaId = "Selecione uma organização";
     }
-    
+
+    return newErrors;
+  }, [formData]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     setLoading(true);
 
     try {
-      const objectivoAngariacao = formData.objectivoAngariacao 
-        ? safeParseFloat(formData.objectivoAngariacao, 0)
-        : undefined;
-
       await onSubmit({
         id: initialData?.id,
         nome: formData.nome,
         descricao: formData.descricao || undefined,
         dataInicio: formData.dataInicio,
         dataFim: formData.dataFim,
-        objectivoAngariacao,
+        objectivoAngariacao: formData.objectivoAngariacao
+          ? safeParseFloat(formData.objectivoAngariacao)
+          : undefined,
         publico: formData.publico,
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
@@ -143,25 +196,29 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
           objectivoAngariacao: "",
           publico: false,
           aldeiaId: aldeiaId || "",
-          estado: "rascunho",
+          estado: EVENT_STATES.RASCUNHO,
         });
+        setJogosSelecionados([]);
       }
       onOpenChange(false);
       setErrors({});
-    } catch (error) {
-      console.error("Erro ao salvar evento:", error);
-      toast.error("Erro ao salvar evento");
     } finally {
       setLoading(false);
     }
-  }, [formData, jogosSelecionados, initialData, aldeiaId, onSubmit, onOpenChange]);
+  }, [formData, jogosSelecionados, initialData, aldeiaId, onSubmit, onOpenChange, validateForm]);
+
+  const handleErrorClear = useCallback((field: string) => {
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  }, [errors]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]" aria-describedby="create-evento-description">
         <DialogHeader>
           <DialogTitle>{initialData ? "Editar Evento" : "Novo Evento"}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="create-evento-description">
             {initialData ? "Edite as informações do evento." : "Crie um novo evento de angariação de fundos."}
           </DialogDescription>
         </DialogHeader>
@@ -173,7 +230,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 <Label htmlFor="aldeia">Aldeia/Organização *</Label>
                 <Select
                   value={formData.aldeiaId}
-                  onValueChange={(value) => setFormData({ ...formData, aldeiaId: value })}
+                  onValueChange={handleAldeiaChange}
                   required
                 >
                   <SelectTrigger>
@@ -187,7 +244,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.aldeiaId && <p className="text-sm text-destructive">{errors.aldeiaId}</p>}
+                {errors.aldeiaId && <p className="text-sm text-destructive" role="alert">{errors.aldeiaId}</p>}
               </div>
             )}
 
@@ -198,13 +255,14 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 placeholder="Ex: Festa de Verão 2024"
                 value={formData.nome}
                 onChange={(e) => {
-                  setFormData({ ...formData, nome: e.target.value });
-                  if (errors.nome) setErrors({ ...errors, nome: "" });
+                  handleChange("nome", e.target.value);
+                  handleErrorClear("nome");
                 }}
                 required
+                aria-describedby={errors.nome ? "nome-error" : "nome-description"}
               />
-              <p className="text-xs text-muted-foreground">Nome que aparecerá nos cartões e materiais</p>
-              {errors.nome && <p className="text-sm text-destructive">{errors.nome}</p>}
+              <p id="nome-description" className="text-xs text-muted-foreground">Nome que aparecerá nos cartões e materiais</p>
+              {errors.nome && <p id="nome-error" className="text-sm text-destructive" role="alert">{errors.nome}</p>}
             </div>
 
             <div className="grid gap-2">
@@ -213,7 +271,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 id="descricao"
                 placeholder="Descreva o evento..."
                 value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                onChange={(e) => handleChange("descricao", e.target.value)}
                 rows={3}
               />
             </div>
@@ -226,13 +284,14 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                   type="datetime-local"
                   value={formData.dataInicio}
                   onChange={(e) => {
-                    setFormData({ ...formData, dataInicio: e.target.value });
-                    if (errors.dataInicio) setErrors({ ...errors, dataInicio: "" });
+                    handleChange("dataInicio", e.target.value);
+                    handleErrorClear("dataInicio");
                   }}
                   required
+                  aria-describedby={errors.dataInicio ? "dataInicio-error" : "dataInicio-description"}
                 />
-                <p className="text-xs text-muted-foreground">Data de inicio do evento</p>
-                {errors.dataInicio && <p className="text-sm text-destructive">{errors.dataInicio}</p>}
+                <p id="dataInicio-description" className="text-xs text-muted-foreground">Data de inicio do evento</p>
+                {errors.dataInicio && <p id="dataInicio-error" className="text-sm text-destructive" role="alert">{errors.dataInicio}</p>}
               </div>
 
               <div className="grid gap-2">
@@ -242,13 +301,14 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                   type="datetime-local"
                   value={formData.dataFim}
                   onChange={(e) => {
-                    setFormData({ ...formData, dataFim: e.target.value });
-                    if (errors.dataFim) setErrors({ ...errors, dataFim: "" });
+                    handleChange("dataFim", e.target.value);
+                    handleErrorClear("dataFim");
                   }}
                   required
+                  aria-describedby={errors.dataFim ? "dataFim-error" : "dataFim-description"}
                 />
-                <p className="text-xs text-muted-foreground">Data de fim do evento</p>
-                {errors.dataFim && <p className="text-sm text-destructive">{errors.dataFim}</p>}
+                <p id="dataFim-description" className="text-xs text-muted-foreground">Data de fim do evento</p>
+                {errors.dataFim && <p id="dataFim-error" className="text-sm text-destructive" role="alert">{errors.dataFim}</p>}
               </div>
             </div>
 
@@ -261,7 +321,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 step="0.01"
                 placeholder="5000"
                 value={formData.objectivoAngariacao}
-                onChange={(e) => setFormData({ ...formData, objectivoAngariacao: e.target.value })}
+                onChange={(e) => handleChange("objectivoAngariacao", e.target.value)}
               />
               <p className="text-xs text-muted-foreground">Valor objetivo a angariar (opcional)</p>
             </div>
@@ -271,27 +331,23 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
               <Label>Criar Jogos para este Evento</Label>
               <p className="text-xs text-muted-foreground mb-2">Selecione os tipos de jogos que deseja criar automaticamente</p>
               <div className="grid grid-cols-2 gap-2">
-                {TIPOS_JOGOS.map((jogo) => {
+                {GAME_TYPES.map((jogo) => {
                   const Icon = jogo.icon;
                   const selecionado = jogosSelecionados.includes(jogo.id);
                   return (
                     <button
                       key={jogo.id}
                       type="button"
-                      onClick={() => {
-                        if (selecionado) {
-                          setJogosSelecionados(jogosSelecionados.filter(j => j !== jogo.id));
-                        } else {
-                          setJogosSelecionados([...jogosSelecionados, jogo.id]);
-                        }
-                      }}
+                      onClick={() => toggleJogoSelecionado(jogo.id)}
                       className={`p-3 rounded-xl border-2 flex items-center gap-2 transition-all ${
-                        selecionado 
-                          ? "border-primary bg-primary/10" 
+                        selecionado
+                          ? "border-primary bg-primary/10"
                           : "border-outline-variant/20 bg-surface-container hover:border-primary/30"
                       }`}
+                      aria-label={`${selecionado ? 'Remover' : 'Adicionar'} jogo ${jogo.nome}`}
+                      aria-pressed={selecionado}
                     >
-                      <Icon className={`w-5 h-5 ${selecionado ? "text-primary" : "text-muted-foreground"}`} />
+                      <Icon className={`w-5 h-5 ${selecionado ? "text-primary" : "text-muted-foreground"}`} aria-hidden="true" />
                       <span className={`text-sm font-medium ${selecionado ? "text-primary" : "text-muted-foreground"}`}>
                         {jogo.nome}
                       </span>
@@ -300,7 +356,7 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
                 })}
               </div>
               {jogosSelecionados.length > 0 && (
-                <p className="text-xs text-primary">
+                <p className="text-xs text-primary" aria-live="polite">
                   {jogosSelecionados.length} jogo(s) será(ão) criado(s) automaticamente
                 </p>
               )}
@@ -310,18 +366,16 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
               <Label htmlFor="estado">Estado do Evento</Label>
               <Select
                 value={formData.estado}
-                onValueChange={(value: "rascunho" | "ativo" | "fechado" | "finalizado") => 
-                  setFormData({ ...formData, estado: value })
-                }
+                onValueChange={handleEstadoChange}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rascunho">Rascunho</SelectItem>
-                  <SelectItem value="ativo">Ativo</SelectItem>
-                  <SelectItem value="fechado">Fechado</SelectItem>
-                  <SelectItem value="finalizado">Finalizado</SelectItem>
+                  <SelectItem value={EVENT_STATES.RASCUNHO}>Rascunho</SelectItem>
+                  <SelectItem value={EVENT_STATES.ATIVO}>Ativo</SelectItem>
+                  <SelectItem value={EVENT_STATES.FECHADO}>Fechado</SelectItem>
+                  <SelectItem value={EVENT_STATES.FINALIZADO}>Finalizado</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">Evento ativo fica visível para participantes</p>
@@ -337,8 +391,10 @@ export function CreateEventoModal({ open, onOpenChange, onSubmit, aldeiaId, init
               <Switch
                 id="publico"
                 checked={formData.publico}
-                onCheckedChange={(checked) => setFormData({ ...formData, publico: checked })}
+                onCheckedChange={(checked) => handleChange("publico", checked)}
+                aria-describedby="publico-description"
               />
+              <p id="publico-description" className="sr-only">Ativar ou desativar visibilidade pública do evento</p>
             </div>
           </div>
 

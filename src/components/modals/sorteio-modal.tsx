@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,24 @@ import { AlertTriangle, CheckCircle } from "lucide-react";
 import { LotteryAnimation } from "@/components/games/lottery-animation";
 import { motion } from "framer-motion";
 
+interface ResultadoPoio {
+  letraVencedora: string;
+  numeroVencedor: number;
+}
+
+interface ResultadoNumero {
+  numeroVencedor: number;
+}
+
+type ResultadoSorteio = ResultadoPoio | ResultadoNumero;
+
+interface SorteioData {
+  resultado: ResultadoSorteio;
+  vencedores: number;
+  hash: string;
+  seed: string;
+}
+
 interface SorteioModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,20 +42,14 @@ interface SorteioModalProps {
   totalParticipacoes: number;
   onExecutarSorteio: (observacoes?: string) => Promise<{
     success: boolean;
-    data?: {
-      resultado: Record<string, unknown>;
-      vencedores: number;
-      hash: string;
-      seed: string;
-    };
+    data?: SorteioData;
     error?: string;
   }>;
 }
 
-type ResultadoSorteio = Record<string, unknown>;
-
-function isResultadoPoio(r: ResultadoSorteio): r is { letraVencedora: string; numeroVencedor: number } {
-  return typeof r.letraVencedora === 'string' && typeof r.numeroVencedor === 'number';
+// Type guard for Poio result
+function isResultadoPoio(resultado: ResultadoSorteio): resultado is ResultadoPoio {
+  return 'letraVencedora' in resultado && 'numeroVencedor' in resultado;
 }
 
 export function SorteioModal({
@@ -49,31 +61,32 @@ export function SorteioModal({
 }: SorteioModalProps) {
   const [observacoes, setObservacoes] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<{
-    resultado: Record<string, unknown>;
-    vencedores: number;
-    hash: string;
-    seed: string;
-  } | null>(null);
+  const [resultado, setResultado] = useState<SorteioData | null>(null);
 
-  const handleExecutar = async () => {
+  const handleExecutar = useCallback(async () => {
     setLoading(true);
-    const response = await onExecutarSorteio(observacoes);
-    setLoading(false);
-
-    if (response.success && response.data) {
-      setResultado(response.data);
+    try {
+      const response = await onExecutarSorteio(observacoes);
+      if (response.success && response.data) {
+        setResultado(response.data);
+      }
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [observacoes, onExecutarSorteio]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setResultado(null);
     setObservacoes("");
     onOpenChange(false);
-  };
+  }, [onOpenChange]);
+
+  const handleObservacoesChange = useCallback((value: string) => {
+    setObservacoes(value);
+  }, []);
 
   // Helper to compute final result string and animation type
-  const getResultDisplay = (res: Record<string, unknown>) => {
+  const getResultDisplay = useCallback((res: ResultadoSorteio) => {
     if (isResultadoPoio(res)) {
       return {
         finalResult: `${res.letraVencedora}${res.numeroVencedor}`,
@@ -84,14 +97,14 @@ export function SorteioModal({
       finalResult: `${res.numeroVencedor}`,
       type: "number" as const,
     };
-  };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]" aria-describedby="sorteio-modal-description">
         <DialogHeader>
           <DialogTitle>Executar Sorteio</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="sorteio-modal-description">
             {jogoNome}
           </DialogDescription>
         </DialogHeader>
@@ -100,7 +113,7 @@ export function SorteioModal({
           <>
             <div className="py-4">
               <Alert>
-                <AlertTriangle className="h-4 w-4" />
+                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
                 <AlertDescription>
                   Total de participações: <strong>{totalParticipacoes}</strong>
                   <br />
@@ -114,16 +127,23 @@ export function SorteioModal({
                   id="observacoes"
                   placeholder="Notas sobre o sorteio..."
                   value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
+                  onChange={(e) => handleObservacoesChange(e.target.value)}
+                  aria-describedby="observacoes-description"
                 />
+                <p id="observacoes-description" className="sr-only">Adicione observações opcionais sobre o sorteio</p>
               </div>
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button onClick={handleExecutar} disabled={loading || totalParticipacoes === 0}>
+              <Button
+                type="button"
+                onClick={handleExecutar}
+                disabled={loading || totalParticipacoes === 0}
+                aria-label={`Executar sorteio com ${totalParticipacoes} participações`}
+              >
                 {loading ? "A sortear..." : "Executar Sorteio"}
               </Button>
             </DialogFooter>
@@ -150,7 +170,7 @@ export function SorteioModal({
                   className="space-y-4"
                 >
                   <Alert className="border-green-500">
-                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <CheckCircle className="h-4 w-4 text-primary" aria-hidden="true" />
                     <AlertDescription className="text-green-700">
                       Sorteio executado com sucesso!
                     </AlertDescription>
@@ -159,11 +179,16 @@ export function SorteioModal({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-medium text-muted-foreground">Vencedores:</h4>
-                      <p className="font-bold">{resultado.vencedores} vencedor(es)</p>
+                      <p className="font-bold" aria-label={`${resultado.vencedores} vencedor(es)`}>
+                        {resultado.vencedores} vencedor(es)
+                      </p>
                     </div>
                     <div className="space-y-1 text-right">
                       <h4 className="text-sm font-medium text-muted-foreground">Audit Hash:</h4>
-                      <code className="text-[10px] break-all opacity-70">
+                      <code
+                        className="text-[10px] break-all opacity-70"
+                        aria-label={`Hash de auditoria: ${resultado.hash}`}
+                      >
                         {resultado.hash.substring(0, 16)}...
                       </code>
                     </div>
@@ -173,7 +198,9 @@ export function SorteioModal({
             </div>
 
             <DialogFooter>
-              <Button onClick={handleClose}>Fechar</Button>
+              <Button type="button" onClick={handleClose}>
+                Fechar
+              </Button>
             </DialogFooter>
           </>
         )}

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Zap, Rocket } from "lucide-react";
+import type { Jogo, Aldeia, Evento } from "@/types/project";
 
 // Constants
 const ROLE_PATHS = {
@@ -24,23 +25,23 @@ const ROLE_PATHS = {
 const DEFAULT_ROLE = "user";
 
 // Types
-interface Evento {
+interface LandingEvento {
   id: string;
   nome: string;
-  // Add other properties as needed
+  descricao?: string;
+  imagemUrl?: string;
+  dataInicio: string;
+  dataFim: string;
+  aldeia?: { nome: string };
 }
 
-interface Jogo {
+interface LandingJogo {
   id: string;
   nome: string;
   tipo: string;
-  // Add other properties as needed
-}
-
-interface Aldeia {
-  id: string;
-  nome: string;
-  // Add other properties as needed
+  descricao?: string;
+  preco: number;
+  stockAtual: number;
 }
 
 interface LoginFormState {
@@ -91,8 +92,8 @@ export default function Home() {
     register: { nome: "", email: "", password: "", telefone: "" }
   });
 
-  const [eventos, setEventos] = useState<Evento[]>([]);
-  const [jogos, setJogos] = useState<Jogo[]>([]);
+  const [eventos, setEventos] = useState<LandingEvento[]>([]);
+  const [jogos, setJogos] = useState<LandingJogo[]>([]);
   const [aldeias, setAldeias] = useState<Aldeia[]>([]);
 
   const fetchData = useCallback(async () => {
@@ -107,7 +108,17 @@ export default function Home() {
         resJo.json(),
         resAl.json()
       ]);
-      if (dataEv.data) setEventos(dataEv.data);
+
+      // Transform data to match expected types
+      if (dataEv.data) {
+        const transformedEventos = dataEv.data.map((evento: any) => ({
+          ...evento,
+          dataInicio: evento.dataInicio ? new Date(evento.dataInicio).toISOString().split('T')[0] : '',
+          dataFim: evento.dataFim ? new Date(evento.dataFim).toISOString().split('T')[0] : ''
+        }));
+        setEventos(transformedEventos);
+      }
+
       if (dataJo.data) setJogos(dataJo.data);
       if (dataAl.data) setAldeias(dataAl.data);
     } catch (error) {

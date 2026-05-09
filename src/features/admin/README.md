@@ -30,6 +30,105 @@ src/features/admin/
 
 ---
 
+---
+
+## 🔍 Aba "Verificar" - Verificação de Participações
+
+### 🎯 Objetivo
+A aba **"Verificar"** permite ao superadmin e aldeia_admin verificar a autenticidade de participações através de hashes criptográficos, garantindo que apenas bilhetes válidos recebam prémios.
+
+### 🔐 Segurança e Integridade
+- **Hashes Criptográficos**: Cada participação gera um hash SHA-256 único
+- **Verificação de Autenticidade**: Sistema verifica se o hash corresponde aos dados armazenados
+- **Prevenção de Fraudes**: Impossível falsificar bilhetes sem conhecimento dos dados internos
+
+### 📋 Como Funciona
+
+#### 1. **Obtenção do Hash**
+- Cliente apresenta bilhete físico ou digital com código hash
+- Hash é um código alfanumérico de 64 caracteres (ex: `a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3`)
+- Pode ser obtido por:
+  - **Leitura manual** do código impresso
+  - **Scanner QR code** (se disponível)
+  - **Digitação direta** no sistema
+
+#### 2. **Processo de Verificação**
+1. Acesse a aba **"Verificar"** no dashboard
+2. Clique em **"Verificar Hash"**
+3. Digite ou cole o hash no campo
+4. Clique na lupa ou pressione Enter
+5. Sistema retorna resultado em segundos
+
+#### 3. **Resultado da Verificação**
+**✅ Hash Válido:**
+- Verde com ícone de check
+- Mostra todos os detalhes da participação
+- Permite entregar prémio com segurança
+
+**❌ Hash Inválido:**
+- Vermelho com ícone X
+- Indica tentativa de fraude
+- Bloqueia entrega de prémio
+
+#### 4. **Informações Mostradas**
+Após verificação válida, o sistema exibe:
+- **Jogo**: Nome do jogo/jogo
+- **Tipo**: Rifas, Tombolas, Poio da Vaca, Raspadinhas
+- **Valor**: Montante pago pelo cliente
+- **Data**: Quando foi realizada a participação
+- **Cliente**: Nome do comprador
+- **Telefone**: Contacto para validação
+- **Aldeia**: Organização responsável
+- **Estado do Prémio**: Se já foi entregue
+- **Resultado/Jogada**: Números sorteados ou coordenadas
+
+### 🎮 Tipos de Jogos e Verificação
+
+#### **Rifas e Tombolas**
+- Hash baseado em números sorteados
+- Verificação compara seed + resultado + ID único
+
+#### **Poio da Vaca**
+- Hash baseado em coordenadas escolhidas
+- Cada combinação letra+número é verificada
+
+#### **Raspadinhas**
+- Hash baseado no resultado revelado
+- Seed único por raspadinha
+
+### ⚠️ Casos de Uso
+
+#### **Cenário 1: Entrega de Prémio**
+```
+Cliente: "Ganhei! Aqui está o meu bilhete"
+Admin: Verifica hash → ✅ Válido → Entrega prémio
+```
+
+#### **Cenário 2: Detecção de Fraude**
+```
+Cliente: "Ganhei! Aqui está o meu bilhete"
+Admin: Verifica hash → ❌ Inválido → Recusa entrega
+```
+
+#### **Cenário 3: Validação sem Cliente**
+```
+Admin encontra bilhete perdido → Verifica hash → Identifica dono
+```
+
+### 🔧 Permissões
+- ✅ **super_admin**: Acesso total
+- ✅ **aldeia_admin**: Acesso às participações da sua aldeia
+- ❌ **vendedor**: Sem acesso
+- ❌ **user**: Sem acesso
+
+### 💡 Dicas de Uso
+- Sempre verifique o hash **ANTES** de entregar prémios
+- Compare nome/telefone do cliente com os dados mostrados
+- Em caso de dúvida, contacte o cliente pelo telefone registrado
+- Mantenha registro das verificações para auditoria
+
+---
+
 ## ✨ Melhorias Implementadas
 
 ### 1. Performance

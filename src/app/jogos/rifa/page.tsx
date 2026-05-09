@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
 import { BottomNav } from "@/components/bottom-nav";
+import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 
 interface Jogo {
   id: string;
@@ -92,6 +93,8 @@ export default function RifaPage() {
   const [numeroSorte, setNumeroSorte] = useState<string>("");
   const [saldo, setSaldo] = useState(0);
   const [paymentModalOpen, setCreditCardModalOpen] = useState(false);
+  const [confirmacaoModalOpen, setConfirmacaoModalOpen] = useState(false);
+  const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -426,18 +429,25 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
         setNumeroSorte(data.data?.numero || numerosSelecionados[0].toString().padStart(5, "0"));
         setParticipacaoConfirmada(true);
         setCreditCardModalOpen(false);
-        
+
+        // Definir a participação criada para mostrar no modal
+        setParticipacaoCriada(data.data);
+        setConfirmacaoModalOpen(true);
+
+        // Manter as notificações por WhatsApp/Email se solicitado
         if (participante.notificacao === "whatsapp" && participante.telefone) {
           const telLimpo = participante.telefone.replace(/\D/g, "");
-          const msg = encodeURIComponent(`🎉 Participação Confirmada!\n\nRifa: ${jogo.nome}\nNúmeros: ${numerosSelecionados.join(", ")}\n${config.dataSorteio ? `Sorteio: ${config.dataSorteio}${config.horaSorteio ? ` às ${config.horaSorteio}` : ''}` : ''}\n${config.localSorteio ? `Local: ${config.localSorteio}` : ''}\n\nObrigado por apoiar!`);
+          const hash = data.data?.hashParticipacao || data.data?.hashRaspe;
+          const msg = encodeURIComponent(`🎉 Participação Confirmada!\n\nRifa: ${jogo.nome}\nNúmeros: ${numerosSelecionados.join(", ")}\n${config.dataSorteio ? `Sorteio: ${config.dataSorteio}${config.horaSorteio ? ` às ${config.horaSorteio}` : ''}` : ''}\n${config.localSorteio ? `Local: ${config.localSorteio}` : ''}\n\nCódigo de Verificação: ${hash ? hash.substring(0, 16) + '...' : 'Consulte seu perfil'}\n\nObrigado por apoiar!`);
           const whatsappUrl = `https://wa.me/351${telLimpo}?text=${msg}`;
           window.open(whatsappUrl, "_blank");
         } else if (participante.notificacao === "email" && participante.email) {
+          const hash = data.data?.hashParticipacao || data.data?.hashRaspe;
           const subject = encodeURIComponent(`Confirmação de Participação - ${jogo.nome}`);
-          const body = encodeURIComponent(`🎉 Participação Confirmada!\n\nRifa: ${jogo.nome}\nNúmeros: ${numerosSelecionados.join(", ")}\n${config.dataSorteio ? `Sorteio: ${config.dataSorteio}${config.horaSorteio ? ` às ${config.horaSorteio}` : ''}` : ''}\n${config.localSorteio ? `Local: ${config.localSorteio}` : ''}\n\nObrigado por apoiar!`);
+          const body = encodeURIComponent(`🎉 Participação Confirmada!\n\nRifa: ${jogo.nome}\nNúmeros: ${numerosSelecionados.join(", ")}\n${config.dataSorteio ? `Sorteio: ${config.dataSorteio}${config.horaSorteio ? ` às ${config.horaSorteio}` : ''}` : ''}\n${config.localSorteio ? `Local: ${config.localSorteio}` : ''}\n\nCódigo de Verificação: ${hash || 'Consulte seu perfil'}\n\nObrigado por apoiar!`);
           window.open(`mailto:${participante.email}?subject=${subject}&body=${body}`);
         }
-        
+
         toast.success("Participação confirmada!");
       } else {
         const errorData = await response.json().catch(() => null);
@@ -880,6 +890,14 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
         <p className="text-center text-on-surface/40 text-xs">
           Apoie a cultura local. Todos os lucros revertem para a associação.
         </p>
+
+        {/* Modal de Confirmação de Participação */}
+        <ParticipacaoConfirmacaoModal
+          open={confirmacaoModalOpen}
+          onOpenChange={setConfirmacaoModalOpen}
+          participacao={participacaoCriada}
+        />
+
         </main>
       </div>
     </LayoutHeader>

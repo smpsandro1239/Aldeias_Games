@@ -8,7 +8,7 @@ import { LoaderScreen } from "@/components/loader-screen";
 import { useAuth } from "@/hooks/use-auth";
 
 // Constants
-const ALLOWED_ROLES = ["aldeia_admin"] as const;
+const ALLOWED_ROLES = ["aldeia_admin"];
 const REDIRECT_PATH = "/clientedashboard";
 const PANEL_NAME = "AdminDashboard";
 const LOADING_MESSAGE = "A carregar";
@@ -88,24 +88,8 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return <LoaderScreen message="A carregar" />;
-  }
-
-  if (error || !user || !token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        <div className="text-center p-8">
-          <p className="text-destructive mb-4">{error || "Sessão inválida. Faça login novamente."}</p>
-          <button 
-            onClick={() => { localStorage.clear(); window.location.href = "/"; }}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded"
-          >
-            Voltar ao início
-          </button>
-        </div>
-      </div>
-    );
   }
 
   return (

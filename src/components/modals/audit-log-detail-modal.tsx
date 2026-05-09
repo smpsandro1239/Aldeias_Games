@@ -18,11 +18,11 @@ export function AuditLogDetailModal({ log, open, onOpenChange }: AuditLogDetailM
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" aria-describedby="audit-log-description">
         <DialogHeader>
           <DialogTitle>Detalhes do Registo de Acesso</DialogTitle>
-          <DialogDescription>
-            Informações completas do registo de acesso
+          <DialogDescription id="audit-log-description">
+            Informações completas do registo de acesso #{log.id}
           </DialogDescription>
         </DialogHeader>
 
@@ -30,43 +30,53 @@ export function AuditLogDetailModal({ log, open, onOpenChange }: AuditLogDetailM
           <div className="grid gap-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Status</span>
-              <Badge variant={log.sucesso ? "default" : "destructive"}>
+              <Badge variant={log.sucesso ? "default" : "destructive"} aria-label={`Status do acesso: ${log.sucesso ? "Sucesso" : "Falha"}`}>
                 {log.sucesso ? "Sucesso" : "Falha"}
               </Badge>
             </div>
 
             <div className="grid gap-2">
               <span className="text-sm font-medium text-muted-foreground">Email</span>
-              <p className="text-sm">{log.email}</p>
+              <p className="text-sm" aria-label={`Email do utilizador: ${log.email}`}>
+                {log.email}
+              </p>
             </div>
 
             <div className="grid gap-2">
               <span className="text-sm font-medium text-muted-foreground">Endereço IP</span>
-              <p className="text-sm font-mono">{log.ip}</p>
+              <p className="text-sm font-mono" aria-label={`Endereço IP: ${log.ip}`}>
+                {log.ip}
+              </p>
             </div>
 
             <div className="grid gap-2">
               <span className="text-sm font-medium text-muted-foreground">User Agent</span>
-              <p className="text-sm text-wrap break-words">{log.userAgent}</p>
+              <p className="text-sm text-wrap break-words" aria-label={`User Agent: ${log.userAgent}`}>
+                {log.userAgent}
+              </p>
             </div>
 
             {log.motivo && (
               <div className="grid gap-2">
                 <span className="text-sm font-medium text-muted-foreground">Motivo</span>
-                <p className="text-sm">{log.motivo}</p>
+                <p className="text-sm" aria-label={`Motivo da falha: ${log.motivo}`}>
+                  {log.motivo}
+                </p>
               </div>
             )}
 
             <div className="grid gap-2">
               <span className="text-sm font-medium text-muted-foreground">Data/Hora</span>
-              <p className="text-sm">{formatDate(log.createdAt)}</p>
+              <p className="text-sm" aria-label={`Data e hora do acesso: ${formatDate(log.createdAt)}`}>
+                {formatDate(log.createdAt)}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="flex justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            <X className="h-4 w-4 mr-2" />
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} aria-label="Fechar modal de detalhes do registo de acesso">
+            <X className="h-4 w-4 mr-2" aria-hidden="true" />
             Fechar
           </Button>
         </div>

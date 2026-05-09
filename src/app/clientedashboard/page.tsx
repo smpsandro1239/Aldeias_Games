@@ -8,7 +8,7 @@ import { LoaderScreen } from "@/components/loader-screen";
 import { useAuth } from "@/hooks/use-auth";
 
 // Constants
-const ALLOWED_ROLES = ["user"] as const;
+const ALLOWED_ROLES = ["user"];
 const REDIRECT_PATH = "/";
 const PANEL_NAME = "ClienteDashboard";
 

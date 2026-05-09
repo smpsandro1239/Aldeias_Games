@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
+import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 
 interface Jogo {
   id: string;
@@ -153,6 +154,8 @@ export default function PoioDaVacaPage() {
   const [apostas, setApostas] = useState<Aposta[]>([]);
   const [betModalOpen, setBetModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [confirmacaoModalOpen, setConfirmacaoModalOpen] = useState(false);
+  const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
   const [notificationSent, setNotificationSent] = useState(false);
   const [saldo, setSaldo] = useState(0);
   const [pagamentoPendente, setPagamentoPendente] = useState<any>(null);
