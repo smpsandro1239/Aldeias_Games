@@ -162,8 +162,10 @@ export function CreateEventoModal({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('CreateEventoModal handleSubmit called');
 
     const newErrors = validateForm();
+    console.log('Validation errors:', newErrors);
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -172,7 +174,7 @@ export function CreateEventoModal({
     setLoading(true);
 
     try {
-      await onSubmit({
+      const submitData = {
         id: initialData?.id,
         nome: formData.nome,
         descricao: formData.descricao || undefined,
@@ -185,7 +187,10 @@ export function CreateEventoModal({
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
         jogosSelecionados: jogosSelecionados,
-      });
+      };
+      console.log('Submitting data:', submitData);
+
+      await onSubmit(submitData);
 
       if (!initialData) {
         setFormData({

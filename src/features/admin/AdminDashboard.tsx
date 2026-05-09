@@ -263,6 +263,7 @@ export default function AdminDashboard({
   // ==================== HANDLERS ====================
 
   const handleSaveEvento = useCallback(async (data: any) => {
+    console.log('handleSaveEvento called with data:', data);
     const isEditing = !!data.id;
     const jogosSelecionados = data.jogosSelecionados || [];
     const eventoData = { ...data };
@@ -270,6 +271,8 @@ export default function AdminDashboard({
 
     const url = isEditing ? `/api/eventos/${data.id}` : `/api/eventos`;
     const method = isEditing ? "PUT" : "POST";
+
+    console.log('Making request to:', url, 'with method:', method, 'data:', eventoData);
 
     try {
       const res = await fetch(url, {
@@ -280,6 +283,8 @@ export default function AdminDashboard({
         },
         body: JSON.stringify(eventoData),
       });
+
+      console.log('Response status:', res.status, 'ok:', res.ok);
 
       if (res.ok) {
         const evento = await res.json();
@@ -317,9 +322,11 @@ export default function AdminDashboard({
         setEventoModalOpen(false);
       } else {
         const err = await res.json();
+        console.error('API error response:', err);
         throw new Error(err.error || "Erro ao salvar evento");
       }
     } catch (error: any) {
+      console.error('handleSaveEvento error:', error);
       toast.error(error.message || "Erro ao salvar evento");
     }
   }, [token, fetchData, setEventoModalOpen]);
