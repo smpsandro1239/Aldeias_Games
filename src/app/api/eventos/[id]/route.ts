@@ -93,41 +93,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     console.log('PUT /api/eventos/[id] - Final updateData:', updateData);
 
-    // Recorrência
-    if (data.isRecurring !== undefined) {
-      console.log('PUT /api/eventos/[id] - Processing recurrence data:', data.isRecurring);
-      updateData.isTemplate = data.isRecurring;
-
-      if (data.isRecurring) {
-        updateData.templateNome = data.nome || evento.nome;
-        updateData.frequenciaRecorrencia = data.recurrenceFrequency;
-        updateData.diaSemanaRecorrencia = data.recurrenceDayOfWeek;
-
-        // Recalcular próxima data se os parâmetros mudaram
-        if (data.recurrenceFrequency && data.recurrenceDayOfWeek !== undefined && data.recurrenceTime) {
-          console.log('PUT /api/eventos/[id] - Recalculating next occurrence');
-          try {
-            const now = new Date();
-            const [hours, minutes] = data.recurrenceTime.split(':').map(Number);
-
-            let nextOccurrence = new Date(now);
-            nextOccurrence.setHours(hours, minutes, 0, 0);
-
-            const currentDay = nextOccurrence.getDay();
-            const targetDay = data.recurrenceDayOfWeek;
-            let daysToAdd = targetDay - currentDay;
-
-            if (daysToAdd <= 0) {
-              if (data.recurrenceFrequency === 'semanal') {
-                daysToAdd += 7;
-              } else if (data.recurrenceFrequency === 'quinzenal') {
-                daysToAdd += 14;
-              } else if (data.recurrenceFrequency === 'mensal') {
-                nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
-                nextOccurrence.setDate(1);
-                while (nextOccurrence.getDay() !== targetDay) {
-                  nextOccurrence.setDate(nextOccurrence.getDate() + 1);
-                }
+    // Recorrência - Temporariamente desabilitado para debug
+    console.log('PUT /api/eventos/[id] - Skipping recurrence processing for debug');
               }
             } else {
               if (data.recurrenceFrequency === 'quinzenal') {
