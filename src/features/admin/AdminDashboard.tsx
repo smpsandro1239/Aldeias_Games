@@ -1029,9 +1029,9 @@ export default function AdminDashboard({
           descricao: selectedEvento.descricao,
           dataInicio: selectedEvento.dataInicio,
           dataFim: selectedEvento.dataFim,
-          objectivoAngariacao: selectedEvento.objectivoAngariacao || selectedEvento.totalAngariado,
+          objectivoAngariacao: selectedEvento.totalAngariado || 0,
           publico: selectedEvento.publico || false,
-          aldeiaId: selectedEvento.aldeiaId || aldeiaId || "",
+          aldeiaId: aldeiaId || "",
           estado: selectedEvento.estado as any,
           // Recorrência
           isRecurring: selectedEvento.isTemplate || false,
