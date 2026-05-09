@@ -319,17 +319,19 @@ export async function POST(request: NextRequest) {
         const timestamp = new Date().toISOString();
         
         if (jogo.tipo === 'raspadinha') {
-          const config = typeof jogo.configuracao === 'string' 
-            ? JSON.parse(jogo.configuracao) 
+          const config = typeof jogo.configuracao === 'string'
+            ? JSON.parse(jogo.configuracao)
             : jogo.configuracao;
           const outcome = determineRaspadinhaOutcome(config);
           const grid = buildGridFromOutcome(outcome, config);
-          const rngSeed = crypto.randomBytes(16).toString('hex');
-          
-          const hash = generateHash(rngSeed, outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win', jogo.stockAtual - i, timestamp);
-          
+          const rngSeed = crypto.randomBytes(32).toString('hex');
+          const uniqueSalt = crypto.randomBytes(32).toString('hex');
+
+          const hash = generateHash(rngSeed, outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win', uniqueSalt, timestamp);
+
           dados.seedRaspe = rngSeed;
           dados.hashRaspe = hash;
+          dados.uniqueSalt = uniqueSalt;
           dados.resultadoRaspe = outcome.hasWin ? outcome.winningPrize?.nome : 'sem_premio';
           dados.dadosParticipacao = JSON.stringify({
             grid,
@@ -337,6 +339,7 @@ export async function POST(request: NextRequest) {
             hasWin: outcome.hasWin,
             generatedAt: new Date().toISOString(),
             rngSeed,
+            uniqueSalt,
             roll: outcome.roll,
           });
         } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
@@ -369,26 +372,30 @@ export async function POST(request: NextRequest) {
           }
           
           const resultado = JSON.stringify(numerosSelecionados);
-          const hash = generateHash(seed, resultado, jogo.stockAtual - i, timestamp);
-          
+          const uniqueSalt = crypto.randomBytes(32).toString('hex');
+          const hash = generateHash(seed, resultado, uniqueSalt, timestamp);
+
           dados.hashParticipacao = hash;
           dados.dadosVerificacao = JSON.stringify({
             seed,
             timestamp,
             numeros: numerosSelecionados,
+            uniqueSalt,
             hash
           });
         } else if (jogo.tipo === 'poio_da_vaca') {
           // Para poio da vaca, usar as coordenadas como "resultado"
           const coordenadas = data.dadosParticipacao?.coordenadas || [];
           const resultado = JSON.stringify(coordenadas);
-          const hash = generateHash(seed, resultado, jogo.stockAtual - i, timestamp);
-          
+          const uniqueSalt = crypto.randomBytes(32).toString('hex');
+          const hash = generateHash(seed, resultado, uniqueSalt, timestamp);
+
           dados.hashParticipacao = hash;
           dados.dadosVerificacao = JSON.stringify({
             seed,
             timestamp,
             coordenadas,
+            uniqueSalt,
             hash
           });
         }
@@ -567,10 +574,10 @@ function generateSeed(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function generateHash(seed: string, resultado: string, cardNumber: number, timestamp?: string): string {
-  const data = timestamp 
-    ? `${seed}:${resultado}:${cardNumber}:${timestamp}`
-    : `${seed}:${resultado}:${cardNumber}`;
+function generateHash(seed: string, resultado: string, salt: string, timestamp?: string): string {
+  const data = timestamp
+    ? `${seed}:${resultado}:${salt}:${timestamp}`
+    : `${seed}:${resultado}:${salt}`;
   return crypto
     .createHash('sha256')
     .update(data)

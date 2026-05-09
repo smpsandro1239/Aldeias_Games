@@ -64,9 +64,14 @@ export async function GET(request: NextRequest) {
               logoUrl: true,
             },
           },
-          _count: {
+          jogos: {
             select: {
-              jogos: true,
+              id: true,
+              nome: true,
+              tipo: true,
+              preco: true,
+              stockInicial: true,
+              estado: true,
             },
           },
         },

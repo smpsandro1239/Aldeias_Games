@@ -193,14 +193,19 @@ export function CreateEventoModal({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🚀 handleSubmit chamado');
 
     const newErrors = validateForm();
+    console.log('🔍 Erros de validação:', newErrors);
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      alert('Erros de validação:\n' + Object.values(newErrors).join('\n'));
       return;
     }
 
     setLoading(true);
+    console.log('⚙️ Iniciando salvamento...');
 
     try {
       const submitData = {
@@ -223,7 +228,15 @@ export function CreateEventoModal({
         maxOccurrences: isRecurring ? maxOccurrences : undefined,
       };
 
+      console.log('📤 Dados para submit:', submitData);
+      console.log('🔗 onSubmit function:', typeof onSubmit);
+
+      if (!onSubmit) {
+        throw new Error('onSubmit não está definido');
+      }
+
       await onSubmit(submitData);
+      console.log('✅ onSubmit concluído com sucesso');
 
       if (!initialData) {
         setFormData({
@@ -263,7 +276,7 @@ export function CreateEventoModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[60vh]">
+        <form onSubmit={handleSubmit} id="event-form">
           <div className="grid gap-4 py-4 pr-2">
             {aldeias && aldeias.length > 0 && !initialData && (
               <div className="grid gap-2">
@@ -534,11 +547,38 @@ export function CreateEventoModal({
             </div>
           </div>
 
-          <DialogFooter className="sticky bottom-0 bg-background pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="sticky bottom-0 bg-background pt-2 border-t" style={{ zIndex: 1000 }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              style={{ position: 'relative', zIndex: 1001 }}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="button"
+              disabled={loading}
+              onClick={(e) => {
+                console.log('🖱️ Botão Guardar clicado, loading:', loading);
+                console.log('📋 Form data:', formData);
+                console.log('🎮 Jogos selecionados:', jogosSelecionados);
+                console.log('🎯 initialData:', initialData);
+                e.preventDefault();
+                try {
+                  handleSubmit(e as any);
+                } catch (error) {
+                  console.error('Erro no handleSubmit:', error);
+                  alert('Erro ao guardar: ' + error.message);
+                }
+              }}
+              style={{
+                position: 'relative',
+                zIndex: 1001,
+                backgroundColor: loading ? undefined : '#2563eb',
+                border: loading ? undefined : '1px solid #2563eb'
+              }}
+            >
               {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Evento")}
             </Button>
           </DialogFooter>

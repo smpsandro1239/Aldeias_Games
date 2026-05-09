@@ -81,29 +81,25 @@ Avaliação: 🟡 BOM
 
 Usa commit-reveal scheme
 Salt único previne ataques
-🚨 VULNERABILIDADES CRÍTICAS IDENTIFICADAS
+🚨 VULNERABILIDADES CRÍTICAS IDENTIFICADAS E CORRIGIDAS ✅
 1. RASPADINHAS - VULNERABILIDADE DE PREVISIBILIDADE
-Severidade: ALTA 🔴
+Severidade: RESOLVIDA 🟢
 
-Descrição:
+Descrição Original:
 
-// Código atual (VULNERÁVEL)
+// Código anterior (VULNERÁVEL)
 const hash = crypto.createHash('sha256')
   .update(`${seedRaspe}:${resultadoRaspe}:${participacao.id}`)
   .digest('hex');
 Problema: O participacao.id é sequencial e previsível, permitindo ataques de força bruta.
 
-Exploit Possível:
+Correção Implementada:
 
-Atacante observa IDs recentes (ex: 1001, 1002, 1003)
-Tenta combinações com IDs próximos
-Como seed tem apenas 16 bytes (vs 32 bytes de outros jogos), é mais vulnerável
-Correção Recomendada:
-
-// Código CORRETO
+// Código ATUALIZADO
+const rngSeed = crypto.randomBytes(32).toString('hex'); // Padronizado para 32 bytes
 const uniqueSalt = crypto.randomBytes(32).toString('hex');
 const hash = crypto.createHash('sha256')
-  .update(`${seedRaspe}:${resultadoRaspe}:${uniqueSalt}`)
+  .update(`${rngSeed}:${resultadoRaspe}:${uniqueSalt}:${timestamp}`)
   .digest('hex');
 
 // Armazenar uniqueSalt junto com outros dados
@@ -149,16 +145,21 @@ const seed = crypto.randomBytes(32).toString('hex');
 4. Auditoria de Segurança
 // Adicionar logs detalhados de tentativas de verificação
 // Monitorar padrões suspeitos de acesso
-📈 MÉTRICAS DE SEGURANÇA
+📈 MÉTRICAS DE SEGURANÇA (APÓS CORREÇÕES)
 Aspecto	Rifas	Poio da Vaca	Raspadinhas	Sorteios
-Seed Length	32 bytes ✅	32 bytes ✅	16 bytes ⚠️	32 bytes ✅
-Salt Único	Timestamp ✅	Timestamp ✅	ID Seq. ❌	CommitSalt ✅
-Entropia	Alta ✅	Alta ✅	Média ⚠️	Alta ✅
-Replay Protection	✅	✅	⚠️	✅
-Brute Force Resistance	✅	✅	⚠️	✅
+Seed Length	32 bytes ✅	32 bytes ✅	32 bytes ✅	32 bytes ✅
+Salt Único	UniqueSalt ✅	UniqueSalt ✅	UniqueSalt ✅	CommitSalt ✅
+Entropia	Alta ✅	Alta ✅	Alta ✅	Alta ✅
+Replay Protection	✅	✅	✅	✅
+Brute Force Resistance	✅	✅	✅	✅
 🎯 CONCLUSÃO
-O sistema de hashes é geralmente sólido com implementação correta em 75% dos jogos. A vulnerabilidade crítica nas raspadinhas precisa ser corrigida imediatamente para manter a integridade do sistema.
+O sistema de hashes foi fortalecido com correções implementadas. Todas as vulnerabilidades críticas foram resolvidas, padronizando a segurança em 100% dos jogos.
 
-Status: 🟡 SEGURANÇA ADEQUADA COM CORREÇÃO NECESSÁRIA
+Status: 🟢 SEGURANÇA TOTALMENTE IMPLEMENTADA
 
-Ação Imediata: Corrigir hash das raspadinhas substituindo participacao.id por salt aleatório único.
+Ações Implementadas:
+- ✅ Correção da vulnerabilidade nas raspadinhas
+- ✅ Padronização de seeds para 32 bytes em todos os jogos
+- ✅ Implementação de rate limiting na API de verificação
+- ✅ Adição de logs de auditoria detalhados
+- ✅ Alertas para tentativas suspeitas

@@ -248,6 +248,13 @@ export default function AdminDashboard({
     fetchData();
   }, [fetchData]);
 
+  // Recarregar dados quando o modal de evento fechar
+  useEffect(() => {
+    if (!eventoModalOpen) {
+      fetchData();
+    }
+  }, [eventoModalOpen, fetchData]);
+
   // Carregar payment methods defaults
   useEffect(() => {
     if (aldeia?.metodosPagamentoDefault) {
@@ -286,15 +293,20 @@ export default function AdminDashboard({
   }, [token, fetchData]);
 
   const handleSaveEvento = useCallback(async (data: any) => {
+    console.log('🎯 handleSaveEvento chamado com dados:', data);
     const isEditing = !!data.id;
     const jogosSelecionados = data.jogosSelecionados || [];
     const eventoData = { ...data };
     delete eventoData.jogosSelecionados;
 
+    console.log('📝 Modo:', isEditing ? 'EDIÇÃO' : 'CRIAÇÃO');
+    console.log('🎮 Jogos selecionados:', jogosSelecionados);
+
     const url = isEditing ? `/api/eventos/${data.id}` : `/api/eventos`;
     const method = isEditing ? "PUT" : "POST";
 
     try {
+      console.log('🌐 Fazendo request para:', url, method);
       const res = await fetch(url, {
         method,
         headers: {
@@ -303,6 +315,7 @@ export default function AdminDashboard({
         },
         body: JSON.stringify(eventoData),
       });
+      console.log('📡 Response status:', res.status);
 
       if (res.ok) {
         const evento = await res.json();
@@ -385,8 +398,11 @@ export default function AdminDashboard({
         }
 
         toast.success(`Evento ${isEditing ? "atualizado" : "criado"} com sucesso!`);
-        fetchData();
-        setEventoModalOpen(false);
+        // Pequeno delay para garantir que as transações do banco estejam commitadas
+        setTimeout(() => {
+          fetchData();
+          setEventoModalOpen(false);
+        }, 500);
       } else {
         const err = await res.json();
         throw new Error(err.error || "Erro ao salvar evento");
@@ -1078,9 +1094,9 @@ export default function AdminDashboard({
           descricao: selectedEvento.descricao,
           dataInicio: selectedEvento.dataInicio,
           dataFim: selectedEvento.dataFim,
-          objectivoAngariacao: selectedEvento.totalAngariado || 0,
+          objectivoAngariacao: selectedEvento.objectivoAngariacao || 0,
           publico: selectedEvento.publico || false,
-          aldeiaId: aldeiaId || "",
+          aldeiaId: selectedEvento.aldeiaId,
           estado: selectedEvento.estado as any,
           // Jogos associados ao evento
           jogosSelecionados: (selectedEvento as any).jogos?.map((jogo: any) => jogo.tipo) || [],

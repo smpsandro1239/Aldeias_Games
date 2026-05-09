@@ -3,6 +3,11 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import crypto from 'crypto';
 
+// Rate limiting
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 10; // requests per minute
+const WINDOW_MS = 60 * 1000;
+
 // POST - Verificar hash de uma participação
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +15,21 @@ export async function POST(request: NextRequest) {
     
     if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+    }
+
+    // Rate limiting
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const now = Date.now();
+    const key = `${clientIP}:${user.id}`;
+    let entry = rateLimitMap.get(key);
+    if (!entry || now > entry.resetTime) {
+      entry = { count: 1, resetTime: now + WINDOW_MS };
+    } else {
+      entry.count++;
+    }
+    rateLimitMap.set(key, entry);
+    if (entry.count > RATE_LIMIT) {
+      return NextResponse.json({ error: 'Muitas tentativas de verificação. Tente novamente mais tarde.' }, { status: 429 });
     }
 
     const body = await request.json();
@@ -61,36 +81,49 @@ export async function POST(request: NextRequest) {
     if (participacao.dadosVerificacao) {
       try {
         dadosVerificacao = JSON.parse(participacao.dadosVerificacao);
-        
+
         // Recalcular hash para verificar
         const seed = dadosVerificacao.seed;
         const timestamp = dadosVerificacao.timestamp;
-        
+        const uniqueSalt = dadosVerificacao.uniqueSalt;
+
         if (dadosVerificacao.numeros) {
           const resultado = JSON.stringify(dadosVerificacao.numeros);
           const novoHash = crypto
             .createHash('sha256')
-            .update(`${seed}:${resultado}:${participacao.id}:${timestamp}`)
+            .update(`${seed}:${resultado}:${uniqueSalt}:${timestamp}`)
             .digest('hex');
           hashCorresponde = novoHash === hash;
         } else if (dadosVerificacao.coordenadas) {
           const resultado = JSON.stringify(dadosVerificacao.coordenadas);
           const novoHash = crypto
             .createHash('sha256')
-            .update(`${seed}:${resultado}:${participacao.id}:${timestamp}`)
+            .update(`${seed}:${resultado}:${uniqueSalt}:${timestamp}`)
             .digest('hex');
           hashCorresponde = novoHash === hash;
         }
       } catch (e) {
         console.error('Erro ao verificar dados:', e);
       }
-    } else if (participacao.hashRaspe && participacao.seedRaspe) {
+    } else if (participacao.hashRaspe && participacao.seedRaspe && participacao.uniqueSalt) {
       // Verificar raspadinha
-      const novoHash = crypto
-        .createHash('sha256')
-        .update(`${participacao.seedRaspe}:${participacao.resultadoRaspe}:${participacao.id}`)
-        .digest('hex');
-      hashCorresponde = novoHash === hash;
+      try {
+        const dadosParticipacao = JSON.parse(participacao.dadosParticipacao);
+        const timestamp = dadosParticipacao.generatedAt;
+        const novoHash = crypto
+          .createHash('sha256')
+          .update(`${participacao.seedRaspe}:${participacao.resultadoRaspe}:${participacao.uniqueSalt}:${timestamp}`)
+          .digest('hex');
+        hashCorresponde = novoHash === hash;
+      } catch (e) {
+        console.error('Erro ao verificar raspadinha:', e);
+      }
+    }
+
+    // Log da tentativa de verificação
+    console.log(`[AUDIT] Verificação de hash: ${hashCorresponde ? 'VÁLIDA' : 'INVÁLIDA'} - User: ${user.id} - IP: ${clientIP} - Participacao: ${participacao.id} - Tipo: ${participacao.jogo.tipo}`);
+    if (!hashCorresponde) {
+      console.warn(`[ALERT] Tentativa de verificação INVÁLIDA detectada - User: ${user.id} - Hash: ${hash}`);
     }
 
     return NextResponse.json({
@@ -108,8 +141,8 @@ export async function POST(request: NextRequest) {
         premioEntregue: participacao.premioEntregue,
         aldeia: participacao.jogo.evento.aldeia?.nome,
       },
-      mensagem: hashCorresponde 
-        ? 'Hash válido - prémio pode ser entregue' 
+      mensagem: hashCorresponde
+        ? 'Hash válido - prémio pode ser entregue'
         : 'Hash inválido - não corresponde aos registros',
     });
   } catch (error) {

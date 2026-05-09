@@ -415,6 +415,7 @@ model Participacao {
   dataPagamento       DateTime?
   seedRaspe           String?
   hashRaspe           String?
+  uniqueSalt          String?
   resultadoRaspe      String?
   revelado            Boolean                 @default(false)
   dataRevelacao       DateTime?
