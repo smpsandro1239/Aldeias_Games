@@ -1005,9 +1005,9 @@ export default function AdminDashboard({
           descricao: selectedEvento.descricao,
           dataInicio: selectedEvento.dataInicio,
           dataFim: selectedEvento.dataFim,
-          objectivoAngariacao: selectedEvento.totalAngariado,
+          objectivoAngariacao: selectedEvento.objectivoAngariacao || selectedEvento.totalAngariado,
           publico: selectedEvento.publico || false,
-          aldeiaId: '', // será definido no modal
+          aldeiaId: selectedEvento.aldeiaId || aldeiaId || "",
           estado: selectedEvento.estado as any,
         } : undefined}
         aldeias={userRole === "super_admin" ? aldeias : undefined}
