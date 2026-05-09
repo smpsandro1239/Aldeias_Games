@@ -145,6 +145,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Datas inválidas' }, { status: 400 });
     }
 
+    // Calcular próxima data para recorrência
+    let proximaData: Date | undefined;
+    if (data.isRecurring && data.recurrenceFrequency && data.recurrenceDayOfWeek !== undefined && data.recurrenceTime) {
+      const now = new Date();
+      const [hours, minutes] = data.recurrenceTime.split(':').map(Number);
+
+      // Encontrar a próxima ocorrência
+      let nextOccurrence = new Date(now);
+      nextOccurrence.setHours(hours, minutes, 0, 0);
+
+      // Ajustar para o próximo dia da semana correto
+      const currentDay = nextOccurrence.getDay();
+      const targetDay = data.recurrenceDayOfWeek;
+      let daysToAdd = targetDay - currentDay;
+
+      if (daysToAdd <= 0) {
+        // Se já passou hoje, ir para a próxima semana/quinzena/mês
+        if (data.recurrenceFrequency === 'semanal') {
+          daysToAdd += 7;
+        } else if (data.recurrenceFrequency === 'quinzenal') {
+          daysToAdd += 14;
+        } else if (data.recurrenceFrequency === 'mensal') {
+          // Para mensal, calcular próximo mês
+          nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+          nextOccurrence.setDate(1); // Primeiro dia do mês
+          // Encontrar o dia da semana correto
+          while (nextOccurrence.getDay() !== targetDay) {
+            nextOccurrence.setDate(nextOccurrence.getDate() + 1);
+          }
+        }
+      } else {
+        if (data.recurrenceFrequency === 'quinzenal') {
+          daysToAdd += 7; // Pular uma semana para quinzenal
+        } else if (data.recurrenceFrequency === 'mensal') {
+          // Para mensal, ir para o próximo mês
+          nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+          nextOccurrence.setDate(1);
+          while (nextOccurrence.getDay() !== targetDay) {
+            nextOccurrence.setDate(nextOccurrence.getDate() + 1);
+          }
+        }
+      }
+
+      if (data.recurrenceFrequency !== 'mensal') {
+        nextOccurrence.setDate(nextOccurrence.getDate() + daysToAdd);
+      }
+
+      proximaData = nextOccurrence;
+    }
+
     // Criar evento
     const evento = await prisma.evento.create({
       data: {
@@ -159,6 +209,12 @@ export async function POST(request: NextRequest) {
         estado: data.estado,
         publico: data.publico,
         aldeiaId: data.aldeiaId,
+        // Recorrência
+        isTemplate: data.isRecurring || false,
+        templateNome: data.isRecurring ? data.nome : undefined,
+        frequenciaRecorrencia: data.recurrenceFrequency || undefined,
+        diaSemanaRecorrencia: data.recurrenceDayOfWeek,
+        proximaData,
       },
       include: {
         aldeia: {

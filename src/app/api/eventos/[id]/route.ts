@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const updateData: any = { ...data };
     delete updateData.imagemBase64;
-    
+
     if (imagemUrl) updateData.imagemUrl = imagemUrl;
     if (data.dataInicio) {
       const d = new Date(data.dataInicio);
@@ -65,6 +65,65 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       const d = new Date(data.dataFim);
       if (isNaN(d.getTime())) return NextResponse.json({ error: 'Data de fim inválida' }, { status: 400 });
       updateData.dataFim = d;
+    }
+
+    // Recorrência
+    if (data.isRecurring !== undefined) {
+      updateData.isTemplate = data.isRecurring;
+
+      if (data.isRecurring) {
+        updateData.templateNome = data.nome || evento.nome;
+        updateData.frequenciaRecorrencia = data.recurrenceFrequency;
+        updateData.diaSemanaRecorrencia = data.recurrenceDayOfWeek;
+
+        // Recalcular próxima data se os parâmetros mudaram
+        if (data.recurrenceFrequency && data.recurrenceDayOfWeek !== undefined && data.recurrenceTime) {
+          const now = new Date();
+          const [hours, minutes] = data.recurrenceTime.split(':').map(Number);
+
+          let nextOccurrence = new Date(now);
+          nextOccurrence.setHours(hours, minutes, 0, 0);
+
+          const currentDay = nextOccurrence.getDay();
+          const targetDay = data.recurrenceDayOfWeek;
+          let daysToAdd = targetDay - currentDay;
+
+          if (daysToAdd <= 0) {
+            if (data.recurrenceFrequency === 'semanal') {
+              daysToAdd += 7;
+            } else if (data.recurrenceFrequency === 'quinzenal') {
+              daysToAdd += 14;
+            } else if (data.recurrenceFrequency === 'mensal') {
+              nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+              nextOccurrence.setDate(1);
+              while (nextOccurrence.getDay() !== targetDay) {
+                nextOccurrence.setDate(nextOccurrence.getDate() + 1);
+              }
+            }
+          } else {
+            if (data.recurrenceFrequency === 'quinzenal') {
+              daysToAdd += 7;
+            } else if (data.recurrenceFrequency === 'mensal') {
+              nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+              nextOccurrence.setDate(1);
+              while (nextOccurrence.getDay() !== targetDay) {
+                nextOccurrence.setDate(nextOccurrence.getDate() + 1);
+              }
+            }
+          }
+
+          if (data.recurrenceFrequency !== 'mensal') {
+            nextOccurrence.setDate(nextOccurrence.getDate() + daysToAdd);
+          }
+
+          updateData.proximaData = nextOccurrence;
+        }
+      } else {
+        updateData.templateNome = null;
+        updateData.frequenciaRecorrencia = null;
+        updateData.diaSemanaRecorrencia = null;
+        updateData.proximaData = null;
+      }
     }
 
      const updated = await prisma.evento.update({

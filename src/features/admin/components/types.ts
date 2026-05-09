@@ -17,6 +17,11 @@ export interface Evento {
   totalAngariado?: number;
   descricao?: string;
   publico?: boolean;
+  // Recorrência
+  isTemplate?: boolean;
+  frequenciaRecorrencia?: 'semanal' | 'quinzenal' | 'mensal';
+  diaSemanaRecorrencia?: number;
+  proximaData?: string;
   // ... outros campos conforme API
 }
 

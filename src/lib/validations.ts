@@ -105,6 +105,12 @@ export const createEventoSchema = z.object({
   estado: z.enum(['rascunho', 'ativo', 'pausado', 'finalizado', 'cancelado']).default('rascunho'),
   publico: z.boolean().default(false),
   aldeiaId: z.string(),
+  // Recorrência
+  isRecurring: z.boolean().optional().default(false),
+  recurrenceFrequency: z.enum(['semanal', 'quinzenal', 'mensal']).optional(),
+  recurrenceDayOfWeek: z.number().min(0).max(6).optional(),
+  recurrenceTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
+  maxOccurrences: z.number().min(1).optional(),
 });
 
 export const updateEventoSchema = createEventoSchema.partial().omit({ aldeiaId: true });

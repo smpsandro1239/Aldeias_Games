@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, RotateCcw } from "lucide-react";
 
 import {
    LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Globe,
@@ -261,6 +261,29 @@ export default function AdminDashboard({
   }, [aldeia]);
 
   // ==================== HANDLERS ====================
+
+  const handleProcessRecurringEvents = useCallback(async () => {
+    try {
+      const res = await fetch("/api/eventos/process-recurring", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(data.message);
+        fetchData();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Erro ao processar eventos recorrentes");
+      }
+    } catch (error) {
+      console.error("Erro:", error);
+      toast.error("Erro ao processar eventos recorrentes");
+    }
+  }, [token, fetchData]);
 
   const handleSaveEvento = useCallback(async (data: any) => {
     console.log('handleSaveEvento called with data:', data);
@@ -733,6 +756,13 @@ export default function AdminDashboard({
           </Button>
           <Button
             variant="outline"
+            onClick={handleProcessRecurringEvents}
+            className="w-full sm:w-auto"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" /> Processar Recorrentes
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => setResultadosExternosOpen(true)}
             className="w-full sm:w-auto"
           >
@@ -1009,6 +1039,11 @@ export default function AdminDashboard({
           publico: selectedEvento.publico || false,
           aldeiaId: selectedEvento.aldeiaId || aldeiaId || "",
           estado: selectedEvento.estado as any,
+          // Recorrência
+          isRecurring: selectedEvento.isTemplate || false,
+          recurrenceFrequency: selectedEvento.frequenciaRecorrencia || 'semanal',
+          recurrenceDayOfWeek: selectedEvento.diaSemanaRecorrencia ?? 1,
+          recurrenceTime: selectedEvento.proximaData ? new Date(selectedEvento.proximaData).toTimeString().slice(0, 5) : '08:00',
         } : undefined}
         aldeias={userRole === "super_admin" ? aldeias : undefined}
       />

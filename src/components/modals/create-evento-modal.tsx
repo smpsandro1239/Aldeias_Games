@@ -57,6 +57,12 @@ interface EventoData {
   aldeiaId: string;
   estado: EventState;
   jogosSelecionados?: string[];
+  // Recorrência
+  isRecurring?: boolean;
+  recurrenceFrequency?: 'semanal' | 'quinzenal' | 'mensal';
+  recurrenceDayOfWeek?: number;
+  recurrenceTime?: string;
+  maxOccurrences?: number;
 }
 
 interface CreateEventoModalProps {
@@ -89,6 +95,11 @@ export function CreateEventoModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [jogosSelecionados, setJogosSelecionados] = useState<string[]>([]);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<'semanal' | 'quinzenal' | 'mensal'>('semanal');
+  const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number>(1); // Segunda-feira
+  const [recurrenceTime, setRecurrenceTime] = useState<string>('08:00');
+  const [maxOccurrences, setMaxOccurrences] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (initialData && open) {
@@ -103,6 +114,11 @@ export function CreateEventoModal({
         estado: initialData.estado || EVENT_STATES.RASCUNHO,
       });
       setJogosSelecionados(initialData.jogosSelecionados || []);
+      setIsRecurring(initialData.isRecurring || false);
+      setRecurrenceFrequency(initialData.recurrenceFrequency || 'semanal');
+      setRecurrenceDayOfWeek(initialData.recurrenceDayOfWeek ?? 1);
+      setRecurrenceTime(initialData.recurrenceTime || '08:00');
+      setMaxOccurrences(initialData.maxOccurrences);
     } else if (!open) {
       setFormData({
         nome: "",
@@ -115,6 +131,11 @@ export function CreateEventoModal({
         estado: EVENT_STATES.RASCUNHO,
       });
       setJogosSelecionados([]);
+      setIsRecurring(false);
+      setRecurrenceFrequency('semanal');
+      setRecurrenceDayOfWeek(1);
+      setRecurrenceTime('08:00');
+      setMaxOccurrences(undefined);
     }
   }, [initialData, open, aldeiaId]);
 
@@ -157,8 +178,18 @@ export function CreateEventoModal({
       newErrors.aldeiaId = "Selecione uma organização";
     }
 
+    // Validações para recorrência
+    if (isRecurring) {
+      if (!recurrenceTime) {
+        newErrors.recurrenceTime = "Horário é obrigatório para eventos recorrentes";
+      }
+      if (maxOccurrences && maxOccurrences < 1) {
+        newErrors.maxOccurrences = "Número máximo deve ser maior que 0";
+      }
+    }
+
     return newErrors;
-  }, [formData]);
+  }, [formData, isRecurring, recurrenceTime, maxOccurrences]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,6 +218,11 @@ export function CreateEventoModal({
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
         jogosSelecionados: jogosSelecionados,
+        isRecurring,
+        recurrenceFrequency: isRecurring ? recurrenceFrequency : undefined,
+        recurrenceDayOfWeek: isRecurring ? recurrenceDayOfWeek : undefined,
+        recurrenceTime: isRecurring ? recurrenceTime : undefined,
+        maxOccurrences: isRecurring ? maxOccurrences : undefined,
       };
       console.log('Submitting data:', submitData);
 
@@ -384,6 +420,102 @@ export function CreateEventoModal({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">Evento ativo fica visível para participantes</p>
+            </div>
+
+            {/* Recorrência */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="recurring">Evento Recorrente</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Criar automaticamente novos eventos neste horário
+                  </p>
+                </div>
+                <Switch
+                  id="recurring"
+                  checked={isRecurring}
+                  onCheckedChange={setIsRecurring}
+                />
+              </div>
+
+              {isRecurring && (
+                <div className="bg-surface-container-low/50 rounded-2xl p-4 border border-outline-variant/20 space-y-4">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    ⚙️ Configuração da Recorrência
+                  </h4>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="frequency">Frequência</Label>
+                      <Select
+                        value={recurrenceFrequency}
+                        onValueChange={(value: 'semanal' | 'quinzenal' | 'mensal') => setRecurrenceFrequency(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="semanal">Semanal</SelectItem>
+                          <SelectItem value="quinzenal">Quinzenal</SelectItem>
+                          <SelectItem value="mensal">Mensal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="dayOfWeek">Dia da Semana</Label>
+                      <Select
+                        value={String(recurrenceDayOfWeek)}
+                        onValueChange={(value) => setRecurrenceDayOfWeek(Number(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">Domingo</SelectItem>
+                          <SelectItem value="1">Segunda-feira</SelectItem>
+                          <SelectItem value="2">Terça-feira</SelectItem>
+                          <SelectItem value="3">Quarta-feira</SelectItem>
+                          <SelectItem value="4">Quinta-feira</SelectItem>
+                          <SelectItem value="5">Sexta-feira</SelectItem>
+                          <SelectItem value="6">Sábado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="time">Horário</Label>
+                      <Input
+                        id="time"
+                        type="time"
+                        value={recurrenceTime}
+                        onChange={(e) => setRecurrenceTime(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="maxOccurrences">Máx. Ocorrências (opcional)</Label>
+                      <Input
+                        id="maxOccurrences"
+                        type="number"
+                        min="1"
+                        placeholder="Ilimitado"
+                        value={maxOccurrences || ""}
+                        onChange={(e) => setMaxOccurrences(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-3">
+                    <p className="text-xs text-accent font-medium">
+                      📅 Próximas ocorrências serão criadas automaticamente às {recurrenceTime} de cada {recurrenceFrequency === 'semanal' ? 'semana' : recurrenceFrequency === 'quinzenal' ? 'quinzena' : 'mês'}.
+                      {maxOccurrences && ` Máximo de ${maxOccurrences} ocorrências.`}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between rounded-lg border p-3">

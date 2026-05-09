@@ -9,7 +9,8 @@ import {
   Plus,
   Edit,
   Trash2,
-  Gamepad2
+  Gamepad2,
+  RotateCcw
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Evento, Jogo } from "../types";
@@ -105,18 +106,31 @@ export function EventosTab({
               .map((ev) => (
                 <Card key={ev.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
                   <CardContent className="p-4 flex items-center justify-between">
-                    <div
-                      className="flex-1"
-                      onClick={() => {
-                        setSelectedEvento(ev);
-                        setEventoModalOpen(true);
-                      }}
-                    >
-                      <h3 className="font-semibold">{ev.nome}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(ev.dataInicio)} - {formatDate(ev.dataFim)}
-                      </p>
-                    </div>
+                     <div
+                       className="flex-1"
+                       onClick={() => {
+                         setSelectedEvento(ev);
+                         setEventoModalOpen(true);
+                       }}
+                     >
+                       <div className="flex items-center gap-2">
+                         <h3 className="font-semibold">{ev.nome}</h3>
+                         {ev.isTemplate && (
+                           <div className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                             <RotateCcw className="h-3 w-3" />
+                             Recorrente
+                           </div>
+                         )}
+                       </div>
+                       <p className="text-sm text-muted-foreground">
+                         {formatDate(ev.dataInicio)} - {formatDate(ev.dataFim)}
+                       </p>
+                       {ev.isTemplate && ev.frequenciaRecorrencia && (
+                         <p className="text-xs text-blue-600 mt-1">
+                           Próxima: {ev.proximaData ? formatDate(ev.proximaData) : 'Calculando...'}
+                         </p>
+                       )}
+                     </div>
                     <div
                       className="flex flex-wrap gap-2 items-center"
                       onClick={(e) => e.stopPropagation()}
