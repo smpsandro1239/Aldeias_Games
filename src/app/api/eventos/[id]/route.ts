@@ -109,14 +109,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       { status: 500 }
     );
   }
-        }
-      } else {
-        updateData.templateNome = null;
-        updateData.frequenciaRecorrencia = null;
-        updateData.diaSemanaRecorrencia = null;
-        updateData.proximaData = null;
-      }
-    }
 
     console.log('PUT /api/eventos/[id] - Updating event in database');
     const updated = await prisma.evento.update({
