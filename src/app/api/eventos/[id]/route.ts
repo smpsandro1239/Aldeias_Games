@@ -25,27 +25,38 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
+    console.log('PUT /api/eventos/[id] - Starting update for event:', await context.params);
+
     const { id } = await context.params;
     const user = await getFullUserFromRequest(request);
-    
+
     if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
+      console.log('PUT /api/eventos/[id] - Unauthorized user:', user?.role);
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
     const evento = await prisma.evento.findUnique({ where: { id } });
-    if (!evento) return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
+    if (!evento) {
+      console.log('PUT /api/eventos/[id] - Event not found:', id);
+      return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
+    }
 
     if (user.role === 'aldeia_admin' && user.aldeiaId !== evento.aldeiaId) {
+      console.log('PUT /api/eventos/[id] - User not authorized for this aldeia:', user.aldeiaId, evento.aldeiaId);
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
     const body = await request.json();
+    console.log('PUT /api/eventos/[id] - Received body:', body);
+
     const validation = updateEventoSchema.safeParse(body);
     if (!validation.success) {
+      console.log('PUT /api/eventos/[id] - Validation failed:', validation.error.errors);
       return NextResponse.json({ error: 'Dados inválidos', details: validation.error.errors }, { status: 400 });
     }
 
     const data = validation.data;
+    console.log('PUT /api/eventos/[id] - Validated data:', data);
     let imagemUrl = undefined;
     if (data.imagemBase64) {
       const saved = await saveImage(data.imagemBase64, 'eventos');
@@ -55,20 +66,31 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const updateData: any = { ...data };
     delete updateData.imagemBase64;
 
+    console.log('PUT /api/eventos/[id] - Preparing updateData:', updateData);
+
     if (imagemUrl) updateData.imagemUrl = imagemUrl;
     if (data.dataInicio) {
       const d = new Date(data.dataInicio);
-      if (isNaN(d.getTime())) return NextResponse.json({ error: 'Data de início inválida' }, { status: 400 });
+      if (isNaN(d.getTime())) {
+        console.log('PUT /api/eventos/[id] - Invalid start date:', data.dataInicio);
+        return NextResponse.json({ error: 'Data de início inválida' }, { status: 400 });
+      }
       updateData.dataInicio = d;
     }
     if (data.dataFim) {
       const d = new Date(data.dataFim);
-      if (isNaN(d.getTime())) return NextResponse.json({ error: 'Data de fim inválida' }, { status: 400 });
+      if (isNaN(d.getTime())) {
+        console.log('PUT /api/eventos/[id] - Invalid end date:', data.dataFim);
+        return NextResponse.json({ error: 'Data de fim inválida' }, { status: 400 });
+      }
       updateData.dataFim = d;
     }
 
+    console.log('PUT /api/eventos/[id] - Final updateData:', updateData);
+
     // Recorrência
     if (data.isRecurring !== undefined) {
+      console.log('PUT /api/eventos/[id] - Processing recurrence data:', data.isRecurring);
       updateData.isTemplate = data.isRecurring;
 
       if (data.isRecurring) {
@@ -78,45 +100,55 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
         // Recalcular próxima data se os parâmetros mudaram
         if (data.recurrenceFrequency && data.recurrenceDayOfWeek !== undefined && data.recurrenceTime) {
-          const now = new Date();
-          const [hours, minutes] = data.recurrenceTime.split(':').map(Number);
+          console.log('PUT /api/eventos/[id] - Recalculating next occurrence');
+          try {
+            const now = new Date();
+            const [hours, minutes] = data.recurrenceTime.split(':').map(Number);
 
-          let nextOccurrence = new Date(now);
-          nextOccurrence.setHours(hours, minutes, 0, 0);
+            let nextOccurrence = new Date(now);
+            nextOccurrence.setHours(hours, minutes, 0, 0);
 
-          const currentDay = nextOccurrence.getDay();
-          const targetDay = data.recurrenceDayOfWeek;
-          let daysToAdd = targetDay - currentDay;
+            const currentDay = nextOccurrence.getDay();
+            const targetDay = data.recurrenceDayOfWeek;
+            let daysToAdd = targetDay - currentDay;
 
-          if (daysToAdd <= 0) {
-            if (data.recurrenceFrequency === 'semanal') {
-              daysToAdd += 7;
-            } else if (data.recurrenceFrequency === 'quinzenal') {
-              daysToAdd += 14;
-            } else if (data.recurrenceFrequency === 'mensal') {
-              nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
-              nextOccurrence.setDate(1);
-              while (nextOccurrence.getDay() !== targetDay) {
-                nextOccurrence.setDate(nextOccurrence.getDate() + 1);
+            if (daysToAdd <= 0) {
+              if (data.recurrenceFrequency === 'semanal') {
+                daysToAdd += 7;
+              } else if (data.recurrenceFrequency === 'quinzenal') {
+                daysToAdd += 14;
+              } else if (data.recurrenceFrequency === 'mensal') {
+                nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+                nextOccurrence.setDate(1);
+                while (nextOccurrence.getDay() !== targetDay) {
+                  nextOccurrence.setDate(nextOccurrence.getDate() + 1);
+                }
+              }
+            } else {
+              if (data.recurrenceFrequency === 'quinzenal') {
+                daysToAdd += 7;
+              } else if (data.recurrenceFrequency === 'mensal') {
+                nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+                nextOccurrence.setDate(1);
+                while (nextOccurrence.getDay() !== targetDay) {
+                  nextOccurrence.setDate(nextOccurrence.getDate() + 1);
+                }
               }
             }
-          } else {
-            if (data.recurrenceFrequency === 'quinzenal') {
-              daysToAdd += 7;
-            } else if (data.recurrenceFrequency === 'mensal') {
-              nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
-              nextOccurrence.setDate(1);
-              while (nextOccurrence.getDay() !== targetDay) {
-                nextOccurrence.setDate(nextOccurrence.getDate() + 1);
-              }
+
+            if (data.recurrenceFrequency !== 'mensal') {
+              nextOccurrence.setDate(nextOccurrence.getDate() + daysToAdd);
             }
-          }
 
-          if (data.recurrenceFrequency !== 'mensal') {
-            nextOccurrence.setDate(nextOccurrence.getDate() + daysToAdd);
-          }
-
-          updateData.proximaData = nextOccurrence;
+            updateData.proximaData = nextOccurrence;
+            console.log('PUT /api/eventos/[id] - Next occurrence calculated:', nextOccurrence);
+  } catch (error) {
+    console.error('PUT /api/eventos/[id] - Error updating event:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
         }
       } else {
         updateData.templateNome = null;
@@ -126,26 +158,30 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
     }
 
-     const updated = await prisma.evento.update({
-       where: { id },
-       data: updateData,
-     });
+    console.log('PUT /api/eventos/[id] - Updating event in database');
+    const updated = await prisma.evento.update({
+      where: { id },
+      data: updateData,
+    });
 
-     // Audit log for event update
-     await logAudit(
-       user.id,
-       'update',
-       'evento',
-       id,
-       {
-         oldValues: { nome: evento.nome, estado: evento.estado, dataInicio: evento.dataInicio, dataFim: evento.dataFim },
-         newValues: { nome: updated.nome, estado: updated.estado, dataInicio: updated.dataInicio, dataFim: updated.dataFim }
-       },
-       request.headers.get('x-forwarded-for') || 'unknown',
-       request.headers.get('user-agent') || 'unknown'
-     );
+    console.log('PUT /api/eventos/[id] - Event updated successfully:', updated.id);
 
-     return NextResponse.json({ success: true, data: updated });
+    // Audit log for event update
+    await logAudit(
+      user.id,
+      'update',
+      'evento',
+      id,
+      {
+        oldValues: { nome: evento.nome, estado: evento.estado, dataInicio: evento.dataInicio, dataFim: evento.dataFim },
+        newValues: { nome: updated.nome, estado: updated.estado, dataInicio: updated.dataInicio, dataFim: updated.dataFim }
+      },
+      request.headers.get('x-forwarded-for') || 'unknown',
+      request.headers.get('user-agent') || 'unknown'
+    );
+
+    console.log('PUT /api/eventos/[id] - Audit log created, returning success');
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
