@@ -196,7 +196,7 @@ Admin encontra bilhete perdido → Verifica hash → Identifica dono
 |-----|-----------|-------|-----------|
 | Visão Geral | Resumo de stats + eventos recentes | Novo evento, Novo jogo | Todos |
 | Analytics | Gráficos e métricas | - | Todos |
-| Eventos | Lista de eventos | Criar, Editar, Eliminar, Ver Jogos | Todos |
+| Eventos | Lista de eventos | Criar, Editar, Eliminar, Ver Jogos, Processar Recorrentes | Todos |
 | Jogos | Lista de jogos | Criar, Editar, Eliminar, Toggle estado, QR Code, Testar | Todos |
 | Vencedores | Participações vencedoras | Converter prémio, Confirmar entrega | Todos |
 | Utilizadores | Gestão de utilizadores | Criar, Editar, Eliminar | aldeia_admin, super_admin |
@@ -287,6 +287,17 @@ Ambas exibem badge com contador de itens pendentes.
 ### Testar Jogo (Super Admin)
 - Apenas super_admin pode testar jogos
 - Abre modal com opções de teste (em breve)
+
+### Eventos Recorrentes
+- **Objetivo**: Permitir criação de eventos que se repetem automaticamente (semanal, quinzenal, mensal)
+- **Como usar**:
+  1. Criar novo evento e marcar "Evento Recorrente"
+  2. Escolher frequência (semanal/quinzenal/mensal)
+  3. Selecionar dia da semana e horário
+  4. Definir máximo de ocorrências (opcional)
+- **Processamento**: Endpoint `POST /api/eventos/process-recurring` cria novos eventos automaticamente
+- **Visual**: Eventos recorrentes marcados com 🔄 e mostram próxima data
+- **Botão**: "Processar Recorrentes" para execução manual
 
 ---
 
