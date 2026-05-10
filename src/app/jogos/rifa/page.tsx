@@ -742,6 +742,29 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
           )}
 
           <div className="space-y-3">
+            {/* Legenda */}
+            <div className="bg-surface-container-high rounded-xl p-3 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Legenda</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-surface-container-highest border border-outline-variant"></div>
+                  <span className="text-muted-foreground">Disponível</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-secondary"></div>
+                  <span className="text-muted-foreground">Selecionado</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-orange-500/70 border-2 border-orange-400"></div>
+                  <span className="text-muted-foreground">Seus números</span>
+                </div>
+                <div className="flex items-center gap-2 col-span-1 sm:col-span-3">
+                  <div className="w-4 h-4 rounded bg-red-900/40 border-2 border-red-800/60"></div>
+                  <span className="text-muted-foreground">Indisponível (já vendido)</span>
+                </div>
+              </div>
+            </div>
+
             <div className="flex justify-between items-center">
               <p className="text-xs text-muted-foreground">Selecionados: {numerosSelecionados.length}/20</p>
               <div className="flex gap-1">
@@ -784,8 +807,8 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
                         ? "bg-secondary text-primary-foreground" 
                         : isJogado 
                         ? "bg-orange-500/70 text-foreground border-2 border-orange-400 cursor-not-allowed"
-                        : isOcupado 
-                        ? "bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/30"
+                        : isOcupado
+                        ? "bg-red-900/40 text-red-400 cursor-not-allowed border-2 border-red-800/60"
                         : "bg-surface-container-highest text-on-surface hover:bg-muted/30"
                       }
                     `}
