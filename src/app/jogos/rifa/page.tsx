@@ -67,7 +67,6 @@ interface Jogo {
 }
 
 export default function RifaPage() {
-  console.log("🔄 RifaPage component rendered");
   const router = useRouter();
   const [jogo, setJogo] = useState<Jogo | null>(null);
   const [config, setConfig] = useState<{
@@ -124,12 +123,8 @@ export default function RifaPage() {
   }, []);
 
   useEffect(() => {
-    console.log("🎯 useEffect fetchNumerosOcupados - jogo?.id:", jogo?.id);
-    if (jogo?.id) {
-      console.log("✅ Chamando fetchNumerosOcupados");
+      if (jogo?.id) {
       fetchNumerosOcupados();
-    } else {
-      console.log("❌ jogo.id não definido, não chamando fetchNumerosOcupados");
     }
   }, [jogo?.id]);
 
@@ -144,27 +139,21 @@ export default function RifaPage() {
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      console.log("Buscando números ocupados para jogo:", jogo?.id);
       const response = await fetch(`/api/participacoes?jogoId=${jogo?.id}`, {
         headers
       });
       const data = await response.json();
-      console.log("API participacoes response:", response.status, "headers enviados:", Object.keys(headers));
-      console.log("Dados retornados da API:", JSON.stringify(data, null, 2));
 
       if (data.data && Array.isArray(data.data)) {
         console.log("Número de participações encontradas:", data.data.length);
         const todosNumeros: number[] = [];
         const meusNumeros: number[] = [];
 
-        console.log("Processando", data.data.length, "participações");
         data.data.forEach((p: any) => {
-          console.log("Participação encontrada:", p.id, "userId:", p.userId, "dadosParticipacao:", p.dadosParticipacao);
           if (p.dadosParticipacao) {
             let numeros: number[] = [];
             try {
               const parsed = JSON.parse(p.dadosParticipacao);
-              console.log("Dados parseados para participação", p.id, ":", parsed);
               // Support multiple formats:
               // - Array of numbers: [1, 2, 3]
               // - Object with 'numeros': {numeros: [1, 2, 3]}
@@ -177,40 +166,27 @@ export default function RifaPage() {
                 // Legacy seed format - single number
                 numeros = [parsed.numero];
               }
-              console.log("Números extraídos da participação", p.id, ":", numeros);
-            } catch (e) {
-              console.error("Erro ao parsear dadosParticipacao da participação", p.id, ":", p.dadosParticipacao, e);
+            } catch {
               numeros = [];
             }
 
-            console.log("Processando números da participação", p.id, ":", numeros);
             numeros.forEach((n: any) => {
               const num = Number(n);
-              console.log("Adicionando número ocupado:", num, "do tipo:", typeof num);
               if (!todosNumeros.includes(num)) {
                 todosNumeros.push(num);
-                console.log("Número", num, "adicionado à lista de ocupados");
               }
               // Track if this number belongs to the current user
               if (userId && p.userId === userId && !meusNumeros.includes(num)) {
                 meusNumeros.push(num);
-                console.log("Número", num, "adicionado aos meus números");
               }
             });
-          } else {
-            console.log("Participação", p.id, "não tem dadosParticipacao");
           }
         });
-
-        console.log(`Encontrados ${todosNumeros.length} números ocupados e ${meusNumeros.length} meus números para jogo ${jogo?.id}`);
-        console.log("Números ocupados:", todosNumeros);
-        console.log("Meus números:", meusNumeros);
 
         // Forçar conversão para numbers e remover duplicatas
         const ocupadosUnicos = [...new Set(todosNumeros.map(n => Number(n)))];
         const jogadosUnicos = [...new Set(meusNumeros.map(n => Number(n)))];
 
-        console.log("Definindo estado - ocupados:", ocupadosUnicos, "jogados:", jogadosUnicos);
         setNumerosOcupados(ocupadosUnicos);
         setNumerosJogados(jogadosUnicos);
       }
@@ -228,8 +204,6 @@ export default function RifaPage() {
       for (let i = inicioBloco; i <= fimBloco; i++) {
         numeros.push(i);
       }
-      console.log(`Bloco ${blocoSelecionado}: números ${inicioBloco}-${fimBloco}`, numeros, "total:", numeros.length);
-      console.log("Números ocupados atuais no momento da definição:", numerosOcupados);
       setNumerosDisponiveis(numeros);
     }
   }, [blocoSelecionado, jogo, config]);
@@ -251,16 +225,12 @@ export default function RifaPage() {
       let jogoData;
       if (jogoId) {
         jogoData = data.data || data;
-        console.log("Jogo específico encontrado:", !!jogoData, jogoData?.id);
         // If specific game not found, fall back to first active rifa
         if (!jogoData || (response.status !== 200 && response.status !== 201)) {
-          console.log("🔄 Jogo específico não encontrado, fazendo fallback");
           const fallbackResponse = await fetch("/api/jogos?ativos=true&tipo=rifa");
           const fallbackData = await fallbackResponse.json();
-          console.log("Fallback response:", fallbackResponse.status, fallbackData);
           if (fallbackData.data && fallbackData.data.length > 0) {
             jogoData = fallbackData.data[0];
-            console.log("Usando jogo fallback:", jogoData.id);
           }
         }
       } else if (data.data && data.data.length > 0) {
@@ -268,7 +238,6 @@ export default function RifaPage() {
       }
 
       if (jogoData) {
-        console.log("🎯 Definindo jogo:", jogoData.id, jogoData.nome);
         setJogo(jogoData);
         
         fetchNumerosOcupados();
@@ -847,12 +816,10 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
               </div>
             </div>
             <div className="grid grid-cols-5 md:grid-cols-10 gap-2 max-h-48 overflow-y-auto p-2 bg-surface-container-high rounded-xl">
-              {console.log("🎨 Renderizando grade - numerosOcupados:", numerosOcupados, "numerosDisponiveis:", numerosDisponiveis)}
               {numerosDisponiveis.map((num) => {
                 const isSelected = numerosSelecionados.includes(num);
                 const isOcupado = numerosOcupados.includes(num);
                 const isJogado = numerosJogados.includes(num);
-                console.log(`Número ${num}: selected=${isSelected}, ocupado=${isOcupado}, jogado=${isJogado}`);
                 
                 return (
                   <button

@@ -288,7 +288,6 @@ export async function POST(request: NextRequest) {
           select: { stockAtual: true, preco: true, tipo: true, nome: true },
         });
 
-        console.log('Jogo locked:', jogoLocked, 'quantidade solicitada:', data.quantidade);
         if (!jogoLocked || jogoLocked.stockAtual < data.quantidade) {
           throw new Error('Stock insuficiente');
         }
@@ -357,44 +356,26 @@ export async function POST(request: NextRequest) {
         } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
           // Para rifas, verificar se números já estão ocupados
           const numerosSelecionados = data.dadosParticipacao?.numeros || [];
-          console.log('Verificando números selecionados:', numerosSelecionados);
-
-          // Buscar números já vendidos neste jogo
-          const participacoesExistentes = await tx.participacao.findMany({
-            where: { jogoId: jogo.id },
-            select: { dadosParticipacao: true }
-          });
-          console.log('Participações existentes encontradas:', participacoesExistentes.length);
-
           const numerosOcupados = new Set<number>();
           for (const p of participacoesExistentes) {
-            console.log('Processando participação:', p.dadosParticipacao);
             try {
               const dados = typeof p.dadosParticipacao === 'string'
                 ? JSON.parse(p.dadosParticipacao)
                 : p.dadosParticipacao;
-              console.log('Dados parseados:', dados);
               if (dados?.numeros) {
                 dados.numeros.forEach((n: number) => {
-                  console.log('Adicionando número ocupado:', n);
                   numerosOcupados.add(n);
                 });
               }
-            } catch (e) {
-              console.error('Erro ao parsear dadosParticipacao:', p.dadosParticipacao, e);
-            }
+            } catch {}
           }
-          console.log('Números ocupados encontrados:', Array.from(numerosOcupados));
 
           // Verificar se algum número já está ocupado
-          console.log('Verificando se números estão ocupados:', numerosSelecionados, 'vs ocupados:', Array.from(numerosOcupados));
           for (const num of numerosSelecionados) {
-            console.log(`Verificando número ${num}: ocupado = ${numerosOcupados.has(num)}`);
             if (numerosOcupados.has(num)) {
               throw new Error(`O número ${num} já foi vendido`);
             }
           }
-          console.log('Validação de números passou!');
 
           const resultado = JSON.stringify(numerosSelecionados);
           const uniqueSalt = crypto.randomBytes(32).toString('hex');
@@ -425,7 +406,6 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        console.log('Dados finais sendo salvos para participação', i + 1, ':', dados);
         const participacao = await tx.participacao.create({
           data: dados as never,
           include: {
@@ -582,7 +562,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
     } catch (error: any) {
     console.error('Erro ao criar participação:', error);
-    console.error('Stack trace:', error.stack);
     if (error.message === 'Stock insuficiente' || error.message.includes('Stock insuficiente')) {
       return NextResponse.json(
         { error: 'Stock insuficiente' },
@@ -596,7 +575,7 @@ export async function POST(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      { error: 'Erro interno do servidor: ' + error.message },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
