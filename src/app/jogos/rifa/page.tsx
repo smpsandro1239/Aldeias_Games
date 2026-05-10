@@ -141,6 +141,7 @@ export default function RifaPage() {
         headers
       });
       const data = await response.json();
+      console.log('API response:', response.status, data);
 
       if (data.data && Array.isArray(data.data)) {
         const todosNumeros: number[] = [];
@@ -212,15 +213,27 @@ export default function RifaPage() {
 
       const response = await fetch(url);
       const data = await response.json();
+      console.log('Jogo API response:', response.status, url, data);
 
       let jogoData;
       if (jogoId) {
         jogoData = data.data || data;
+        // If specific game not found, fall back to first active rifa
+        if (!jogoData || (response.status !== 200 && response.status !== 201)) {
+          console.log('Jogo específico não encontrado, buscando jogos ativos...');
+          const fallbackResponse = await fetch("/api/jogos?ativos=true&tipo=rifa");
+          const fallbackData = await fallbackResponse.json();
+          if (fallbackData.data && fallbackData.data.length > 0) {
+            jogoData = fallbackData.data[0];
+            console.log('Fallback para jogo ativo:', jogoData);
+          }
+        }
       } else if (data.data && data.data.length > 0) {
         jogoData = data.data[0];
       }
 
       if (jogoData) {
+        console.log('Jogo final carregado:', jogoData);
         setJogo(jogoData);
         
         fetchNumerosOcupados();

@@ -573,6 +573,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    if (error.message && error.message.includes('já foi vendido')) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
