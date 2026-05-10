@@ -1096,8 +1096,8 @@ function RaspadinhaPremiumContent() {
 
       <BottomNav />
 
-       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-         <DialogContent className="max-w-[90vw] sm:max-w-md bg-surface-container border border-outline-variant/10 p-4 overflow-hidden">
+        <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-lg md:max-w-2xl bg-surface-container border border-outline-variant/10 p-4 overflow-hidden">
            <DialogHeader className="p-4 pb-2">
              <DialogTitle className="font-headline text-xl flex items-center gap-2">
                <Euro className="w-5 h-5 text-primary" />
@@ -1140,7 +1140,7 @@ function RaspadinhaPremiumContent() {
 
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground uppercase tracking-wider">Receber Notificação</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setParticipante({ ...participante, notificacao: "whatsapp" })}
