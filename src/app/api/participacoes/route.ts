@@ -282,15 +282,16 @@ export async function POST(request: NextRequest) {
      // Usar transação atómica para evitar race conditions
      const result = await executeWithRetry(async () => {
        return await prisma.$transaction(async (tx) => {
-      // Verificar stock dentro da transação com locking
-      const jogoLocked = await tx.jogo.findUnique({
-        where: { id: data.jogoId },
-        select: { stockAtual: true, preco: true, tipo: true, nome: true },
-      });
+        // Verificar stock dentro da transação com locking
+        const jogoLocked = await tx.jogo.findUnique({
+          where: { id: data.jogoId },
+          select: { stockAtual: true, preco: true, tipo: true, nome: true },
+        });
 
-      if (!jogoLocked || jogoLocked.stockAtual < data.quantidade) {
-        throw new Error('Stock insuficiente');
-      }
+        console.log('Jogo locked:', jogoLocked, 'quantidade solicitada:', data.quantidade);
+        if (!jogoLocked || jogoLocked.stockAtual < data.quantidade) {
+          throw new Error('Stock insuficiente');
+        }
 
       // Atualizar stock atomicamente (só executa se stock for suficiente)
       const updated = await tx.jogo.updateMany({
@@ -386,11 +387,14 @@ export async function POST(request: NextRequest) {
           console.log('Números ocupados encontrados:', Array.from(numerosOcupados));
 
           // Verificar se algum número já está ocupado
+          console.log('Verificando se números estão ocupados:', numerosSelecionados, 'vs ocupados:', Array.from(numerosOcupados));
           for (const num of numerosSelecionados) {
+            console.log(`Verificando número ${num}: ocupado = ${numerosOcupados.has(num)}`);
             if (numerosOcupados.has(num)) {
               throw new Error(`O número ${num} já foi vendido`);
             }
           }
+          console.log('Validação de números passou!');
 
           const resultado = JSON.stringify(numerosSelecionados);
           const uniqueSalt = crypto.randomBytes(32).toString('hex');
@@ -421,7 +425,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        console.log('Dados finais sendo salvos:', dados);
+        console.log('Dados finais sendo salvos para participação', i + 1, ':', dados);
         const participacao = await tx.participacao.create({
           data: dados as never,
           include: {
@@ -576,8 +580,9 @@ export async function POST(request: NextRequest) {
       })() : result.participacoes,
       valorTotal: result.valorTotal,
     }, { status: 201 });
-  } catch (error: any) {
+    } catch (error: any) {
     console.error('Erro ao criar participação:', error);
+    console.error('Stack trace:', error.stack);
     if (error.message === 'Stock insuficiente' || error.message.includes('Stock insuficiente')) {
       return NextResponse.json(
         { error: 'Stock insuficiente' },
@@ -591,7 +596,7 @@ export async function POST(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor: ' + error.message },
       { status: 500 }
     );
   }
