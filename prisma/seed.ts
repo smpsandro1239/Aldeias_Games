@@ -551,7 +551,7 @@ async function main() {
 
           const participacao = await prisma.participacao.create({
             data: {
-              dadosParticipacao: JSON.stringify({ numero: j + 1 }),
+              dadosParticipacao: JSON.stringify({ numeros: [j + 1] }),
               valorPago: jogoConfig.preco,
               metodoPagamento: metodo,
               estadoPagamento: EstadoPagamento.concluido,

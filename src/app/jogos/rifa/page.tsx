@@ -151,11 +151,17 @@ export default function RifaPage() {
             let numeros: number[] = [];
             try {
               const parsed = JSON.parse(p.dadosParticipacao);
-              // Support both array of numbers and object with 'numeros' property
+              // Support multiple formats:
+              // - Array of numbers: [1, 2, 3]
+              // - Object with 'numeros': {numeros: [1, 2, 3]}
+              // - Object with 'numero': {numero: 1} (legacy seed format)
               if (Array.isArray(parsed)) {
                 numeros = parsed;
               } else if (parsed.numeros && Array.isArray(parsed.numeros)) {
                 numeros = parsed.numeros;
+              } else if (parsed.numero) {
+                // Legacy seed format - single number
+                numeros = [parsed.numero];
               }
             } catch {
               numeros = [];
