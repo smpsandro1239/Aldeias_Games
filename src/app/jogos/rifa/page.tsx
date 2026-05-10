@@ -67,6 +67,7 @@ interface Jogo {
 }
 
 export default function RifaPage() {
+  console.log("🔄 RifaPage component rendered");
   const router = useRouter();
   const [jogo, setJogo] = useState<Jogo | null>(null);
   const [config, setConfig] = useState<{
@@ -204,8 +205,14 @@ export default function RifaPage() {
         console.log(`Encontrados ${todosNumeros.length} números ocupados e ${meusNumeros.length} meus números para jogo ${jogo?.id}`);
         console.log("Números ocupados:", todosNumeros);
         console.log("Meus números:", meusNumeros);
-        setNumerosOcupados(todosNumeros);
-        setNumerosJogados(meusNumeros);
+
+        // Forçar conversão para numbers e remover duplicatas
+        const ocupadosUnicos = [...new Set(todosNumeros.map(n => Number(n)))];
+        const jogadosUnicos = [...new Set(meusNumeros.map(n => Number(n)))];
+
+        console.log("Definindo estado - ocupados:", ocupadosUnicos, "jogados:", jogadosUnicos);
+        setNumerosOcupados(ocupadosUnicos);
+        setNumerosJogados(jogadosUnicos);
       }
     } catch (error) {
       console.error("Erro ao buscar números ocupados:", error);
@@ -221,6 +228,8 @@ export default function RifaPage() {
       for (let i = inicioBloco; i <= fimBloco; i++) {
         numeros.push(i);
       }
+      console.log(`Bloco ${blocoSelecionado}: números ${inicioBloco}-${fimBloco}`, numeros, "total:", numeros.length);
+      console.log("Números ocupados atuais no momento da definição:", numerosOcupados);
       setNumerosDisponiveis(numeros);
     }
   }, [blocoSelecionado, jogo, config]);
@@ -838,10 +847,12 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
               </div>
             </div>
             <div className="grid grid-cols-5 md:grid-cols-10 gap-2 max-h-48 overflow-y-auto p-2 bg-surface-container-high rounded-xl">
+              {console.log("🎨 Renderizando grade - numerosOcupados:", numerosOcupados, "numerosDisponiveis:", numerosDisponiveis)}
               {numerosDisponiveis.map((num) => {
                 const isSelected = numerosSelecionados.includes(num);
                 const isOcupado = numerosOcupados.includes(num);
                 const isJogado = numerosJogados.includes(num);
+                console.log(`Número ${num}: selected=${isSelected}, ocupado=${isOcupado}, jogado=${isJogado}`);
                 
                 return (
                   <button
