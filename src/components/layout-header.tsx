@@ -27,15 +27,17 @@ const NAV_ITEMS = {
     { icon: Calendar, label: "Eventos", path: "/admindashboard?tab=eventos" },
     { icon: Gamepad2, label: "Jogos", path: "/admindashboard?tab=jogos" },
     { icon: Users, label: "Equipa", path: "/admindashboard?tab=users" },
+    { icon: BarChart3, label: "Verificar", path: "/verificar-hash" },
   ],
   vendedor: [
     { icon: LayoutDashboard, label: "Vendas", path: "/vendedordashboard" },
     { icon: Wallet, label: "Pedidos", path: "/vendedordashboard/pedidos" },
     { icon: TrendingUp, label: "Histórico", path: "/vendedordashboard?tab=historico" },
+    { icon: BarChart3, label: "Verificar", path: "/verificar-hash" },
   ],
   user: [
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },
-    { icon: Ticket, label: "Prémios", path: "/premios" },
+    { icon: Ticket, label: "Participações", path: "/participacoes" },
     { icon: User, label: "Perfil", path: "/perfil" },
   ],
 } as const;

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
     
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
+    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
@@ -105,16 +105,19 @@ export async function POST(request: NextRequest) {
       } catch (e) {
         console.error('Erro ao verificar dados:', e);
       }
-    } else if (participacao.hashRaspe && participacao.seedRaspe && participacao.uniqueSalt) {
+    } else if (participacao.hashRaspe && participacao.seedRaspe) {
       // Verificar raspadinha
       try {
         const dadosParticipacao = JSON.parse(participacao.dadosParticipacao);
         const timestamp = dadosParticipacao.generatedAt;
-        const novoHash = crypto
-          .createHash('sha256')
-          .update(`${participacao.seedRaspe}:${participacao.resultadoRaspe}:${participacao.uniqueSalt}:${timestamp}`)
-          .digest('hex');
-        hashCorresponde = novoHash === hash;
+        const uniqueSalt = dadosParticipacao.uniqueSalt;
+        if (uniqueSalt) {
+          const novoHash = crypto
+            .createHash('sha256')
+            .update(`${participacao.seedRaspe}:${participacao.resultadoRaspe}:${uniqueSalt}:${timestamp}`)
+            .digest('hex');
+          hashCorresponde = novoHash === hash;
+        }
       } catch (e) {
         console.error('Erro ao verificar raspadinha:', e);
       }

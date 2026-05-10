@@ -86,7 +86,27 @@ export async function GET(request: NextRequest) {
     const [participacoes, total] = await Promise.all([
       prisma.participacao.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          valorPago: true,
+          metodoPagamento: true,
+          estadoPagamento: true,
+          jogoId: true,
+          userId: true,
+          vendedorId: true,
+          nomeCliente: true,
+          telefoneCliente: true,
+          emailCliente: true,
+          ganhador: true,
+          premioEntregue: true,
+          createdAt: true,
+          hashParticipacao: true,
+          hashRaspe: true,
+          dadosVerificacao: true,
+          seedRaspe: true,
+          resultadoRaspe: true,
+          revelado: true,
+          dataRevelacao: true,
           jogo: {
             select: {
               id: true,
@@ -116,14 +136,6 @@ export async function GET(request: NextRequest) {
                 },
                 orderBy: { ordem: 'asc' },
               },
-            },
-          },
-          user: {
-            select: {
-              id: true,
-              nome: true,
-              email: true,
-              telefone: true,
             },
           },
         },
@@ -331,7 +343,6 @@ export async function POST(request: NextRequest) {
 
           dados.seedRaspe = rngSeed;
           dados.hashRaspe = hash;
-          dados.uniqueSalt = uniqueSalt;
           dados.resultadoRaspe = outcome.hasWin ? outcome.winningPrize?.nome : 'sem_premio';
           dados.dadosParticipacao = JSON.stringify({
             grid,
