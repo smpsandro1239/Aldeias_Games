@@ -141,16 +141,20 @@ export default function RifaPage() {
         headers
       });
       const data = await response.json();
+      console.log("API participacoes response:", response.status, data);
 
       if (data.data && Array.isArray(data.data)) {
+        console.log("Número de participações encontradas:", data.data.length);
         const todosNumeros: number[] = [];
         const meusNumeros: number[] = [];
 
         data.data.forEach((p: any) => {
+          console.log("Participação encontrada:", p.id, "dadosParticipacao:", p.dadosParticipacao);
           if (p.dadosParticipacao) {
             let numeros: number[] = [];
             try {
               const parsed = JSON.parse(p.dadosParticipacao);
+              console.log("Dados parseados:", parsed);
               // Support multiple formats:
               // - Array of numbers: [1, 2, 3]
               // - Object with 'numeros': {numeros: [1, 2, 3]}
@@ -163,12 +167,16 @@ export default function RifaPage() {
                 // Legacy seed format - single number
                 numeros = [parsed.numero];
               }
-            } catch {
+              console.log("Números extraídos:", numeros);
+            } catch (e) {
+              console.error("Erro ao parsear dadosParticipacao:", p.dadosParticipacao, e);
               numeros = [];
             }
 
+            console.log("Números parseados da participação:", p.id, numeros);
             numeros.forEach((n: any) => {
               const num = Number(n);
+              console.log("Processando número:", n, "->", num);
               if (!todosNumeros.includes(num)) {
                 todosNumeros.push(num);
               }
@@ -179,8 +187,12 @@ export default function RifaPage() {
             });
           }
         });
+          }
+        });
 
         console.log(`Encontrados ${todosNumeros.length} números ocupados e ${meusNumeros.length} meus números para jogo ${jogo?.id}`);
+        console.log("Números ocupados:", todosNumeros);
+        console.log("Meus números:", meusNumeros);
         setNumerosOcupados(todosNumeros);
         setNumerosJogados(meusNumeros);
       }

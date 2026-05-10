@@ -356,32 +356,42 @@ export async function POST(request: NextRequest) {
         } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
           // Para rifas, verificar se números já estão ocupados
           const numerosSelecionados = data.dadosParticipacao?.numeros || [];
-          
+          console.log('Verificando números selecionados:', numerosSelecionados);
+
           // Buscar números já vendidos neste jogo
           const participacoesExistentes = await tx.participacao.findMany({
             where: { jogoId: jogo.id },
             select: { dadosParticipacao: true }
           });
-          
+          console.log('Participações existentes encontradas:', participacoesExistentes.length);
+
           const numerosOcupados = new Set<number>();
           for (const p of participacoesExistentes) {
+            console.log('Processando participação:', p.dadosParticipacao);
             try {
-              const dados = typeof p.dadosParticipacao === 'string' 
-                ? JSON.parse(p.dadosParticipacao) 
+              const dados = typeof p.dadosParticipacao === 'string'
+                ? JSON.parse(p.dadosParticipacao)
                 : p.dadosParticipacao;
+              console.log('Dados parseados:', dados);
               if (dados?.numeros) {
-                dados.numeros.forEach((n: number) => numerosOcupados.add(n));
+                dados.numeros.forEach((n: number) => {
+                  console.log('Adicionando número ocupado:', n);
+                  numerosOcupados.add(n);
+                });
               }
-            } catch {}
+            } catch (e) {
+              console.error('Erro ao parsear dadosParticipacao:', p.dadosParticipacao, e);
+            }
           }
-          
+          console.log('Números ocupados encontrados:', Array.from(numerosOcupados));
+
           // Verificar se algum número já está ocupado
           for (const num of numerosSelecionados) {
             if (numerosOcupados.has(num)) {
               throw new Error(`O número ${num} já foi vendido`);
             }
           }
-          
+
           const resultado = JSON.stringify(numerosSelecionados);
           const uniqueSalt = crypto.randomBytes(32).toString('hex');
           const hash = generateHash(seed, resultado, uniqueSalt, timestamp);
@@ -411,6 +421,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        console.log('Dados finais sendo salvos:', dados);
         const participacao = await tx.participacao.create({
           data: dados as never,
           include: {
