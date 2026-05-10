@@ -141,10 +141,11 @@ export default function RifaPage() {
         headers
       });
       const data = await response.json();
+
       if (data.data && Array.isArray(data.data)) {
         const todosNumeros: number[] = [];
         const meusNumeros: number[] = [];
-        
+
         data.data.forEach((p: any) => {
           if (p.dadosParticipacao) {
             let numeros: number[] = [];
@@ -159,19 +160,20 @@ export default function RifaPage() {
             } catch {
               numeros = [];
             }
-            
-            numeros.forEach((n: number) => {
-              if (!todosNumeros.includes(n)) {
-                todosNumeros.push(n);
+
+            numeros.forEach((n: any) => {
+              const num = Number(n);
+              if (!todosNumeros.includes(num)) {
+                todosNumeros.push(num);
               }
               // Track if this number belongs to the current user
-              if (userId && p.userId === userId && !meusNumeros.includes(n)) {
-                meusNumeros.push(n);
+              if (userId && p.userId === userId && !meusNumeros.includes(num)) {
+                meusNumeros.push(num);
               }
             });
           }
         });
-        
+
         setNumerosOcupados(todosNumeros);
         setNumerosJogados(meusNumeros);
       }
