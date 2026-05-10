@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Star, 
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  MapPin,
+  Star,
   Verified,
   Ticket,
   Check,
@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
@@ -133,8 +133,13 @@ export default function RifaPage() {
       const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
       const userId = userStr ? JSON.parse(userStr).id : null;
-      
-      const response = await fetch(`/api/participacoes?jogoId=${jogo?.id}`);
+
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch(`/api/participacoes?jogoId=${jogo?.id}`, {
+        headers
+      });
       const data = await response.json();
       if (data.data && Array.isArray(data.data)) {
         const todosNumeros: number[] = [];
@@ -190,10 +195,24 @@ export default function RifaPage() {
 
   const fetchJogo = async () => {
     try {
-      const response = await fetch("/api/jogos?ativos=true&tipo=rifa");
+      const jogoId = new URL(window.location.href).searchParams.get('id');
+
+      let url = "/api/jogos?ativos=true&tipo=rifa";
+      if (jogoId) {
+        url = `/api/jogos/${jogoId}`;
+      }
+
+      const response = await fetch(url);
       const data = await response.json();
-      if (data.data && data.data.length > 0) {
-        const jogoData = data.data[0];
+
+      let jogoData;
+      if (jogoId) {
+        jogoData = data.data || data;
+      } else if (data.data && data.data.length > 0) {
+        jogoData = data.data[0];
+      }
+
+      if (jogoData) {
         setJogo(jogoData);
         
         fetchNumerosOcupados();
@@ -897,6 +916,27 @@ const custoTotal = numerosSelecionados.length * (jogo.preco || 5);
           onOpenChange={setConfirmacaoModalOpen}
           participacao={participacaoCriada}
         />
+
+        {/* Modal de Pagamento */}
+        <Dialog open={paymentModalOpen} onOpenChange={setCreditCardModalOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-lg md:max-w-2xl bg-surface-container border border-outline-variant/10 p-4 overflow-hidden">
+            <DialogHeader className="p-4 pb-2">
+              <DialogTitle className="font-headline text-xl flex items-center gap-2">
+                <Euro className="w-5 h-5 text-primary" />
+                Pagamento - Rifa
+              </DialogTitle>
+              <DialogDescription>
+                {numerosSelecionados.length} número{numerosSelecionados.length > 1 ? 's' : ''} selecionado{numerosSelecionados.length > 1 ? 's' : ''} - Total: <strong>{(numerosSelecionados.length * (jogo?.preco || 5)).toFixed(2)}€</strong>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="px-4 pb-4">
+              <PaymentSelector
+                amount={numerosSelecionados.length * (jogo?.preco || 5)}
+                onSelect={processarPagamento}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         </main>
       </div>
