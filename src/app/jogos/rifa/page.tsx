@@ -187,8 +187,6 @@ export default function RifaPage() {
             });
           }
         });
-          }
-        });
 
         console.log(`Encontrados ${todosNumeros.length} números ocupados e ${meusNumeros.length} meus números para jogo ${jogo?.id}`);
         console.log("Números ocupados:", todosNumeros);
