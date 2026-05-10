@@ -17,7 +17,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "postinstall": "echo 'Prisma generate skipped'"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.1014.0",
