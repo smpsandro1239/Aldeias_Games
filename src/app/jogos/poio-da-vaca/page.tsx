@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Grid2X2,
   CheckCircle2,
@@ -228,10 +228,25 @@ export default function PoioDaVacaPage() {
 
   const fetchJogo = async () => {
     try {
-      const response = await fetch("/api/jogos?ativos=true&tipo=poio_da_vaca");
+      const jogoId = new URL(window.location.href).searchParams.get('id');
+
+      let url = "/api/jogos?ativos=true&tipo=poio_da_vaca";
+      if (jogoId) {
+        url = `/api/jogos/${jogoId}`;
+      }
+
+      const response = await fetch(url);
       const data = await response.json();
-      if (data.data && data.data.length > 0) {
-        setJogo(data.data[0]);
+
+      let jogoData;
+      if (jogoId) {
+        jogoData = data.data || data;
+      } else if (data.data && data.data.length > 0) {
+        jogoData = data.data[0];
+      }
+
+      if (jogoData) {
+        setJogo(jogoData);
       }
     } catch (error) {
       console.error("Erro ao carregar jogo:", error);
@@ -242,13 +257,20 @@ export default function PoioDaVacaPage() {
 
   const fetchApostas = async () => {
     try {
+      const token = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
       let userParam = "";
       if (storedUser) {
         const userData = JSON.parse(storedUser);
         userParam = "&user=" + btoa(JSON.stringify(userData));
       }
-      const response = await fetch(`/api/apostas?tipo=poio_da_vaca${userParam}`);
+
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch(`/api/apostas?tipo=poio_da_vaca${userParam}`, {
+        headers
+      });
       const data = await response.json();
       if (data.data) {
         const apostasConvertidas = data.data.map((a: any) => ({
