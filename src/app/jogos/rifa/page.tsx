@@ -123,38 +123,47 @@ export default function RifaPage() {
   }, []);
 
   useEffect(() => {
+    console.log("🎯 useEffect fetchNumerosOcupados - jogo?.id:", jogo?.id);
     if (jogo?.id) {
+      console.log("✅ Chamando fetchNumerosOcupados");
       fetchNumerosOcupados();
+    } else {
+      console.log("❌ jogo.id não definido, não chamando fetchNumerosOcupados");
     }
   }, [jogo?.id]);
 
   const fetchNumerosOcupados = async () => {
+    console.log("🔍 fetchNumerosOcupados CHAMADO para jogo:", jogo?.id);
     try {
       const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
       const userId = userStr ? JSON.parse(userStr).id : null;
+      console.log("Token presente:", !!token, "userId:", userId);
 
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
+      console.log("Buscando números ocupados para jogo:", jogo?.id);
       const response = await fetch(`/api/participacoes?jogoId=${jogo?.id}`, {
         headers
       });
       const data = await response.json();
-      console.log("API participacoes response:", response.status, data);
+      console.log("API participacoes response:", response.status, "headers enviados:", Object.keys(headers));
+      console.log("Dados retornados da API:", JSON.stringify(data, null, 2));
 
       if (data.data && Array.isArray(data.data)) {
         console.log("Número de participações encontradas:", data.data.length);
         const todosNumeros: number[] = [];
         const meusNumeros: number[] = [];
 
+        console.log("Processando", data.data.length, "participações");
         data.data.forEach((p: any) => {
-          console.log("Participação encontrada:", p.id, "dadosParticipacao:", p.dadosParticipacao);
+          console.log("Participação encontrada:", p.id, "userId:", p.userId, "dadosParticipacao:", p.dadosParticipacao);
           if (p.dadosParticipacao) {
             let numeros: number[] = [];
             try {
               const parsed = JSON.parse(p.dadosParticipacao);
-              console.log("Dados parseados:", parsed);
+              console.log("Dados parseados para participação", p.id, ":", parsed);
               // Support multiple formats:
               // - Array of numbers: [1, 2, 3]
               // - Object with 'numeros': {numeros: [1, 2, 3]}
@@ -167,24 +176,28 @@ export default function RifaPage() {
                 // Legacy seed format - single number
                 numeros = [parsed.numero];
               }
-              console.log("Números extraídos:", numeros);
+              console.log("Números extraídos da participação", p.id, ":", numeros);
             } catch (e) {
-              console.error("Erro ao parsear dadosParticipacao:", p.dadosParticipacao, e);
+              console.error("Erro ao parsear dadosParticipacao da participação", p.id, ":", p.dadosParticipacao, e);
               numeros = [];
             }
 
-            console.log("Números parseados da participação:", p.id, numeros);
+            console.log("Processando números da participação", p.id, ":", numeros);
             numeros.forEach((n: any) => {
               const num = Number(n);
-              console.log("Processando número:", n, "->", num);
+              console.log("Adicionando número ocupado:", num, "do tipo:", typeof num);
               if (!todosNumeros.includes(num)) {
                 todosNumeros.push(num);
+                console.log("Número", num, "adicionado à lista de ocupados");
               }
               // Track if this number belongs to the current user
               if (userId && p.userId === userId && !meusNumeros.includes(num)) {
                 meusNumeros.push(num);
+                console.log("Número", num, "adicionado aos meus números");
               }
             });
+          } else {
+            console.log("Participação", p.id, "não tem dadosParticipacao");
           }
         });
 
@@ -224,15 +237,21 @@ export default function RifaPage() {
       const response = await fetch(url);
       const data = await response.json();
 
+      console.log("🎮 fetchJogo - jogoId da URL:", jogoId, "status:", response.status);
+
       let jogoData;
       if (jogoId) {
         jogoData = data.data || data;
+        console.log("Jogo específico encontrado:", !!jogoData, jogoData?.id);
         // If specific game not found, fall back to first active rifa
         if (!jogoData || (response.status !== 200 && response.status !== 201)) {
+          console.log("🔄 Jogo específico não encontrado, fazendo fallback");
           const fallbackResponse = await fetch("/api/jogos?ativos=true&tipo=rifa");
           const fallbackData = await fallbackResponse.json();
+          console.log("Fallback response:", fallbackResponse.status, fallbackData);
           if (fallbackData.data && fallbackData.data.length > 0) {
             jogoData = fallbackData.data[0];
+            console.log("Usando jogo fallback:", jogoData.id);
           }
         }
       } else if (data.data && data.data.length > 0) {
@@ -240,6 +259,7 @@ export default function RifaPage() {
       }
 
       if (jogoData) {
+        console.log("🎯 Definindo jogo:", jogoData.id, jogoData.nome);
         setJogo(jogoData);
         
         fetchNumerosOcupados();
