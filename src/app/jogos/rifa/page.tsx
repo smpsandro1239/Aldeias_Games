@@ -127,65 +127,37 @@ export default function RifaPage() {
       fetchNumerosOcupados();
     }
   }, [jogo?.id]);
-
   const fetchNumerosOcupados = async () => {
     console.log("🔍 fetchNumerosOcupados CHAMADO para jogo:", jogo?.id);
     try {
-      const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
       const userId = userStr ? JSON.parse(userStr).id : null;
-      console.log("Token presente:", !!token, "userId:", userId);
+      console.log("userId:", userId);
 
       const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (userId) headers["x-user-id"] = userId;
 
-      const response = await fetch(`/api/participacoes?jogoId=${jogo?.id}`, {
-        headers
+      // Usar endpoint público que não requer autenticação
+      const response = await fetch(`/api/jogos/${jogo?.id}/numeros-ocupados`, {
+        headers,
       });
+      
+      if (!response.ok) {
+        console.error("Erro na resposta da API:", response.status);
+        return;
+      }
+      
       const data = await response.json();
+      console.log("Dados recebidos:", data);
 
-      if (data.data && Array.isArray(data.data)) {
-        console.log("Número de participações encontradas:", data.data.length);
-        const todosNumeros: number[] = [];
-        const meusNumeros: number[] = [];
+      if (data.numerosOcupados) {
+        const ocupadosUnicos = [...new Set(data.numerosOcupados.map((n: number) => Number(n)))];
+        const jogadosUnicos = data.numerosDoUtilizador 
+          ? [...new Set(data.numerosDoUtilizador.map((n: number) => Number(n)))]
+          : [];
 
-        data.data.forEach((p: any) => {
-          if (p.dadosParticipacao) {
-            let numeros: number[] = [];
-            try {
-              const parsed = JSON.parse(p.dadosParticipacao);
-              // Support multiple formats:
-              // - Array of numbers: [1, 2, 3]
-              // - Object with 'numeros': {numeros: [1, 2, 3]}
-              // - Object with 'numero': {numero: 1} (legacy seed format)
-              if (Array.isArray(parsed)) {
-                numeros = parsed;
-              } else if (parsed.numeros && Array.isArray(parsed.numeros)) {
-                numeros = parsed.numeros;
-              } else if (parsed.numero) {
-                // Legacy seed format - single number
-                numeros = [parsed.numero];
-              }
-            } catch {
-              numeros = [];
-            }
-
-            numeros.forEach((n: any) => {
-              const num = Number(n);
-              if (!todosNumeros.includes(num)) {
-                todosNumeros.push(num);
-              }
-              // Track if this number belongs to the current user
-              if (userId && p.userId === userId && !meusNumeros.includes(num)) {
-                meusNumeros.push(num);
-              }
-            });
-          }
-        });
-
-        // Forçar conversão para numbers e remover duplicatas
-        const ocupadosUnicos = [...new Set(todosNumeros.map(n => Number(n)))];
-        const jogadosUnicos = [...new Set(meusNumeros.map(n => Number(n)))];
+        console.log("Números ocupados:", ocupadosUnicos.length);
+        console.log("Meus números:", jogadosUnicos.length);
 
         setNumerosOcupados(ocupadosUnicos);
         setNumerosJogados(jogadosUnicos);
