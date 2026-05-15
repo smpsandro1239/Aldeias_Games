@@ -29,8 +29,9 @@ const GAME_TYPES = [
 const EVENT_STATES = {
   RASCUNHO: 'rascunho',
   ATIVO: 'ativo',
-  FECHADO: 'fechado',
-  FINALIZADO: 'finalizado'
+  PAUSADO: 'pausado',
+  FINALIZADO: 'finalizado',
+  CANCELADO: 'cancelado'
 } as const;
 
 type EventState = typeof EVENT_STATES[keyof typeof EVENT_STATES];
@@ -425,10 +426,11 @@ export function CreateEventoModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={EVENT_STATES.RASCUNHO}>Rascunho</SelectItem>
-                  <SelectItem value={EVENT_STATES.ATIVO}>Ativo</SelectItem>
-                  <SelectItem value={EVENT_STATES.FECHADO}>Fechado</SelectItem>
-                  <SelectItem value={EVENT_STATES.FINALIZADO}>Finalizado</SelectItem>
+                   <SelectItem value={EVENT_STATES.RASCUNHO}>Rascunho</SelectItem>
+                   <SelectItem value={EVENT_STATES.ATIVO}>Ativo</SelectItem>
+                   <SelectItem value={EVENT_STATES.PAUSADO}>Pausado</SelectItem>
+                   <SelectItem value={EVENT_STATES.FINALIZADO}>Finalizado</SelectItem>
+                   <SelectItem value={EVENT_STATES.CANCELADO}>Cancelado</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">Evento ativo fica visível para participantes</p>

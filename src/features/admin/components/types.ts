@@ -8,21 +8,43 @@ export interface Stats {
   totalAngariado: number;
 }
 
+export type EstadoEvento = 'rascunho' | 'ativo' | 'pausado' | 'finalizado' | 'cancelado';
+
+export type Recorrencia = 'semanal' | 'quinzenal' | 'mensal';
+
 export interface Evento {
   id: string;
   nome: string;
-  dataInicio: string;
-  dataFim: string;
-  estado: string;
-  totalAngariado?: number;
+  slug: string;
   descricao?: string;
-  publico?: boolean;
-  // Recorrência
+  imagemUrl?: string;
+  imagemBase64?: string;
+  
+  dataInicio: Date;
+  dataFim: Date;
+  
+  objectivoAngariacao?: number;
+  estado: EstadoEvento;
+  publico: boolean;
+  
+  // Template / Recorrência
   isTemplate?: boolean;
-  frequenciaRecorrencia?: 'semanal' | 'quinzenal' | 'mensal';
-  diaSemanaRecorrencia?: number;
-  proximaData?: string;
-  // ... outros campos conforme API
+  templateNome?: string;
+  frequenciaRecorrencia?: Recorrencia;
+  diaSemanaRecorrencia?: number; // 0=Domingo, 1=Segunda, etc
+  proximaData?: Date;
+  
+  // Estatísticas
+  totalAngariado: number;
+  totalParticipacoes: number;
+  
+  // Relações
+  aldeiaId: string;
+  aldeia?: Aldeia;
+  jogos?: Jogo[];
+  
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Jogo {
@@ -100,7 +122,7 @@ export interface Aldeia {
   id: string;
   nome: string;
   tipoOrganizacao: string;
-  email: string;
+  email?: string;
   slug?: string;
   logoUrl?: string;
   metodosPagamentoDefault?: string;
@@ -137,5 +159,21 @@ export interface VendedorStats {
   nome: string;
   totalVendas: number;
   // ... outros campos de estatísticas
+}
+
+export interface Premio {
+  id: string;
+  nome: string;
+  descricao?: string;
+  imagemUrl?: string;
+  valorDinheiroAlternative?: number;
+  percentagem?: number;
+  ordem?: number;
+  createdAt: Date;
+  updatedAt: Date;
+  aldeiaId: string;
+  jogoId?: string;
+  aldeia?: Aldeia;
+  jogo?: Jogo;
 }
 

@@ -58,12 +58,12 @@ import type {
   Evento,
   Jogo,
   User,
-  Vencedor,
   Aldeia,
   Transacao,
   Log,
+  Vencedor,
   VendedorStats,
-} from "./components";
+} from "./components/types";
 import type { JogoData } from "@/components/modals/create-jogo-modal";
 import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
@@ -1092,17 +1092,17 @@ export default function AdminDashboard({
           id: selectedEvento.id,
           nome: selectedEvento.nome,
           descricao: selectedEvento.descricao,
-          dataInicio: selectedEvento.dataInicio,
-          dataFim: selectedEvento.dataFim,
-          objectivoAngariacao: selectedEvento.objectivoAngariacao || 0,
-          publico: selectedEvento.publico || false,
+          dataInicio: selectedEvento.dataInicio.toISOString().slice(0, 16),
+          dataFim: selectedEvento.dataFim.toISOString().slice(0, 16),
+          objectivoAngariacao: selectedEvento.objectivoAngariacao ?? 0,
+          publico: selectedEvento.publico ?? false,
           aldeiaId: selectedEvento.aldeiaId,
-          estado: selectedEvento.estado as any,
+          estado: selectedEvento.estado,
           // Jogos associados ao evento
-          jogosSelecionados: (selectedEvento as any).jogos?.map((jogo: any) => jogo.tipo) || [],
+          jogosSelecionados: selectedEvento.jogos?.map((jogo) => jogo.tipo) || [],
           // Recorrência
-          isRecurring: selectedEvento.isTemplate || false,
-          recurrenceFrequency: selectedEvento.frequenciaRecorrencia || 'semanal',
+          isRecurring: selectedEvento.isTemplate ?? false,
+          recurrenceFrequency: selectedEvento.frequenciaRecorrencia ?? 'semanal',
           recurrenceDayOfWeek: selectedEvento.diaSemanaRecorrencia ?? 1,
           recurrenceTime: selectedEvento.proximaData ? new Date(selectedEvento.proximaData).toTimeString().slice(0, 5) : '08:00',
         } : undefined}
