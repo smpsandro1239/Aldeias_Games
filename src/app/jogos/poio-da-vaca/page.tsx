@@ -392,12 +392,12 @@ export default function PoioDaVacaPage() {
      // Only vendedor, aldeia_admin, and super_admin can use dinheiro
      const canUseDinheiro = ['vendedor', 'aldeia_admin', 'super_admin'].includes(userRole);
      
-     if (metodo === "dinheiro" && !canUseDinheiro) {
-       toast.error("Apenas vendedores e administradores podem pagar em dinheiro");
-       return;
-     }
+    if (metodo === "dinheiro" && !canUseDinheiro) {
+      toast.error("Apenas vendedores e administradores podem pagar em dinheiro");
+      return;
+    }
 
-try {
+    try {
         if (metodo === "dinheiro") {
           await criarAposta(true, "dinheiro");
         } else if (metodo === "saldo") {
