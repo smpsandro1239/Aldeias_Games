@@ -357,7 +357,7 @@ export async function POST(request: NextRequest) {
           // Para rifas, verificar se números já estão ocupados
           const numerosSelecionados = data.dadosParticipacao?.numeros || [];
           const numerosOcupados = new Set<number>();
-          for (const p of participacoesExistentes) {
+          for (const p of participacoes) {
             try {
               const dados = typeof p.dadosParticipacao === 'string'
                 ? JSON.parse(p.dadosParticipacao)
