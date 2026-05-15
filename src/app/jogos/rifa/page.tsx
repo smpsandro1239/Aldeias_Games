@@ -159,8 +159,8 @@ export default function RifaPage() {
         console.log("Números ocupados:", ocupadosUnicos.length);
         console.log("Meus números:", jogadosUnicos.length);
 
-        setNumerosOcupados(ocupadosUnicos);
-        setNumerosJogados(jogadosUnicos);
+        setNumerosOcupados(ocupadosUnicos as number[]);
+        setNumerosJogados(jogadosUnicos as number[]);
       }
     } catch (error) {
       console.error("Erro ao buscar números ocupados:", error);
