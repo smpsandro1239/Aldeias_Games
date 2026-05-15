@@ -569,7 +569,8 @@ export function CreateEventoModal({
                   handleSubmit(e as any);
                 } catch (error) {
                   console.error('Erro no handleSubmit:', error);
-                  alert('Erro ao guardar: ' + error.message);
+                  const errorMessage = error instanceof Error ? error.message : String(error);
+                alert('Erro ao guardar: ' + errorMessage);
                 }
               }}
               style={{
