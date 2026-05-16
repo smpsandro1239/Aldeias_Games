@@ -1,5 +1,5 @@
 import { PrismaClient, UserRole, TipoOrganizacao, TipoJogo, EstadoEvento, EstadoJogo, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey, NivelEnsino } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 import { randomBytes, createHash } from 'crypto';
 
 const prisma = new PrismaClient();
@@ -80,14 +80,20 @@ async function main() {
   // ========== CRIAR PERMISSIONS ==========
   console.log('\n🔐 Criando permissões...');
   
-  const permissions = Object.values(PermissionKey).map(key => ({
-    key,
-    description: key.replace(/_/g, ' ').toLowerCase()
-  }));
+  const permissions = Object.values(PermissionKey)
+    .filter(value => typeof value === 'string')
+    .map(key => ({
+      key,
+      description: key.replace(/_/g, ' ').toLowerCase()
+    }));
 
   const createdPermissions: Record<string, any> = {};
   for (const perm of permissions) {
-    const p = await prisma.permission.create({ data: perm });
+    const p = await prisma.permission.upsert({
+      where: { key: perm.key },
+      update: perm,
+      create: perm,
+    });
     createdPermissions[perm.key] = p;
   }
   console.log(`✅ ${permissions.length} permissões`);
@@ -95,6 +101,64 @@ async function main() {
   // ========== CRIAR ROLES ==========
   console.log('\n🎭 Criando roles...');
 
+  const roleNames: Array<{ name: RoleName; description: string; permissions: PermissionKey[] }> = [
+    {
+      name: RoleName.SUPER_ADMIN,
+      description: 'Super Administrador do sistema',
+      permissions: Object.values(PermissionKey)
+    },
+    {
+      name: RoleName.ALDEIA_ADMIN,
+      description: 'Administrador de aldeia',
+      permissions: [
+        PermissionKey.VIEW_ALDEIA,
+        PermissionKey.CREATE_EVENTO, PermissionKey.EDIT_EVENTO, PermissionKey.VIEW_EVENTO,
+        PermissionKey.CREATE_JOGO, PermissionKey.EDIT_JOGO, PermissionKey.VIEW_JOGO,
+        PermissionKey.MANAGE_PREMIOS, PermissionKey.VIEW_PREMIOS,
+        PermissionKey.MANAGE_VENDEDORES, PermissionKey.VIEW_VENDEDORES,
+        PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS,
+        PermissionKey.VIEW_ANALYTICS_LOCAL,
+      ]
+    },
+    {
+      name: RoleName.GESTOR,
+      description: 'Gestor de vendas',
+      permissions: [
+        PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO,
+        PermissionKey.VIEW_PREMIOS, PermissionKey.VIEW_VENDEDORES,
+        PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS,
+        PermissionKey.VIEW_ANALYTICS_LOCAL,
+      ]
+    },
+    {
+      name: RoleName.COLABORADOR,
+      description: 'Colaborador/Vendedor',
+      permissions: [
+        PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO,
+  // ========== CRIAR PERMISSIONS ==========
+  console.log('\n🔐 Criando permissões...');
+ 
+  const permissions = Object.values(PermissionKey)
+    .filter(value => typeof value === 'string')
+    .map(key => ({
+      key,
+      description: key.replace(/_/g, ' ').toLowerCase()
+    }));
+ 
+  const createdPermissions: Record<string, any> = {};
+  for (const perm of permissions) {
+    const p = await prisma.permission.upsert({
+      where: { key: perm.key },
+      update: perm,
+      create: perm,
+    });
+    createdPermissions[perm.key] = p;
+  }
+  console.log(`✅ ${permissions.length} permissões`);
+ 
+  // ========== CRIAR ROLES ==========
+  console.log('\n🎭 Criando roles...');
+ 
   const roleNames: Array<{ name: RoleName; description: string; permissions: PermissionKey[] }> = [
     {
       name: RoleName.SUPER_ADMIN,
@@ -140,27 +204,46 @@ async function main() {
       ]
     }
   ];
-
+ 
   const createdRoles: Record<string, any> = {};
   for (const roleData of roleNames) {
-    const role = await prisma.role.create({
-      data: { name: roleData.name, description: roleData.description }
+    const role = await prisma.role.upsert({
+      where: { name: roleData.name },
+      update: { description: roleData.description },
+      create: { name: roleData.name, description: roleData.description },
     });
     createdRoles[roleData.name] = role;
-
+ 
     for (const permKey of roleData.permissions) {
-      await prisma.rolePermission.create({
-        data: { roleId: role.id, permissionId: createdPermissions[permKey].id }
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: role.id,
+            permissionId: createdPermissions[permKey].id
+          }
+        },
+        update: {},
+        create: {
+          roleId: role.id,
+          permissionId: createdPermissions[permKey].id
+        }
       });
     }
   }
   console.log(`✅ ${roleNames.length} roles`);
-
+ 
   // ========== CRIAR PLANOS ==========
   console.log('\n📦 Criando planos...');
-  
-  const planoBasico = await prisma.plano.create({
-    data: {
+ 
+  const planoBasico = await prisma.plano.upsert({
+    where: { nome: 'Básico' },
+    update: {
+      descricao: 'Plano gratuito para pequenas comunidades',
+      precoMensal: 0,
+      maxEventos: 2, maxJogos: 5, maxParticipacoes: 100, maxVendedores: 2,
+      ativo: true,
+    },
+    create: {
       nome: 'Básico',
       descricao: 'Plano gratuito para pequenas comunidades',
       precoMensal: 0,
@@ -168,9 +251,16 @@ async function main() {
       ativo: true,
     }
   });
-
-  const planoPro = await prisma.plano.create({
-    data: {
+ 
+  const planoPro = await prisma.plano.upsert({
+    where: { nome: 'Pro' },
+    update: {
+      descricao: 'Plano ideal para escolas e associações',
+      precoMensal: 29.99,
+      maxEventos: 10, maxJogos: 50, maxParticipacoes: 1000, maxVendedores: 10,
+      ativo: true,
+    },
+    create: {
       nome: 'Pro',
       descricao: 'Plano ideal para escolas e associações',
       precoMensal: 29.99,
@@ -178,9 +268,16 @@ async function main() {
       ativo: true,
     }
   });
-
-  const planoEnterprise = await prisma.plano.create({
-    data: {
+ 
+  const planoEnterprise = await prisma.plano.upsert({
+    where: { nome: 'Enterprise' },
+    update: {
+      descricao: 'Plano completo para grandes organizações',
+      precoMensal: 99.99,
+      maxEventos: 100, maxJogos: 500, maxParticipacoes: 10000, maxVendedores: 50,
+      ativo: true,
+    },
+    create: {
       nome: 'Enterprise',
       descricao: 'Plano completo para grandes organizações',
       precoMensal: 99.99,
@@ -189,34 +286,49 @@ async function main() {
     }
   });
   console.log('✅ 3 planos');
-
-  const passwordHash = await bcrypt.hash('123456', 10);
-
+ 
+  const passwordHash = await bcryptjs.hash('123456', 10);
+ 
   // ========== CRIAR SUPER ADMIN ==========
   console.log('\n👤 Criando Super Administrador...');
-
-  const superAdmin = await prisma.user.create({
-    data: {
+ 
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'admin@aldeias.pt' },
+    update: {
+      password: passwordHash,
+      nome: 'Administrador Global',
+      telefone: '+351****0001',
+      role: UserRole.super_admin,
+      emailVerificado: true,
+      saldo: 1000,
+    },
+    create: {
       email: 'admin@aldeias.pt',
       password: passwordHash,
       nome: 'Administrador Global',
-      telefone: '+351900000001',
+      telefone: '+351****0001',
       role: UserRole.super_admin,
       emailVerificado: true,
       saldo: 1000,
     }
   });
-
-  await prisma.userGlobalRole.create({
-    data: { userId: superAdmin.id, roleId: createdRoles[RoleName.SUPER_ADMIN].id }
+ 
+  await prisma.userGlobalRole.upsert({
+    where: { userId_roleId: { userId: superAdmin.id, roleId: createdRoles[RoleName.SUPER_ADMIN].id } },
+    update: {},
+    create: { userId: superAdmin.id, roleId: createdRoles[RoleName.SUPER_ADMIN].id }
   });
-
-  await prisma.twoFactorAuth.create({
-    data: { userId: superAdmin.id, secret: generateSeed(), enabled: false }
+ 
+  await prisma.twoFactorAuth.upsert({
+    where: { userId: superAdmin.id },
+    update: { secret: generateSeed(), enabled: false },
+    create: { userId: superAdmin.id, secret: generateSeed(), enabled: false }
   });
-
-  await prisma.userLevel.create({
-    data: { userId: superAdmin.id, nivel: 10, pontos: 10000, pontosParaProximoNivel: 0 }
+ 
+  await prisma.userLevel.upsert({
+    where: { userId: superAdmin.id },
+    update: { nivel: 10, pontos: 10000, pontosParaProximoNivel: 0 },
+    create: { userId: superAdmin.id, nivel: 10, pontos: 10000, pontosParaProximoNivel: 0 }
   });
   console.log('✅ Super Admin criado');
 
