@@ -6,15 +6,19 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 SEED MÍNIMO - Criando dados para teste');
 
-  // Limpar dados relevantes (em ordem correta)
+  // Limpar dados relevantes (em ordem correta para evitar problemas de foreign key)
   await prisma.$executeRaw`SET CONSTRAINTS ALL DEFERRED`;
   try {
-    await prisma.participacao.deleteMany();
+    // Delete in order: children first, then parents
+    await prisma.premio.deleteMany();
     await prisma.jogo.deleteMany();
     await prisma.evento.deleteMany();
     await prisma.aldeia.deleteMany();
-    await prisma.user.deleteMany();
     await prisma.plano.deleteMany();
+    await prisma.userGlobalRole.deleteMany();
+    await prisma.userPermission.deleteMany();
+    await prisma.rolePermission.deleteMany();
+    await prisma.user.deleteMany();
     await prisma.role.deleteMany();
     await prisma.permission.deleteMany();
   } catch (e) {
@@ -43,7 +47,7 @@ async function main() {
 
   // Criar roles
   const roleNames = [
-    { name: RoleName.SUPER_ADMIN, description: 'Super Admin', permissions: Object.values(PermissionKey) as PermissionKey[] },
+    { name: RoleName.SUPER_ADMIN, description: 'Super Admin', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
     { name: RoleName.ALDEIA_ADMIN, description: 'Admin Aldeia', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
     { name: RoleName.GESTOR, description: 'Gestor', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
     { name: RoleName.COLABORADOR, description: 'Colaborador', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO] },
@@ -135,6 +139,45 @@ async function main() {
     update: {},
     create: { userId: admin.id, roleId: createdRoles[RoleName.SUPER_ADMIN].id }
   });
+
+  // Criar utilizadores de teste para quick login
+  const testUsers = [
+    { email: 'admin@aldeias.pt', role: UserRole.super_admin, nome: 'Super Admin', roleName: RoleName.SUPER_ADMIN },
+    { email: 'admin.valeazinha@aldeias.pt', role: UserRole.aldeia_admin, nome: 'Admin Aldeia', roleName: RoleName.ALDEIA_ADMIN },
+    { email: 'vendedor1@valeazinha.pt', role: UserRole.vendedor, nome: 'Vendedor', roleName: RoleName.GESTOR },
+    { email: 'jogador1@valeazinha.pt', role: UserRole.user, nome: 'Jogador', roleName: RoleName.VIEWER }
+  ];
+
+  for (const userData of testUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: userData.email },
+      update: {
+        password: passwordHash,
+        nome: userData.nome,
+        telefone: '+351 912 345 678',
+        role: userData.role,
+        emailVerificado: true,
+        saldo: 1000,
+      },
+      create: {
+        email: userData.email,
+        password: passwordHash,
+        nome: userData.nome,
+        telefone: '+351 912 345 678',
+        role: userData.role,
+        emailVerificado: true,
+        saldo: 1000,
+      }
+    });
+    console.log(`✅ Utilizador ${userData.nome} criado`);
+
+    // Ligar utilizador ao role correspondente
+    await prisma.userGlobalRole.upsert({
+      where: { userId_roleId: { userId: user.id, roleId: createdRoles[userData.roleName].id } },
+      update: {},
+      create: { userId: user.id, roleId: createdRoles[userData.roleName].id }
+    });
+  }
 
   // Criar aldeia de teste
   const aldeia = await prisma.aldeia.upsert({
