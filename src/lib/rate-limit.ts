@@ -30,6 +30,16 @@ export const rateLimitConfigs = {
     maxRequests: 3,
     windowMs: 60 * 1000,
   },
+  // Forgot password: 3 tentativas por hora
+  forgotPassword: {
+    maxRequests: 3,
+    windowMs: 60 * 60 * 1000, // 1 hora
+  },
+  // Reset password: 5 tentativas por hora
+  resetPassword: {
+    maxRequests: 5,
+    windowMs: 60 * 60 * 1000, // 1 hora
+  },
   // API geral: 100 requests por minuto
   api: {
     maxRequests: 100,
@@ -53,11 +63,11 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 // Limpar entradas expiradas a cada 5 minutos
 setInterval(() => {
   const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
+  rateLimitStore.forEach((entry, key) => {
     if (entry.resetTime < now) {
       rateLimitStore.delete(key);
     }
-  }
+  });
 }, 5 * 60 * 1000);
 
 /**

@@ -1,140 +1,196 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
-import { updateAldeiaSchema } from '@/lib/validations';
-import { saveImage } from '@/lib/storage';
-import { logAudit } from '@/lib/auditLog';
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getUserFromRequest } from '@/lib/auth'
+import { z } from 'zod'
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+// Validation schema for updating an aldeia
+const updateAldeiaSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
+  descricao: z.string().optional(),
+  logoUrl: z.string().url('URL inválida para logo').optional(),
+  tipoOrganizacao: z.enum(['aldeia', 'escola', 'associacao_pais', 'clube']).optional(),
+  permitirStripe: z.boolean().optional(),
+  permitirMBWay: z.boolean().optional(),
+  metodosPagamentoDefault: z.string().optional(),
+  iban: z.string().optional(),
+  nomeTitularConta: z.string().optional(),
+  nomeEscola: z.string().optional(),
+  codigoEscola: z.string().optional(),
+  nivelEnsino: z.enum(['pre_escolar', 'primeiro_ciclo', 'segundo_ciclo', 'terceiro_ciclo', 'secundario', 'superior']).optional(),
+  responsavel: z.string().optional(),
+  telefone: z.string().optional(),
+  email: z.string().email().optional(),
+  morada: z.string().optional(),
+  codigoPostal: z.string().optional(),
+  localidade: z.string().optional(),
+  autorizacaoCM: z.boolean().optional(),
+  numeroAlvara: z.string().optional(),
+  documentosVerificados: z.boolean().optional(),
+  ativo: z.boolean().optional(),
+})
 
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
+    const aldeiaId = params.id
 
     const aldeia = await prisma.aldeia.findUnique({
-      where: { id },
+      where: { id: aldeiaId },
       include: {
-        plano: true,
-      },
-    });
+        _count: {
+          select: { userAldeiaRoles: true, eventos: true, jogos: true, premios: true }
+        },
+        userAldeiaRoles: {
+          include: {
+            user: {
+              select: { id: true, nome: true, role: true }
+            }
+          }
+        },
+        admins: {
+          select: { id: true, nome: true }
+        },
+        vendedores: {
+          select: { id: true, nome: true }
+        }
+      }
+    })
 
     if (!aldeia) {
-      return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Aldeia não encontrada' },
+        { status: 404 }
+      )
     }
 
-    return NextResponse.json({ data: aldeia });
+    // Check if aldeia is public/verificado or if user is a member
+    const user = await getUserFromRequest(request)
+    const isMember = user && aldeia.userAldeiaRoles.some(role => role.userId === user.id)
+    const isPublic = aldeia.ativo && aldeia.verificado
+
+    if (!isPublic && !isMember) {
+      return NextResponse.json(
+        { error: 'Aldeia não encontrada ou acesso negado' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      ...aldeia,
+      membrosAtivos: aldeia._count.userAldeiaRoles,
+      totalEventos: aldeia._count.eventos,
+      totalJogos: aldeia._count.jogos,
+      totalPremios: aldeia._count.premios
+    })
   } catch (error) {
-    console.error('Erro ao buscar aldeia:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    console.error('Error fetching aldeia:', error)
+    return NextResponse.json(
+      { error: 'Erro ao buscar aldeia' },
+      { status: 500 }
+    )
   }
 }
 
-export async function PATCH(request: NextRequest, context: RouteContext) {
-  return PUT(request, context);
-}
-
-export async function PUT(request: NextRequest, context: RouteContext) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
-    const user = await getFullUserFromRequest(request);
-
-    if (!user || (!hasRole(user.role, ['super_admin', 'aldeia_admin']))) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
-    
-    // Se for admin de aldeia, só edita a sua própria
-    if (user.role === 'aldeia_admin' && user.aldeiaId !== id) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+    const user = await getUserFromRequest(request)
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      )
     }
 
-    const body = await request.json();
-    const validation = updateAldeiaSchema.safeParse(body);
+    const aldeiaId = params.id
 
-    if (!validation.success) {
-      return NextResponse.json({ error: 'Dados inválidos', details: validation.error.errors }, { status: 400 });
+    // Check if user is admin of this aldeia
+    const aldeia = await prisma.aldeia.findUnique({
+      where: { id: aldeiaId },
+      include: { admins: { select: { id: true } } }
+    })
+
+    if (!aldeia) {
+      return NextResponse.json(
+        { error: 'Aldeia não encontrada' },
+        { status: 404 }
+      )
     }
 
-    const data = validation.data;
+    const isAdmin = aldeia.admins.some(admin => admin.id === user.id)
+    const isSuperAdmin = user.role === 'super_admin'
 
-    let logoUrl = undefined;
-    if (data.logoBase64) {
-      const saved = await saveImage(data.logoBase64, 'aldeias');
-      logoUrl = saved.url;
+    if (!isAdmin && !isSuperAdmin) {
+      return NextResponse.json(
+        { error: 'Não autorizado para editar esta aldeia' },
+        { status: 403 }
+      )
     }
 
-     const updateData: any = { ...data };
-     delete updateData.logoBase64;
-     if (logoUrl) {
-       updateData.logoUrl = logoUrl;
-     }
+    const body = await request.json()
+    const result = updateAldeiaSchema.safeParse(body)
 
-      // Get old values for audit
-      const oldAldeia = await prisma.aldeia.findUnique({ where: { id } });
-      
-      // If aldeia doesn't exist, return error
-      if (!oldAldeia) {
-        return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 404 });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Dados inválidos', details: result.error.format() },
+        { status: 400 }
+      )
+    }
+
+    const updateData = result.data
+
+    // Prepare data for Prisma update
+    const prismaUpdateData: any = { ...updateData }
+
+    // If nome is being updated, regenerate slug and check uniqueness
+    if (updateData.nome !== undefined) {
+      const newSlug = updateData.nome
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+
+      const existingAldeia = await prisma.aldeia.findFirst({
+        where: { slug: newSlug, NOT: { id: aldeiaId } }
+      })
+
+      if (existingAldeia) {
+        return NextResponse.json(
+          { error: 'Já existe uma aldeia com este nome' },
+          { status: 409 }
+        )
       }
 
-      const aldeia = await prisma.aldeia.update({
-        where: { id },
-        data: updateData,
-      });
+      prismaUpdateData.slug = newSlug
+    }
 
-      // Audit log for config change (update)
-      await logAudit(
-        user.id,
-        'update',
-        'aldeia',
-        id,
-        {
-          old: { nome: oldAldeia.nome, permitirStripe: oldAldeia.permitirStripe, permitirMBWay: oldAldeia.permitirMBWay },
-          new: { nome: aldeia.nome, permitirStripe: aldeia.permitirStripe, permitirMBWay: aldeia.permitirMBWay }
-        },
-        request.headers.get('x-forwarded-for') || 'unknown',
-        request.headers.get('user-agent') || 'unknown'
-      );
+    const updatedAldeia = await prisma.aldeia.update({
+      where: { id: aldeiaId },
+      data: prismaUpdateData
+    })
 
-     return NextResponse.json({ success: true, data: aldeia });
+    // Log the update
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        aldeiaId: aldeiaId,
+        action: 'UPDATE_ALDEIA',
+        resource: 'Aldeia',
+        resourceId: aldeiaId,
+        metadata: { 
+          nome: updatedAldeia.nome,
+          updatedFields: Object.keys(updateData)
+        }
+      }
+    })
+
+    return NextResponse.json(updatedAldeia)
   } catch (error) {
-    console.error('Erro ao atualizar aldeia:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    console.error('Error updating aldeia:', error)
+    return NextResponse.json(
+      { error: 'Erro ao atualizar aldeia' },
+      { status: 500 }
+    )
   }
-}
-
-export async function DELETE(request: NextRequest, context: RouteContext) {
-   try {
-     const { id } = await context.params;
-     const user = await getFullUserFromRequest(request);
-
-     // Só superadmin pode eliminar aldeias
-     if (!user || !hasRole(user.role, ['super_admin'])) {
-       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-     }
-
-     const aldeia = await prisma.aldeia.findUnique({ where: { id } });
-     if (!aldeia) {
-       return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 404 });
-     }
-
-     await prisma.aldeia.delete({ where: { id } });
-
-      // Audit log
-      await logAudit(
-        user.id,
-        'delete',
-        'aldeia',
-        id,
-        { nome: aldeia.nome, slug: aldeia.slug },
-        request.headers.get('x-forwarded-for') || 'unknown',
-        request.headers.get('user-agent') || 'unknown'
-      );
-
-     return NextResponse.json({ success: true });
-   } catch (error) {
-     console.error('Erro ao eliminar aldeia:', error);
-     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
-   }
 }

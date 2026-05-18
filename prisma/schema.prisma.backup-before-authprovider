@@ -26,11 +26,10 @@ model User {
   googleId              String?
   fotoUrl             String?
   appleId             String?
+  authProvider         String?
   aldeiaId                String?
   aldeiasPermitidas       String?
   saldo                   Float                   @default(0)
-  mfaEnabled          Boolean                 @default(false)
-  mfaSecret           String?
   comissaoPercentual      Float                   @default(10)
   comissaoAtiva           Boolean                 @default(true)
   comissaoTotal           Float                   @default(0)
@@ -239,20 +238,14 @@ model Aldeia {
   autorizacaoCM           Boolean          @default(false)
   numeroAlvara            String?
   documentosVerificados   Boolean          @default(false)
-   ativo                   Boolean          @default(true)
-   verificado              Boolean          @default(false)
-   dataVerificacao         DateTime?
-   nivel                   Int              @default(1)
-   experiencia             Int              @default(0)
-   pontos                  Int              @default(0)
-   moedaInterna            Decimal          @default(0)
-   membrosAtivos           Int              @default(0)
-   dataCriacao             DateTime         @default(now())
-   planoId                 String?
-   dataInicioPlano         DateTime?
-   dataFimPlano            DateTime?
-   createdAt               DateTime         @default(now())
-   updatedAt               DateTime         @updatedAt
+  ativo                   Boolean          @default(true)
+  verificado              Boolean          @default(false)
+  dataVerificacao         DateTime?
+  planoId                 String?
+  dataInicioPlano         DateTime?
+  dataFimPlano            DateTime?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
   auditLogs               AuditLog[]
   userAldeiaRoles         UserAldeiaRole[]
   userPermissions         UserPermission[]
@@ -874,9 +867,6 @@ enum RoleName {
   GESTOR
   COLABORADOR
   VIEWER
-  MEMBRO
-  MODERADOR
-  LIDER
 }
 
 enum PermissionKey {
