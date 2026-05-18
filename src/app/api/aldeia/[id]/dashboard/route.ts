@@ -4,37 +4,9 @@ import { getUserFromRequest } from '@/lib/auth'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await getUserFromRequest(request)
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
     const aldeiaId = params.id
 
-    // Check if user is a member of this aldeia
-    const membership = await prisma.userAldeiaRole.findFirst({
-      where: {
-        userId: user.id,
-        aldeiaId: aldeiaId
-      },
-      include: {
-        role: {
-          select: { name: true }
-        }
-      }
-    })
-
-    if (!membership) {
-      return NextResponse.json(
-        { error: 'Acesso negado: você não é membro desta aldeia' },
-        { status: 403 }
-      )
-    }
-
-    // Get aldeia data
+    // Get aldeia data with member count
     const aldeia = await prisma.aldeia.findUnique({
       where: { id: aldeiaId },
       select: {
@@ -133,6 +105,34 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       }
     })
 
+    // Get recent game contributions (both prize won and aldeia prize share)
+    const recentContributions = await prisma.gameAnalytics.findMany({
+      where: {
+        aldeiaId: aldeiaId,
+        type: {
+          in: ['prize_won', 'aldeia_prize_share']
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        amount: true,
+        createdAt: true,
+        game: {
+          select: {
+            nome: true,
+            tipo: true
+          }
+        },
+        user: {
+          select: {
+            nome: true
+          }
+        }
+      }
+    })
+
     // Calculate level progress
     // Assuming each level requires 1000 * level points (so level 1: 0-999, level 2: 1000-1999, etc.)
     const pontosParaProximoNivel = aldeia.nivel * 1000
@@ -161,7 +161,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         fotoUrl: m.fotoUrl
       })),
       recentEvents,
-      recentJogos
+      recentJogos,
+      recentContributions: recentContributions.map(c => ({
+        id: c.id,
+        amount: c.amount,
+        createdAt: c.createdAt,
+        gameNome: c.game.nome,
+        gameTipo: c.game.tipo,
+        userNome: c.user.nome,
+        type: c.type // Include type to distinguish between prize won and aldeia share
+      }))
     })
   } catch (error) {
     console.error('Error fetching aldeia dashboard:', error)
