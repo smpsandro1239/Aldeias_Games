@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 import { useState, useEffect, useCallback, useReducer } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutHeader } from "@/components/layout-header";
@@ -86,6 +87,8 @@ export default function Home() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [formState, dispatchForm] = useReducer(formReducer, {
     login: { email: "", password: "" },
@@ -139,7 +142,8 @@ export default function Home() {
     }
   }, [mounted, isAuthenticated, user, router]);
 
-  const doLogin = useCallback(async (email: string, password: string) => {
+    const doLogin = useCallback(async (email: string, password: string) => {
+    try {
     try {
       console.log('[Quick Login] Tentando login para:', email);
       const result = await login({ email, password });
@@ -213,8 +217,8 @@ export default function Home() {
               Acede à tua conta para jogar e ganhar prémios
             </DialogDescription>
           </DialogHeader>
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="px-8 pb-8 space-y-6">
+
+          <form onSubmit={handleLogin} className="px-8 pb-8">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
@@ -239,85 +243,6 @@ export default function Home() {
                   required
                   className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
                 />
-                {/* Esqueci-me da password link */}
-                <div className="text-right mt-1">
-                  <a href="/esqueci-minha-senha" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                    Esqueci-me da password
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="mt-6 flex-col gap-4">
-              <div className="flex gap-2 w-full">
-                <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
-                  Cancelar
-                </Button>
-                <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold" disabled={isLoggingIn}>
-                  <Zap className="h-4 w-4 mr-2" />
-                  {isLoggingIn ? 'Entrando...' : 'Entrar'}
-                </Button>
-              </div>
-            </DialogFooter>
-
-            {/* Divider */}
-            <div className="flex items-center my-6">
-              <div className="w-1 bg-outline-variant/20 flex-1"></div>
-              <span className="px-3 text-[10px] text-muted-foreground">ou continue com</span>
-              <div className="w-1 bg-outline-variant/20 flex-1"></div>
-            </div>
-
-            {/* Social Login Buttons */}
-            <div className="pt-4 space-y-3">
-              {/* Google Login Button */}
-              <div className="pt-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-3"
-                  onClick={() => {
-                    window.location.href = "/api/auth/google";
-                  }}
-                  disabled={isLoggingIn}
-                >
-                  <span className="flex items-center gap-2">
-                    {/* Ícone oficial do Google */}
-                    <img src="https://fonts.gstatic.com/s/i/googlematerialicons/gm6_2024Q2/googlelogo_color_72x24dp.png"
-                         alt="Google"
-                         className="h-4 w-auto"
-                         onError={(e) => {
-                           // Fallback em caso de falha ao carregar o ícone
-                           e.target.src = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_72x24dp.png";
-                         }}
-                    />
-                    <span className="text-xs font-medium">{isLoggingIn ? 'Entrando...' : 'Continuar com o Google'}</span>
-                  </span>
-                </Button>
-                <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                  ou use seu e-mail e senha
-                </p>
-              </div>
-
-              {/* Apple Login Button */}
-              <div className="pt-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-3"
-                  onClick={() => {
-                    window.location.href = "/api/auth/apple";
-                  }}
-                  disabled={isLoggingIn}
-                >
-                  <span className="flex items-center gap-2">
-                    {/* Apple Logo */}
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2L14.5 8.25H22L15 12.75L17.5 20H12L8.5 12.75L1.5 8.25H9L12 2Z" fill="currentColor"/>
-                    </svg>
-                    <span className="text-xs font-medium">{isLoggingIn ? 'Entrando...' : 'Continuar com a Apple'}</span>
-                  </span>
-                </Button>
-                <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                  ou use seu e-mail e senha
-                </p>
               </div>
             </div>
 
@@ -332,61 +257,95 @@ export default function Home() {
                 </Button>
               </div>
 
-              {/* Botões de Atalho para Testes (Quick Login) */}
-              <div className="pt-4 border-t border-outline-variant/10 w-full">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Super Admin clicked');
-                      await doLogin("admin@aldeias.pt", "123456");
-                    }}
-                  >
-                    Super Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Admin Aldeia clicked');
-                      await doLogin("admin.valeazinha@aldeias.pt", "123456");
-                    }}
-                  >
-                    Admin Aldeia
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Vendedor clicked');
-                      await doLogin("vendedor1@valeazinha.pt", "123456");
-                    }}
-                  >
-                    Vendedor
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Jogador clicked');
-                      await doLogin("jogador1@valeazinha.pt", "123456");
-                    }}
-                  >
-                    Jogador
-                  </Button>
+                {/* Botões de Atalho para Testes (Quick Login) */}
+                <div className="pt-4 border-t border-outline-variant/10 w-full">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Super Admin clicked');
+                        await doLogin("admin@aldeias.pt", "123456");
+                      }}
+                    >
+                      Super Admin
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Admin Aldeia clicked');
+                        await doLogin("admin.valeazinha@aldeias.pt", "123456");
+                      }}
+                    >
+                      Admin Aldeia
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Vendedor clicked');
+                        await doLogin("vendedor1@valeazinha.pt", "123456");
+                      }}
+                    >
+                      Vendedor
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        console.log('[Quick Login Button] Jogador clicked');
+                        await doLogin("jogador1@valeazinha.pt", "123456");
+                      }}
+                    >
+                      Jogador
+                    </Button>
+                  </div>
                 </div>
-              </div>
             </DialogFooter>
+            {/* Botão de Login do Google */}
+            <div className="pt-4">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center gap-3"
+                onClick={() => {
+                  window.location.href = "/api/auth/google";
+                }}
+                disabled={isLoggingIn}
+              >
+                <span className="flex items-center gap-2">
+                  {/* Ícone oficial do Google */}
+                  <img src="https://fonts.gstatic.com/s/i/googlematerialicons/gm6_2024Q2/googlelogo_color_72x24dp.png" 
+                       alt="Google" 
+                       className="h-4 w-auto"
+                       onError={(e) => {
+                         // Fallback em caso de falha ao carregar o ícone
+                         e.target.src = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_72x24dp.png";
+                       }}
+            {/* Botão de Login do Google */}
+            <div className="pt-4">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center gap-3"
+                onClick={() => {
+                  window.location.href = "/api/auth/google";
+                }}
+              >
+                <span className="flex items-center gap-2">
+                  {/* Ícone do Google (você pode adicionar um SVG ou usar uma biblioteca) */}
+                  <span className="text-[18px]">G</span>
+                  <span className="text-xs font-medium">Continuar com o Google</span>
+                </span>
+              </Button>
           </form>
         </DialogContent>
       </Dialog>
