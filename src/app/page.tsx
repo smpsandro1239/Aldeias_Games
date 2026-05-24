@@ -210,7 +210,7 @@ export default function Home() {
           <DialogHeader className="p-8 pb-4">
             <DialogTitle className="font-serif text-2xl text-center">Entrar</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
-              Acede à tua conta para jogar e ganhar prémios
+              Acede à tua conta para jogar e ganhar prémio
             </DialogDescription>
           </DialogHeader>
           {/* Login Form */}
