@@ -29,7 +29,7 @@ function formatLog(level: LogLevel, message: string, meta?: Record<string, unkno
   if (meta) {
     const { userId, requestId, module, error, ...data } = meta;
     if (module) entry.module = String(module);
-    if (userId) entry.id = String(userId);
+    if (userId) entry.userId = String(userId);
     if (requestId) entry.requestId = String(requestId);
     if (error && typeof error === 'object') {
       entry.error = {

@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateToken, setAuthCookie } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { verifyGoogleIdToken } from '@/lib/oauth';
+import { verifyToken } from '@/lib/auth';
+import type { User } from '@prisma/client';
 import { verifyAppleIdToken } from '@/lib/apple-auth';
+import type { User } from '@prisma/client';
 
 /**
  * Generic OAuth callback handler for providers like Google and Apple
@@ -21,7 +23,7 @@ export async function handleOAuthCallback(
     // Provider-specific function to get user data from token response
     getUserData: (tokenData: any) => Promise<any>;
     // Field in User model to store the provider ID
-    providerIdField: keyof typeof import('@/prisma/client').User;
+    providerIdField: keyof User;
     // Provider name for logging
     providerName: string;
   }

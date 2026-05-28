@@ -28,7 +28,9 @@ model User {
   aldeiasPermitidas String?
   saldo             Float     @default(0)
   onboardingCompleted Boolean   @default(false) // Flag to track if user completed onboarding
-
+  appleId           String?   @unique // Apple OAuth user ID
+  googleId          String?   @unique // Google OAuth user ID
+  authProvider      String?   // OAuth provider (google, apple, etc.)
   comissaoPercentual Float   @default(10) // % de comissão por venda
   comissaoAtiva      Boolean @default(true) // se comissões estão ativas
   comissaoTotal      Float   @default(0) // total acumulado em comissões

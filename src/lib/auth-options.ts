@@ -7,6 +7,26 @@ import { getUserFromRequest } from "@/lib/auth";
 import type { JWT } from "next-auth/jwt";
 import type { Session } from "next-auth";
 
+declare module "next-auth/jwt" {
+  interface JWT {
+    role?: string;
+    aldeiaId?: string | null;
+  }
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string;
+      aldeiaId?: string | null;
+    };
+  }
+}
+
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
@@ -62,8 +82,8 @@ export const authOptions = {
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
-        session.user.role = token.role as string;
-        session.user.aldeiaId = token.aldeiaId as string | null;
+        session.user.role = token.role ?? undefined;
+        session.user.aldeiaId = token.aldeiaId ?? undefined;
       }
       return session;
     }
