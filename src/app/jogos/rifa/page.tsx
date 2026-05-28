@@ -422,12 +422,23 @@ export default function RifaPage() {
       metodoPagamento: metodo === "mbway" ? "mbway" : metodo
     };
 
+    // Only include dadosCliente if we have at least name and one contact method
     if (participante.nome && (participante.telefone || participante.email)) {
-      payload.dadosCliente = {
-        nome: participante.nome,
-        telefone: participante.telefone || undefined,
-        email: participante.email || undefined
+      const dadosCliente: Record<string, unknown> = {
+        nome: participante.nome
       };
+      
+      // Only add telefone if it's not empty
+      if (participante.telefone) {
+        dadosCliente.telefone = participante.telefone;
+      }
+      
+      // Only add email if it's not empty
+      if (participante.email) {
+        dadosCliente.email = participante.email;
+      }
+      
+      payload.dadosCliente = dadosCliente;
     }
 
     try {
