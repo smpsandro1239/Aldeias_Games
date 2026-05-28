@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { verifyPassword } from "@/lib/auth";
 import { getUserFromRequest } from "@/lib/auth";
-import type { JWT, Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
