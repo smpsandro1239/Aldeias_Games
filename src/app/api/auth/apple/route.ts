@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { handleOAuthCallback, verifyAppleIdToken } from '@/lib/oauth-handler';
+import { handleOAuthCallback } from '@/lib/oauth-handler';
 
 export async function POST(request: NextRequest) {
   try {

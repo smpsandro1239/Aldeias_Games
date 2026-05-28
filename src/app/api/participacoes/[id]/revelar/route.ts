@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 
 interface Context {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }
 
 export async function POST(request: NextRequest, { params }: Context) {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: Context) {
 
     if (!participacao) return NextResponse.json({ error: 'Não encontrada' }, { status: 404 });
 
-    if (participacao.userId !== user.id) {
+    if (participacao.id !== user.id) {
        return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 

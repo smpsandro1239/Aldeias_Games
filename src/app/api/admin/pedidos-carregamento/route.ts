@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       estado: p.estado,
       metodoPagamento: p.metodoPagamento || 'dinheiro',
       createdAt: p.createdAt,
-      userId: p.userId,
+      userId: p.id,
       user: p.user,
       vendedorId: p.vendedorId || '',
       vendedor: null,

@@ -25,14 +25,14 @@ export async function GET(request: NextRequest) {
 
     // Logs de acesso
     const logsAcessoWhere: Record<string, unknown> = {};
-    if (userId) logsAcessoWhere.userId = userId;
+    if (userId) logsAcessoWhere.id = userId;
     if (dataInicio || dataFim) logsAcessoWhere.createdAt = dateFilter;
 
     // Transações com audit trail (ajustes de saldo)
     const transacoesWhere: Record<string, unknown> = {
       tipo: { in: ['deposito', 'levantamento', 'cashback'] },
     };
-    if (userId) transacoesWhere.userId = userId;
+    if (userId) transacoesWhere.id = userId;
     if (dataInicio || dataFim) transacoesWhere.createdAt = dateFilter;
 
     const [logsAcesso, transacoesAudit, totalLogs] = await Promise.all([

@@ -163,14 +163,14 @@ export async function PUT(request: NextRequest) {
 
     // Credit saldo ao jogador
     await prisma.user.update({
-      where: { id: pedido.userId },
+      where: { id: pedido.id },
       data: { saldo: { increment: pedido.valor } }
     });
 
     // Criar notificação para o jogador
     await prisma.notificacao.create({
       data: {
-        userId: pedido.userId,
+        userId: pedido.id,
         tipo: 'sistema',
         titulo: 'Saldo Carregado',
         mensagem: `O teu saldo foi carregado com ${pedido.valor}€. Novo saldo disponível.`,

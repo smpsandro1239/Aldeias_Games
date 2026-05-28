@@ -75,11 +75,11 @@ export function useParticipacoes(token: string | null) {
     setError(null);
 
     try {
-      const queryParams = new URLSearchParams();
-      if (params.page) queryParams.append("page", params.page.toString());
-      if (params.limit) queryParams.append("limit", params.limit.toString());
-      if (params.jogoId) queryParams.append("jogoId", params.jogoId);
-      if (params.userId) queryParams.append("userId", params.userId);
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.jogoId) queryParams.append("jogoId", params.jogoId);
+    if (params.userId) queryParams.append("userId", params.userId);
 
       const response = await fetch(`/api/participacoes?${queryParams}`, {
         headers: { Authorization: `Bearer ${token}` },

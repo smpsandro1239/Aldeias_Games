@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest) {
            // 1. Creditar jogador
            await tx.transacao.create({
              data: {
-               userId: pedido.userId,
+               userId: pedido.id,
                tipo: 'carregamento_saldo',
                valor: pedido.valor,
                descricao: 'Carregamento via vendedor confirmado',
@@ -125,7 +125,7 @@ export async function PATCH(request: NextRequest) {
            });
 
            await tx.user.update({
-             where: { id: pedido.userId },
+             where: { id: pedido.id },
              data: { saldo: { increment: pedido.valor } }
            });
 
@@ -138,7 +138,7 @@ export async function PATCH(request: NextRequest) {
                  valor: pedido.valor,
                  descricao: `Recebimento de carregamento do jogador ${pedido.user?.nome || 'unknown'}`,
                  estado: 'concluido',
-                 dadosAdicionais: { pedidoId: pedido.id, userId: pedido.userId }
+                 dadosAdicionais: { pedidoId: pedido.id, userId: pedido.id }
                }
              });
 

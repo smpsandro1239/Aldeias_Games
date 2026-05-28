@@ -5,7 +5,7 @@ import { updateJogoSchema } from '@/lib/validations';
 import { logAudit } from '@/lib/auditLog';
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: Promise<{id: string}>
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {

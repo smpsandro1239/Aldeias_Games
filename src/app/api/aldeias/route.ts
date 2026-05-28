@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get user from request (optional for public aldeias list)
     const user = await getUserFromRequest(request)
-    
+
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         },
         skip,
         take: limit,
-        orderBy: { criadoEm: 'desc' }
+        orderBy: { createdAt: 'desc' }
       }),
       prisma.aldeia.count({ where })
     ])
@@ -102,9 +102,9 @@ export async function POST(request: NextRequest) {
     const slug = nome
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[^a-z0-9\\s-]/g, '')
+      .replace(/\\s+/g, '-')
       .replace(/-+/g, '-')
       .trim()
 
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         tipoOrganizacao,
         // Set the creator as admin of the aldeia
         admins: {
-          connect: { id: user.id }
+          connect: { id: user.userId }
         }
       }
     })
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     // Log the creation
     await prisma.auditLog.create({
       data: {
-        userId: user.id,
+        userId: user.userId,
         aldeiaId: aldeia.id,
         action: 'CREATE_ALDEIA',
         resource: 'Aldeia',

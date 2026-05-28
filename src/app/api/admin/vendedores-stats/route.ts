@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         
         const comissaoGanhas = (volumeTotal * percentual) / 100;
         
-        const sellerPayouts = payouts.filter(p => p.userId === v.id);
+        const sellerPayouts = payouts.filter(p => p.id === v.id);
         const jaPago = sellerPayouts.reduce((acc, p) => acc + p.valor, 0);
 
         return {

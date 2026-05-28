@@ -1,10 +1,15 @@
-import { useState, useRouter } from 'next/navigation';
+"use client";
+
+import type { User } from '@/hooks/use-auth';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -32,11 +37,12 @@ export default function OnboardingPage() {
 
     try {
       // Update user with onboarding info
-      await updateUser({
+      const updateData: Partial<User> = {
         nome: nome.trim(),
         telefone: telefone.trim() || null,
         onboardingCompleted: true,
-      });
+      };
+      await updateUser(updateData);
 
       // Redirect to appropriate dashboard based on role
       const role = user?.role;

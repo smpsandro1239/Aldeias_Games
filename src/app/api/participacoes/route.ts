@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     if (user.role === 'super_admin') {
       // Super admin vê todas
       if (userId) {
-        where.userId = userId;
+        where.id = userId;
       }
     } else if (user.role === 'aldeia_admin') {
       // Admin vê participações dos jogos da sua aldeia

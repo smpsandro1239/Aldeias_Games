@@ -134,11 +134,14 @@ export default function ResetPasswordPage() {
               <p className="text-xs text-gray-500 mb-2">
                 A password deve ter pelo menos 12 caracteres e conter:
               </p>
-              <ul className="text-xs text-gray-500 space-y-2 pl-4">
+              <p className="text-xs text-gray-500 mb-2">
+                A password deve ter pelo menos 12 caracteres e conter:
+              </p>
+              <ul className='text-xs text-gray-500 space-y-2 pl-4'>
                 <li>1 letra maiúscula</li>
                 <li>1 letra minúscula</li>
                 <li>1 número</li>
-                <li>1 carácter especial (!@#$%^&*()_+-=[]{};':"\\|,.<>/?)</li>
+                <li>1 carácter especial (!@#$%^&*()_+-=[]{};':\"\\|,.&lt;&gt;/?)</li>
               </ul>
 
               <Button

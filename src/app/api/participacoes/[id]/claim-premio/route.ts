@@ -24,7 +24,7 @@ function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{id: string}> }
 ) {
   try {
     const user = await getFullUserFromRequest(request);
@@ -36,7 +36,7 @@ export async function POST(
       );
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // Rate limiting
     const rateLimit = checkRateLimit(user.id);
@@ -71,7 +71,7 @@ export async function POST(
 
     // Owner check - by userId or by matching email
     const emailMatch = participacao.emailCliente && participacao.emailCliente === user.email;
-    if (participacao.userId !== user.id && !emailMatch) {
+    if (participacao.id !== user.id && !emailMatch) {
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 403 }

@@ -8,8 +8,9 @@ const roleUpdateSchema = z.object({
   role: z.enum(['MEMBRO', 'MODERADOR'])
 })
 
-export async function POST(request: NextRequest, { params }: { params: { id: string; userId: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{id: string; userId: string}> }) {
   try {
+    const { id, userId } = await context.params
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json(
@@ -18,8 +19,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       )
     }
 
-    const aldeiaId = params.id
-    const targetUserId = params.userId
+    const aldeiaId = id
+    const targetUserId = userId
 
     // Check if the aldeia exists
     const aldeia = await prisma.aldeia.findUnique({
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       include: {
         admins: { select: { id: true } },
         userAldeiaRoles: {
-          where: { userId: user.id },
+          where: { userId: user.userId },
           include: { role: true }
         }
       }
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Check if the requesting user is a LIDER or MODERADOR in this aldeia
-    const isLider = aldeia.admins.some(admin => admin.id === user.id) // Assuming LIDER is same as admin for now
+    const isLider = aldeia.admins.some(admin => admin.id === user.userId) // Assuming LIDER is same as admin for now
     const isModerador = aldeia.userAldeiaRoles.some(
       role => role.role.name === 'MODERADOR'
     )
@@ -98,11 +99,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Update the user's role in the aldeia
     const updatedUserAldeiaRole = await prisma.userAldeiaRole.update({
       where: {
-        userId_aldeiaId_roleId: {
-          userId: targetUserId,
-          aldeiaId,
-          roleId: targetUserRole.roleId
-        }
+        id: targetUserRole.id
       },
       data: {
         roleId: roleRecord.id
@@ -115,28 +112,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       }
     })
 
-    // Log the action
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        aldeiaId,
-        action: 'ALTERAR_ROLE_MEMBRO',
-        resource: 'UserAldeiaRole',
-        resourceId: updatedUserAldeiaRole.id,
-        metadata: {
-          targetUserId,
-          targetUserNome: updatedUserAldeiaRole.user.nome,
-          oldRole: targetUserRole.role.name,
-          newRole: role
-        }
-      }
-    })
-
-    return NextResponse.json(updatedUserAldeiaRole)
+    return NextResponse.json({ updatedUserAldeiaRole }, { status: 200 })
   } catch (error) {
-    console.error('Error updating member role:', error)
+    console.error(error)
     return NextResponse.json(
-      { error: 'Erro ao atualizar role do membro' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

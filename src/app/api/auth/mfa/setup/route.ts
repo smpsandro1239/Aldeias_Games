@@ -1,26 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getUserFromRequest } from '@/lib/auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { generateMFASecret, generateMFAQRCode } from '@/lib/mfa';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const userData = await getUserFromRequest(request);
+    if (!userData) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userData.email },
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // If MFA is already enabled, return error
-    if (user.mfaEnabled) {
+    // Check if MFA is already enabled for this user
+    const existingTwoFactorAuth = await prisma.twoFactorAuth.findUnique({
+      where: { userId: user.id },
+    });
+    if (existingTwoFactorAuth && existingTwoFactorAuth.enabled) {
       return NextResponse.json({ error: 'MFA is already enabled' }, { status: 400 });
     }
 
@@ -29,10 +32,15 @@ export async function POST(request: NextRequest) {
     // Generate QR code
     const qrCode = await generateMFAQRCode(user.email, secret);
 
-    // Save the secret to the user (but do not enable MFA yet)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { mfaSecret: secret },
+    // Save the secret to the TwoFactorAuth record (MFA not enabled yet)
+    await prisma.twoFactorAuth.upsert({
+      where: { userId: user.id },
+      update: { secret: secret },
+      create: {
+        userId: user.id,
+        secret: secret,
+        enabled: false,
+      },
     });
 
     return NextResponse.json({

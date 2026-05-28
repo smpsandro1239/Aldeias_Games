@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string; userId: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{id: string; userId: string}> }) {
   try {
+    const { id, userId } = await context.params
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json(
@@ -12,8 +13,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    const aldeiaId = params.id
-    const targetUserId = params.userId
+    const aldeiaId = id
+    const targetUserId = userId
 
     // Check if the aldeia exists
     const aldeia = await prisma.aldeia.findUnique({
@@ -21,7 +22,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       include: {
         admins: { select: { id: true } },
         userAldeiaRoles: {
-          where: { userId: user.id },
+          where: { userId: user.userId },
           include: { role: true }
         }
       }
@@ -35,7 +36,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Check if the requesting user is a LIDER or MODERADOR in this aldeia
-    const isLider = aldeia.admins.some(admin => admin.id === user.id) // Assuming LIDER is same as admin for now
+    const isLider = aldeia.admins.some(admin => admin.id === user.userId) // Assuming LIDER is same as admin for now
     const isModerador = aldeia.userAldeiaRoles.some(
       role => role.role.name === 'MODERADOR'
     )
@@ -64,29 +65,26 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Prevent removing the aldeia LIDER (if we consider LIDER as admin)
-    // For now, we'll allow removing any member except we won't allow removing LIDER via this route? Actually LIDER is admin, so they are in aldeia.admins relation, not necessarily in userAldeiaRoles with role LIDER? We have both: admins relation and userAldeiaRoles with role LIDER? In our schema, we have aldeiasAdmin relation (User) and also we could have a role LIDER in UserAldeiaRole. We'll assume that LIDER is also represented as a role in userAldeiaRoles. For safety, we prevent removing if the target user has role LIDER in the aldeia.
-    if (targetUserRole.role.name === 'LIDER') {
+    // The leader is represented in the aldeia.admins relation.
+    const isTargetLider = aldeia.admins.some(admin => admin.id === targetUserId);
+    if (isTargetLider) {
       return NextResponse.json(
         { error: 'Não é possível remover o líder da aldeia' },
         { status: 400 }
-      )
+      );
     }
 
     // Remove the user from the aldeia
     await prisma.userAldeiaRole.delete({
       where: {
-        userId_aldeiaId_roleId: {
-          userId: targetUserId,
-          aldeiaId,
-          roleId: targetUserRole.roleId
-        }
+        id: targetUserRole.id
       }
-    })
+    });
 
     // Log the action
     await prisma.auditLog.create({
       data: {
-        userId: user.id,
+        userId: user.userId,
         aldeiaId,
         action: 'REMOVER_MEMBRO_ALDEIA',
         resource: 'UserAldeiaRole',

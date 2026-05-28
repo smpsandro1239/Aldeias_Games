@@ -1,4 +1,4 @@
-import { Decimal } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 /**
  * Calcula o nível atual baseado na experiência
@@ -45,30 +45,30 @@ export async function addExperienceToAldeia(
     where: { id: aldeiaId },
     select: { id: true, experiencia: true, nivel: true, pontos: true, moedaInterna: true }
   });
-
+  
   if (!aldeia) {
     throw new Error('Aldeia não encontrada');
   }
-
+  
   const oldLevel = aldeia.nivel;
   const novaExperiencia = aldeia.experiencia + experienciaParaAdicionar;
   const newLevel = calculateLevelFromExperience(novaExperiencia);
   const levelUp = newLevel > oldLevel;
-
+  
   // Calculate rewards based on level up
   let pontosParaAdicionar = 0;
   let moedaParaAdicionar = 0;
-
+  
   // Base reward for participation
   pontosParaAdicionar = Math.floor(experienciaParaAdicionar / 10); // 1 ponto por 10 experiencia
   moedaParaAdicionar = Math.floor(experienciaParaAdicionar / 20); // 1 moeda por 20 experiencia
-
+  
   // Bonus for level up
   if (levelUp) {
     pontosParaAdicionar += 50; // Bonus por subir de nível
     moedaParaAdicionar += 20;
   }
-
+  
   // Update aldeia
   const updatedAldeia = await prisma.aldeia.update({
     where: { id: aldeiaId },
@@ -76,7 +76,7 @@ export async function addExperienceToAldeia(
       experiencia: novaExperiencia,
       nivel: newLevel,
       pontos: aldeia.pontos + pontosParaAdicionar,
-      moedaInterna: new Decimal(aldeia.moedaInterna.toNumber() + moedaParaAdicionar)
+      moedaInterna: new Prisma.Decimal(aldeia.moedaInterna.toNumber() + moedaParaAdicionar)
     },
     select: {
       id: true,
@@ -87,7 +87,7 @@ export async function addExperienceToAldeia(
       moedaInterna: true
     }
   });
-
+  
   // Log the progression
   await prisma.auditLog.create({
     data: {
@@ -105,7 +105,7 @@ export async function addExperienceToAldeia(
       }
     }
   });
-
+  
   return {
     aldeia: updatedAldeia,
     levelUp,
@@ -125,21 +125,21 @@ export async function handleMemberParticipation(
 ): Promise<{ aldeia: any; levelUp: boolean }> {
   // Base experiencia por participação
   let experienciaBase = 10;
-
+  
   // Ajustar por tipo
   if (tipoParticipacao === 'evento') {
     experienciaBase *= 2; // Eventos valem mais
   }
-
+  
   // Bonus se ganhou
   if (ganhou) {
     experienciaBase *= 1.5;
   }
-
+  
   // Bonus baseado no valor gasto (mais gasto = mais experiencia para a aldeia)
   const experienciaPorValor = Math.floor(valorParticipacao / 5); // 1 experiencia por 5 de valor gasto
   const experienciaTotal = Math.floor(experienciaBase + experienciaPorValor);
-
+  
   const result = await addExperienceToAldeia(aldeiaId, experienciaTotal);
   return result;
 }

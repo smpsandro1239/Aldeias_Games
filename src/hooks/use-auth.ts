@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 
-interface User {
+export interface User {
   id: string;
   email: string;
   nome: string;
-  telefone?: string;
+  telefone?: string | null;
   role: "super_admin" | "aldeia_admin" | "vendedor" | "user";
   aldeiaId?: string;
   aldeia?: {
@@ -17,6 +17,7 @@ interface User {
     tipoOrganizacao: string;
   };
   notificacoesEmail: boolean;
+  onboardingCompleted?: boolean;
 }
 
 interface LoginCredentials {

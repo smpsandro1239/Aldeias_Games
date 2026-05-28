@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.userId,
+          userId: v.id,
           userNome: v.user?.nome || v.nomeCliente,
           userEmail: v.user?.email || v.emailCliente,
           userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
       vencedoresDetalhes = vencedores.map(v => ({
         posicao: v.posicao,
-        userId: (v.dados as any).userId,
+        userId: (v.dados as any).id,
         userNome: (v.dados as any).userNome,
         userEmail: (v.dados as any).userEmail,
         userTelefone: (v.dados as any).userTelefone,
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.userId,
+          userId: v.id,
           userNome: v.user?.nome || v.nomeCliente,
           userEmail: v.user?.email || v.emailCliente,
           userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 
       vencedoresDetalhes = vencedores.map(v => ({
         posicao: v.posicao,
-        userId: (v.dados as any).userId,
+        userId: (v.dados as any).id,
         userNome: (v.dados as any).userNome,
         userEmail: (v.dados as any).userEmail,
         userTelefone: (v.dados as any).userTelefone,

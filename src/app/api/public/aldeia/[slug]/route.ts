@@ -3,10 +3,10 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  context: { params: Promise<{slug: string}> }
 ) {
   try {
-    const { slug } = await params;
+    const { slug } = await context.params;
     
     const aldeia = await prisma.aldeia.findUnique({
       where: { slug },

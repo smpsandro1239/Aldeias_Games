@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     let where: Record<string, unknown> = {};
     if (estado) where.estado = estado;
-    if (userId) where.userId = userId;
+    if (userId) where.id = userId;
 
     const pedidos = await prisma.direitoEsquecimento.findMany({
       where,
@@ -109,12 +109,12 @@ export async function PATCH(request: NextRequest) {
 
       // Anonimizar dados do utilizador
       await prisma.user.update({
-        where: { id: pedido.userId },
+        where: { id: pedido.id },
         data: {
           nome: 'Utilizador Anónimo',
           telefone: null,
           password: 'DELETED_' + Date.now(),
-          email: `deleted_${pedido.userId}@deleted.local`,
+          email: `deleted_${pedido.id}@deleted.local`,
         },
       });
 

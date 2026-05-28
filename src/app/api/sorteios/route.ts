@@ -168,7 +168,7 @@ export async function PATCH(request: NextRequest) {
           posicao: index + 1,
           participacaoId: v.id,
           dados: {
-            userId: v.userId,
+            userId: v.id,
             userNome: v.user?.nome || v.nomeCliente,
             userEmail: v.user?.email || v.emailCliente,
             userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -196,7 +196,7 @@ export async function PATCH(request: NextRequest) {
           posicao: index + 1,
           participacaoId: v.id,
           dados: {
-            userId: v.userId,
+            userId: v.id,
             userNome: v.user?.nome || v.nomeCliente,
             userEmail: v.user?.email || v.emailCliente,
             userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -242,15 +242,15 @@ export async function PATCH(request: NextRequest) {
           data: { ganhador: true },
         })
 
-        const dadosVencedor = vencedor.dados as { userId: string | null; userNome: string; userEmail?: string; userTelefone?: string }
+        const dadosVencedor = vencedor.dados as { userId: string | null; userNome: string; userEmail?: string | undefined; userTelefone?: string | undefined; id?: string | null }
 
-        if (dadosVencedor.userId) {
+        if (dadosVencedor.id) {
           await prisma.notificacao.create({
             data: {
               tipo: 'sorteio',
               titulo: 'Parabéns! Você ganhou!',
               mensagem: `Você foi o vencedor do sorteio \"${jogo.nome}\". Entre em contacto com a organização para receber o seu prémio!`,
-              userId: dadosVencedor.userId,
+              userId: dadosVencedor.id,
             },
           })
 
@@ -286,16 +286,16 @@ export async function PATCH(request: NextRequest) {
             data: {
               type: 'aldeia_prize_share',
               aldeiaId: jogo.aldeiaId,
-              jogoId: jogo.id,
+              gameId: jogo.id,
               amount: aldeiaShare,
-              description: `Share from prize won in jogo ${jogo.nome} (${primeiroPremio.nome || 'Prémio'})`,
+              // description: `Share from prize won in jogo ${jogo.nome} (${primeiroPremio.nome || 'Prémio'})`,
               metadata: JSON.stringify({
                 premioId: primeiroPremio.id,
- premioNome: primeiroPremio.nome,
+                premioNome: primeiroPremio.nome,
                 valorPremio: prizeValue,
                 percentagem: aldeiaSharePercentage,
                 vencedorId: vencedor.participacaoId,
-                vencedorUserId: dadosVencedor.userId,
+                vencedorUserId: dadosVencedor.id,
               }),
             },
           })
@@ -469,7 +469,7 @@ export async function POST(request: NextRequest) {
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.userId,
+          userId: v.id,
           userNome: v.user?.nome || v.nomeCliente,
           userEmail: v.user?.email || v.emailCliente,
           userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -496,7 +496,7 @@ export async function POST(request: NextRequest) {
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.userId,
+          userId: v.id,
           userNome: v.user?.nome || v.nomeCliente,
           userEmail: v.user?.email || v.emailCliente,
           userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -543,15 +543,15 @@ export async function POST(request: NextRequest) {
         data: { ganhador: true },
       })
 
-      const dadosVencedor = vencedor.dados as { userId: string | null; userNome: string; userEmail?: string; userTelefone?: string }
+      const dadosVencedor = vencedor.dados as { userId: string | null; userNome: string; userEmail?: string | undefined; userTelefone?: string | undefined; id?: string | null }
 
-      if (dadosVencedor.userId) {
+      if (dadosVencedor.id) {
         await prisma.notificacao.create({
           data: {
             tipo: 'sorteio',
             titulo: 'Parabéns! Você ganhou!',
             mensagem: `Você foi o vencedor do sorteio \"${jogo.nome}\". Entre em contacto com a organização para receber o seu prémio!`,
-            userId: dadosVencedor.userId,
+            userId: dadosVencedor.id,
           },
         })
 
@@ -585,16 +585,16 @@ export async function POST(request: NextRequest) {
           data: {
             type: 'aldeia_prize_share',
             aldeiaId: jogo.aldeiaId,
-            jogoId: jogo.id,
+            gameId: jogo.id,
             amount: aldeiaShare,
-            description: `Share from prize won in jogo ${jogo.nome} (${primeiroPremio.nome || 'Prémio'})`,
+            // description: `Share from prize won in jogo ${jogo.nome} (${primeiroPremio.nome || 'Prémio'})`,
             metadata: JSON.stringify({
               premioId: primeiroPremio.id,
               premioNome: primeiroPremio.nome,
               valorPremio: prizeValue,
               percentagem: aldeiaSharePercentage,
               vencedorId: vencedor.participacaoId,
-              vencedorUserId: dadosVencedor.userId,
+              vencedorUserId: dadosVencedor.id,
             }),
           },
         })

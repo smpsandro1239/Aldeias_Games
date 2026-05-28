@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
                   return {
                     posicao: index + 1,
                     dadosVencedor: JSON.stringify({
-                      userId: participacao?.userId,
+                      userId: participacao?.id,
                       userNome: participacao?.user?.nome || participacao?.nomeCliente,
                       userEmail: participacao?.user?.email || participacao?.emailCliente,
                       userTelefone: participacao?.user?.telefone || participacao?.telefoneCliente,

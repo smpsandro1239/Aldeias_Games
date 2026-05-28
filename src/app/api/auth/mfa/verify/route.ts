@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getUserFromRequest } from '@/lib/auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { verifyMFAOTP } from '@/lib/mfa';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const userData = await getUserFromRequest(request);
+    if (!userData) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -19,27 +19,29 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: userData.email },
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (!user.mfaSecret) {
+    const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
+      where: { userId: userData.userId },
+    });
+    if (!twoFactorAuth || !twoFactorAuth.secret) {
       return NextResponse.json({ error: 'MFA secret not found. Please set up MFA first.' }, { status: 400 });
     }
 
-    const isValid = verifyMFAOTP(token, user.mfaSecret);
-
+    const isValid = verifyMFAOTP(token, twoFactorAuth.secret);
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
     }
 
     // Enable MFA for the user
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { mfaEnabled: true },
+    await prisma.twoFactorAuth.update({
+      where: { userId: userData.userId },
+      data: { enabled: true },
     });
 
     return NextResponse.json({ success: true, message: 'MFA enabled successfully' });

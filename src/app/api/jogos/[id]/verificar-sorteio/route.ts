@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{id: string}> }) {
   try {
-    const jogoId = params.id
+    const { id } = await context.params;
+    const jogoId = id;
 
     // Find the jogo
     const jogo = await prisma.jogo.findUnique({
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         fase: true,
         preCommitHash: true,
         commitSalt: true,
-        reveladoAt: true,
+        revealedAt: true,
         createdAt: true,
         vencedores: {
           select: {
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           seed: sorteio.seed,
           hash: sorteio.hash,
           resultado: sorteio.resultado ? JSON.parse(sorteio.resultado) : null,
-          reveladoEm: sorteio.reveladoAt?.toISOString() ?? null
+          reveladoEm: sorteio.revealedAt?.toISOString() ?? null
         } : null,
         vencedores: sorteio.vencedores.map(v => ({
           posicao: v.posicao,

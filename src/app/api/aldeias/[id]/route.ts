@@ -29,12 +29,11 @@ const updateAldeiaSchema = z.object({
   ativo: z.boolean().optional(),
 })
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{id: string}> }) {
   try {
-    const aldeiaId = params.id
-
+    const { id } = await context.params
     const aldeia = await prisma.aldeia.findUnique({
-      where: { id: aldeiaId },
+      where: { id },
       include: {
         _count: {
           select: { userAldeiaRoles: true, eventos: true, jogos: true, premios: true }
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Check if aldeia is public/verificado or if user is a member
     const user = await getUserFromRequest(request)
-    const isMember = user && aldeia.userAldeiaRoles.some(role => role.userId === user.id)
+    const isMember = user && aldeia.userAldeiaRoles.some(role => role.id === user.userId)
     const isPublic = aldeia.ativo && aldeia.verificado
 
     if (!isPublic && !isMember) {
@@ -90,8 +89,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{id: string}> }) {
   try {
+    const { id } = await context.params
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json(
@@ -100,11 +100,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       )
     }
 
-    const aldeiaId = params.id
-
     // Check if user is admin of this aldeia
     const aldeia = await prisma.aldeia.findUnique({
-      where: { id: aldeiaId },
+      where: { id },
       include: { admins: { select: { id: true } } }
     })
 
@@ -115,7 +113,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       )
     }
 
-    const isAdmin = aldeia.admins.some(admin => admin.id === user.id)
+    const isAdmin = aldeia.admins.some(admin => admin.id === user.userId)
     const isSuperAdmin = user.role === 'super_admin'
 
     if (!isAdmin && !isSuperAdmin) {
@@ -145,14 +143,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       const newSlug = updateData.nome
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
+        .replace(/[\\u0300-\\u036f]/g, '')
+        .replace(/[^a-z0-9\\s-]/g, '')
+        .replace(/\\s+/g, '-')
         .replace(/-+/g, '-')
         .trim()
 
       const existingAldeia = await prisma.aldeia.findFirst({
-        where: { slug: newSlug, NOT: { id: aldeiaId } }
+        where: { slug: newSlug, NOT: { id } }
       })
 
       if (existingAldeia) {
@@ -166,19 +164,19 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const updatedAldeia = await prisma.aldeia.update({
-      where: { id: aldeiaId },
+      where: { id },
       data: prismaUpdateData
     })
 
     // Log the update
     await prisma.auditLog.create({
       data: {
-        userId: user.id,
-        aldeiaId: aldeiaId,
+        userId: user.userId,
+        aldeiaId: id,
         action: 'UPDATE_ALDEIA',
         resource: 'Aldeia',
-        resourceId: aldeiaId,
-        metadata: { 
+        resourceId: id,
+        metadata: {
           nome: updatedAldeia.nome,
           updatedFields: Object.keys(updateData)
         }

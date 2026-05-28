@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -24,7 +24,7 @@ export async function POST(
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // Buscar pedido
     const pedido = await prisma.pedidoCarregamento.findUnique({
@@ -52,7 +52,7 @@ export async function POST(
 
     // Adicionar saldo ao utilizador
     await prisma.user.update({
-      where: { id: pedido.userId },
+      where: { id: pedido.id },
       data: {
         saldo: {
           increment: pedido.valor,
@@ -63,7 +63,7 @@ export async function POST(
     // Criar transação
     await prisma.transacao.create({
       data: {
-        userId: pedido.userId,
+        userId: pedido.id,
         valor: pedido.valor,
         tipo: 'carregamento_saldo',
         descricao: `Carregamento confirmado - ${pedido.metodoPagamento || 'dinheiro'}`,
@@ -74,7 +74,7 @@ export async function POST(
 
     logger.info('Carregamento confirmado', {
       pedidoId: id,
-      userId: pedido.userId,
+      userId: pedido.id,
       valor: pedido.valor,
       confirmadoPor: payload.userId,
     });

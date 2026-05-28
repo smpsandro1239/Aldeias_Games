@@ -286,7 +286,7 @@ export default function Home() {
                          className="h-4 w-auto"
                          onError={(e) => {
                            // Fallback em caso de falha ao carregar o ícone
-                           e.target.src = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_72x24dp.png";
+                           (e.target as HTMLImageElement).src = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_72x24dp.png";
                          }}
                     />
                     <span className="text-xs font-medium">{isLoggingIn ? 'Entrando...' : 'Continuar com o Google'}</span>

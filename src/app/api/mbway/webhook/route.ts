@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
           if (dadosOld?.estado !== 'concluido') {
             // Creditar saldo ao utilizador
             await prisma.user.update({
-              where: { id: carregamento.userId },
+              where: { id: carregamento.id },
               data: {
                 saldo: { increment: carregamento.valor },
               },
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            console.log(`Carregamento saldo creditado: €${carregamento.valor} para user ${carregamento.userId}`);
+            console.log(`Carregamento saldo creditado: €${carregamento.valor} para user ${carregamento.id}`);
           }
         }
       }
@@ -106,9 +106,9 @@ export async function POST(request: NextRequest) {
         const cashbackPercent = 0.05;
         const cashbackValor = participacao.valorPago * cashbackPercent;
 
-        if (participacao.userId) {
+        if (participacao.id) {
           await prisma.user.update({
-            where: { id: participacao.userId },
+            where: { id: participacao.id },
             data: {
               saldo: { increment: cashbackValor },
             },
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
           await prisma.transacao.create({
             data: {
-              userId: participacao.userId,
+              userId: participacao.id,
               valor: cashbackValor,
               tipo: 'cashback',
               descricao: `Cashback de compra: raspadinha`,

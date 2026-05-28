@@ -162,9 +162,9 @@ export async function PATCH(request: NextRequest) {
     const comissao = (venda.valor * percent) / 100;
 
     // Atualizar comissão do vendedor
-    if (venda.userId) {
+    if (venda.id) {
       await prisma.user.update({
-        where: { id: venda.userId },
+        where: { id: venda.id },
         data: { comissaoTotal: { increment: comissao } }
       });
     }
