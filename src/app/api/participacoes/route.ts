@@ -6,6 +6,7 @@ import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/paginat
 import crypto from 'crypto';
 import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
+import { euromillionsApiService } from '@/lib/euromillions-api';
 
 
 // GET - Listar participações
@@ -438,7 +439,59 @@ export async function POST(request: NextRequest) {
          }
        }
 
-       // Atualizar total do evento
+      // --- TOMBOLA FINALIZATION LOGIC ---      if (jogoLocked.tipo === "tombola" && jogoLocked.stockAtual - data.quantidade === 0) {
+        // For Tombola, use EuroMillions first main number as winning number for transparency
+        try {
+          const winningNumber = await euromillionsApiService.getFirstMainNumber();
+          // Validate it's in our 1-50 range (should be, but double-check)
+          if (winningNumber >= 1 && winningNumber <= 50) {
+            // Update the jogo to mark as finalized and store the drawn number
+            await tx.jogo.update({
+              where: { id: data.jogoId },
+              data: {
+                sorteado: winningNumber,
+                dataSorteio: new Date(),
+                isFinalizado: true,
+              }
+            });
+          } else {
+            // Fallback: if somehow out of range, use a deterministic fallback
+            // Use hash of jogoId + current time to get a pseudo-random number 1-50
+            const fallbackHash = crypto.createHash('sha256')
+              .update(`${data.jogoId}-${Date.now()}`)
+              .digest('hex');
+            const fallbackNumber = (parseInt(fallbackHash.substring(0, 8), 16) % 50) + 1;
+            
+            await tx.jogo.update({
+              where: { id: data.jogoId },
+              data: {
+                sorteado: fallbackNumber,
+                dataSorteio: new Date(),
+                isFinalizado: true,
+              }
+            });
+            
+            console.warn('[Tombola] EuroMillions number out of range, using fallback:', winningNumber, '->', fallbackNumber);
+          }
+        } catch (error) {
+          // If EuroMillions API fails, use deterministic fallback to avoid blocking game finalization
+          console.error('[Tombola] Failed to fetch EuroMillions draw, using fallback:', error);
+          
+          const fallbackHash = crypto.createHash('sha256')
+            .update(`${data.jogoId}-${Date.now()}`)
+            .digest('hex');
+          const fallbackNumber = (parseInt(fallbackHash.substring(0, 8), 16) % 50) + 1;
+          
+          await tx.jogo.update({
+            where: { id: data.jogoId },
+            data: {
+              sorteado: fallbackNumber,
+              dataSorteio: new Date(),
+              isFinalizado: true,
+            }
+          });
+        }
+      }       // Atualizar total do evento
       await tx.evento.update({
         where: { id: jogo.eventoId },
         data: {
