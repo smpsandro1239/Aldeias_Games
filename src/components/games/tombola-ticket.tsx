@@ -108,11 +108,11 @@ export default function TombolaTicket({
   },
   data = {
     ticketNumber: `${Math.floor(Math.random() * 9000) + 1000}`,
-    tombolaNumbers: Array.from({ length: 15 }, () => Math.floor(Math.random() * 90) + 1), // 15 random numbers 1-90
+    tombolaNumbers: [7, 14, 23, 31, 42], // Example selected numbers
     price: "3€",
     drawDate: "15/08/2026",
     drawTime: "21:30",
-    drawLocation: "Salão Paroquial"
+    drawLocation: "Número do Euromilhões",
   },
   layout = {
     borderRadius: "medium",
