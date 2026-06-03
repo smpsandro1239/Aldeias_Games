@@ -34,55 +34,62 @@ class EuromillionsApiService {
    */
   public async fetchLatestDraw(): Promise<EuromillionsDraw> {
     const now = Date.now();
-    
+
     // Return cached data if still fresh
     if (this.cachedDraw && (now - this.lastFetch) < this.CACHE_DURATION_MS) {
       return this.cachedDraw;
     }
 
     try {
-      const response = await fetch(`${this.API_URL}?drawCount=1`, {
-        timeout: 8000,
-        headers: { 'Accept': 'application/json' },
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      if (!response.ok) {
-        throw new Error(`EuroMillions API returned ${response.status}`);
+      try {
+        const response = await fetch(`${this.API_URL}?drawCount=1`, {
+          signal: controller.signal,
+          headers: { 'Accept': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(`EuroMillions API returned ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Parse the API response format (adjust based on actual API response)
+        // Assuming format: { data: [{ drawDate: string, mainNumbers: [n1,n2,n3,n4,n5], luckyStars: [s1,s2] }] }
+        const drawData = Array.isArray(data) ? data[0] : 
+                        (data.data && Array.isArray(data.data) ? data.data[0] : data);
+
+        if (!drawData || !drawData.mainNumbers || drawData.mainNumbers.length < 1) {
+          throw new Error('Invalid EuroMillions data received');
+        }
+
+        const draw: EuromillionsDraw = {
+          drawDate: drawData.drawDate || new Date().toISOString(),
+          mainNumbers: drawData.mainNumbers.slice(0, 5).map((n: string) => Number(n)),
+          luckyStars: drawData.luckyStars ? drawData.luckyStars.slice(0, 2).map((n: string) => Number(n)) : [],
+          jackpot: drawData.jackpot || undefined,
+        };
+
+        // Validate numbers are in expected ranges
+        if (draw.mainNumbers.some((n: number) => n < 1 || n > 50)) {
+          throw new Error('EuroMillions main numbers out of range (1-50)');
+        }
+        if (draw.luckyStars.some((n: number) => n < 1 || n > 12)) {
+          throw new Error('EuroMillions lucky stars out of range (1-12)');
+        }
+
+        // Update cache
+        this.cachedDraw = draw;
+        this.lastFetch = now;
+
+        console.log('[EuromillionsAPI] Fetched latest draw:', draw);
+        return draw;
+
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      const data = await response.json();
-      
-      // Parse the API response format (adjust based on actual API response)
-      // Assuming format: { data: [{ drawDate: string, mainNumbers: [n1,n2,n3,n4,n5], luckyStars: [s1,s2] }] }
-      const drawData = Array.isArray(data) ? data[0] : 
-                      (data.data && Array.isArray(data.data) ? data.data[0] : data);
-
-      if (!drawData || !drawData.mainNumbers || drawData.mainNumbers.length < 1) {
-        throw new Error('Invalid EuroMillions data received');
-      }
-
-      const draw: EuromillionsDraw = {
-        drawDate: drawData.drawDate || new Date().toISOString(),
-        mainNumbers: drawData.mainNumbers.slice(0, 5).map(n => Number(n)),
-        luckyStars: drawData.luckyStars ? drawData.luckyStars.slice(0, 2).map(n => Number(n)) : [],
-        jackpot: drawData.jackpot || undefined,
-      };
-
-      // Validate numbers are in expected ranges
-      if (draw.mainNumbers.some(n => n < 1 || n > 50)) {
-        throw new Error('EuroMillions main numbers out of range (1-50)');
-      }
-      if (draw.luckyStars.some(n => n < 1 || n > 12)) {
-        throw new Error('EuroMillions lucky stars out of range (1-12)');
-      }
-
-      // Update cache
-      this.cachedDraw = draw;
-      this.lastFetch = now;
-
-      console.log('[EuromillionsAPI] Fetched latest draw:', draw);
-      return draw;
-
     } catch (error) {
       console.error('[EuromillionsAPI] Failed to fetch EuroMillions draw:', error);
       
@@ -109,7 +116,7 @@ class EuromillionsApiService {
   /**
    * Clear cache (useful for testing or forced refresh)
    */
-  public void clearCache() {
+  public clearCache(): void {
     this.cachedDraw = null;
     this.lastFetch = 0;
   }
