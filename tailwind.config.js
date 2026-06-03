@@ -1,0 +1,45 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        background: 'hsl(15 7% 5%)',
+        foreground: 'hsl(20 30% 92%)',
+        primary: 'hsl(14 90% 58%)',
+        'primary-foreground': 'hsl(14 95% 12%)',
+        secondary: 'hsl(187 100% 53%)',
+        'secondary-foreground': 'hsl(187 100% 10%)',
+        muted: 'hsl(15 15% 12%)',
+        'muted-foreground': 'hsl(20 15% 65%)',
+        accent: 'hsl(48 100% 55%)',
+        'accent-foreground': 'hsl(48 100% 15%)',
+        destructive: 'hsl(0 85% 65%)',
+        'destructive-foreground': 'hsl(0 0% 100%)',
+        border: 'hsl(15 10% 18%)',
+        input: 'hsl(15 10% 18%)',
+        ring: 'hsl(14 90% 58%)',
+        // Surface tokens
+        surface: 'hsl(15 7% 5%)',
+        'surface-dim': 'hsl(15 7% 5%)',
+        'surface-container-lowest': 'hsl(15 8% 6%)',
+        'surface-container-low': 'hsl(15 9% 7%)',
+        'surface-container': 'hsl(15 10% 9%)',
+        'surface-container-high': 'hsl(15 12% 11%)',
+        'surface-container-highest': 'hsl(15 14% 14%)',
+        'on-surface': 'hsl(20 30% 92%)',
+        'on-surface-variant': 'hsl(20 15% 65%)',
+        outline: 'hsl(15 10% 35%)',
+        'outline-variant': 'hsl(15 12% 20%)',
+        tertiary: 'hsl(48 100% 55%)',
+        'tertiary-foreground': 'hsl(48 100% 15%)',
+        'primary-container': 'hsl(14 90% 45%)',
+        'secondary-container': 'hsl(187 80% 20%)',
+        'tertiary-container': 'hsl(48 80% 45%)',
+      },
+    },
+  },
+  plugins: [],
+}

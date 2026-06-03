@@ -1,0 +1,40 @@
+🌱 SEED MÍNIMO - Criando dados para teste
+Erro na limpeza (pode ser normal na primeira execução): PrismaClientKnownRequestError: 
+Invalid `prisma.aldeia.deleteMany()` invocation in
+/home/smpsandro/Aldeias_Games/prisma/seed.ts:16:25
+
+  13 await prisma.premio.deleteMany();
+  14 await prisma.jogo.deleteMany();
+  15 await prisma.evento.deleteMany();
+→ 16 await prisma.aldeia.deleteMany(
+Foreign key constraint violated on the constraint: `GameSettings_aldeiaId_fkey`
+    at ei.handleRequestError (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/RequestHandler.ts:228:13)
+    at ei.handleAndLogRequestError (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async main (/home/smpsandro/Aldeias_Games/prisma/seed.ts:16:5) {
+  code: 'P2003',
+  meta: { modelName: 'Aldeia', constraint: 'GameSettings_aldeiaId_fkey' },
+  clientVersion: '6.19.3'
+}
+✅ 5 permissões
+✅ 5 roles
+✅ Plano criado
+❌ Erro no seed: PrismaClientKnownRequestError: 
+Invalid `prisma.user.upsert()` invocation in
+/home/smpsandro/Aldeias_Games/prisma/seed.ts:114:35
+
+  111 const passwordHash = await bcrypt.hash('123456', 10);
+  112 
+  113 // Criar utilizador de teste (admin)
+→ 114 const admin = await prisma.user.upsert(
+The column `users.fotoUrl` does not exist in the current database.
+    at ei.handleRequestError (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/RequestHandler.ts:228:13)
+    at ei.handleAndLogRequestError (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at ei.request (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at async a (/home/smpsandro/Aldeias_Games/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)
+    at async main (/home/smpsandro/Aldeias_Games/prisma/seed.ts:114:17) {
+  code: 'P2022',
+  meta: { modelName: 'User', column: 'users.fotoUrl' },
+  clientVersion: '6.19.3'
+}

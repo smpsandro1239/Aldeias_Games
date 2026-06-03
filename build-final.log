@@ -1,0 +1,249 @@
+
+> aldeias-games@3.11.1 build
+> next build
+
+▲ Next.js 16.2.4 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 17 errors:
+./src/app/api/admin/pedidos-carregamento/[id]/route.ts:8:33
+Expected ',', got ':'
+  [90m 6 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mPOST[0m(
+  [90m 7 |[0m   request: [33mNextRequest[0m,
+[31m[1m>[0m [90m 8 |[0m   context: { params: [33mPromise[0m< id: string > }
+  [90m   |[0m                                 [31m[1m^[0m
+  [90m 9 |[0m ) {
+  [90m10 |[0m   [36mtry[0m {
+  [90m11 |[0m     [90m// Verificar autenticação[0m
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/aldeia/[aldeiaId]/dashboard/route.ts:8:39
+Expected ',', got ':'
+  [90m 6 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(
+  [90m 7 |[0m   request: [33mNextRequest[0m,
+[31m[1m>[0m [90m 8 |[0m   context: { params: [33mPromise[0m< aldeiaId: string; > }
+  [90m   |[0m                                       [31m[1m^[0m
+  [90m 9 |[0m ) {
+  [90m10 |[0m   [36mtry[0m {
+  [90m11 |[0m     [36mconst[0m { aldeiaId } = [36mawait[0m context.params
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/aldeias/[id]/entrar/route.ts:12:80
+Expected ',', got ':'
+  [90m10 |[0m ...
+  [90m11 |[0m ...
+[31m[1m>[0m [90m12 |[0m ...[33mNextRequest[0m, context: { params: [33mPromise[0m< id: string > }) {
+  [90m   |[0m                                               [31m[1m^[0m
+  [90m13 |[0m ...
+  [90m14 |[0m ...ams
+  [90m15 |[0m ...omRequest(request)
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/aldeias/[id]/membros/[userId]/role/route.ts:11:80
+Expected ',', got ':'
+  [90m 9 |[0m ...
+  [90m10 |[0m ...
+[31m[1m>[0m [90m11 |[0m ...[33mNextRequest[0m, context: { params: [33mPromise[0m< id: string; userId: string > }) {
+  [90m   |[0m                                               [31m[1m^[0m
+  [90m12 |[0m ...
+  [90m13 |[0m ...text.params
+  [90m14 |[0m ...quest(request)
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/aldeias/[id]/membros/[userId]/route.ts:5:82
+Expected ',', got ':'
+  [90m3 |[0m ...[32m/lib/auth'[0m
+  [90m4 |[0m ...
+[31m[1m>[0m [90m5 |[0m ... [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string; userId: string > }) {
+  [90m  |[0m                                                [31m[1m^[0m
+  [90m6 |[0m ...
+  [90m7 |[0m ...ext.params
+  [90m8 |[0m ...uest(request)
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/aldeias/[id]/route.ts:32:79
+Expected ',', got ':'
+  [90m30 |[0m })
+  [90m31 |[0m
+[31m[1m>[0m [90m32 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(request: [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string > }) {
+  [90m   |[0m                                                                               [31m[1m^[0m
+  [90m33 |[0m   [36mtry[0m {
+  [90m34 |[0m     [36mconst[0m { id } = [36mawait[0m context.params
+  [90m35 |[0m     [36mconst[0m aldeia = [36mawait[0m prisma.aldeia.findUnique({
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/eventos/[id]/route.ts:9:21
+Expected ',', got ':'
+  [90m 7 |[0m
+  [90m 8 |[0m [36minterface[0m [33mRouteContext[0m {
+[31m[1m>[0m [90m 9 |[0m   params: [33mPromise[0m<id: string>
+  [90m   |[0m                     [31m[1m^[0m
+  [90m10 |[0m }
+  [90m11 |[0m
+  [90m12 |[0m [90m// Função robusta para calcular próxima data de recorrência[0m
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/jogos/[id]/numeros-ocupados/route.ts:8:33
+Expected ',', got ':'
+  [90m 6 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(
+  [90m 7 |[0m   request: [33mNextRequest[0m,
+[31m[1m>[0m [90m 8 |[0m   context: { params: [33mPromise[0m< id: string > }
+  [90m   |[0m                                 [31m[1m^[0m
+  [90m 9 |[0m ) {
+  [90m10 |[0m   [36mtry[0m {
+  [90m11 |[0m     [36mconst[0m { id: jogoId } = [36mawait[0m context.params;
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/jogos/[id]/verificar-sorteio/route.ts:4:79
+Expected ',', got ':'
+  [90m2 |[0m [36mimport[0m { prisma } [36mfrom[0m [32m'@/lib/prisma'[0m
+  [90m3 |[0m
+[31m[1m>[0m [90m4 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(request: [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string > }) {
+  [90m  |[0m                                                                               [31m[1m^[0m
+  [90m5 |[0m   [36mtry[0m {
+  [90m6 |[0m     [36mconst[0m { id } = [36mawait[0m context.params;
+  [90m7 |[0m     [36mconst[0m jogoId = id;
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/participacoes/[id]/claim-premio/route.ts:27:33
+Expected ',', got ':'
+  [90m25 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mPOST[0m(
+  [90m26 |[0m   request: [33mNextRequest[0m,
+[31m[1m>[0m [90m27 |[0m   context: { params: [33mPromise[0m< id: string > }
+  [90m   |[0m                                 [31m[1m^[0m
+  [90m28 |[0m ) {
+  [90m29 |[0m   [36mtry[0m {
+  [90m30 |[0m     [36mconst[0m user = [36mawait[0m getFullUserFromRequest(request);
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/participacoes/[id]/revelar/route.ts:6:21
+Expected ',', got ':'
+  [90m4 |[0m
+  [90m5 |[0m [36minterface[0m [33mContext[0m {
+[31m[1m>[0m [90m6 |[0m   params: [33mPromise[0m<id: string>;
+  [90m  |[0m                     [31m[1m^[0m
+  [90m7 |[0m }
+  [90m8 |[0m
+  [90m9 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mPOST[0m(request: [33mNextRequest[0m, { params }: [33mContext[0m) {
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/participacoes/[id]/route.ts:6:21
+Expected ',', got ':'
+  [90m4 |[0m
+  [90m5 |[0m [36minterface[0m [33mContext[0m {
+[31m[1m>[0m [90m6 |[0m   params: [33mPromise[0m<id: string>;
+  [90m  |[0m                     [31m[1m^[0m
+  [90m7 |[0m }
+  [90m8 |[0m
+  [90m9 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(request: [33mNextRequest[0m, { params }: [33mContext[0m) {
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/public/aldeia/[slug]/route.ts:6:35
+Expected ',', got ':'
+  [90m4 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(
+  [90m5 |[0m   request: [33mNextRequest[0m,
+[31m[1m>[0m [90m6 |[0m   context: { params: [33mPromise[0m< slug: string > }
+  [90m  |[0m                                   [31m[1m^[0m
+  [90m7 |[0m ) {
+  [90m8 |[0m   [36mtry[0m {
+  [90m9 |[0m     [36mconst[0m { slug } = [36mawait[0m context.params;
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/rbac/user/[id]/permissions/route.ts:4:76
+Expected ',', got ':'
+  [90m2 |[0m [36mimport[0m prisma [36mfrom[0m [32m"@/lib/db"[0m;
+  [90m3 |[0m
+[31m[1m>[0m [90m4 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mPOST[0m(req: [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string > }) {
+  [90m  |[0m                                                                            [31m[1m^[0m
+  [90m5 |[0m   [36mconst[0m { id: userId } = [36mawait[0m context.params;
+  [90m6 |[0m   [36mconst[0m body = [36mawait[0m req.json();
+  [90m7 |[0m
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/rbac/user/[id]/roles/route.ts:4:76
+Expected ',', got ':'
+  [90m2 |[0m [36mimport[0m prisma [36mfrom[0m [32m"@/lib/db"[0m;
+  [90m3 |[0m
+[31m[1m>[0m [90m4 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mPOST[0m(req: [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string > }) {
+  [90m  |[0m                                                                            [31m[1m^[0m
+  [90m5 |[0m   [36mconst[0m { id: userId } = [36mawait[0m context.params;
+  [90m6 |[0m   [36mconst[0m body = [36mawait[0m req.json();
+  [90m7 |[0m
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/rbac/user/[id]/route.ts:5:75
+Expected ',', got ':'
+  [90m3 |[0m [36mimport[0m { resolvePermissions } [36mfrom[0m [32m"@/lib/rbac/resolvePermissions"[0m;
+  [90m4 |[0m
+[31m[1m>[0m [90m5 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(req: [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string > }) {
+  [90m  |[0m                                                                           [31m[1m^[0m
+  [90m6 |[0m   [36mconst[0m { id: userId } = [36mawait[0m context.params;
+  [90m7 |[0m
+  [90m8 |[0m   [36mconst[0m user = [36mawait[0m prisma.user.findUnique({
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/users/[id]/route.ts:7:21
+Expected ',', got ':'
+  [90m 5 |[0m
+  [90m 6 |[0m [36minterface[0m [33mRouteContext[0m {
+[31m[1m>[0m [90m 7 |[0m   params: [33mPromise[0m<id: string>
+  [90m   |[0m                     [31m[1m^[0m
+  [90m 8 |[0m }
+  [90m 9 |[0m
+  [90m10 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(request: [33mNextRequest[0m, context: [33mRouteContext[0m) {
+
+Parsing ecmascript source code failed
+
+
+    at <unknown> (./src/app/api/admin/pedidos-carregamento/[id]/route.ts:8:33)
+    at <unknown> (./src/app/api/aldeia/[aldeiaId]/dashboard/route.ts:8:39)
+    at <unknown> (./src/app/api/aldeias/[id]/entrar/route.ts:12:80)
+    at <unknown> (./src/app/api/aldeias/[id]/membros/[userId]/role/route.ts:11:80)
+    at <unknown> (./src/app/api/aldeias/[id]/membros/[userId]/route.ts:5:82)
+    at <unknown> (./src/app/api/aldeias/[id]/route.ts:32:79)
+    at <unknown> (./src/app/api/eventos/[id]/route.ts:9:21)
+    at <unknown> (./src/app/api/jogos/[id]/numeros-ocupados/route.ts:8:33)
+    at <unknown> (./src/app/api/jogos/[id]/verificar-sorteio/route.ts:4:79)
+    at <unknown> (./src/app/api/participacoes/[id]/claim-premio/route.ts:27:33)
+    at <unknown> (./src/app/api/participacoes/[id]/revelar/route.ts:6:21)
+    at <unknown> (./src/app/api/participacoes/[id]/route.ts:6:21)
+    at <unknown> (./src/app/api/public/aldeia/[slug]/route.ts:6:35)
+    at <unknown> (./src/app/api/rbac/user/[id]/permissions/route.ts:4:76)
+    at <unknown> (./src/app/api/rbac/user/[id]/roles/route.ts:4:76)
+    at <unknown> (./src/app/api/rbac/user/[id]/route.ts:5:75)
+    at <unknown> (./src/app/api/users/[id]/route.ts:7:21)

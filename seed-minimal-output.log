@@ -1,0 +1,21 @@
+🌱 SEED MÍNIMO - Criando dados para teste
+✅ 5 permissões
+✅ 5 roles
+✅ Plano criado
+✅ Utilizador admin criado
+✅ Utilizador Super Admin criado
+✅ Utilizador Admin Aldeia criado
+✅ Utilizador Vendedor criado
+✅ Utilizador Jogador criado
+✅ Aldeia criada
+✅ Evento criado
+✅ Jogo de rifa criado
+✅ Prémios criados
+
+🎉 SEED MÍNIMO CONCLUÍDO!
+🔑 Credenciais de teste:
+   Email: admin@teste.pt
+   Senha: 123456
+
+🎮 Jogo de rifa ID: rifa-teste-001
+   Acesse: http://localhost:3000/jogos/rifa?id=rifa-teste-001

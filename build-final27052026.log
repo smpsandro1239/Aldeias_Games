@@ -1,0 +1,10 @@
+
+> aldeias-games@3.11.1 build
+> next build
+
+▲ Next.js 16.2.4 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 43s
+  Running TypeScript ...

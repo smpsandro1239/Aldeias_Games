@@ -1,0 +1,53 @@
+
+> aldeias-games@3.11.1 build
+> next build
+
+▲ Next.js 16.2.4 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 3 errors:
+./src/app/api/aldeias/[id]/membros/[userId]/role/route.ts:11:80
+Expected ',', got ':'
+  [90m 9 |[0m ...
+  [90m10 |[0m ...
+[31m[1m>[0m [90m11 |[0m ...[33mNextRequest[0m, context: { params: [33mPromise[0m< id: string; userId: string > }) {
+  [90m   |[0m                                               [31m[1m^[0m
+  [90m12 |[0m ...
+  [90m13 |[0m ...text.params
+  [90m14 |[0m ...quest(request)
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/aldeias/[id]/membros/[userId]/route.ts:5:82
+Expected ',', got ':'
+  [90m3 |[0m ...[32m/lib/auth'[0m
+  [90m4 |[0m ...
+[31m[1m>[0m [90m5 |[0m ... [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string; userId: string > }) {
+  [90m  |[0m                                                [31m[1m^[0m
+  [90m6 |[0m ...
+  [90m7 |[0m ...ext.params
+  [90m8 |[0m ...uest(request)
+
+Parsing ecmascript source code failed
+
+
+./src/app/api/jogos/[id]/verificar-sorteio/route.ts:4:79
+Expected ',', got ':'
+  [90m2 |[0m [36mimport[0m { prisma } [36mfrom[0m [32m'@/lib/prisma'[0m
+  [90m3 |[0m
+[31m[1m>[0m [90m4 |[0m [36mexport[0m [36masync[0m [36mfunction[0m [33mGET[0m(request: [33mNextRequest[0m, context: { params: [33mPromise[0m< id: string > }) {
+  [90m  |[0m                                                                               [31m[1m^[0m
+  [90m5 |[0m   [36mtry[0m {
+  [90m6 |[0m     [36mconst[0m jogoId = params.id
+  [90m7 |[0m
+
+Parsing ecmascript source code failed
+
+
+    at <unknown> (./src/app/api/aldeias/[id]/membros/[userId]/role/route.ts:11:80)
+    at <unknown> (./src/app/api/aldeias/[id]/membros/[userId]/route.ts:5:82)
+    at <unknown> (./src/app/api/jogos/[id]/verificar-sorteio/route.ts:4:79)
