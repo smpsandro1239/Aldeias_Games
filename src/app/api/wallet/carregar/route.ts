@@ -60,7 +60,28 @@ export async function POST(request: NextRequest) {
       });
 
       // TODO: Notificar vendedor via push/email/etc
-      
+      // Notificar vendedor sobre novo pedido de carregamento
+      try {
+        await (prisma.notificacao as any).create({
+          data: {
+            userId: body.vendedorId,
+            tipo: 'sistema',
+            titulo: '💰 Novo pedido de carregamento',
+            mensagem: `Utilizador ${user.nome} pediu um carregamento de €${valor.toFixed(2)}.`,
+            estado: 'pendente',
+            dadosAdicionais: {
+              pedidoId: pedido.id,
+              valor,
+              metodoCarregamento: 'vendedor',
+              user: { nome: user.nome, email: user.email, telefone: user.telefone },
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao criar notificação para vendedor:', error);
+        // Don't fail the request if notification fails
+      }
+
       return NextResponse.json({
         success: true,
         data: {

@@ -35,7 +35,6 @@ import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
-
 interface Jogo {
   id: string;
   nome: string;
@@ -49,18 +48,11 @@ interface Jogo {
     nome: string;
     aldeia?: {
       nome: string;
-  sorteado?: number;
-  dataSorteio?: string;
-  isFinalizado?: boolean;
-  const handleResetJogo = async () => {
-    // TODO: Implement reset game logic
-    // For now, we just show a toast
-    toast.info("Funcionalidade de reset de jogo em desenvolvimento.");
-    // In the future, this should call an API to create a new tombola game with the same configuration
-    // and redirect to it.
-  };
-    };
-  };
+    }
+    sorteado?: number;
+    dataSorteio?: string;
+    isFinalizado?: boolean;
+  }
   premio?: {
     id: string;
     nome: string;
@@ -497,6 +489,57 @@ export default function TombolaPage() {
     } catch (error) {
       console.error("Erro ao participar:", error);
       toast.error("Erro ao participar");
+    };
+  };
+
+  const handleResetJogo = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Por favor, faça login para redefinir o jogo");
+      return;
+    }
+
+    if (!jogo) {
+      toast.error("Jogo não encontrado");
+      return;
+    }
+
+    try {
+      // Call API to reset/create a new tombola game with same configuration
+      const response = await fetch("/api/jogos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tipo: "tombola",
+          configuracao: JSON.stringify({
+            numeroInicial: config.numeroInicial,
+            numeroFinal: config.numeroFinal,
+            numeroBlocos: config.numeroBlocos,
+            permitirStripe: config.permitirStripe,
+            valorPremios: config.valorPremios,
+            dataSorteio: config.dataSorteio,
+            horaSorteio: config.horaSorteio,
+            localSorteio: config.localSorteio,
+          }),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Falha ao redefinir o jogo");
+      }
+
+      const newGame = await response.json();
+      
+      // Redirect to the new game
+      router.push(`/jogos/tombola?id=${newGame.id}`);
+      toast.success("Jogo redefinido com sucesso!");
+    } catch (error) {
+      console.error("Erro ao redefinir jogo:", error);
+      toast.error(error.message || "Falha em redefinir o jogo");
     }
   };
 

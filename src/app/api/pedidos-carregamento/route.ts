@@ -156,6 +156,36 @@ export async function PATCH(request: NextRequest) {
      }
 
     // TODO: Enviar notificações ao utilizador
+    // Notificar utilizador sobre resultado do pedido
+    try {
+      await (prisma.notificacao as any).create({
+        data: {
+          userId: pedido.userId,
+          tipo: 'sistema',
+          titulo: acao === 'confirmar' ? '✅ Carregamento Confirmado' : '❌ Carregamento Rejeitado',
+          mensagem: acao === 'confirmar' 
+            ? `O seu carregamento de €${pedido.valor.toFixed(2)} foi confirmado pelo vendedor ${pedido.vendedor?.nome || 'desconhecido'}. O saldo foi adicionado à sua conta.`
+            : `O seu pedido de carregamento de €${pedido.valor.toFixed(2)} foi rejeitado pelo vendedor ${pedido.vendedor?.nome || 'desconhecido'}.`,
+          estado: 'pendente',
+          dadosAdicionais: {
+            pedidoId: pedido.id,
+            valor: pedido.valor,
+            acao,
+            vendedor: pedido.vendedor ? { 
+              nome: pedido.vendedor.nome, 
+              telefone: pedido.vendedor.telefone 
+            } : null,
+            user: {
+              nome: pedido.user?.nome,
+              telefone: pedido.user?.telefone
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao criar notificação para utilizador:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({ 
       success: true, 

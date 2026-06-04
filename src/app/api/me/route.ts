@@ -218,6 +218,41 @@ export async function POST(request: NextRequest) {
     );
 
     // TODO: Notify admin about deletion request
+    // Notify admins about new deletion request
+    try {
+      // Find super admins and aldeia admins (if user belongs to an aldeia)
+      const admins = await prisma.user.findMany({
+        where: {
+          OR: [
+            { role: 'super_admin' },
+            { role: 'aldeia_admin', aldeiaId: user.aldeiaId }
+          ]
+        },
+        select: { id: true, nome: true, email: true }
+      });
+
+      for (const admin of admins) {
+        await (prisma.notificacao as any).create({
+          data: {
+            userId: admin.id,
+            tipo: 'sistema',
+            titulo: '🗑️ Novo pedido de eliminação de conta',
+            mensagem: `Utilizador ${user.nome} (ID: ${user.id}) solicitou eliminação de conta. Motivo: ${motivo || 'Não especificado'}.`,
+            estado: 'pendente',
+            dadosAdicionais: {
+              deletionRequestId: deletionRequest.id,
+              userId: user.id,
+              userNome: user.nome,
+              userEmail: user.email,
+              motivo
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao criar notificação para admins sobre pedido de eliminação:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({ success: true, data: deletionRequest });
   } catch (error) {
