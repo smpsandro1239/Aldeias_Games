@@ -32,9 +32,10 @@ interface AldeiaModalProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: AldeiaData) => Promise<void>;
   initialData?: AldeiaData;
+  loading?: boolean;
 }
 
-export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: AldeiaModalProps) {
+export function AldeiaModal({ open, onOpenChange, onSubmit, initialData, loading = false }: AldeiaModalProps) {
   const [formData, setFormData] = useState<AldeiaData>({
     nome: "",
     tipoOrganizacao: TIPO_ORGANIZACAO.ALDEIA,
@@ -42,7 +43,7 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
     telefone: "",
     email: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
 
   useEffect(() => {
     if (initialData && open) {
@@ -68,12 +69,12 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLocalLoading(true);
     try {
       await onSubmit(formData);
       onOpenChange(false);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -146,8 +147,8 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData }: Aldei
 
           <DialogFooter className="sticky bottom-0 bg-background pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Organização")}
+            <Button type="submit" disabled={loading || localLoading}>
+              {loading || localLoading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Organização")}
             </Button>
           </DialogFooter>
         </form>

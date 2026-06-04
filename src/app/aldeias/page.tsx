@@ -1,18 +1,68 @@
 "use client";
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { AldeiaModal } from "@/components/modals/aldeia-modal";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function AldeiasPage() {
-  const [search, setSearch] = useState('')
-  const [tipoOrganizacao, setTipoOrganizacao] = useState('')
+  const [search, setSearch] = useState("");
+  const [tipoOrganizacao, setTipoOrganizacao] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleCreateAldeia = async () => {
-    // TODO: Implement aldeia creation modal/form
-    alert('Funcionalidade de criação de aldeia em desenvolvimento')
-  }
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const handleSubmitAldeia = async (data: {
+    nome: string;
+    tipoOrganizacao: string;
+    descricao?: string;
+    telefone?: string;
+    email?: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/aldeias", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nome: data.nome,
+          descricao: data.descricao,
+          logoUrl: "", // TODO: Add logo upload later
+          tipoOrganizacao: data.tipoOrganizacao,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao criar aldeia");
+      }
+
+      const aldeia = await response.json();
+      toast.success("Aldeia criada com sucesso!");
+      handleCloseCreateModal();
+      // Redirect to the new aldeia page
+      router.push(`/aldeia/${aldeia.id}`);
+    } catch (error: any) {
+      console.error("Erro ao criar aldeia:", error);
+      toast.error(error.message || "Erro ao criar aldeia");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -105,6 +155,14 @@ export default function AldeiasPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Aldeia Modal */}
+      <AldeiaModal
+        open={isCreateModalOpen}
+        onOpenChange={handleCloseCreateModal}
+        onSubmit={handleSubmitAldeia}
+        loading={isLoading}
+      />
     </div>
-  )
+  );
 }
