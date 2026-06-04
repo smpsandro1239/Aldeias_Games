@@ -352,7 +352,8 @@ model Jogo {
 
   totalParticipacoes     Int            @default(0)
   totalAngariado         Float          @default(0)
-  sorteado               Boolean        @default(false)
+  sorteado               Int?           // Stores the drawn number (1-50) or null
+  isFinalizado           Boolean        @default(false) // Tracks if game is finalized
   dataSorteio            DateTime?
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt

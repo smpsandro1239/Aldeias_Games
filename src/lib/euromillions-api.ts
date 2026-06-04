@@ -1,4 +1,3 @@
-import { zonedTimeToUtc } from 'date-fns-tz';
 
 // Interface for EuroMillions draw data
 export interface EuromillionsDraw {

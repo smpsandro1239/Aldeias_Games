@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       where: {
         modoSorteio: 'externo',
         detalhesSorteioExterno: tipoLoteria,
-        sorteado: false,
+        sorteado: null,
         evento: user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : undefined,
       },
       include: {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
           }),
           prisma.jogo.update({
             where: { id: jogo.id },
-            data: { sorteado: true, dataSorteio: new Date() },
+            data: { sorteado: numerosSorteados[0], dataSorteio: new Date() }
           }),
         ]);
 

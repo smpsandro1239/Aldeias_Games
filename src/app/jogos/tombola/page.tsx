@@ -181,7 +181,6 @@ export default function TombolaPage() {
       setNumerosDisponiveis(available);
     }
   }, [jogo, config, numerosOcupados]);
-  }, [blocoSelecionado, jogo, config]);
 
   const fetchJogo = async () => {
     try {
@@ -539,7 +538,8 @@ export default function TombolaPage() {
       toast.success("Jogo redefinido com sucesso!");
     } catch (error) {
       console.error("Erro ao redefinir jogo:", error);
-      toast.error(error.message || "Falha em redefinir o jogo");
+      const message = error instanceof Error ? error.message : "Falha em redefinir o jogo";
+      toast.error(message);
     }
   };
 

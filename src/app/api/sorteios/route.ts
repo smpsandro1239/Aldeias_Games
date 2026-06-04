@@ -227,9 +227,20 @@ export async function PATCH(request: NextRequest) {
       })
 
       // Atualizar jogo como sorteado
+      let sorteadoValue: number | null = null;
+      if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
+        sorteadoValue = (resultado as { numeroVencedor: number }).numeroVencedor;
+      } else if (jogo.tipo === 'poio_da_vaca') {
+        // For poio da vaça, we don't have a single number to store; keep null
+        sorteadoValue = null;
+      }
       await prisma.jogo.update({
         where: { id: jogoId },
-        data: { sorteado: true, dataSorteio: new Date() },
+        data: { 
+          sorteado: sorteadoValue,
+          isFinalizado: true,
+          dataSorteio: new Date()
+        },
       })
 
       // Marcar participações como ganhadoras e enviar notificações
@@ -528,9 +539,21 @@ export async function POST(request: NextRequest) {
       include: { vencedores: true },
     })
 
+    // Atualizar jogo como sorteado
+    let sorteadoValue: number | null = null;
+    if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
+      sorteadoValue = (resultado as { numeroVencedor: number }).numeroVencedor;
+    } else if (jogo.tipo === 'poio_da_vaca') {
+      // For poio da vaça, we don't have a single number to store; keep null
+      sorteadoValue = null;
+    }
     await prisma.jogo.update({
       where: { id: jogoId },
-      data: { sorteado: true, dataSorteio: new Date() },
+      data: { 
+        sorteado: sorteadoValue,
+        isFinalizado: true,
+        dataSorteio: new Date()
+      },
     })
 
     // Marcar participações como ganhadoras e enviar notificações

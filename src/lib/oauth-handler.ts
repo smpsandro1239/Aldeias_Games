@@ -5,7 +5,6 @@ import { logger } from '@/lib/logger';
 import { verifyToken } from '@/lib/auth';
 import type { User } from '@prisma/client';
 import { verifyAppleIdToken } from '@/lib/apple-auth';
-import type { User } from '@prisma/client';
 
 /**
  * Generic OAuth callback handler for providers like Google and Apple

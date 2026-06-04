@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
         // Verificar stock dentro da transação com locking
         const jogoLocked = await tx.jogo.findUnique({
           where: { id: data.jogoId },
-          select: { stockAtual: true, preco: true, tipo: true, nome: true },
+          select: { stockAtual: true, preco: true, tipo: true, nome: true, eventoId: true },
         });
 
         if (!jogoLocked || jogoLocked.stockAtual < data.quantidade) {
