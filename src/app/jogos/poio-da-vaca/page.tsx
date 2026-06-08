@@ -1,4 +1,6 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -214,7 +216,7 @@ export default function PoioDaVacaPage() {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -419,7 +421,7 @@ export default function PoioDaVacaPage() {
             toast.error("Telefone obrigatório para MBWay");
             return;
           }
-          const res = await fetch("/api/pagamentos/mbway", {
+          const res = await apiRequest("/api/pagamentos/mbway", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -465,7 +467,7 @@ export default function PoioDaVacaPage() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch("/api/apostas", {
+      const response = await apiRequest("/api/apostas", {
         method: "POST",
         headers,
         body: JSON.stringify(aposta)

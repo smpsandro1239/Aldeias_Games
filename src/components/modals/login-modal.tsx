@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Chrome } from "lucide-react";
 
 interface LoginModalProps {
   open: boolean;
@@ -42,15 +43,8 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
     }
   };
 
-  const quickLogin = async (email: string, pass: string) => {
-    setEmail(email);
-    setPassword(pass);
-    setLoading(true);
-    try {
-      await onLogin(email, pass);
-    } finally {
-      setLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    window.location.href = "/api/auth/google";
   };
 
   return (
@@ -59,12 +53,31 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
         <DialogHeader>
           <DialogTitle>Iniciar Sessão</DialogTitle>
           <DialogDescription>
-            Entre com as suas credenciais para aceder à plataforma.
+            Entre com as suas credenciais ou use a sua conta Google.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4">
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full flex items-center justify-center gap-2"
+            onClick={handleGoogleLogin}
+          >
+            <Chrome className="h-4 w-4" />
+            Continuar com Google
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Ou com email</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -77,7 +90,16 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <button
+                  type="button"
+                  onClick={() => (window.location.href = "/forgot-password")}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Esqueceu-se da password?
+                </button>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -89,73 +111,27 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            {/* Quick Login */}
-            <div className="border-t pt-4 mt-2">
-              <p className="text-xs text-muted-foreground mb-3">Quick Login (Testes):</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => { e.preventDefault(); quickLogin("admin@aldeias.pt", "123456"); }}
-                  disabled={loading}
-                  className="h-9"
-                >
-                  Super Admin
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => { e.preventDefault(); quickLogin("admin.valeazinha@aldeias.pt", "123456"); }}
-                  disabled={loading}
-                  className="h-9"
-                >
-                  Admin Aldeia
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => { e.preventDefault(); quickLogin("vendedor1@valeazinha.pt", "123456"); }}
-                  disabled={loading}
-                  className="h-9"
-                >
-                  Vendedor
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => { e.preventDefault(); quickLogin("jogador1@valeazinha.pt", "123456"); }}
-                  disabled={loading}
-                  className="h-9"
-                >
-                  Jogador
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="flex-col gap-2">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "A entrar..." : "Entrar"}
             </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              Não tem conta?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  onOpenChange(false);
-                  onRegisterClick();
-                }}
-                className="text-primary hover:underline"
-              >
-                Registe-se
-              </button>
-            </p>
-          </DialogFooter>
-        </form>
+          </form>
+        </div>
+
+        <DialogFooter className="flex-col gap-2">
+          <p className="text-sm text-center text-muted-foreground">
+            Não tem conta?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                onOpenChange(false);
+                onRegisterClick();
+              }}
+              className="text-primary hover:underline"
+            >
+              Registe-se
+            </button>
+          </p>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

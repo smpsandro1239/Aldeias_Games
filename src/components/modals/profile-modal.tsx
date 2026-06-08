@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -314,7 +315,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
 
     setPasswordLoading(true);
     try {
-      const res = await fetch("/api/users/password", {
+      const res = await apiRequest("/api/users/password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

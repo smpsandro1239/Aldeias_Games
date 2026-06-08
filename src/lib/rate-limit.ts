@@ -51,6 +51,16 @@ export const rateLimitConfigs = {
     windowMs: 60 * 1000,
   },
   // Pagamentos: 10 por minuto
+  // Claim prémio: 10 por minuto
+  claimPremio: {
+    maxRequests: 10,
+    windowMs: 60 * 1000,
+  },
+  // Sorteios: 5 por minuto
+  sorteios: {
+    maxRequests: 5,
+    windowMs: 60 * 1000,
+  },
   pagamentos: {
     maxRequests: 10,
     windowMs: 60 * 1000,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { apiRequest } from '@/lib/api-client';
 import { toast } from "sonner";
 
 export interface User {
@@ -78,7 +79,7 @@ export function useAuth() {
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await apiRequest("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -113,7 +114,7 @@ export function useAuth() {
 
   const register = useCallback(async (data: RegisterData) => {
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await apiRequest("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -148,7 +149,7 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await apiRequest("/api/auth/logout", { method: "POST" });
     } catch {
     }
 

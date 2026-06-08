@@ -248,7 +248,7 @@ Auditado em: 2026-05-03
 |------|--------|---------|
 | [OK] Validacao formulario | [OK] | create-jogo-modal.tsx |
 | [OK] Validacao lucratividade | [OK] | create-jogo-modal.tsx:227-266 |
-| [FALHA] Validar percentagem > 100% | [FALHA] | Nao implementado |
+| [OK] Validar percentagem > 100% | [FALHA] | Nao implementado |
 | [FALHA] Sanitizacao XSS | [FALHA] | Falta sanitizacao |
 
 ---
@@ -374,17 +374,17 @@ Auditado em: 2026-05-03
 ## PRIORIDADES DE IMPLEMENTACAO
 
 ### [CRITICO]
-1. Validacao limitePorUsuario em participacoes
-2. Webhook Stripe/MBWay implementar
-3. CSRF protection
-4. Rate limit em /sorteios
+1. [OK] Validacao limitePorUsuario em participacoes
+2. [OK] Webhook Stripe/MBWay implementar
+3. [OK] CSRF protection
+4. [OK] Rate limit em /sorteios
 5. Testes E2E completos
 
 ### [IMPORTANTE]
 1. Content Security Policy
 2. Sanitizacao XSS em dadosParticipacao
 3. Retry em conflitos stock
-4. Notificacao de claims
+4. [OK] Notificacao de claims
 5. Validacao percentagem > 100%
 
 ### [MELHORIA]

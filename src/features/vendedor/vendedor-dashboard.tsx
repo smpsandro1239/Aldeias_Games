@@ -1,4 +1,6 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,7 +119,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/vendedor/entrega-saldo", {
+      const res = await apiRequest("/api/vendedor/entrega-saldo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +173,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
      try {
        // Fetch stats
-       const statsRes = await fetch("/api/dashboard/vendedor", {
+       const statsRes = await apiRequest("/api/dashboard/vendedor", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (statsRes.ok) {
@@ -180,7 +182,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
        }
 
        // Fetch jogos disponíveis
-       const jogosRes = await fetch("/api/jogos?ativos=true", {
+       const jogosRes = await apiRequest("/api/jogos?ativos=true", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (jogosRes.ok) {
@@ -189,7 +191,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
        }
 
        // Fetch pedidos pendentes count
-       const pedidosRes = await fetch("/api/pedidos-carregamento?estado=pendente", {
+       const pedidosRes = await apiRequest("/api/pedidos-carregamento?estado=pendente", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (pedidosRes.ok) {
@@ -198,7 +200,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
        }
 
        // Fetch saldo angariado
-       const saldoRes = await fetch("/api/vendedor/saldo-angariado", {
+       const saldoRes = await apiRequest("/api/vendedor/saldo-angariado", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (saldoRes.ok) {
@@ -223,7 +225,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
     const jogo = jogos.find((j) => j.id === novaVenda.jogoId);
     if (!jogo) return;
 
-    const response = await fetch("/api/participacoes", {
+    const response = await apiRequest("/api/participacoes", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -405,7 +407,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
         <TabsContent value="pos">
           <POSView jogos={jogos} onSell={async (data) => {
-            const res = await fetch("/api/participacoes", {
+            const res = await apiRequest("/api/participacoes", {
               method: "POST",
               headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
               body: JSON.stringify(data),

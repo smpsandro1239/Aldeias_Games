@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -349,7 +350,7 @@ export default function RifaPage() {
             toast.error("Precisa de login para usar cartão");
             return;
           }
-          const res = await fetch("/api/pagamentos/stripe", {
+          const res = await apiRequest("/api/pagamentos/stripe", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -381,7 +382,7 @@ export default function RifaPage() {
             toast.error("Telefone obrigatório para MBWay");
             return;
           }
-          const res = await fetch("/api/pagamentos/mbway", {
+          const res = await apiRequest("/api/pagamentos/mbway", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -445,7 +446,7 @@ export default function RifaPage() {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const response = await fetch("/api/participacoes", {
+      const response = await apiRequest("/api/participacoes", {
         method: "POST",
         headers,
         body: JSON.stringify(payload)

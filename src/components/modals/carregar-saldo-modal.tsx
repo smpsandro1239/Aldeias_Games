@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useReducer, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -260,7 +261,7 @@ export function CarregarSaldoModal({
           toast.error("Sessão expirada");
           return;
         }
-        const res = await fetch("/api/wallet/carregar", {
+        const res = await apiRequest("/api/wallet/carregar", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -309,7 +310,7 @@ export function CarregarSaldoModal({
         toast.error("Sessão expirada");
         return;
       }
-      const res = await fetch("/api/wallet/carregar", {
+      const res = await apiRequest("/api/wallet/carregar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

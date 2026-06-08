@@ -237,6 +237,48 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+    // Verificar limite por utilizador
+    const limite = jogo.limitePorUsuario;
+    if (limite > 0) {
+      const orConditions: any[] = [];
+
+      if (hasDadosCliente) {
+        if (data.dadosCliente?.email) orConditions.push({ emailCliente: data.dadosCliente.email });
+        if (data.dadosCliente?.telefone) orConditions.push({ telefoneCliente: data.dadosCliente.telefone });
+
+        const customerUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              ...(data.dadosCliente?.email ? [{ email: data.dadosCliente.email }] : []),
+              ...(data.dadosCliente?.telefone ? [{ telefone: data.dadosCliente.telefone }] : []),
+            ]
+          },
+          select: { id: true }
+        });
+        if (customerUser) orConditions.push({ userId: customerUser.id });
+      } else if (user) {
+        orConditions.push({ userId: user.id });
+        if ((user as any).email) orConditions.push({ emailCliente: (user as any).email });
+        if ((user as any).telefone) orConditions.push({ telefoneCliente: (user as any).telefone });
+      }
+
+      if (orConditions.length > 0) {
+        const count = await prisma.participacao.count({
+          where: {
+            jogoId: data.jogoId,
+            estadoPagamento: { in: ["concluido", "pendente"] },
+            OR: orConditions,
+          },
+        });
+
+        if (count + data.quantidade > limite) {
+          return NextResponse.json(
+            { error: `Limite de participações excedido. O limite para este jogo é de ${limite} por utilizador.` },
+            { status: 400 }
+          );
+        }
+      }
+    }
 
     // Verificar isolamento de aldeia para vendedores
     if (user && user.role === 'vendedor' && jogo.evento.aldeiaId !== user.aldeiaId) {
@@ -308,8 +350,21 @@ export async function POST(request: NextRequest) {
 
       if (updated.count === 0) {
         throw new Error('Stock insuficiente - operação concorrente');
-      }
 
+      // Verificar se o stock esgotou para fechar o jogo automaticamente
+      }
+      const jogoFinal = await tx.jogo.findUnique({
+        where: { id: data.jogoId },
+        select: { stockAtual: true }
+      });
+
+      if (jogoFinal && jogoFinal.stockAtual <= 0) {
+        await tx.jogo.update({
+          where: { id: data.jogoId },
+          data: { estado: "fechado" }
+        });
+      }
+      }
        // Criar participações (pode ser múltipla)
        const participacoes: any[] = [];
       

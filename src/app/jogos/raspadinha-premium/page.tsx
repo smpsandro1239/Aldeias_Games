@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -456,7 +457,7 @@ function RaspadinhaPremiumContent() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await fetch(`/api/participacoes/${pId}/claim-premio`, {
+      const res = await apiRequest(`/api/participacoes/${pId}/claim-premio`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

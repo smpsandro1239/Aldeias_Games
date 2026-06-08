@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
@@ -147,7 +148,7 @@ export default function AdminDashboard({
   // ==================== FETCH DATA OTIMIZADO ====================
   const getApi = useCallback(async (url: string, revalidate: number = 30) => {
     try {
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         headers: { Authorization: `Bearer ${token}` },
         next: { revalidate },
       });
@@ -165,7 +166,7 @@ export default function AdminDashboard({
   const fetchPedidosPendentes = useCallback(async () => {
     try {
       const q = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=pendente` : "?estado=pendente";
-      const res = await fetch(`/api/admin/pedidos-carregamento${q}`, {
+      const res = await apiRequest(`/api/admin/pedidos-carregamento${q}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -180,7 +181,7 @@ export default function AdminDashboard({
   const fetchEntregasPendentes = useCallback(async () => {
     try {
       const q = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=solicitado` : "?estado=solicitado";
-      const res = await fetch(`/api/admin/entregas-saldo${q}`, {
+      const res = await apiRequest(`/api/admin/entregas-saldo${q}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -271,7 +272,7 @@ export default function AdminDashboard({
 
   const handleProcessRecurringEvents = useCallback(async () => {
     try {
-      const res = await fetch("/api/eventos/process-recurring", {
+      const res = await apiRequest("/api/eventos/process-recurring", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -307,7 +308,7 @@ export default function AdminDashboard({
 
     try {
       console.log('🌐 Fazendo request para:', url, method);
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -325,7 +326,7 @@ export default function AdminDashboard({
         if (jogosSelecionados.length > 0 && eventoId) {
           try {
             // Buscar jogos existentes do evento
-            const jogosRes = await fetch(`/api/jogos?eventoId=${eventoId}`, {
+            const jogosRes = await apiRequest(`/api/jogos?eventoId=${eventoId}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -419,7 +420,7 @@ export default function AdminDashboard({
     const method = isEditing ? "PUT" : "POST";
 
     try {
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -515,7 +516,7 @@ export default function AdminDashboard({
     const method = isEditing ? "PUT" : "POST";
 
     try {
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -552,7 +553,7 @@ export default function AdminDashboard({
     }
 
     try {
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method,
         headers: {
           "Content-Type": "application/json",

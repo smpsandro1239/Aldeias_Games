@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
@@ -59,7 +60,7 @@ function useJogosExternos(open: boolean, token: string) {
     const fetchJogos = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/api/sorteios/externo", {
+        const res = await apiRequest("/api/sorteios/externo", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -78,7 +79,7 @@ function useJogosExternos(open: boolean, token: string) {
 
   const refetch = useCallback(async () => {
     try {
-      const res = await fetch("/api/sorteios/externo", {
+      const res = await apiRequest("/api/sorteios/externo", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -117,7 +118,7 @@ export function ResultadosExternosModal({
     const numeros = resultados.split(/[\s,\n]+/).filter(Boolean);
 
     try {
-      const res = await fetch("/api/sorteios/externo", {
+      const res = await apiRequest("/api/sorteios/externo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

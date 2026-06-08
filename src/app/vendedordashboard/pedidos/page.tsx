@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -51,7 +52,7 @@ export default function PedidosPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/pedidos-carregamento", {
+      const res = await apiRequest("/api/pedidos-carregamento", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -69,7 +70,7 @@ export default function PedidosPage() {
     setProcessing(pedidoId);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/pedidos-carregamento", {
+      const res = await apiRequest("/api/pedidos-carregamento", {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
@@ -96,7 +97,7 @@ export default function PedidosPage() {
     setProcessing(pedidoId);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/pedidos-carregamento", {
+      const res = await apiRequest("/api/pedidos-carregamento", {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
