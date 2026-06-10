@@ -4,6 +4,7 @@ import { validateCsrf, generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const requestId = crypto.randomUUID();
 
   // CSRF Protection for API routes
   if (pathname.startsWith("/api/")) {
@@ -18,6 +19,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
+
+  // Adicionar Request ID aos headers da resposta para tracing
+  response.headers.set("x-request-id", requestId);
 
   // Sempre gerar um novo token e colocar no cookie para o cliente poder usar na próxima requisição
   const csrfToken = await generateCsrfToken();

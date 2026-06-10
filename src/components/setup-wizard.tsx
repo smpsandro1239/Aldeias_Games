@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -151,7 +152,7 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
     
     try {
       // Create aldeia
-      const aldeiaRes = await fetch("/api/aldeias", {
+      const aldeiaRes = await apiRequest("/api/aldeias", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -168,7 +169,7 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
       const aldeiaIdResult = aldeiaJson.data?.id;
 
       // Create evento
-      const eventoRes = await fetch("/api/eventos", {
+      const eventoRes = await apiRequest("/api/eventos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -189,7 +190,7 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
       const eventoIdResult = eventoJson.data?.id;
 
       // Create jogo
-      const jogoRes = await fetch("/api/jogos", {
+      const jogoRes = await apiRequest("/api/jogos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -209,7 +210,7 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
       }
 
       // Create premio
-      const premioRes = await fetch("/api/premios", {
+      const premioRes = await apiRequest("/api/premios", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -225,7 +226,7 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
       // Create vendedores
       for (const v of vendedores) {
         if (v.nome && v.email) {
-          await fetch("/api/users", {
+          await apiRequest("/api/users", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

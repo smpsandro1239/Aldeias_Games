@@ -260,7 +260,7 @@ export default function RifaPage() {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();

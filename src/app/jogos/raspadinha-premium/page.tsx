@@ -188,7 +188,7 @@ function RaspadinhaPremiumContent() {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -255,7 +255,7 @@ function RaspadinhaPremiumContent() {
            toast.error("Telefone obrigatório para MBWay");
            return;
          }
-         const res = await fetch("/api/pagamentos/mbway", {
+         const res = await apiRequest("/api/pagamentos/mbway", {
            method: "POST",
            headers: { 
              "Content-Type": "application/json",
@@ -280,7 +280,7 @@ function RaspadinhaPremiumContent() {
             toast.error("Precisa de login para usar cartão");
             return;
           }
-          const res = await fetch("/api/pagamentos/stripe", {
+          const res = await apiRequest("/api/pagamentos/stripe", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -334,7 +334,7 @@ function RaspadinhaPremiumContent() {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const response = await fetch("/api/participacoes", {
+      const response = await apiRequest("/api/participacoes", {
         method: "POST",
         headers,
         body: JSON.stringify(payload)

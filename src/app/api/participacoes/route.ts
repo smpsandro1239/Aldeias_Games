@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sanitizeObject } from '@/lib/sanitization';
+import { escapeHtml } from '@/lib/utils';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { createParticipacaoSchema } from '@/lib/validations';
@@ -370,7 +372,7 @@ export async function POST(request: NextRequest) {
       
       for (let i = 0; i < data.quantidade; i++) {
         const dados: Record<string, unknown> = {
-          dadosParticipacao: JSON.stringify(data.dadosParticipacao),
+          dadosParticipacao: JSON.stringify(sanitizeObject(data.dadosParticipacao)),
           valorPago: jogo.preco,
           metodoPagamento: data.metodoPagamento,
           estadoPagamento: data.metodoPagamento === 'dinheiro' ? 'concluido' : 'pendente',

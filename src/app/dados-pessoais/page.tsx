@@ -1,5 +1,4 @@
 "use client";
-import { apiRequest } from '@/lib/api-client';
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,7 +18,7 @@ export default function DadosPessoaisPage() {
   const handleExportData = async () => {
     setExportLoading(true);
     try {
-      const response = await apiRequest("/api/me");
+      const response = await fetch("/api/me/data-export");
       if (!response.ok) throw new Error("Falha ao exportar");
       const data = await response.json();
 
@@ -49,7 +48,7 @@ export default function DadosPessoaisPage() {
     }
     setDeleteLoading(true);
     try {
-      const response = await apiRequest("/api/me"), {
+      const response = await fetch("/api/me/request-deletion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ motivo: deleteReason }),

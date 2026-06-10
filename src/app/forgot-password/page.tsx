@@ -1,5 +1,4 @@
 "use client";
-import { apiRequest } from '@/lib/api-client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';

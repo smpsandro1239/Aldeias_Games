@@ -265,7 +265,7 @@ export default function TombolaPage() {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -506,7 +506,7 @@ export default function TombolaPage() {
 
     try {
       // Call API to reset/create a new tombola game with same configuration
-      const response = await fetch("/api/jogos", {
+      const response = await apiRequest("/api/jogos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

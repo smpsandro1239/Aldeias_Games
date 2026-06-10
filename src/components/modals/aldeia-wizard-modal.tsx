@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +31,7 @@ export function AldeiaWizardModal({ open, onComplete }: AldeiaWizardModalProps) 
 
   const fetchAldeias = async () => {
     try {
-      const res = await fetch("/api/aldeias");
+      const res = await apiRequest("/api/aldeias");
       if (res.ok) {
         const data = await res.json();
         // Handle both { data: [...] } and [...] response formats
@@ -59,7 +60,7 @@ export function AldeiaWizardModal({ open, onComplete }: AldeiaWizardModalProps) 
         return;
       }
       
-      const res = await fetch("/api/users/perfil", {
+      const res = await apiRequest("/api/users/perfil", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

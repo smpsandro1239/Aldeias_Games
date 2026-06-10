@@ -1,5 +1,6 @@
 "use client";
 import { apiRequest } from '@/lib/api-client';
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
@@ -577,7 +578,7 @@ export default function AdminDashboard({
 
   const handleConvertPrize = useCallback(async (participacaoId: string, valor: number) => {
     try {
-      const res = await fetch("/api/admin/convert-prize", {
+      const res = await apiRequest("/api/admin/convert-prize", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
