@@ -1,355 +1,122 @@
-/// <reference types="node" />
-import { PrismaClient, UserRole, TipoJogo, EstadoJogo, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import { PrismaClient, UserRole, EstadoJogo, MetodoPagamento, EstadoPagamento, PermissionKey, RoleName } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 SEED MÍNIMO - Criando dados para teste');
+  console.log('🚀 Iniciando Seed Completo...');
 
-  // Limpar dados relevantes (em ordem correta para evitar problemas de foreign key)
-  await prisma.$executeRaw`SET CONSTRAINTS ALL DEFERRED`;
-  try {
-    // Delete in order: children first, then parents
-    await prisma.premio.deleteMany();
-    await prisma.jogo.deleteMany();
-    await prisma.evento.deleteMany();
-    await prisma.aldeia.deleteMany();
-    await prisma.plano.deleteMany();
-    await prisma.userGlobalRole.deleteMany();
-    await prisma.userPermission.deleteMany();
-    await prisma.rolePermission.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.permission.deleteMany();
-  } catch (e) {
-    console.warn('Erro na limpeza (pode ser normal na primeira execução):', e);
-  }
+  // 1. Limpar base de dados
+  await prisma.transacao.deleteMany();
+  await prisma.participacao.deleteMany();
+  await prisma.numeroVendido.deleteMany();
+  await prisma.premio.deleteMany();
+  await prisma.jogo.deleteMany();
+  await prisma.evento.deleteMany();
+  await prisma.userGlobalRole.deleteMany();
+  await prisma.userAldeiaRole.deleteMany();
+  await prisma.notificacao.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.aldeia.deleteMany();
+  await prisma.plano.deleteMany();
+  await prisma.rolePermission.deleteMany();
+  await prisma.permission.deleteMany();
+  await prisma.role.deleteMany();
 
-  // Criar permissões básicas
+  console.log('🧹 Base de dados limpa');
+
+  // 2. Criar Permissões
   const permissions = [
-    { key: PermissionKey.VIEW_ALDEIA, description: 'ver aldeia' },
-    { key: PermissionKey.VIEW_EVENTO, description: 'ver evento' },
-    { key: PermissionKey.VIEW_JOGO, description: 'ver jogo' },
-    { key: PermissionKey.EXECUTE_VENDA, description: 'executar venda' },
-    { key: PermissionKey.VIEW_VENDAS, description: 'ver vendas' },
+    { key: PermissionKey.VIEW_ALDEIA, description: 'Ver detalhes da aldeia' },
+    { key: PermissionKey.MANAGE_ALDEIA, description: 'Gerir aldeia' },
+    { key: PermissionKey.VIEW_EVENTO, description: 'Ver eventos' },
+    { key: PermissionKey.CREATE_EVENTO, description: 'Criar eventos' },
+    { key: PermissionKey.VIEW_JOGO, description: 'Ver jogos' },
+    { key: PermissionKey.CREATE_JOGO, description: 'Criar jogos' },
+    { key: PermissionKey.EXECUTE_VENDA, description: 'Executar vendas no POS' },
+    { key: PermissionKey.VIEW_VENDAS, description: 'Ver histórico de vendas' },
+    { key: PermissionKey.MANAGE_VENDEDORES, description: 'Gerir vendedores' },
   ];
 
-  const createdPermissions: Record<string, any> = {};
-  for (const perm of permissions) {
-    const p = await prisma.permission.upsert({
-      where: { key: perm.key },
-      update: perm,
-      create: perm,
-    });
-    createdPermissions[perm.key] = p;
+  const createdPerms: Record<string, any> = {};
+  for (const p of permissions) {
+    createdPerms[p.key] = await prisma.permission.create({ data: p });
   }
-  console.log(`✅ ${permissions.length} permissões`);
 
-  // Criar roles
-  const roleNames = [
-    { name: RoleName.SUPER_ADMIN, description: 'Super Admin', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
-    { name: RoleName.ALDEIA_ADMIN, description: 'Admin Aldeia', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
-    { name: RoleName.GESTOR, description: 'Gestor', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
-    { name: RoleName.COLABORADOR, description: 'Colaborador', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO] },
-    { name: RoleName.VIEWER, description: 'Utilizador', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO] },
+  const roles = [
+    { name: RoleName.SUPER_ADMIN, description: 'Administrador Global', permissions: permissions.map(p => p.key) },
+    { name: RoleName.ALDEIA_ADMIN, description: 'Admin de Organização', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.CREATE_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.CREATE_JOGO, PermissionKey.MANAGE_VENDEDORES, PermissionKey.VIEW_VENDAS] },
+    { name: RoleName.GESTOR, description: 'Vendedor / POS', permissions: [PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
+    { name: RoleName.VIEWER, description: 'Utilizador Final', permissions: [PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO] },
   ];
 
   const createdRoles: Record<string, any> = {};
-  for (const roleData of roleNames) {
-    const role = await prisma.role.upsert({
-      where: { name: roleData.name },
-      update: { description: roleData.description },
-      create: { name: roleData.name, description: roleData.description },
-    });
-    createdRoles[roleData.name] = role;
-
-    for (const permKey of roleData.permissions) {
-      await prisma.rolePermission.upsert({
-        where: {
-          roleId_permissionId: {
-            roleId: role.id,
-            permissionId: createdPermissions[permKey].id
-          }
-        },
-        update: {},
-        create: {
-          roleId: role.id,
-          permissionId: createdPermissions[permKey].id
-        }
+  for (const r of roles) {
+    const role = await prisma.role.create({ data: { name: r.name, description: r.description } });
+    createdRoles[r.name] = role;
+    for (const pk of r.permissions) {
+      await prisma.rolePermission.create({
+        data: { roleId: role.id, permissionId: createdPerms[pk].id }
       });
     }
   }
-  console.log(`✅ ${roleNames.length} roles`);
+  console.log('✅ RBAC configurado');
 
-  // Criar plano básico
-  const plano = await prisma.plano.upsert({
-    where: { id: 'plano-basico' },
-    update: {
-      descricao: 'Plano gratuito para testes',
-      precoMensal: 0,
-      maxEventos: 10,
-      maxJogos: 100,
-      maxParticipacoes: 10000,
-      maxVendedores: 10,
-      ativo: true,
-    },
-    create: {
-      id: 'plano-basico',
-      nome: 'Básico',
-      descricao: 'Plano gratuito para testes',
-      precoMensal: 0,
-      maxEventos: 10,
-      maxJogos: 100,
-      maxParticipacoes: 10000,
-      maxVendedores: 10,
-      ativo: true,
+  // 3. Criar Planos
+  await prisma.plano.create({ data: { id: 'plano-pro', nome: 'Premium', precoMensal: 29.99, maxEventos: 50, maxJogos: 200, maxParticipacoes: 50000, maxVendedores: 100 } });
+  console.log('✅ Planos criados');
+
+  const pass = await bcrypt.hash('123456', 10);
+
+  // 4. Criar Aldeia e Utilizadores
+  const aldeia1 = await prisma.aldeia.create({
+    data: {
+      nome: 'Vale a Zinha', slug: 'vale-a-zinha', tipoOrganizacao: 'aldeia', localidade: 'Viseu', email: 'geral@valeazinha.pt',
+      ativo: true, verificado: true, planoId: 'plano-pro', metodosPagamentoDefault: '["saldo", "dinheiro", "mbway", "stripe"]'
     }
   });
-  console.log('✅ Plano criado');
 
-  // Criar hash de senha
-  const passwordHash = await bcrypt.hash('123456', 10);
-
-  // Criar utilizador de teste (admin)
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@teste.pt' },
-    update: {
-      password: passwordHash,
-      nome: 'Admin Teste',
-      telefone: '+351 912 345 678',
-      role: UserRole.super_admin,
-      emailVerificado: true,
-      saldo: 1000,
-    },
-    create: {
-      email: 'admin@teste.pt',
-      password: passwordHash,
-      nome: 'Admin Teste',
-      telefone: '+351 912 345 678',
-      role: UserRole.super_admin,
-      emailVerificado: true,
-      saldo: 1000,
-    }
-  });
-  console.log('✅ Utilizador admin criado');
-
-  // Ligar utilizador ao role
-  await prisma.userGlobalRole.upsert({
-    where: { userId_roleId: { userId: admin.id, roleId: createdRoles[RoleName.SUPER_ADMIN].id } },
-    update: {},
-    create: { userId: admin.id, roleId: createdRoles[RoleName.SUPER_ADMIN].id }
-  });
-
-  // Criar utilizadores de teste para quick login
-  const testUsers = [
-    { email: 'admin@aldeias.pt', role: UserRole.super_admin, nome: 'Super Admin', roleName: RoleName.SUPER_ADMIN },
-    { email: 'admin.valeazinha@aldeias.pt', role: UserRole.aldeia_admin, nome: 'Admin Aldeia', roleName: RoleName.ALDEIA_ADMIN },
-    { email: 'vendedor1@valeazinha.pt', role: UserRole.vendedor, nome: 'Vendedor', roleName: RoleName.GESTOR },
-    { email: 'jogador1@valeazinha.pt', role: UserRole.user, nome: 'Jogador', roleName: RoleName.VIEWER }
+  const userData = [
+    { email: 'admin@aldeias.pt', role: UserRole.super_admin, nome: 'Admin Global', globalRole: RoleName.SUPER_ADMIN },
+    { email: 'admin.valeazinha@aldeias.pt', role: UserRole.aldeia_admin, nome: 'Admin Vale a Zinha', globalRole: RoleName.ALDEIA_ADMIN, aldeiaId: aldeia1.id },
+    { email: 'vendedor1@valeazinha.pt', role: UserRole.vendedor, nome: 'João Vendedor', globalRole: RoleName.GESTOR, aldeiaId: aldeia1.id },
+    { email: 'jogador1@valeazinha.pt', role: UserRole.user, nome: 'Maria Jogadora', globalRole: RoleName.VIEWER, aldeiaId: aldeia1.id },
   ];
 
-  for (const userData of testUsers) {
-    const user = await prisma.user.upsert({
-      where: { email: userData.email },
-      update: {
-        password: passwordHash,
-        nome: userData.nome,
-        telefone: '+351 912 345 678',
-        role: userData.role,
-        emailVerificado: true,
-        saldo: 1000,
-      },
-      create: {
-        email: userData.email,
-        password: passwordHash,
-        nome: userData.nome,
-        telefone: '+351 912 345 678',
-        role: userData.role,
-        emailVerificado: true,
-        saldo: 1000,
-      }
+  const users: any[] = [];
+  for (const u of userData) {
+    const user = await prisma.user.create({
+      data: { email: u.email, password: pass, nome: u.nome, role: u.role, aldeiaId: u.aldeiaId, emailVerificado: true, saldo: 500.0 }
     });
-    console.log(`✅ Utilizador ${userData.nome} criado`);
-
-    // Ligar utilizador ao role correspondente
-    await prisma.userGlobalRole.upsert({
-      where: { userId_roleId: { userId: user.id, roleId: createdRoles[userData.roleName].id } },
-      update: {},
-      create: { userId: user.id, roleId: createdRoles[userData.roleName].id }
-    });
+    users.push(user);
+    await prisma.userGlobalRole.create({ data: { userId: user.id, roleId: createdRoles[u.globalRole].id } });
+    if (u.aldeiaId) await prisma.userAldeiaRole.create({ data: { userId: user.id, roleId: createdRoles[u.globalRole].id, aldeiaId: u.aldeiaId } });
   }
 
-  // Criar aldeia de teste
-  const aldeia = await prisma.aldeia.upsert({
-    where: { slug: 'teste-aldeia' },
-    update: {
-      nome: 'Aldeia de Teste',
-      slug: 'teste-aldeia',
-      tipoOrganizacao: 'aldeia',
-      descricao: 'Aldeia para testes',
-      morada: 'Rua de Teste, 1',
-      codigoPostal: '1000-000',
-      localidade: 'Teste',
-      telefone: '+351 912 345 678',
-      email: 'geral@teste-aldeia.pt',
-      responsavel: 'Admin Teste',
-      planoId: plano.id,
-      permitirMBWay: false,
-      permitirStripe: false,
-      metodosPagamentoDefault: '["saldo","dinheiro"]',
-      autorizacaoCM: true,
-      documentosVerificados: true,
-      ativo: true,
-      verificado: true,
-    },
-    create: {
-      nome: 'Aldeia de Teste',
-      slug: 'teste-aldeia',
-      tipoOrganizacao: 'aldeia',
-      descricao: 'Aldeia para testes',
-      morada: 'Rua de Teste, 1',
-      codigoPostal: '1000-000',
-      localidade: 'Teste',
-      telefone: '+351 912 345 678',
-      email: 'geral@teste-aldeia.pt',
-      responsavel: 'Admin Teste',
-      planoId: plano.id,
-      permitirMBWay: false,
-      permitirStripe: false,
-      metodosPagamentoDefault: '["saldo","dinheiro"]',
-      autorizacaoCM: true,
-      documentosVerificados: true,
-      ativo: true,
-      verificado: true,
-    }
+  // 5. Criar Evento e Jogos
+  const ev = await prisma.evento.create({
+    data: { nome: 'Festa Popular 2026', slug: 'festa-2026', aldeiaId: aldeia1.id, estado: 'ativo', publico: true, dataInicio: new Date(), dataFim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
   });
-  console.log('✅ Aldeia criada');
 
-  // Criar evento de teste
-  const evento = await prisma.evento.upsert({
-    where: { slug: 'evento-teste' },
-    update: {
-      nome: 'Evento de Teste',
-      slug: 'evento-teste',
-      descricao: 'Evento para testes de rifa',
-      dataInicio: new Date('2026-06-01'),
-      dataFim: new Date('2026-06-30'),
-      objectivoAngariacao: 1000,
-      estado: 'ativo',
-      publico: true,
-      aldeiaId: aldeia.id,
-      totalAngariado: 0,
-      totalParticipacoes: 0,
-    },
-    create: {
-      nome: 'Evento de Teste',
-      slug: 'evento-teste',
-      descricao: 'Evento para testes de rifa',
-      dataInicio: new Date('2026-06-01'),
-      dataFim: new Date('2026-06-30'),
-      objectivoAngariacao: 1000,
-      estado: 'ativo',
-      publico: true,
-      aldeiaId: aldeia.id,
-      totalAngariado: 0,
-      totalParticipacoes: 0,
-    }
+  const rifa = await prisma.jogo.create({
+    data: { nome: 'Rifa Cabaz', tipo: 'rifa', preco: 2.0, stockInicial: 100, stockAtual: 100, estado: EstadoJogo.aberto, eventoId: ev.id, aldeiaId: aldeia1.id, configuracao: '{"numeroInicial":1,"numeroFinal":100}' }
   });
-  console.log('✅ Evento criado');
 
-  // Criar jogo de rifa de teste
-  const jogo = await prisma.jogo.upsert({
-    where: { id: 'rifa-teste-001' },
-    update: {
-      nome: 'Rifa de Teste',
-      tipo: 'rifa',
-      descricao: 'Rifa para teste de funcionalidade',
-      preco: 5,
-      stockInicial: 100,
-      stockAtual: 100, // Todos disponíveis inicialmente
-      limitePorUsuario: 10,
-      estado: 'aberto',
-      dataAbertura: new Date(),
-      lucroMinimoPercent: 70,
-      percentagemTotalPremios: 30,
-      eventoId: evento.id,
-      aldeiaId: aldeia.id,
-      totalParticipacoes: 0,
-      totalAngariado: 0,
-      configuracao: JSON.stringify({
-        numeroInicial: 1,
-        numeroFinal: 100,
-        numeroBlocos: 1,
-        permitirStripe: false,
-        valorPremios: null
-      })
-    },
-    create: {
-      id: 'rifa-teste-001',
-      nome: 'Rifa de Teste',
-      tipo: 'rifa',
-      descricao: 'Rifa para teste de funcionalidade',
-      preco: 5,
-      stockInicial: 100,
-      stockAtual: 100,
-      limitePorUsuario: 10,
-      estado: 'aberto',
-      dataAbertura: new Date(),
-      lucroMinimoPercent: 70,
-      percentagemTotalPremios: 30,
-      eventoId: evento.id,
-      aldeiaId: aldeia.id,
-      totalParticipacoes: 0,
-      totalAngariado: 0,
-      configuracao: JSON.stringify({
-        numeroInicial: 1,
-        numeroFinal: 100,
-        numeroBlocos: 1,
-        permitirStripe: false,
-        valorPremios: null
-      })
-    }
-  });
-  console.log('✅ Jogo de rifa criado');
-
-  // Criar prémios para a rifa
-  await prisma.premio.upsert({
-    where: { id: 'premio-1' },
-    update: {
-      nome: 'Grande Prémio',
-      valorDinheiroAlternative: 150,
-      percentagem: 30,
-      ordem: 1,
-      aldeiaId: aldeia.id,
-      jogoId: jogo.id
-    },
-    create: {
-      id: 'premio-1',
-      nome: 'Grande Prémio',
-      valorDinheiroAlternative: 150,
-      percentagem: 30,
-      ordem: 1,
-      aldeiaId: aldeia.id,
-      jogoId: jogo.id
+  const poio = await prisma.jogo.create({
+    data: {
+      nome: 'Poio da Vaca', tipo: 'poio_da_vaca', preco: 10.0, stockInicial: 100, stockAtual: 100, estado: EstadoJogo.aberto, eventoId: ev.id, aldeiaId: aldeia1.id,
+      configuracao: '{"letras":["A","B","C","D","E","F","G","H","I","J"],"numerosPorLetra":10}', dimensoesCampo: '{"x":10,"y":10,"total":100}', custoQuadrado: 10.0
     }
   });
 
-  console.log('✅ Prémios criados');
+  const rasp = await prisma.jogo.create({
+    data: {
+      nome: 'Raspadinha Sorte', tipo: 'raspadinha', preco: 1.0, stockInicial: 1000, stockAtual: 1000, estado: EstadoJogo.aberto, eventoId: ev.id, aldeiaId: aldeia1.id,
+      configuracao: '{"premios":[{"nome":"Presunto","valorDinheiroAlternative":50,"percentagem":1,"convertivelSaldo":true},{"nome":"1€ Saldo","valorDinheiroAlternative":1,"percentagem":10,"convertivelSaldo":true}]}'
+    }
+  });
 
-  console.log('\n🎉 SEED MÍNIMO CONCLUÍDO!');
-  console.log('🔑 Credenciais de teste:');
-  console.log('   Email: admin@teste.pt');
-  console.log('   Senha: 123456');
-  console.log(`\n🎮 Jogo de rifa ID: ${jogo.id}`);
-  console.log('   Acesse: http://localhost:3000/jogos/rifa?id=' + jogo.id);
+  console.log('✅ Jogos e Utilizadores criados. Seed concluído!');
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Erro no seed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch(e => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());

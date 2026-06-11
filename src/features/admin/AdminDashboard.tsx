@@ -368,7 +368,7 @@ export default function AdminDashboard({
             // Remover jogos não selecionados (apenas se estiverem vazios)
             for (const jogo of jogosParaRemover) {
               // Verificar se o jogo tem participações
-              const participacoesRes = await fetch(`/api/participacoes?jogoId=${jogo.id}&limit=1`, {
+              const participacoesRes = await apiRequest("/api/participacoes?jogoId=${jogo.id}&limit=1`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 
@@ -378,7 +378,7 @@ export default function AdminDashboard({
 
                 // Só remover se não tiver participações
                 if (totalParticipacoes === 0) {
-                  await fetch(`/api/jogos/${jogo.id}`, {
+                  await apiRequest(`/api/jogos/${jogo.id}`, {
                     method: "DELETE",
                     headers: { Authorization: `Bearer ${token}` },
                   });
@@ -458,7 +458,7 @@ export default function AdminDashboard({
      setTestJogo(jogo);
      // Buscar total de participações concluídas do jogo (apenas pagamentos confirmados)
      try {
-       const res = await fetch(`/api/participacoes?jogoId=${jogo.id}&estadoPagamento=concluido&page=1&limit=1`, {
+       const res = await apiRequest("/api/participacoes?jogoId=${jogo.id}&estadoPagamento=concluido&page=1&limit=1`, {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (res.ok) {
@@ -480,7 +480,7 @@ export default function AdminDashboard({
      if (!toggleJogoData) return;
      const { jogo, novoEstado } = toggleJogoData;
      try {
-       const res = await fetch(`/api/jogos/${jogo.id}`, {
+       const res = await apiRequest(`/api/jogos/${jogo.id}`, {
          method: "PUT",
          headers: {
            "Content-Type": "application/json",
@@ -1273,7 +1273,7 @@ export default function AdminDashboard({
                 totalParticipacoes={testJogoTotalParticipacoes}
                 onExecutarSorteio={async (observacoes?: string) => {
                   try {
-                    const res = await fetch('/api/sorteios/teste', {
+                    const res = await apiRequest('/api/sorteios/teste', {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',

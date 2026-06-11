@@ -13,197 +13,168 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, ShieldCheck, Hash } from "lucide-react";
 import { LotteryAnimation } from "@/components/games/lottery-animation";
 import { motion } from "framer-motion";
-
-interface ResultadoPoio {
-  letraVencedora: string;
-  numeroVencedor: number;
-}
-
-interface ResultadoNumero {
-  numeroVencedor: number;
-}
-
-type ResultadoSorteio = ResultadoPoio | ResultadoNumero;
-
-interface SorteioData {
-  resultado: ResultadoSorteio;
-  vencedores: number;
-  hash: string;
-  seed: string;
-}
+import { apiRequest } from "@/lib/api-client";
+import { toast } from "sonner";
 
 interface SorteioModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  jogoNome: string;
+  jogo: { id: string, nome: string, hashSorteio?: string | null };
   totalParticipacoes: number;
-  onExecutarSorteio: (observacoes?: string) => Promise<{
-    success: boolean;
-    data?: SorteioData;
-    error?: string;
-  }>;
-}
-
-// Type guard for Poio result
-function isResultadoPoio(resultado: ResultadoSorteio): resultado is ResultadoPoio {
-  return 'letraVencedora' in resultado && 'numeroVencedor' in resultado;
+  onSuccess: () => void;
 }
 
 export function SorteioModal({
   open,
   onOpenChange,
-  jogoNome,
+  jogo,
   totalParticipacoes,
-  onExecutarSorteio,
+  onSuccess,
 }: SorteioModalProps) {
-  const [observacoes, setObservacoes] = useState("");
+  const [clientSeed, setClientSeed] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<SorteioData | null>(null);
+  const [fase, setFase] = useState<'idle' | 'committed' | 'revealed'>(jogo.hashSorteio ? 'committed' : 'idle');
+  const [resultado, setResultado] = useState<any>(null);
 
-  const handleExecutar = useCallback(async () => {
+  const handleCommit = async () => {
     setLoading(true);
     try {
-      const response = await onExecutarSorteio(observacoes);
-      if (response.success && response.data) {
-        setResultado(response.data);
+      const res = await apiRequest('/api/sorteios', {
+        method: 'PATCH',
+        body: JSON.stringify({ jogoId: jogo.id, action: 'commit' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Seed comprometida com sucesso!");
+        setFase('committed');
+        onSuccess();
+      } else {
+        toast.error(data.error || "Erro ao comprometer sorteio");
       }
+    } catch (e) {
+      toast.error("Erro de conexão");
     } finally {
       setLoading(false);
     }
-  }, [observacoes, onExecutarSorteio]);
+  };
 
-  const handleClose = useCallback(() => {
-    setResultado(null);
-    setObservacoes("");
-    onOpenChange(false);
-  }, [onOpenChange]);
-
-  const handleObservacoesChange = useCallback((value: string) => {
-    setObservacoes(value);
-  }, []);
-
-  // Helper to compute final result string and animation type
-  const getResultDisplay = useCallback((res: ResultadoSorteio) => {
-    if (isResultadoPoio(res)) {
-      return {
-        finalResult: `${res.letraVencedora}${res.numeroVencedor}`,
-        type: "coordinate" as const,
-      };
+  const handleReveal = async () => {
+    setLoading(true);
+    try {
+      const res = await apiRequest('/api/sorteios', {
+        method: 'POST',
+        body: JSON.stringify({ jogoId: jogo.id, clientSeed })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResultado(data);
+        setFase('revealed');
+        toast.success("Sorteio realizado com sucesso!");
+        onSuccess();
+      } else {
+        toast.error(data.error || "Erro ao realizar sorteio");
+      }
+    } catch (e) {
+      toast.error("Erro de conexão");
+    } finally {
+      setLoading(false);
     }
-    return {
-      finalResult: `${res.numeroVencedor}`,
-      type: "number" as const,
-    };
-  }, []);
+  };
+
+  const handleClose = () => {
+    if (fase !== 'revealed') {
+      setFase(jogo.hashSorteio ? 'committed' : 'idle');
+    }
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]" aria-describedby="sorteio-modal-description">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Executar Sorteio</DialogTitle>
-          <DialogDescription id="sorteio-modal-description">
-            {jogoNome}
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="text-primary" />
+            Sorteio Provavelmente Justo
+          </DialogTitle>
+          <DialogDescription>
+            {jogo.nome}
           </DialogDescription>
         </DialogHeader>
 
-        {!resultado ? (
-          <>
-            <div className="py-4">
+        <div className="py-4 space-y-6">
+          {fase === 'idle' && (
+            <div className="space-y-4">
               <Alert>
-                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Total de participações: <strong>{totalParticipacoes}</strong>
-                  <br />
-                  O sorteio é irreversível e utiliza um algoritmo auditável SHA-256.
+                  Fase 1: Compromisso. O sistema irá gerar uma seed secreta e publicar o seu Hash.
+                  Isto garante que o resultado não pode ser alterado após o início.
+                </AlertDescription>
+              </Alert>
+              <Button onClick={handleCommit} className="w-full" disabled={loading}>
+                {loading ? "A processar..." : "Gerar Hash de Compromisso"}
+              </Button>
+            </div>
+          )}
+
+          {fase === 'committed' && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg border border-primary/20">
+                <p className="text-[10px] font-mono text-muted-foreground uppercase mb-1">Hash Público de Compromisso:</p>
+                <p className="text-xs font-mono break-all font-bold text-primary">{jogo.hashSorteio}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clientSeed">Seed do Cliente (Opcional)</Label>
+                <Input
+                  id="clientSeed"
+                  placeholder="Ex: Palavra aleatória ou timestamp..."
+                  value={clientSeed}
+                  onChange={(e) => setClientSeed(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground italic">
+                  Esta seed será combinada com a seed do servidor para garantir que o resultado é imprevisível.
+                </p>
+              </div>
+
+              <Alert className="bg-primary/5 border-primary/20">
+                <AlertDescription className="text-xs">
+                  Participações confirmadas: <strong>{totalParticipacoes}</strong>.
+                  Ao clicar em "Executar", a seed secreta será revelada e o vencedor determinado.
                 </AlertDescription>
               </Alert>
 
-              <div className="mt-4">
-                <Label htmlFor="observacoes">Observações (opcional)</Label>
-                <Input
-                  id="observacoes"
-                  placeholder="Notas sobre o sorteio..."
-                  value={observacoes}
-                  onChange={(e) => handleObservacoesChange(e.target.value)}
-                  aria-describedby="observacoes-description"
-                />
-                <p id="observacoes-description" className="sr-only">Adicione observações opcionais sobre o sorteio</p>
+              <Button onClick={handleReveal} className="w-full" disabled={loading || totalParticipacoes === 0}>
+                {loading ? "A sortear..." : "🚀 Revelar e Sortear"}
+              </Button>
+            </div>
+          )}
+
+          {fase === 'revealed' && resultado && (
+            <div className="space-y-4 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary">
+                  <CheckCircle className="w-10 h-10 text-primary" />
+                </div>
               </div>
+              <h3 className="text-xl font-bold">Sorteio Concluído!</h3>
+              <div className="p-4 bg-accent/5 rounded-xl border-2 border-accent/20">
+                <p className="text-sm text-muted-foreground mb-1 uppercase font-bold tracking-widest">Resultado</p>
+                <p className="text-3xl font-serif text-accent font-bold">{resultado.resultado}</p>
+              </div>
+
+              <div className="text-left space-y-2 p-3 bg-muted rounded-lg text-[10px] font-mono">
+                <p><span className="text-muted-foreground">Server Seed:</span> {resultado.seedRevelada}</p>
+                <p><span className="text-muted-foreground">Final Hash:</span> {resultado.hashFinal}</p>
+              </div>
+
+              <Button onClick={handleClose} className="w-full" variant="outline">Fechar</Button>
             </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                onClick={handleExecutar}
-                disabled={loading || totalParticipacoes === 0}
-                aria-label={`Executar sorteio com ${totalParticipacoes} participações`}
-              >
-                {loading ? "A sortear..." : "Executar Sorteio"}
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <div className="py-4 space-y-4">
-              {(() => {
-                const display = getResultDisplay(resultado.resultado);
-                return (
-                  <LotteryAnimation
-                    finalResult={display.finalResult}
-                    isSpinning={loading}
-                    type={display.type}
-                  />
-                );
-              })()}
-
-              {/* Detalhes aparecem só depois da animação (simulado pelo loading aqui) */}
-              {!loading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-4"
-                >
-                  <Alert className="border-green-500">
-                    <CheckCircle className="h-4 w-4 text-primary" aria-hidden="true" />
-                    <AlertDescription className="text-green-700">
-                      Sorteio executado com sucesso!
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-medium text-muted-foreground">Vencedores:</h4>
-                      <p className="font-bold" aria-label={`${resultado.vencedores} vencedor(es)`}>
-                        {resultado.vencedores} vencedor(es)
-                      </p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                      <h4 className="text-sm font-medium text-muted-foreground">Audit Hash:</h4>
-                      <code
-                        className="text-[10px] break-all opacity-70"
-                        aria-label={`Hash de auditoria: ${resultado.hash}`}
-                      >
-                        {resultado.hash.substring(0, 16)}...
-                      </code>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button type="button" onClick={handleClose}>
-                Fechar
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

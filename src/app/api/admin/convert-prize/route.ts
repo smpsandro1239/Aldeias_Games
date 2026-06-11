@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determinar qual utilizador vai receber o crédito
-    let userIdToCredit = participacao.id;
+    let userIdToCredit = participacao.userId;
     
     if (!userIdToCredit) {
       // Se não há userId, tentar encontrar pelo email/telefone do cliente
