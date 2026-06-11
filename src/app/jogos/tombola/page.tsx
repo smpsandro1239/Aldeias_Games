@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -264,7 +265,7 @@ export default function TombolaPage() {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -354,7 +355,7 @@ export default function TombolaPage() {
             toast.error("Precisa de login para usar cartão");
             return;
           }
-          const res = await fetch("/api/pagamentos/stripe", {
+          const res = await apiRequest("/api/pagamentos/stripe", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -386,7 +387,7 @@ export default function TombolaPage() {
             toast.error("Telefone obrigatório para MBWay");
             return;
           }
-          const res = await fetch("/api/pagamentos/mbway", {
+          const res = await apiRequest("/api/pagamentos/mbway", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -450,7 +451,7 @@ export default function TombolaPage() {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const response = await fetch("/api/participacoes", {
+      const response = await apiRequest("/api/participacoes", {
         method: "POST",
         headers,
         body: JSON.stringify(payload)
@@ -505,7 +506,7 @@ export default function TombolaPage() {
 
     try {
       // Call API to reset/create a new tombola game with same configuration
-      const response = await fetch("/api/jogos", {
+      const response = await apiRequest("/api/jogos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -148,7 +148,7 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await apiRequest("/api/auth/logout", { method: "POST" });
     } catch {
     }
 

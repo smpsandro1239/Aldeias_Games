@@ -1,26 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { getFullUserFromRequest } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getFullUserFromRequest, verifyToken } from "@/lib/auth";
 
-const prisma = new PrismaClient();
-
-function getSimpleAuthUser(request: NextRequest) {
+async function getAuthFromHeader(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
-  if (authHeader) {
-    try {
-      const token = authHeader.replace("Bearer ", "");
-      return JSON.parse(atob(token));
-    } catch (e) {
-      return null;
-    }
-  }
-  const userParam = request.nextUrl.searchParams.get("user");
-  if (userParam) {
-    try {
-      return JSON.parse(atob(userParam));
-    } catch (e) {
-      return null;
-    }
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    return await verifyToken(token);
   }
   return null;
 }
@@ -31,10 +17,9 @@ export async function GET(request: NextRequest) {
     const tipo = searchParams.get("tipo");
     const jogoId = searchParams.get("jogoId");
 
-    const user = getSimpleAuthUser(request);
-    const userRole = user?.role || null;
-    const userId = user?.id || null;
-    const userAldeiaId = user?.aldeiaId || null;
+    const payload = await getAuthFromHeader(request);
+    const userRole = payload?.role || null;
+    const userAldeiaId = payload?.aldeiaId || null;
 
     const where: any = {};
     
@@ -46,7 +31,7 @@ export async function GET(request: NextRequest) {
       where.jogoId = jogoId;
     }
 
-    const apostass = await prisma.aposta.findMany({
+    const apostas = await prisma.aposta.findMany({
       where,
       include: {
         jogo: {
@@ -64,43 +49,28 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const apostassNumeros = apostass.map((a: any) => ({
-      ...a,
-      numeros: JSON.parse(a.numeros || "[]"),
-    }));
+    const mappedApostas = apostas.map((a: any) => {
+      const nums = typeof a.numeros === 'string' ? JSON.parse(a.numeros || "[]") : a.numeros;
 
-    let filteredApostas = apostassNumeros;
-    
-    if (userRole === "super_admin") {
-      filteredApostas = apostassNumeros;
-    } else if (userRole === "admin" || userRole === "aldeia_admin") {
-      if (userAldeiaId) {
-        filteredApostas = apostassNumeros.filter((a: any) => 
-          a.jogo.evento && a.jogo.evento.aldeiaId === userAldeiaId
-        );
-      } else {
-        filteredApostas = apostassNumeros;
+      // Filtragem de dados sensíveis para utilizadores normais
+      if (userRole === "super_admin" || userRole === "aldeia_admin" || userRole === "admin" || userRole === "vendedor") {
+        return { ...a, numeros: nums };
       }
-    } else if (userRole === "vendedor") {
-      filteredApostas = apostassNumeros;
-    } else {
-      filteredApostas = apostassNumeros.map((a: any) => ({
-        ...a,
-        jogadorNome: a.jogadorNome === user?.nome ? a.jogadorNome : null,
-        jogadorTelefone: undefined,
-        jogadorEmail: undefined,
-        vendedorId: undefined,
-      }));
-    }
 
-    const ApostasComNumeros = filteredApostas.map((a: any) => ({
-      ...a,
-      isPropria: userRole !== "super_admin" && userRole !== "admin" && userRole !== "aldeia_admin" && userRole !== "vendedor" 
-        ? a.jogadorNome === user?.nome 
-        : undefined,
-    }));
+      const isPropria = payload?.userId === a.userId || (a.jogadorNome === payload?.email); // Fallback logic
 
-    return NextResponse.json({ data: ApostasComNumeros });
+      return {
+        id: a.id,
+        numeros: nums,
+        jogadorNome: a.jogadorNome,
+        pago: a.pago,
+        jogoId: a.jogoId,
+        createdAt: a.createdAt,
+        isPropria
+      };
+    });
+
+    return NextResponse.json({ data: mappedApostas });
   } catch (error) {
     console.error("Erro ao buscar apostas:", error);
     return NextResponse.json(
@@ -134,12 +104,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get authenticated user for saldo payment processing
+    // Get authenticated user
     const user = await getFullUserFromRequest(request) as any;
     const custoTotal = numeros.length * (jogo.preco || jogo.custoQuadrado || 5);
 
     // Handle saldo payment
-    if (usarSaldo && user) {
+    if (usarSaldo) {
+      if (!user) {
+        return NextResponse.json({ error: "Deve estar autenticado para pagar com saldo" }, { status: 401 });
+      }
       if ((user.saldo || 0) < custoTotal) {
         return NextResponse.json(
           { error: "Saldo insuficiente" },
@@ -158,77 +131,79 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           valor: -custoTotal,
           tipo: "pagamento_jogo",
-          descricao: `Poio da Vaca - ${numeros.length} números`,
+          descricao: `Poio da Vaca - ${numeros.length} números (${jogo.nome})`,
           referencia: jogoId,
         },
       });
     }
 
-    const apostasExistentes = await prisma.aposta.findMany({
-      where: { jogoId },
-    });
+    // Verificar se números já estão ocupados (Race condition protection)
+    const result = await prisma.$transaction(async (tx) => {
+      const apostasExistentes = await tx.aposta.findMany({
+        where: { jogoId },
+      });
 
-    const numerosOcupados = new Set(
-      apostasExistentes.flatMap((a: any) => {
-        try {
-          return JSON.parse(a.numeros || "[]");
-        } catch (e) {
-          return [];
-        }
-      })
-    );
-
-    const numerosIndisponiveis = numeros.filter((n: number) => 
-      numerosOcupados.has(n)
-    );
-
-    if (numerosIndisponiveis.length > 0) {
-      return NextResponse.json(
-        { error: `Os seguintes números já estão ocupados: ${numerosIndisponiveis.join(", ")}` },
-        { status: 409 }
+      const numerosOcupados = new Set(
+        apostasExistentes.flatMap((a: any) => {
+          try {
+            return typeof a.numeros === 'string' ? JSON.parse(a.numeros || "[]") : a.numeros;
+          } catch (e) {
+            return [];
+          }
+        })
       );
-    }
 
-    const aposta = await prisma.aposta.create({
-      data: {
-        jogoId,
-        numeros: JSON.stringify(numeros),
-        jogadorNome: jogador.nome,
-        jogadorTelefone: jogador.telefone || null,
-        jogadorEmail: jogador.email || null,
-        vendedorId: vendedorId || null,
-        pago: pago || usarSaldo || false,
-      },
-    });
+      const numerosIndisponiveis = numeros.filter((n: number) =>
+        numerosOcupados.has(n)
+      );
 
-    // Give cashback for saldo payments
-    if (usarSaldo && user) {
-      const cashbackPercent = 0.05;
-      const cashbackValor = custoTotal * cashbackPercent;
+      if (numerosIndisponiveis.length > 0) {
+        throw new Error(`Números ocupados: ${numerosIndisponiveis.join(", ")}`);
+      }
 
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { saldo: { increment: cashbackValor } },
-      });
-
-      await prisma.transacao.create({
+      const aposta = await tx.aposta.create({
         data: {
-          userId: user.id,
-          valor: cashbackValor,
-          tipo: "cashback",
-          descricao: `Cashback Poio da Vaca`,
-          referencia: jogoId,
+          jogoId,
+          numeros: JSON.stringify(numeros),
+          jogadorNome: jogador.nome,
+          jogadorTelefone: jogador.telefone || null,
+          jogadorEmail: jogador.email || null,
+          vendedorId: vendedorId || user?.id || null,
+          pago: pago || usarSaldo || false,
+          userId: user?.id || null,
         },
       });
-    }
 
-    return NextResponse.json({ data: aposta }, { status: 201 });
-  } catch (error) {
+      // Give cashback for saldo payments (5%)
+      if (usarSaldo && user) {
+        const cashbackPercent = 0.05;
+        const cashbackValor = custoTotal * cashbackPercent;
+
+        await tx.user.update({
+          where: { id: user.id },
+          data: { saldo: { increment: cashbackValor } },
+        });
+
+        await tx.transacao.create({
+          data: {
+            userId: user.id,
+            valor: cashbackValor,
+            tipo: "cashback",
+            descricao: `Cashback Poio da Vaca: ${jogo.nome}`,
+            referencia: jogoId,
+          },
+        });
+      }
+
+      return aposta;
+    });
+
+    return NextResponse.json({ data: result }, { status: 201 });
+  } catch (error: any) {
     console.error("Erro ao criar aposta:", error);
-    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
     return NextResponse.json(
-      { error: "Erro ao criar aposta: " + errorMessage },
-      { status: 500 }
+      { error: error.message || "Erro ao criar aposta" },
+      { status: error.message?.includes("ocupados") ? 409 : 500 }
     );
   }
 }

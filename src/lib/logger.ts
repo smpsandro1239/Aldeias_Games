@@ -1,6 +1,5 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-// Constants
 const LOG_LEVELS: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3 };
 const DEFAULT_LOG_LEVEL: LogLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
 
@@ -12,11 +11,7 @@ interface LogEntry {
   userId?: string;
   requestId?: string;
   data?: Record<string, unknown>;
-  error?: {
-    message: string;
-    stack?: string;
-    code?: string;
-  };
+  error?: { message: string; stack?: string; code?: string; };
 }
 
 function formatLog(level: LogLevel, message: string, meta?: Record<string, unknown>): string {
@@ -51,19 +46,10 @@ function shouldLog(level: LogLevel): boolean {
 
 function log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {
   if (!shouldLog(level)) return;
-
   const formatted = formatLog(level, message, meta);
-
-  switch (level) {
-    case 'error':
-      console.error(formatted);
-      break;
-    case 'warn':
-      console.warn(formatted);
-      break;
-    default:
-      console.log(formatted);
-  }
+  if (level === 'error') console.error(formatted);
+  else if (level === 'warn') console.warn(formatted);
+  else console.log(formatted);
 }
 
 export const logger = {

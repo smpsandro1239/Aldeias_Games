@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export function WalletCard({ token }: WalletCardProps) {
   const fetchWallet = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

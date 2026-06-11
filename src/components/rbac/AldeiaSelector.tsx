@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useEffect, useState } from "react";
 import {
@@ -28,7 +29,7 @@ export default function AldeiaSelector({ value, onChange }: AldeiaSelectorProps)
       setLoading(true);
 
       try {
-        const response = await fetch("/api/aldeias");
+        const response = await apiRequest("/api/aldeias");
         if (!response.ok) {
           throw new Error("Não foi possível carregar as aldeias");
         }

@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -54,7 +55,7 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const response = await fetch("/api/auth/reset-password/confirm", {
+      const response = await apiRequest("/api/auth/reset-password/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, novaPassword }),

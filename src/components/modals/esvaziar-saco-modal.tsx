@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -91,7 +92,7 @@ export function EsvaziarSacoModal({ open, onOpenChange, aldeiaId, aldeiaNome }: 
         return;
       }
 
-      const res = await fetch("/api/wallet/adjust", {
+      const res = await apiRequest("/api/wallet/adjust", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

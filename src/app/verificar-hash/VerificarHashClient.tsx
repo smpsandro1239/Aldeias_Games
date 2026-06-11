@@ -1,4 +1,5 @@
 'use client';
+import { apiRequest } from '@/lib/api-client';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

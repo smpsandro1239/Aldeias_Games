@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -49,7 +50,7 @@ export function WalletBalance({ token, className = "", showAddButton = true, com
   const fetchWallet = async () => {
     if (!token) return;
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -192,7 +193,7 @@ export function AddBalanceModal({ open, onOpenChange, onSuccess, token }: AddBal
 
     try {
       if (selectedMethod === "stripe") {
-        const res = await fetch("/api/pagamentos/stripe", {
+        const res = await apiRequest("/api/pagamentos/stripe", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -241,7 +242,7 @@ export function AddBalanceModal({ open, onOpenChange, onSuccess, token }: AddBal
           return;
         }
 
-        const res = await fetch("/api/pagamentos/mbway", {
+        const res = await apiRequest("/api/pagamentos/mbway", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -268,7 +269,7 @@ export function AddBalanceModal({ open, onOpenChange, onSuccess, token }: AddBal
         setStep("method");
       } else {
         // For dinheiro/transferencia, use the wallet API directly
-        const res = await fetch("/api/wallet/carregar", {
+        const res = await apiRequest("/api/wallet/carregar", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -522,7 +523,7 @@ export function WalletHistory({ token }: { token: string }) {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch("/api/wallet", {
+      const res = await apiRequest("/api/wallet", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

@@ -20,7 +20,7 @@ export async function executeWithRetry<T>(
         msg.includes('PGRST116') ||
         msg.includes('Deadlock') ||
         msg.includes('could not execute') ||
-        msg.includes('CONFLICT');
+        msg.includes('CONFLICT') || msg.includes('Números ocupados');
       if (!isRetryable || attempt === MAX_RETRIES - 1) {
         throw lastError;
       }

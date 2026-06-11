@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -45,7 +46,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
   const fetchPedidos = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/pedidos-carregamento", {
+      const res = await apiRequest("/api/pedidos-carregamento", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -66,7 +67,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
   const handleConfirmar = async (pedidoId: string) => {
     setProcessing(pedidoId);
     try {
-      const res = await fetch("/api/pedidos-carregamento", {
+      const res = await apiRequest("/api/pedidos-carregamento", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -92,7 +93,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
   const handleRejeitar = async (pedidoId: string) => {
     setProcessing(pedidoId);
     try {
-      const res = await fetch("/api/pedidos-carregamento", {
+      const res = await apiRequest("/api/pedidos-carregamento", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

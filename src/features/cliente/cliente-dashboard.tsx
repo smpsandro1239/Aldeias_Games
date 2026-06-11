@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -146,7 +147,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
      try {
        // Fetch participações
-       const partRes = await fetch("/api/participacoes", {
+       const partRes = await apiRequest("/api/participacoes", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (partRes.ok) {
@@ -155,7 +156,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
        }
 
        // Fetch jogos disponíveis
-       const jogosRes = await fetch("/api/jogos?ativos=true", {
+       const jogosRes = await apiRequest("/api/jogos?ativos=true", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (jogosRes.ok) {
@@ -164,7 +165,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
        }
 
        // Fetch saldo
-       const walletRes = await fetch("/api/wallet", {
+       const walletRes = await apiRequest("/api/wallet", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (walletRes.ok) {
@@ -174,7 +175,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
        }
 
        // Fetch perfil do utilizador (inclui nome, email, telefone)
-       const perfilRes = await fetch("/api/users/perfil", {
+       const perfilRes = await apiRequest("/api/users/perfil", {
          headers: { Authorization: `Bearer ${token}` },
        });
        if (perfilRes.ok) {
@@ -266,7 +267,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       dadosParticipacao = {};
     }
 
-    const response = await fetch("/api/participacoes", {
+    const response = await apiRequest("/api/participacoes", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

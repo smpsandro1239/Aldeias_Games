@@ -37,10 +37,10 @@ export async function handleOAuthCallback(
 
     // Handle provider-specific errors
     if (error) {
-      logger.error(`${options.providerName} OAuth error`, { 
-        module: 'auth', 
+      logger.error(`${options.providerName} OAuth error`, {
+        module: 'auth',
         provider: options.providerName,
-        error 
+        error
       });
       return NextResponse.redirect(
         new URL(`/?error=${options.providerName}_sign_in_failed`, request.url)
@@ -50,11 +50,11 @@ export async function handleOAuthCallback(
     // CSRF protection using state parameter
     const storedState = request.cookies.get(`${options.providerName.toLowerCase()}_oauth_state`)?.value;
     if (!state || state !== storedState) {
-      logger.warn(`Invalid ${options.providerName} OAuth state`, { 
-        module: 'auth', 
+      logger.warn(`Invalid ${options.providerName} OAuth state`, {
+        module: 'auth',
         provider: options.providerName,
-        state, 
-        storedState 
+        state,
+        storedState
       });
       return NextResponse.redirect(
         new URL('/?error=invalid_state', request.url)
@@ -68,8 +68,8 @@ export async function handleOAuthCallback(
     }
 
     // Exchange authorization code for tokens
-    const clientSecret = typeof options.clientSecret === 'function' 
-      ? await options.clientSecret() 
+    const clientSecret = typeof options.clientSecret === 'function'
+      ? await options.clientSecret()
       : options.clientSecret;
 
     const tokenResponse = await fetch(options.tokenUrl, {
@@ -82,7 +82,7 @@ export async function handleOAuthCallback(
         client_secret: clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: options.redirectUri || 
+        redirect_uri: options.redirectUri ||
           `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/${provider}/callback`,
         ...(options.scope ? { scope: options.scope } : {}),
       }),
@@ -101,10 +101,10 @@ export async function handleOAuthCallback(
     }
 
     const tokenData = await tokenResponse.json();
-    
+
     // Get user data from the provider (ID token verification happens here)
     const userData = await options.getUserData(tokenData);
-    
+
     const { email, name, providerId, email_verified: emailVerified } = userData;
 
     if (!email) {
@@ -193,7 +193,7 @@ export async function handleOAuthCallback(
 
     // Create redirect response
     let redirectUrl = new URL('/', request.url);
-    
+
     if (needsOnboarding) {
       // Redirect to onboarding page
       redirectUrl = new URL('/onboarding', request.url);
@@ -238,10 +238,10 @@ export async function handleOAuthCallback(
 
     return response;
   } catch (error) {
-    logger.error(`${options.providerName} OAuth error`, { 
-      module: 'auth', 
+    logger.error(`${options.providerName} OAuth error`, {
+      module: 'auth',
       provider: options.providerName,
-      error 
+      error
     });
     // Generic error fallback
     return NextResponse.redirect(

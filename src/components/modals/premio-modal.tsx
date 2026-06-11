@@ -1,4 +1,5 @@
 "use client";
+import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback, useMemo, useReducer } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -192,7 +193,7 @@ export function PremioModal({
         jogoId: jogoId || null,
       };
 
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -223,7 +224,7 @@ export function PremioModal({
     setDeleting(true);
 
     try {
-      const res = await fetch(`/api/premios/${premio.id}`, {
+      const res = await apiRequest(`/api/premios/${premio.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
