@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🚀 Iniciando Seed Completo...');
+  console.log('🚀 Iniciando Seed Completo e Exaustivo...');
 
   // 1. Limpar base de dados
   await prisma.transacao.deleteMany();
@@ -25,18 +25,11 @@ async function main() {
 
   console.log('🧹 Base de dados limpa');
 
-  // 2. Criar Permissões
-  const permissions = [
-    { key: PermissionKey.VIEW_ALDEIA, description: 'Ver detalhes da aldeia' },
-    { key: PermissionKey.MANAGE_ALDEIA, description: 'Gerir aldeia' },
-    { key: PermissionKey.VIEW_EVENTO, description: 'Ver eventos' },
-    { key: PermissionKey.CREATE_EVENTO, description: 'Criar eventos' },
-    { key: PermissionKey.VIEW_JOGO, description: 'Ver jogos' },
-    { key: PermissionKey.CREATE_JOGO, description: 'Criar jogos' },
-    { key: PermissionKey.EXECUTE_VENDA, description: 'Executar vendas no POS' },
-    { key: PermissionKey.VIEW_VENDAS, description: 'Ver histórico de vendas' },
-    { key: PermissionKey.MANAGE_VENDEDORES, description: 'Gerir vendedores' },
-  ];
+  // 2. Criar Permissões (Matriz Completa)
+  const permissions = Object.values(PermissionKey).map(key => ({
+    key,
+    description: `Permissão para ${key.toLowerCase().replace('_', ' ')}`
+  }));
 
   const createdPerms: Record<string, any> = {};
   for (const p of permissions) {
@@ -44,10 +37,17 @@ async function main() {
   }
 
   const roles = [
-    { name: RoleName.SUPER_ADMIN, description: 'Administrador Global', permissions: permissions.map(p => p.key) },
-    { name: RoleName.ALDEIA_ADMIN, description: 'Admin de Organização', permissions: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.CREATE_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.CREATE_JOGO, PermissionKey.MANAGE_VENDEDORES, PermissionKey.VIEW_VENDAS] },
-    { name: RoleName.GESTOR, description: 'Vendedor / POS', permissions: [PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
-    { name: RoleName.VIEWER, description: 'Utilizador Final', permissions: [PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO] },
+    { name: RoleName.SUPER_ADMIN, description: 'Admin Total', permissions: Object.values(PermissionKey) },
+    { name: RoleName.ALDEIA_ADMIN, description: 'Admin Org', permissions: [
+      PermissionKey.VIEW_ALDEIA, PermissionKey.MANAGE_ALDEIA, PermissionKey.VIEW_EVENTO,
+      PermissionKey.CREATE_EVENTO, PermissionKey.EDIT_EVENTO, PermissionKey.VIEW_JOGO,
+      PermissionKey.CREATE_JOGO, PermissionKey.EDIT_JOGO, PermissionKey.MANAGE_PREMIOS,
+      PermissionKey.VIEW_VENDEDORES, PermissionKey.MANAGE_VENDEDORES, PermissionKey.VIEW_VENDAS
+    ]},
+    { name: RoleName.GESTOR, description: 'Vendedor Plus', permissions: [
+      PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS
+    ]},
+    { name: RoleName.VIEWER, description: 'Visitante', permissions: [PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO] },
   ];
 
   const createdRoles: Record<string, any> = {};
@@ -60,15 +60,13 @@ async function main() {
       });
     }
   }
-  console.log('✅ RBAC configurado');
 
-  // 3. Criar Planos
-  await prisma.plano.create({ data: { id: 'plano-pro', nome: 'Premium', precoMensal: 29.99, maxEventos: 50, maxJogos: 200, maxParticipacoes: 50000, maxVendedores: 100 } });
-  console.log('✅ Planos criados');
+  // 3. Planos
+  await prisma.plano.create({ data: { id: 'plano-pro', nome: 'Premium', precoMensal: 29.99, maxEventos: 100, maxJogos: 500, maxParticipacoes: 100000, maxVendedores: 200 } });
 
   const pass = await bcrypt.hash('123456', 10);
 
-  // 4. Criar Aldeia e Utilizadores
+  // 4. Aldeias
   const aldeia1 = await prisma.aldeia.create({
     data: {
       nome: 'Vale a Zinha', slug: 'vale-a-zinha', tipoOrganizacao: 'aldeia', localidade: 'Viseu', email: 'geral@valeazinha.pt',
@@ -76,47 +74,100 @@ async function main() {
     }
   });
 
-  const userData = [
-    { email: 'admin@aldeias.pt', role: UserRole.super_admin, nome: 'Admin Global', globalRole: RoleName.SUPER_ADMIN },
-    { email: 'admin.valeazinha@aldeias.pt', role: UserRole.aldeia_admin, nome: 'Admin Vale a Zinha', globalRole: RoleName.ALDEIA_ADMIN, aldeiaId: aldeia1.id },
-    { email: 'vendedor1@valeazinha.pt', role: UserRole.vendedor, nome: 'João Vendedor', globalRole: RoleName.GESTOR, aldeiaId: aldeia1.id },
-    { email: 'jogador1@valeazinha.pt', role: UserRole.user, nome: 'Maria Jogadora', globalRole: RoleName.VIEWER, aldeiaId: aldeia1.id },
+  const aldeia2 = await prisma.aldeia.create({
+    data: {
+      nome: 'Escola Primária de Aveiro', slug: 'escola-aveiro', tipoOrganizacao: 'escola', localidade: 'Aveiro', email: 'direcao@escola-aveiro.pt',
+      ativo: true, verificado: true, planoId: 'plano-pro', metodosPagamentoDefault: '["saldo", "dinheiro"]'
+    }
+  });
+
+  // 5. Utilizadores por Role
+  const users = [
+    { email: 'admin@aldeias.pt', role: UserRole.super_admin, nome: 'Sandro Admin', globalRole: RoleName.SUPER_ADMIN },
+    { email: 'admin.valeazinha@aldeias.pt', role: UserRole.aldeia_admin, nome: 'Ricardo Org', globalRole: RoleName.ALDEIA_ADMIN, aldeiaId: aldeia1.id },
+    { email: 'vendedor1@valeazinha.pt', role: UserRole.vendedor, nome: 'João POS', globalRole: RoleName.GESTOR, aldeiaId: aldeia1.id },
+    { email: 'jogador1@valeazinha.pt', role: UserRole.user, nome: 'Maria Sorte', globalRole: RoleName.VIEWER, aldeiaId: aldeia1.id },
+    { email: 'jogador2@escola.pt', role: UserRole.user, nome: 'Pedro Aluno', globalRole: RoleName.VIEWER, aldeiaId: aldeia2.id },
   ];
 
-  const users: any[] = [];
-  for (const u of userData) {
+  const dbUsers: Record<string, any> = {};
+  for (const u of users) {
     const user = await prisma.user.create({
-      data: { email: u.email, password: pass, nome: u.nome, role: u.role, aldeiaId: u.aldeiaId, emailVerificado: true, saldo: 500.0 }
+      data: { email: u.email, password: pass, nome: u.nome, role: u.role, aldeiaId: u.aldeiaId, emailVerificado: true, saldo: 1000.0 }
     });
-    users.push(user);
+    dbUsers[u.email] = user;
     await prisma.userGlobalRole.create({ data: { userId: user.id, roleId: createdRoles[u.globalRole].id } });
     if (u.aldeiaId) await prisma.userAldeiaRole.create({ data: { userId: user.id, roleId: createdRoles[u.globalRole].id, aldeiaId: u.aldeiaId } });
   }
 
-  // 5. Criar Evento e Jogos
-  const ev = await prisma.evento.create({
-    data: { nome: 'Festa Popular 2026', slug: 'festa-2026', aldeiaId: aldeia1.id, estado: 'ativo', publico: true, dataInicio: new Date(), dataFim: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }
+  // 6. Eventos e Jogos (Full Portfolio)
+  const ev1 = await prisma.evento.create({
+    data: { nome: 'Festa de Verão 2026', slug: 'festa-26', aldeiaId: aldeia1.id, estado: 'ativo', publico: true, dataInicio: new Date(), dataFim: new Date(Date.now() + 10e9) }
   });
 
+  // Jogo: Rifa
   const rifa = await prisma.jogo.create({
-    data: { nome: 'Rifa Cabaz', tipo: 'rifa', preco: 2.0, stockInicial: 100, stockAtual: 100, estado: EstadoJogo.aberto, eventoId: ev.id, aldeiaId: aldeia1.id, configuracao: '{"numeroInicial":1,"numeroFinal":100}' }
+    data: {
+      nome: 'Rifa Cabaz Natal', tipo: 'rifa', preco: 2.0, stockInicial: 200, stockAtual: 195, estado: EstadoJogo.aberto,
+      eventoId: ev1.id, aldeiaId: aldeia1.id, configuracao: '{"numeroInicial":1,"numeroFinal":200}'
+    }
   });
 
+  // Jogo: Tombola
+  const tombola = await prisma.jogo.create({
+    data: {
+      nome: 'Tombola Escolar', tipo: 'tombola', preco: 5.0, stockInicial: 50, stockAtual: 40, estado: EstadoJogo.aberto,
+      eventoId: ev1.id, aldeiaId: aldeia1.id, configuracao: '{"numeroInicial":1,"numeroFinal":50}'
+    }
+  });
+
+  // Jogo: Poio da Vaca
   const poio = await prisma.jogo.create({
     data: {
-      nome: 'Poio da Vaca', tipo: 'poio_da_vaca', preco: 10.0, stockInicial: 100, stockAtual: 100, estado: EstadoJogo.aberto, eventoId: ev.id, aldeiaId: aldeia1.id,
-      configuracao: '{"letras":["A","B","C","D","E","F","G","H","I","J"],"numerosPorLetra":10}', dimensoesCampo: '{"x":10,"y":10,"total":100}', custoQuadrado: 10.0
+      nome: 'O Poio da Vaca 2026', tipo: 'poio_da_vaca', preco: 10.0, stockInicial: 100, stockAtual: 90, estado: EstadoJogo.aberto,
+      eventoId: ev1.id, aldeiaId: aldeia1.id, configuracao: '{"letras":["A","B","C","D","E","F","G","H","I","J"],"numerosPorLetra":10}',
+      dimensoesCampo: '{"x":10,"y":10,"total":100}', custoQuadrado: 10.0
     }
   });
 
+  // Jogo: Raspadinha
   const rasp = await prisma.jogo.create({
     data: {
-      nome: 'Raspadinha Sorte', tipo: 'raspadinha', preco: 1.0, stockInicial: 1000, stockAtual: 1000, estado: EstadoJogo.aberto, eventoId: ev.id, aldeiaId: aldeia1.id,
-      configuracao: '{"premios":[{"nome":"Presunto","valorDinheiroAlternative":50,"percentagem":1,"convertivelSaldo":true},{"nome":"1€ Saldo","valorDinheiroAlternative":1,"percentagem":10,"convertivelSaldo":true}]}'
+      nome: 'Raspadinha Aldeia Viva', tipo: 'raspadinha', preco: 1.5, stockInicial: 1000, stockAtual: 850, estado: EstadoJogo.aberto,
+      eventoId: ev1.id, aldeiaId: aldeia1.id, configuracao: '{"premios":[{"nome":"Presunto","valorDinheiroAlternative":60,"percentagem":0.5,"convertivelSaldo":true},{"nome":"10€","valorDinheiroAlternative":10,"percentagem":2,"convertivelSaldo":true},{"nome":"1.5€","valorDinheiroAlternative":1.5,"percentagem":10,"convertivelSaldo":true}]}'
     }
   });
 
-  console.log('✅ Jogos e Utilizadores criados. Seed concluído!');
+  // 7. Participações em Massa e Estados Diversos
+  const player = dbUsers['jogador1@valeazinha.pt'];
+
+  // Rifa (Paga)
+  await prisma.participacao.create({
+    data: { jogoId: rifa.id, userId: player.id, valorPago: 4.0, metodoPagamento: MetodoPagamento.saldo, estadoPagamento: EstadoPagamento.concluido, dataPagamento: new Date(), dadosParticipacao: '{"numeros":[7, 12]}' }
+  });
+
+  // Raspadinha (Revelada e Vencedora)
+  await prisma.participacao.create({
+    data: {
+      jogoId: rasp.id, userId: player.id, valorPago: 1.5, metodoPagamento: MetodoPagamento.saldo, estadoPagamento: EstadoPagamento.concluido,
+      revelado: true, dataRevelacao: new Date(), ganhador: true, resultadoRaspe: 'Presunto',
+      dadosParticipacao: '{"grid":[],"hasWin":true,"result":"Presunto"}'
+    }
+  });
+
+  // Poio da Vaca (Vários quadrados)
+  await prisma.participacao.create({
+    data: {
+      jogoId: poio.id, userId: player.id, valorPago: 30.0, metodoPagamento: MetodoPagamento.dinheiro, estadoPagamento: EstadoPagamento.concluido,
+      dadosParticipacao: '{"coordenadas":[{"letra":"A","numero":1},{"letra":"B","numero":2},{"letra":"C","numero":3}]}'
+    }
+  });
+
+  // 8. Transações e Notificações
+  await prisma.transacao.create({ data: { userId: player.id, valor: 50.0, tipo: 'carregamento_saldo', descricao: 'Carregamento inicial' } });
+  await prisma.notificacao.create({ data: { userId: player.id, titulo: 'Bem-vindo!', mensagem: 'A sua conta está pronta.', tipo: 'sistema' } });
+
+  console.log('✅ Seed exaustivo concluído com sucesso!');
 }
 
 main().catch(e => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
