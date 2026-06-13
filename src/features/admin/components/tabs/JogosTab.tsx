@@ -33,6 +33,7 @@ interface JogosTabProps {
   requestDelete: (type: string, id: string) => void;
   getEstadoBadge: (estado: string) => React.ReactNode;
   onToggleEstado: (jogo: Jogo) => void;
+  onRealSorteio: (jogo: Jogo) => void;
   filtroEventoId?: string | null;
   onLimparFiltro?: () => void;
 }
@@ -204,6 +205,16 @@ export function JogosTab({
                         onClick={() => handleTestarJogo(jg)}
                       >
                         <Eye className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Executar sorteio real"
+                        className="text-primary hover:text-accent font-bold"
+                        onClick={() => onRealSorteio(jg)}
+                        disabled={jg.sorteado || jg.stockAtual > 0}
+                      >
+                        <Trophy className="h-4 w-4" />
+                      </Button>
                       </Button>
                     )}
 

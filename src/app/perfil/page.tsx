@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User as UserIcon, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet, Shield, FileText } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { ShieldCheck, Lock } from 'lucide-react';
+import { MFASetupModal } from '@/components/modals/mfa-setup-modal';
 import { toast } from "sonner";
 import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
 import { LayoutHeader } from "@/components/layout-header";
@@ -46,6 +49,7 @@ export default function PerfilPage() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [carregarSaldoOpen, setCarregarSaldoOpen] = useState(false);
+  const [mfaSetupOpen, setMfaSetupOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -372,6 +376,33 @@ export default function PerfilPage() {
               <p className="text-[10px] text-secondary">Aldeia selecionada</p>
             )}
           </div>
+        <Card className="bg-surface-container/50 border-outline-variant/20">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-accent mb-1 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                Segurança 2FA
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Proteja a sua conta com autenticação de dois fatores.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMfaSetupOpen(true)}
+              className="border-primary/20 text-primary hover:bg-primary/5"
+            >
+              Configurar
+            </Button>
+          </CardContent>
+        </Card>
+
+        <MFASetupModal
+          open={mfaSetupOpen}
+          onOpenChange={setMfaSetupOpen}
+          onSuccess={() => {}}
+        />
         </div>
 
         <Card className="bg-surface-container/50 border-outline-variant/20">

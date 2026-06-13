@@ -1,22 +1,24 @@
-import { TOTP } from 'otplib';
+import { authenticator } from 'otplib';
 import { toDataURL } from 'qrcode';
 
+/**
+ * Gera um segredo aleatório para MFA
+ */
 export const generateMFASecret = () => {
-  return new TOTP().generateSecret();
+  return authenticator.generateSecret();
 };
 
-export const generateMFAOTP = (secret: string) => {
-  const totp = new TOTP({ secret });
-  return totp.generate();
-};
-
+/**
+ * Verifica se um token TOTP é válido para um segredo
+ */
 export const verifyMFAOTP = (token: string, secret: string) => {
-  const totp = new TOTP({ secret });
-  return totp.verify(token, { secret });
+  return authenticator.verify({ token, secret });
 };
 
-export const generateMFAQRCode = async (email: string, secret: string, issuer: string = 'Aldeias Games') => {
-  const totp = new TOTP({ issuer });
-  const otpauthUrl = totp.toURI({ label: email, secret });
+/**
+ * Gera um QR Code para configurar na app do utilizador
+ */
+export const generateMFAQRCode = async (email: string, secret: string, issuer: string = 'Aldeia Viva') => {
+  const otpauthUrl = authenticator.keyuri(email, issuer, secret);
   return await toDataURL(otpauthUrl);
 };

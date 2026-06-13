@@ -128,6 +128,7 @@ export default function AdminDashboard({
   const [qrCodeOpen, setQrCodeOpen] = useState(false);
   const [resultadosExternosOpen, setResultadosExternosOpen] = useState(false);
   const [testJogoOpen, setTestJogoOpen] = useState(false);
+  const [realSorteioOpen, setRealSorteioOpen] = useState(false);
 
   // Seleções
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
@@ -355,7 +356,7 @@ export default function AdminDashboard({
                 estado: "aberto",
               };
 
-              await fetch("/api/jogos", {
+              await apiRequest("/api/jogos", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -449,6 +450,18 @@ export default function AdminDashboard({
     }
   }, [token, fetchData, setJogoModalOpen]);
 
+  const handleRealSorteio = useCallback(async (jogo: Jogo) => {
+    setSelectedJogo(jogo as any);
+    // Buscar total de participações
+    try {
+      const res = await apiRequest(`/api/participacoes?jogoId=${jogo.id}&estadoPagamento=concluido&page=1&limit=1`);
+      if (res.ok) {
+        const data = await res.json();
+        setTestJogoTotalParticipacoes(data.pagination?.total || 0);
+      }
+    } catch (e) {}
+    setRealSorteioOpen(true);
+  }, []);
    const handleToggleJogoEstado = useCallback((jogo: Jogo) => {
      const novoEstado = jogo.estado === 'aberto' ? 'fechado' : 'aberto';
      setToggleJogoData({ jogo, novoEstado });
@@ -473,7 +486,7 @@ export default function AdminDashboard({
        console.error("Erro ao buscar participações:", error);
        setTestJogoTotalParticipacoes(0);
      }
-      setTestJogoOpen(true);
+      setSelectedJogo(jogo as any); setRealSorteioOpen(true);
     }, [token]);
 
    const executeToggleJogoEstado = useCallback(async () => {
@@ -617,7 +630,7 @@ export default function AdminDashboard({
     };
 
     try {
-      const res = await fetch(urls[deleteData.type], {
+      const res = await apiRequest(urls[deleteData.type], {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -1009,6 +1022,7 @@ export default function AdminDashboard({
              requestDelete={requestDelete}
              getEstadoBadge={getEstadoBadge}
              onToggleEstado={handleToggleJogoEstado}
+             onRealSorteio={handleRealSorteio}
              filtroEventoId={filtroEventoId}
              onLimparFiltro={handleLimparFiltroJogos}
            />
@@ -1232,7 +1246,7 @@ export default function AdminDashboard({
         description="Tem a certeza que deseja marcar este prémio como entregue fisicamente?"
         onConfirm={async () => {
           if (selectedPremio) {
-            const res = await fetch(`/api/participacoes/${selectedPremio.id}`, {
+            const res = await apiRequest(`/api/participacoes/${selectedPremio.id}`, {
               method: 'PUT',
               headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
               body: JSON.stringify({ premioEntregue: true })
@@ -1264,48 +1278,18 @@ export default function AdminDashboard({
                 </AlertDescription>
               </Alert>
             )}
-            {/* SorteioModal para executar sorteios de teste */}
-            {testJogo && testJogoTotalParticipacoes > 0 && (
-              <SorteioModal
-                open={testJogoOpen}
-                onOpenChange={setTestJogoOpen}
-                jogoNome={testJogo.nome}
-                totalParticipacoes={testJogoTotalParticipacoes}
-                onExecutarSorteio={async (observacoes?: string) => {
-                  try {
-                    const res = await apiRequest('/api/sorteios/teste', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({ jogoId: testJogo.id, observacoes }),
-                    });
-                    const json = await res.json();
-                    if (!res.ok) {
-                      return { success: false, error: json.error || 'Erro ao executar teste' };
-                    }
-                    // Recarregar dados após teste
-                    fetchData();
-                    return {
-                      success: true,
-                      data: {
-                        resultado: json.data.resultado,
-                        vencedores: json.data.vencedores,
-                        hash: json.data.hash,
-                        seed: json.data.seed,
-                      },
-                    };
-                  } catch (error) {
-                    console.error('Erro no teste de sorteio:', error);
-                    return { success: false, error: 'Erro interno do servidor' };
-                  }
-                }}
-              />
             )}
           </div>
         </DialogContent>
       </Dialog>
+
+      <SorteioModal
+        open={realSorteioOpen}
+        onOpenChange={setRealSorteioOpen}
+        jogo={selectedJogo}
+        totalParticipacoes={testJogoTotalParticipacoes}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }

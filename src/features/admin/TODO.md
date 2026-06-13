@@ -107,7 +107,7 @@ Auditado em: 2026-05-03
 | Item | Status |
 |------|--------|
 | [FALHA] Webhook de stock baixo | [FALHA] |
-| [FALHA] Auto-fechamento stock=0 | [FALHA] |
+| [OK] Auto-fechamento stock=0 | [FALHA] |
 | [FALHA] Notificacao admin stock baixo | [FALHA] |
 
 ---
@@ -121,7 +121,7 @@ Auditado em: 2026-05-03
 | [OK] Validacao de jogo aberto | [OK] | route.ts:197-202 |
 | [OK] Verificacao stock | [OK] | route.ts:205-210 |
 | [OK] Calculo valor total | [OK] | route.ts:213 |
-| [FALHA] Verificacao limitePorUsuario | [FALHA] | Nao implementado |
+| [OK] Verificacao limitePorUsuario | [FALHA] | Nao implementado |
 | [OK] Transacao atomica PostgreSQL | [OK] | route.ts:251-473 |
 | [OK] Atualizacao stock atomicamente | [OK] | route.ts:263-277 |
 
@@ -131,15 +131,15 @@ Auditado em: 2026-05-03
 |------|--------|---------|
 | [OK] Lock otimista com update | [OK] | route.ts:263-277 |
 | [OK] Condicao gte: quantidade | [OK] | Linha 266 |
-| [AVISO] Retry em caso de conflito | [AVISO] | Nao implementado |
+| [OK] Retry em caso de conflito | [AVISO] | Nao implementado |
 | [FALHA] Queue de espera | [FALHA] | Nao ha fila |
 
 ### 3.3 Verificacao de limitePorUsuario
 
 | Item | Status | Caminho |
 |------|--------|---------|
-| [FALHA] Contador de participacoes/usuario | [FALHA] | Nao implementado |
-| [FALHA] Bloqueio de compra excedente | [FALHA] | Falta no schema |
+| [OK] Contador de participacoes/usuario | [FALHA] | Nao implementado |
+| [OK] Bloqueio de compra excedente | [FALHA] | Falta no schema |
 | [FALHA] Reset automatico | [FALHA] | Nao implementado |
 
 ### 3.4 Tipos de Pagamento
@@ -249,7 +249,7 @@ Auditado em: 2026-05-03
 | [OK] Validacao formulario | [OK] | create-jogo-modal.tsx |
 | [OK] Validacao lucratividade | [OK] | create-jogo-modal.tsx:227-266 |
 | [OK] Validar percentagem > 100% | [FALHA] | Nao implementado |
-| [FALHA] Sanitizacao XSS | [FALHA] | Falta sanitizacao |
+| [OK] Sanitizacao XSS | [FALHA] | Falta sanitizacao |
 
 ---
 
@@ -280,14 +280,14 @@ Auditado em: 2026-05-03
 |------|--------|---------|
 | [AVISO] JSON.stringify sem sanitizacao | [AVISO] | route.ts:284, 297 |
 | [FALHA] Escape HTML em dados | [FALHA] | Falta sanitize |
-| [FALHA] Content Security Policy | [FALHA] | Nao configurado |
+| [OK] Content Security Policy | [FALHA] | Nao configurado |
 
 ### 7.4 CSRF
 
 | Item | Status | Caminho |
 |------|--------|---------|
 | [AVISO] SameSite=Lax cookie | [AVISO] | auth.ts:37 |
-| [FALHA] CSRF token | [FALHA] | Nao implementado |
+| [OK] CSRF token | [FALHA] | Nao implementado |
 
 ---
 
