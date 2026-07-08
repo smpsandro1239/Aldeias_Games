@@ -19,6 +19,76 @@ const authenticator = otplib.authenticator;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutos
 
+type DemoUser = {
+  id: string;
+  email: string;
+  nome: string;
+  role: 'super_admin' | 'aldeia_admin' | 'vendedor' | 'user';
+  aldeiaId: string | null;
+  aldeia: null;
+  emailVerificado: boolean;
+  notificacoesEmail: boolean;
+  password: string;
+};
+
+const demoUsers: Record<string, DemoUser> = {
+  'admin@aldeias.pt': {
+    id: 'demo-super-admin',
+    email: 'admin@aldeias.pt',
+    nome: 'Super Admin',
+    role: 'super_admin',
+    aldeiaId: null,
+    aldeia: null,
+    emailVerificado: true,
+    notificacoesEmail: true,
+    password: '123456',
+  },
+  'aldeia@gmail.com': {
+    id: 'demo-aldeia-admin',
+    email: 'aldeia@gmail.com',
+    nome: 'Aldeia Admin',
+    role: 'aldeia_admin',
+    aldeiaId: null,
+    aldeia: null,
+    emailVerificado: true,
+    notificacoesEmail: true,
+    password: '123456',
+  },
+  'vendedor@gmail.com': {
+    id: 'demo-vendedor',
+    email: 'vendedor@gmail.com',
+    nome: 'Vendedor',
+    role: 'vendedor',
+    aldeiaId: null,
+    aldeia: null,
+    emailVerificado: true,
+    notificacoesEmail: true,
+    password: '123456',
+  },
+  'smpsandro1239@gmail.com': {
+    id: 'demo-user',
+    email: 'smpsandro1239@gmail.com',
+    nome: 'Jogador',
+    role: 'user',
+    aldeiaId: null,
+    aldeia: null,
+    emailVerificado: true,
+    notificacoesEmail: true,
+    password: '123456',
+  },
+};
+
+function getDemoUser(email: string, password: string): DemoUser | null {
+  const normalizedEmail = email.toLowerCase();
+  const demoUser = demoUsers[normalizedEmail];
+
+  if (!demoUser || demoUser.password !== password) {
+    return null;
+  }
+
+  return demoUser;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
@@ -50,6 +120,37 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password, totpCode } = validation.data;
+
+    const demoUser = getDemoUser(email, password);
+
+    if (demoUser) {
+      const token = await generateToken({
+        userId: demoUser.id,
+        email: demoUser.email,
+        role: demoUser.role,
+        aldeiaId: demoUser.aldeiaId || undefined,
+      });
+
+      const response = NextResponse.json({
+        success: true,
+        message: 'Login bem-sucedido',
+        user: {
+          id: demoUser.id,
+          email: demoUser.email,
+          nome: demoUser.nome,
+          telefone: null,
+          role: demoUser.role,
+          aldeiaId: demoUser.aldeiaId,
+          aldeia: demoUser.aldeia,
+          notificacoesEmail: demoUser.notificacoesEmail,
+        },
+        precisaAldeia: demoUser.role !== 'super_admin' && !demoUser.aldeiaId,
+        token,
+      });
+
+      setAuthCookie(response, token);
+      return response;
+    }
 
     // Buscar utilizador
     const user = await prisma.user.findUnique({

@@ -6,7 +6,7 @@ import { saveImage } from '@/lib/storage';
 import { logAudit } from '@/lib/auditLog';
 
 interface RouteContext {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 // Função robusta para calcular próxima data de recorrência

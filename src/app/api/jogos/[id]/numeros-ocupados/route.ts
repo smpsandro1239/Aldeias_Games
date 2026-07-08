@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 // Não requer autenticação - apenas retorna números, sem dados sensíveis
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{id: string}> }
+  context: { params: {id: string} }
 ) {
   try {
     const { id: jogoId } = await context.params;

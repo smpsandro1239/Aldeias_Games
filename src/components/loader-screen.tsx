@@ -1,7 +1,6 @@
 "use client";
 
 import { House } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface LoaderScreenProps {
   message?: string;
@@ -29,12 +28,7 @@ export function LoaderScreen({ message = "A Iniciar" }: LoaderScreenProps) {
           Onde a Tradição, Forja o Futuro
         </p>
         
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-12 flex flex-col items-center gap-4"
-        >
+        <div className="mt-12 flex flex-col items-center gap-4 loader-entry">
           <div className="relative w-32 h-1 bg-surface-container-highest/20 rounded-full overflow-hidden">
             <div 
               className="digital-loader absolute inset-0 rounded-full shadow-[0_0_15px_rgba(0,218,243,0.4)]"
@@ -49,7 +43,7 @@ export function LoaderScreen({ message = "A Iniciar" }: LoaderScreenProps) {
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">
             {message}&nbsp;
           </span>
-        </motion.div>
+        </div>
       </div>
 
       <div className="absolute bottom-12 left-12 hidden md:block border-l border-primary/20 pl-4 py-2">
@@ -65,6 +59,13 @@ export function LoaderScreen({ message = "A Iniciar" }: LoaderScreenProps) {
         }
         .digital-loader {
           animation: pulse-cyan 3s infinite ease-in-out;
+        }
+        .loader-entry {
+          animation: fade-in-up 0.6s ease-out forwards;
+        }
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

@@ -9,7 +9,7 @@ const entrarAldeiaSchema = z.object({
   // For now, just an empty object to validate the request body structure
 }).strip()
 
-export async function POST(request: NextRequest, context: { params: Promise<{id: string}> }) {
+export async function POST(request: NextRequest, context: { params: {id: string} }) {
   try {
     const { id } = await context.params
     const user = await getFullUserFromRequest(request)

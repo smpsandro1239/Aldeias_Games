@@ -89,23 +89,29 @@ async function handleApiRequest(request: NextRequest): Promise<NextResponse | nu
     const origin = request.headers.get('origin');
     const referer = request.headers.get('referer');
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const host = request.headers.get('host') || '';
+    const isLocalRequest = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
 
     // Webhooks excluídos
     if (!pathname.startsWith('/api/stripe/webhook') && !pathname.startsWith('/api/mbway/webhook')) {
       const isValidOrigin = origin && (
-        origin === appUrl || 
+        origin === appUrl ||
         origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.startsWith('http://0.0.0.0:') ||
         origin.endsWith('.vercel.app') ||
         origin.endsWith('.vercel.sh')
       );
       const isValidReferer = referer && (
-        referer.startsWith(appUrl) || 
+        referer.startsWith(appUrl) ||
         referer.startsWith('http://localhost:') ||
+        referer.startsWith('http://127.0.0.1:') ||
+        referer.startsWith('http://0.0.0.0:') ||
         referer.endsWith('.vercel.app') ||
         referer.endsWith('.vercel.sh')
       );
 
-      if (!isValidOrigin && !isValidReferer) {
+      if (!isLocalRequest && !isValidOrigin && !isValidReferer) {
         return NextResponse.json(
           { error: 'Origem não permitida' },
           { status: 403 }

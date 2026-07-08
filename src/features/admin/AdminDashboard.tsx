@@ -1,7 +1,5 @@
 "use client";
 import { apiRequest } from '@/lib/api-client';
-import { apiRequest } from '@/lib/api-client';
-
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";

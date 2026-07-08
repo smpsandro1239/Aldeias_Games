@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 
 interface Context {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export async function POST(request: NextRequest, { params }: Context) {

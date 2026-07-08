@@ -352,7 +352,6 @@ export async function POST(request: NextRequest) {
 
       if (updated.count === 0) {
         throw new Error('Stock insuficiente - operação concorrente');
-
       // Verificar se o stock esgotou para fechar o jogo automaticamente
       }
       const jogoFinal = await tx.jogo.findUnique({
@@ -365,7 +364,6 @@ export async function POST(request: NextRequest) {
           where: { id: data.jogoId },
           data: { estado: "fechado" }
         });
-      }
       }
        // Criar participações (pode ser múltipla)
        const participacoes: any[] = [];

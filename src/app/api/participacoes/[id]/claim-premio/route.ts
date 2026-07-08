@@ -24,7 +24,7 @@ function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{id: string}> }
+  context: { params: {id: string} }
 ) {
   try {
     const user = await getFullUserFromRequest(request);

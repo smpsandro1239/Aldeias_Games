@@ -8,7 +8,7 @@ const roleUpdateSchema = z.object({
   role: z.enum(['MEMBRO', 'MODERADOR'])
 })
 
-export async function POST(request: NextRequest, context: { params: Promise<{id: string; userId: string}> }) {
+export async function POST(request: NextRequest, context: { params: {id: string; userId: string} }) {
   try {
     const { id, userId } = await context.params
     const user = await getUserFromRequest(request)

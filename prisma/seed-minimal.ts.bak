@@ -8,6 +8,7 @@ async function main() {
   console.log('🌱 SEED MÍNIMO - Criando dados para teste');
 
   // Limpar dados relevantes (em ordem correta para evitar problemas de foreign key)
+  await prisma.$executeRaw`SET CONSTRAINTS ALL DEFERRED`;
   try {
     // Delete in order: children first, then parents
     await prisma.premio.deleteMany();

@@ -108,17 +108,17 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={(e) => { e.preventDefault(); quickLogin("admin.valeazinha@aldeias.pt", "123456"); }}
+                  onClick={(e) => { e.preventDefault(); quickLogin("aldeia@gmail.com", "123456"); }}
                   disabled={loading}
                   className="h-9"
                 >
-                  Admin Aldeia
+                  Aldeia Admin
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={(e) => { e.preventDefault(); quickLogin("vendedor1@valeazinha.pt", "123456"); }}
+                  onClick={(e) => { e.preventDefault(); quickLogin("vendedor@gmail.com", "123456"); }}
                   disabled={loading}
                   className="h-9"
                 >
@@ -128,7 +128,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={(e) => { e.preventDefault(); quickLogin("jogador1@valeazinha.pt", "123456"); }}
+                  onClick={(e) => { e.preventDefault(); quickLogin("smpsandro1239@gmail.com", "123456"); }}
                   disabled={loading}
                   className="h-9"
                 >

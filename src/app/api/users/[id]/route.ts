@@ -4,7 +4,7 @@ import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/auditLog';
 
 interface RouteContext {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {

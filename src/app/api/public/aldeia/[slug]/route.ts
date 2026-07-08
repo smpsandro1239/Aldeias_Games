@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{slug: string}> }
+  context: { params: {slug: string} }
 ) {
   try {
     const { slug } = await context.params;

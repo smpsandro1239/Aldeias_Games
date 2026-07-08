@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 
-export async function DELETE(request: NextRequest, context: { params: Promise<{id: string; userId: string}> }) {
+export async function DELETE(request: NextRequest, context: { params: {id: string; userId: string} }) {
   try {
     const { id, userId } = await context.params
     const user = await getUserFromRequest(request)
