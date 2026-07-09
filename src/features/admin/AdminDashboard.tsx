@@ -221,7 +221,7 @@ export default function AdminDashboard({
           getApi(`/api/admin/transacoes`, 40),
           getApi(`/api/admin/logs`, 60),
         ]);
-        setAldeias(al || []);
+        setAldeias(al?.aldeias ?? al ?? []);
         setTransacoes(tr || []);
         setLogs(lg || []);
       }
