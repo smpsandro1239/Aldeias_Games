@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
 import { euromillionsApiService } from '@/lib/euromillions-api';
+import { Prisma } from '@prisma/client';
 
 
 // GET - Listar participações
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
         },
         select: { id: true },
       });
-      const jogoIds = jogos.map(j => j.id);
+      const jogoIds = jogos.map((j: { id: string }) => j.id);
       
       if (userId) {
         where = {
@@ -249,45 +250,47 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    // Verificar limite por utilizador
-    const limite = jogo.limitePorUsuario;
-    if (limite > 0) {
-      const orConditions: any[] = [];
+    // Verificar limite por utilizador (apenas para role 'user')
+    if (!user || user.role === 'user') {
+      const limite = jogo.limitePorUsuario;
+      if (limite > 0) {
+        const orConditions: any[] = [];
 
-      if (hasDadosCliente) {
-        if (data.dadosCliente?.email) orConditions.push({ emailCliente: data.dadosCliente.email });
-        if (data.dadosCliente?.telefone) orConditions.push({ telefoneCliente: data.dadosCliente.telefone });
+        if (hasDadosCliente) {
+          if (data.dadosCliente?.email) orConditions.push({ emailCliente: data.dadosCliente.email });
+          if (data.dadosCliente?.telefone) orConditions.push({ telefoneCliente: data.dadosCliente.telefone });
 
-        const customerUser = await prisma.user.findFirst({
-          where: {
-            OR: [
-              ...(data.dadosCliente?.email ? [{ email: data.dadosCliente.email }] : []),
-              ...(data.dadosCliente?.telefone ? [{ telefone: data.dadosCliente.telefone }] : []),
-            ]
-          },
-          select: { id: true }
-        });
-        if (customerUser) orConditions.push({ userId: customerUser.id });
-      } else if (user) {
-        orConditions.push({ userId: user.id });
-        if ((user as any).email) orConditions.push({ emailCliente: (user as any).email });
-        if ((user as any).telefone) orConditions.push({ telefoneCliente: (user as any).telefone });
-      }
+          const customerUser = await prisma.user.findFirst({
+            where: {
+              OR: [
+                ...(data.dadosCliente?.email ? [{ email: data.dadosCliente.email }] : []),
+                ...(data.dadosCliente?.telefone ? [{ telefone: data.dadosCliente.telefone }] : []),
+              ]
+            },
+            select: { id: true }
+          });
+          if (customerUser) orConditions.push({ userId: customerUser.id });
+        } else if (user) {
+          orConditions.push({ userId: user.id });
+          if ((user as any).email) orConditions.push({ emailCliente: (user as any).email });
+          if ((user as any).telefone) orConditions.push({ telefoneCliente: (user as any).telefone });
+        }
 
-      if (orConditions.length > 0) {
-        const count = await prisma.participacao.count({
-          where: {
-            jogoId: data.jogoId,
-            estadoPagamento: { in: ["concluido", "pendente"] },
-            OR: orConditions,
-          },
-        });
+        if (orConditions.length > 0) {
+          const count = await prisma.participacao.count({
+            where: {
+              jogoId: data.jogoId,
+              estadoPagamento: { in: ["concluido", "pendente"] },
+              OR: orConditions,
+            },
+          });
 
-        if (count + data.quantidade > limite) {
-          return NextResponse.json(
-            { error: `Limite de participações excedido. O limite para este jogo é de ${limite} por utilizador.` },
-            { status: 400 }
-          );
+          if (count + data.quantidade > limite) {
+            return NextResponse.json(
+              { error: `Limite de participações excedido. O limite para este jogo é de ${limite} por utilizador.` },
+              { status: 400 }
+            );
+          }
         }
       }
     }
@@ -336,7 +339,7 @@ export async function POST(request: NextRequest) {
 
      // Usar transação atómica para evitar race conditions
      const result = await executeWithRetry(async () => {
-       return await prisma.$transaction(async (tx) => {
+       return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // Verificar stock dentro da transação com locking
         const jogoLocked = await tx.jogo.findUnique({
           where: { id: data.jogoId },
