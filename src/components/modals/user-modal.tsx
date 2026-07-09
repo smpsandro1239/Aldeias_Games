@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { normalizeAldeiasList } from "@/lib/utils";
 
 // Constants for user roles to avoid magic strings
 const USER_ROLES = {
@@ -53,6 +54,8 @@ interface UserModalProps {
 }
 
 export function UserModal({ open, onOpenChange, onSubmit, initialData, aldeias = [], currentUserRole }: UserModalProps) {
+  const normalizedAldeias = normalizeAldeiasList(aldeias);
+
   const [formData, setFormData] = useState<UserData>({
     nome: "",
     email: "",
@@ -218,7 +221,7 @@ export function UserModal({ open, onOpenChange, onSubmit, initialData, aldeias =
               <p id="role-description" className="sr-only">Define as permissões e acesso do utilizador no sistema</p>
             </div>
 
-            {(currentUserRole === USER_ROLES.SUPER_ADMIN || (currentUserRole === USER_ROLES.ALDEIA_ADMIN && aldeias.length > 0)) && (
+            {(currentUserRole === USER_ROLES.SUPER_ADMIN || (currentUserRole === USER_ROLES.ALDEIA_ADMIN && normalizedAldeias.length > 0)) && (
               <div className="grid gap-2">
                 <Label htmlFor="aldeiaId">Aldeia {formData.role === USER_ROLES.ALDEIA_ADMIN && '*'}</Label>
                 <Select
@@ -231,7 +234,7 @@ export function UserModal({ open, onOpenChange, onSubmit, initialData, aldeias =
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Geral (Nenhuma)</SelectItem>
-                    {aldeias.map(a => (
+                    {normalizedAldeias.map(a => (
                       <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
                     ))}
                   </SelectContent>

@@ -9,6 +9,7 @@ import {
   calculatePercentage,
   formatNumber,
   isValidEmail,
+  normalizeAldeiasList,
 } from "@/lib/utils";
 
 describe("Utils", () => {
@@ -92,6 +93,22 @@ describe("Utils", () => {
       expect(isValidEmail("invalid")).toBe(false);
       expect(isValidEmail("@example.com")).toBe(false);
       expect(isValidEmail("test@")).toBe(false);
+    });
+  });
+
+  describe("normalizeAldeiasList", () => {
+    it("deve devolver um array quando recebe uma lista já válida", () => {
+      expect(normalizeAldeiasList([{ id: "1", nome: "Aldeia 1" }])).toEqual([{ id: "1", nome: "Aldeia 1" }]);
+    });
+
+    it("deve extrair aldeias de um objeto com a propriedade aldeias", () => {
+      expect(normalizeAldeiasList({ aldeias: [{ id: "2", nome: "Aldeia 2" }] })).toEqual([{ id: "2", nome: "Aldeia 2" }]);
+    });
+
+    it("deve devolver array vazio para entradas inválidas", () => {
+      expect(normalizeAldeiasList(undefined)).toEqual([]);
+      expect(normalizeAldeiasList(null)).toEqual([]);
+      expect(normalizeAldeiasList({})).toEqual([]);
     });
   });
 });

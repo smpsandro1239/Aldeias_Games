@@ -61,3 +61,11 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+# load tests
+load-test*.js
+loadtest*.js
+
+# temp / logs
+server.log
+nul

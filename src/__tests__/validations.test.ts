@@ -6,6 +6,7 @@ import {
   createJogoSchema,
   mbwayPaymentSchema,
   passwordSchema,
+  createParticipacaoSchema,
 } from "@/lib/validations";
 
 describe("Validations", () => {
@@ -178,6 +179,23 @@ describe("Validations", () => {
         valor: -5,
       });
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe("createParticipacaoSchema", () => {
+    it("deve aceitar telefone com espaços e prefixo internacional", () => {
+      const result = createParticipacaoSchema.safeParse({
+        jogoId: "rifa-teste-001",
+        dadosParticipacao: { numeros: [1] },
+        quantidade: 1,
+        metodoPagamento: "saldo",
+        dadosCliente: {
+          nome: "Admin Teste",
+          telefone: "+351 912 345 678",
+          email: "admin@teste.pt",
+        },
+      });
+      expect(result.success).toBe(true);
     });
   });
 });

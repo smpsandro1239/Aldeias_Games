@@ -116,5 +116,18 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "main": "next.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smpsandro1239/Aldeias_Games.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/smpsandro1239/Aldeias_Games/issues"
+  },
+  "homepage": "https://github.com/smpsandro1239/Aldeias_Games#readme"
 }

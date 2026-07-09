@@ -2,6 +2,15 @@ import { z } from 'zod';
 
 // Constants for validation
 const TELEFONE_REGEX = /^(?:(?:\+|00)351)?[2-9][0-9]{8}$/;
+
+function normalizePhone(value: string): string {
+  if (!value) return '';
+  return value
+    .replace(/\s+/g, '')
+    .replace(/[-().]/g, '')
+    .replace(/^00/, '+')
+    .trim();
+}
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{12,}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -10,7 +19,10 @@ export const passwordSchema = z.string()
   .regex(PASSWORD_REGEX, 'Password deve conter pelo menos: 1 maiúscula, 1 minúscula, 1 número e 1 carácter especial');
 
 export const telefoneSchema = z.string()
-  .regex(TELEFONE_REGEX, 'Número de telefone inválido (deve ser um número português válido)')
+  .transform((value) => normalizePhone(value))
+  .refine((value) => !value || TELEFONE_REGEX.test(value), {
+    message: 'Número de telefone inválido (deve ser um número português válido)',
+  })
   .optional()
   .or(z.literal(''));
 

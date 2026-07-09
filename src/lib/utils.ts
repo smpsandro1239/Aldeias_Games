@@ -278,6 +278,21 @@ export function isValidEmail(email: string): boolean {
 }
 
 /**
+ * Normalizar listas de aldeias vindas de diferentes formatos de API
+ */
+export function normalizeAldeiasList(value: unknown): Array<{ id: string; nome: string }> {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is { id: string; nome: string } => Boolean(item && typeof item === 'object' && 'id' in item && 'nome' in item));
+  }
+
+  if (value && typeof value === 'object' && 'aldeias' in value && Array.isArray((value as { aldeias?: unknown }).aldeias)) {
+    return (value as { aldeias: Array<{ id: string; nome: string }> }).aldeias.filter((item) => Boolean(item && typeof item === 'object' && 'id' in item && 'nome' in item));
+  }
+
+  return [];
+}
+
+/**
  * Verificar se NIF portugues e valido
  */
 export function isValidNIF(nif: string): boolean {

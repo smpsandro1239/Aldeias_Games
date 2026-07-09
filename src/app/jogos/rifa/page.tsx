@@ -124,10 +124,11 @@ export default function RifaPage() {
   }, []);
 
   useEffect(() => {
-      if (jogo?.id) {
+    if (jogo?.id) {
       fetchNumerosOcupados();
     }
   }, [jogo?.id]);
+
   const fetchNumerosOcupados = async () => {
     console.log("🔍 fetchNumerosOcupados CHAMADO para jogo:", jogo?.id);
     try {
@@ -454,6 +455,13 @@ export default function RifaPage() {
 
       if (response.ok) {
         const data = await response.json();
+        const numerosNovos = numerosSelecionados.filter((num) => !numerosOcupados.includes(num));
+
+        if (numerosNovos.length > 0) {
+          setNumerosOcupados((prev) => [...new Set([...prev, ...numerosNovos])]);
+          setNumerosJogados((prev) => [...new Set([...prev, ...numerosNovos])]);
+        }
+
         setNumeroSorte(data.data?.numero || numerosSelecionados[0].toString().padStart(5, "0"));
         setParticipacaoConfirmada(true);
         setCreditCardModalOpen(false);
@@ -461,6 +469,8 @@ export default function RifaPage() {
         // Definir a participação criada para mostrar no modal
         setParticipacaoCriada(data.data);
         setConfirmacaoModalOpen(true);
+
+        await fetchNumerosOcupados();
 
         // Manter as notificações por WhatsApp/Email se solicitado
         if (participante.notificacao === "whatsapp" && participante.telefone) {

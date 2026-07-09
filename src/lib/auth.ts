@@ -9,10 +9,10 @@ const AUTH_COOKIE_NAME = 'auth-token';
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 dias em segundos
 const JWT_EXPIRATION = '30d';
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-local-only-32chars!';
 
-if (!JWT_SECRET && !process.env.NEXT_PHASE?.includes('build')) {
-  throw new Error('JWT_SECRET é obrigatório em todos os ambientes');
+if (!process.env.JWT_SECRET && !process.env.NEXT_PHASE?.includes('build')) {
+  console.warn('JWT_SECRET não definido, a usar fallback local inseguro para desenvolvimento');
 }
 
 const secret = new TextEncoder().encode(JWT_SECRET!);

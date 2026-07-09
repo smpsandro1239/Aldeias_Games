@@ -1,0 +1,233 @@
+import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
+
+// Rate limit config per route
+const RATE_LIMIT_CONFIG: Record<string, { maxRequests: number; windowMs: number }> = {
+  "/api/auth/login": { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 attempts / 15min
+  "/api/auth/register": { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 per hour
+  "/api/auth/forgot-password": { maxRequests: 3, windowMs: 60 * 60 * 1000 },
+  "/api/pagamentos/stripe": { maxRequests: 10, windowMs: 60 * 1000 },
+  "/api/pagamentos/mbway": { maxRequests: 10, windowMs: 60 * 1000 },
+  "/api/participacoes": { maxRequests: 20, windowMs: 60 * 1000 },
+};
+
+// === AUTHENTICATION & AUTHORIZATION CONFIG ===
+// Rotas públicas que não precisam de autenticação
+const publicRoutes = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/reset-password',
+  '/api/auth/verify-email',
+  '/api/auth/2fa',
+  '/api/aldeias',
+  '/api/eventos',
+  '/api/jogos',
+  '/api/apostas',
+  '/api/health',
+  '/api/stripe/webhook',
+  '/api/mbway/webhook',
+  '/api/participacoes/verificar',
+  '/api/rbac/roles',
+  '/api/rbac/user',
+];
+
+// Rotas de página que são públicas (landing page, login, etc.)
+const publicPages = [
+  '/',
+  '/login',
+  '/register',
+  '/privacidade',
+  '/termos',
+  '/favicon.ico',
+];
+
+// Rotas protegidas por role
+const roleProtectedRoutes: Record<string, string[]> = {
+  '/superadmindashboard': ['super_admin'],
+  '/admindashboard': ['super_admin', 'aldeia_admin'],
+  '/vendedordashboard': ['super_admin', 'aldeia_admin', 'vendedor'],
+  '/clientedashboard': ['super_admin', 'aldeia_admin', 'vendedor', 'user'],
+};
+
+// Métodos seguros
+const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+
+// JWT secret
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'dev-secret-key-local-only-32chars!'
+);
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // === RATE LIMITING FOR API ROUTES ===
+  if (pathname.startsWith('/api/')) {
+    const config = RATE_LIMIT_CONFIG[pathname];
+    if (config) {
+      const ip =
+        request.headers.get('x-forwarded-for') ||
+        request.headers.get('x-real-ip') ||
+        'anonymous';
+
+      // Create a unique identifier per path and IP to avoid cross-path rate limiting
+      const identifier = `${pathname}:${ip}`;
+
+      const { allowed, remaining, resetTime } = checkRateLimit(
+        identifier,
+        config
+      );
+
+      const response = NextResponse.next();
+      response.headers.set('X-RateLimit-Limit', config.maxRequests.toString());
+      response.headers.set('X-RateLimit-Remaining', remaining.toString());
+
+      if (resetTime) {
+        response.headers.set(
+          'X-RateLimit-Reset',
+          Math.ceil(resetTime / 1000).toString()
+        );
+      }
+
+      if (!allowed) {
+        return NextResponse.json(
+          { error: 'Demasiadas tentativas. Tente novamente mais tarde.' },
+          { status: 429, headers: response.headers }
+        );
+      }
+
+      return response;
+    }
+  }
+
+  // === AUTHENTICATION & AUTHORIZATION FOR ALL REQUESTS ===
+  // Allow public pages and static assets
+  if (
+    publicPages.includes(pathname) ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/static')
+  ) {
+    return NextResponse.next();
+  }
+
+  // API routes: check authentication for protected endpoints
+  if (pathname.startsWith('/api/')) {
+    const isPublicRoute = publicRoutes.some(route =>
+      pathname === route || pathname.startsWith(`${route}/`)
+    );
+
+    if (!isPublicRoute && !pathname.startsWith('/api/auth/')) {
+      // Try to get token from Authorization header first
+      let token = null;
+      const authHeader = request.headers.get('authorization');
+
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      } else {
+        // Fallback: try to get from httpOnly cookie
+        token = request.cookies.get('auth-token')?.value || null;
+      }
+
+      if (!token) {
+        return NextResponse.json(
+          { error: 'Token de autenticação não fornecido' },
+          { status: 401 }
+        );
+      }
+
+      try {
+        const { payload } = await jwtVerify(token, JWT_SECRET);
+
+        if (!payload.userId || !payload.role) {
+          return NextResponse.json(
+            { error: 'Token inválido' },
+            { status: 401 }
+          );
+        }
+
+        // Add user info to request headers for downstream consumption
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set('x-user-id', String(payload.userId));
+        requestHeaders.set('x-user-role', String(payload.role));
+        if (payload.aldeiaId) {
+          requestHeaders.set('x-user-aldeia-id', String(payload.aldeiaId));
+        }
+
+        return NextResponse.next({
+          request: { headers: requestHeaders },
+        });
+      } catch {
+        return NextResponse.json(
+          { error: 'Token inválido ou expirado' },
+          { status: 401 }
+        );
+      }
+    }
+  }
+
+  // Page routes: protect by role
+  let matchedRoute: string | null = null;
+  let requiredRoles: string[] = [];
+
+  for (const [route, roles] of Object.entries(roleProtectedRoutes)) {
+    if (pathname === route || pathname.startsWith(`${route}/`)) {
+      matchedRoute = route;
+      requiredRoles = roles;
+      break;
+    }
+  }
+
+  if (matchedRoute) {
+    const token = request.cookies.get('auth-token')?.value;
+
+    if (!token) {
+      const loginUrl = new URL('/', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    try {
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+      const userRole = String(payload.role);
+
+      if (!requiredRoles.includes(userRole)) {
+        // Redirect to appropriate dashboard based on role
+        if (userRole === 'super_admin') {
+          return NextResponse.redirect(
+            new URL('/superadmindashboard', request.url)
+          );
+        } else if (userRole === 'aldeia_admin') {
+          return NextResponse.redirect(
+            new URL('/admindashboard', request.url)
+          );
+        } else if (userRole === 'vendedor') {
+          return NextResponse.redirect(
+            new URL('/vendedordashboard', request.url)
+          );
+        } else {
+          return NextResponse.redirect(
+            new URL('/clientedashboard', request.url)
+          );
+        }
+      }
+    } catch {
+      const loginUrl = new URL('/', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - files with .extension
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*$).*)',
+  ],
+};

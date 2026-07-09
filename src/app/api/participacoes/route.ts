@@ -168,8 +168,18 @@ export async function POST(request: NextRequest) {
     const user = await getFullUserFromRequest(request);
 
     const body = await request.json();
+
+    const normalizedBody = {
+      ...body,
+      dadosCliente: body?.dadosCliente ? {
+        ...body.dadosCliente,
+        telefone: typeof body.dadosCliente?.telefone === 'string'
+          ? body.dadosCliente.telefone.replace(/\s+/g, '').replace(/[-().]/g, '')
+          : body.dadosCliente?.telefone,
+      } : body?.dadosCliente,
+    };
     
-    const hasDadosCliente = body.dadosCliente && body.dadosCliente.nome && (body.dadosCliente.telefone || body.dadosCliente.email);
+    const hasDadosCliente = normalizedBody.dadosCliente && normalizedBody.dadosCliente.nome && (normalizedBody.dadosCliente.telefone || normalizedBody.dadosCliente.email);
     
     if (!user && !hasDadosCliente) {
       return NextResponse.json(
@@ -186,7 +196,7 @@ export async function POST(request: NextRequest) {
     // Se é admin, também pode ser vendedor da transação
     const isVendedorOrAdmin = user && hasRole(user.role, ['aldeia_admin', 'vendedor']);
 
-    const validation = createParticipacaoSchema.safeParse(body);
+    const validation = createParticipacaoSchema.safeParse(normalizedBody);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -373,7 +383,7 @@ export async function POST(request: NextRequest) {
           dadosParticipacao: JSON.stringify(sanitizeObject(data.dadosParticipacao)),
           valorPago: jogo.preco,
           metodoPagamento: data.metodoPagamento,
-          estadoPagamento: data.metodoPagamento === 'dinheiro' ? 'concluido' : 'pendente',
+          estadoPagamento: data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo' ? 'concluido' : 'pendente',
           jogoId: data.jogoId,
           userId: effectiveUser?.id ?? null,
           vendedorId: effectiveUser && hasRole(effectiveUser.role, ['aldeia_admin', 'vendedor']) ? effectiveUser.id : undefined,
@@ -488,7 +498,6 @@ export async function POST(request: NextRequest) {
               data: numerosSelecionados.map((num: number) => ({
                 jogoId: data.jogoId,
                 numero: num,
-                participacaoId: participacoes[0].id,
               })),
             });
          }

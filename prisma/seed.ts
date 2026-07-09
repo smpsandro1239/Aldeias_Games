@@ -142,16 +142,17 @@ async function main() {
 
   // Criar utilizadores de teste para quick login
   const testUsers = [
-    { email: 'admin@aldeias.pt', role: UserRole.super_admin, nome: 'Super Admin', roleName: RoleName.SUPER_ADMIN },
-    { email: 'admin.valeazinha@aldeias.pt', role: UserRole.aldeia_admin, nome: 'Admin Aldeia', roleName: RoleName.ALDEIA_ADMIN },
-    { email: 'vendedor1@valeazinha.pt', role: UserRole.vendedor, nome: 'Vendedor', roleName: RoleName.GESTOR },
-    { email: 'jogador1@valeazinha.pt', role: UserRole.user, nome: 'Jogador', roleName: RoleName.VIEWER }
+    { id: 'demo-super-admin', email: 'admin@aldeias.pt', role: UserRole.super_admin, nome: 'Super Admin', roleName: RoleName.SUPER_ADMIN },
+    { id: 'demo-aldeia-admin', email: 'aldeia@gmail.com', role: UserRole.aldeia_admin, nome: 'Admin Aldeia', roleName: RoleName.ALDEIA_ADMIN },
+    { id: 'demo-vendedor', email: 'vendedor@gmail.com', role: UserRole.vendedor, nome: 'Vendedor', roleName: RoleName.GESTOR },
+    { id: 'demo-user', email: 'smpsandro1239@gmail.com', role: UserRole.user, nome: 'Jogador', roleName: RoleName.VIEWER }
   ];
 
   for (const userData of testUsers) {
     const user = await prisma.user.upsert({
       where: { email: userData.email },
       update: {
+        id: userData.id,
         password: passwordHash,
         nome: userData.nome,
         telefone: '+351 912 345 678',
@@ -160,6 +161,7 @@ async function main() {
         saldo: 1000,
       },
       create: {
+        id: userData.id,
         email: userData.email,
         password: passwordHash,
         nome: userData.nome,

@@ -14,11 +14,16 @@ export async function GET(
     const participacoes = await prisma.participacao.findMany({
       where: {
         jogoId,
-        estadoPagamento: 'concluido',
+        OR: [
+          { estadoPagamento: 'concluido' },
+          { metodoPagamento: { in: ['saldo', 'dinheiro'] } },
+        ],
       },
       select: {
         userId: true,
         dadosParticipacao: true,
+        metodoPagamento: true,
+        estadoPagamento: true,
       },
     });
 
