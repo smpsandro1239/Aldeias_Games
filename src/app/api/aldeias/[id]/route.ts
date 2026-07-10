@@ -29,7 +29,7 @@ const updateAldeiaSchema = z.object({
   ativo: z.boolean().optional(),
 })
 
-export async function GET(request: NextRequest, context: { params: {id: string} }) {
+export async function GET(request: NextRequest, context: { params: Promise<{id: string}> }) {
   try {
     const { id } = await context.params
     const aldeia = await prisma.aldeia.findUnique({
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest, context: { params: {id: string} 
   }
 }
 
-export async function PATCH(request: NextRequest, context: { params: {id: string} }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{id: string}> }) {
   try {
     const { id } = await context.params
     const user = await getUserFromRequest(request)

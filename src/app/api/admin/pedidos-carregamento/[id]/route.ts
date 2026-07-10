@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
-  context: { params: {id: string} }
+  context: { params: Promise<{id: string}> }
 ) {
   try {
     // Verificar autenticação

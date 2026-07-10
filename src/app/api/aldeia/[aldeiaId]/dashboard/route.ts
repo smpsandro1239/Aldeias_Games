@@ -5,7 +5,7 @@ import { progressToNextLevel } from '@/lib/aldeia-progress'
 
 export async function GET(
   request: NextRequest,
-  context: { params: {aldeiaId: string;} }
+  context: { params: Promise<{aldeiaId: string;}> }
 ) {
   try {
     const { aldeiaId } = await context.params
