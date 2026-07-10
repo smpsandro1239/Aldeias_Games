@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma@6.19.3 generate && next build",
+  "buildCommand": "npx prisma@6.19.3 generate && next build --webpack",
   "installCommand": "npm install"
 }
