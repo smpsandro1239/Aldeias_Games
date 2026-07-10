@@ -17,7 +17,7 @@ import { AlertTriangle, RotateCcw } from "lucide-react";
 import {
    LayoutDashboard, Calendar, Gamepad2, Users, DollarSign, Plus, Globe,
    BarChart3, Hash, Wallet, TrendingUp, Building2, CreditCard, Shield,
-   Eye, Trophy
+   Eye, Trophy, Banknote, ShieldCheck
 } from "lucide-react";
 
 import { formatCurrency } from "@/lib/utils";
@@ -908,6 +908,11 @@ export default function AdminDashboard({
                   {entregasPendentesCount}
                 </Badge>
               )}
+            </TabsTrigger>
+
+            <TabsTrigger value="cofre" onClick={() => router.push('/admindashboard/cofre')} className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <ShieldCheck className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Cofre</span>
             </TabsTrigger>
 
             <TabsTrigger value="verificar" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">

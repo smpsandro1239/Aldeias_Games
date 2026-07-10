@@ -41,6 +41,31 @@ Turbopack does not work on Windows. Use instead:
 npx next build --webpack
 ```
 
+### Cashbox / Vault System (Rastreabilidade)
+Three pockets track physical money flow:
+- **Vendedor.Cashbox** — cash in the seller's possession (incremented on top-up confirmation)
+- **Vault** — village general cashbox (credited when admin confirms seller deposit)
+- **Player.Wallet** — digital balance
+
+Flow:
+1. Seller confirms top-up → `Player.Wallet += valor` + `Vendedor.Cashbox += valor`
+2. Seller delivers cash to village admin → creates `PedidoDepositoCofre` (pending)
+3. Admin confirms → `Vendedor.Cashbox -= valor` + `Vault += valor`
+
+Every operation is recorded with `criadoPor`, `confirmadoPor`, timestamps, and cross-references.
+
+API Endpoints:
+- `PUT /api/carregamento/[id]` — modified to also increment seller cashbox
+- `GET /api/vendedor/cashbox` — seller's cashbox balance + transactions
+- `POST /api/cofre/pedido-deposito` — create deposit request
+- `GET /api/cofre/pedido-deposito` — list deposit requests (seller sees own, admin sees village)
+- `PUT /api/cofre/pedido-deposito/[id]` — confirm/reject deposit
+- `GET /api/cofre/historico` — vault transaction history (admin/super_admin)
+
+Pages:
+- `/admindashboard/cofre` — admin manages deposit requests + vault history
+- Seller dashboard "Caixa" tab — seller sees cashbox + creates deposit requests
+
 ### Key Files
 - `package.json` — scripts, dependencies, prisma version
 - `vercel.json` — build command
