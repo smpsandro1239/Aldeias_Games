@@ -41,7 +41,7 @@ export default function SuperAdminCofrePage() {
   }
 
   return (
-    <RoleGuard allowedRoles={["super_admin"]} redirectPath="/admindashboard/cofre">
+    <RoleGuard allowedRoles={["super_admin"]} redirectPath="/admindashboard/cofre" panelName="Cofre Global">
       <SuperAdminCofre token={token} />
     </RoleGuard>
   );

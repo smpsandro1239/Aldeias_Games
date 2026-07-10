@@ -49,7 +49,7 @@ const AdminCofrePage = () => {
   }
 
   return (
-    <RoleGuard allowedRoles={["super_admin", "aldeia_admin"]} redirectPath="/">
+    <RoleGuard allowedRoles={["super_admin", "aldeia_admin"]} redirectPath="/" panelName="Cofre">
       <AdminCofre token={token} />
     </RoleGuard>
   );

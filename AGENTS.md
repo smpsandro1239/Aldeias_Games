@@ -41,6 +41,11 @@ Turbopack does not work on Windows. Use instead:
 npx next build --webpack
 ```
 
+### Super Admin Cofre (Visão Global)
+- `GET /api/superadmin/cofre` — consolidated data across all villages (vault balances, pending deposits, recent movements)
+- `/superadmindashboard/cofre` — Super Admin page with global overview, per-village cards, pending deposits tab, global movements feed
+- A tab "Cofre" exists in both `aldeia_admin` and `super_admin` dashboards linking to `/admindashboard/cofre` and `/superadmindashboard/cofre` respectively.
+
 ### Cashbox / Vault System (Rastreabilidade)
 Three pockets track physical money flow:
 - **Vendedor.Cashbox** — cash in the seller's possession (incremented on top-up confirmation)
