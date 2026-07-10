@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     const finalHash = crypto.createHash('sha256').update(combinedSeed).digest('hex');
     let vencedorId: string;
     let winningCoord: string | null = null;
+    let numeroSorteado: number | null = null;
 
     if (jogo.tipo === 'poio_da_vaca') {
       const config = JSON.parse(jogo.configuracao);
@@ -92,17 +93,18 @@ export async function POST(request: NextRequest) {
       if (!vencedor) return NextResponse.json({ success: true, message: 'Ninguém ganhou', resultado: winningCoord });
       vencedorId = vencedor.id;
     } else if (jogo.tipo === 'tombola' && winningNumber !== null) {
-      // Se tivermos o número do EuroMillions, o vencedor é quem tem esse número
       const vencedor = jogo.participacoes.find(p => {
         const d = JSON.parse(p.dadosParticipacao);
         return d.numero === winningNumber;
       });
       if (!vencedor) return NextResponse.json({ success: true, message: 'Ninguém ganhou', resultado: winningNumber });
       vencedorId = vencedor.id;
+      numeroSorteado = winningNumber;
     } else {
-      // Rifa ou Tombola sem API: Sorteio puramente baseado em hash
       const index = Number(BigInt('0x' + finalHash.substring(0, 12)) % BigInt(jogo.participacoes.length));
       vencedorId = jogo.participacoes[index].id;
+      const dadosPart = JSON.parse(jogo.participacoes[index].dadosParticipacao);
+      numeroSorteado = dadosPart.numeros?.[0] ?? (dadosPart.numero ?? null);
     }
 
     await prisma.$transaction([
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
       prisma.jogo.update({
         where: { id: jogoId },
         data: {
-          sorteado: vencedorId,
+          sorteado: numeroSorteado,
           dataSorteio: new Date(),
           isFinalizado: true,
           dadosVerificacao: JSON.stringify({ clientSeed, combinedSeed, finalHash, winningNumber, winningCoord })

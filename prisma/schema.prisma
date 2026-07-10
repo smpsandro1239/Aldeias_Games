@@ -357,6 +357,7 @@ model Jogo {
   dataSorteio            DateTime?
   hashSorteio            String?        // Hash commitado antes do sorteio
   seedSorteio            String?        // Seed usada no sorteio
+  dadosVerificacao       String?        // Dados de verificação do sorteio
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
   eventoId               String
