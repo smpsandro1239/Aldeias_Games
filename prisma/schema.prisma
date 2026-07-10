@@ -836,6 +836,13 @@ model AuditLog {
   metadata Json?
 
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([aldeiaId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([resource])
+  @@map("audit_logs")
 }
 
 enum EstadoPedido {

@@ -77,6 +77,14 @@ Pages:
 - Utility: `src/lib/export-utils.ts` — `generateCSV()`, `downloadCSV()` (with BOM for Excel)
 - Export buttons in: `admin-cofre.tsx` (histórico do cofre), `reconciliacao-cofre.tsx` (vendedores), `superadmin-cofre.tsx` (aldeias global)
 
+### Audit & Segurança
+- `AuditLog` model com índices para performance; mapeamento `@@map("audit_logs")`
+- Audit logging automático nos endpoints de cofre (criar/confirmar/rejeitar depósito)
+- `GET /api/admin/audit-logs` — unified audit feed (LogAcesso + AuditLog) com filtros
+- `GET /api/admin/logs` — super_admin/aldeia_admin logs feed com auditoria + acessos
+- `AuditoriaTab` melhorada com filtros (todos/acessos/auditoria), pesquisa, badges por tipo
+- Três bibliotecas de audit existentes: `@/lib/audit` (jogos), `@/lib/auditLog` (CRUD), `@/lib/audit-log` (console-only super_admin)
+
 ### Notifications System
 - `Notificacao` model already exists with `tipo` (TipoNotificacao enum), `titulo`, `mensagem`, `lida`, `userId`
 - Types added: `deposito_criado`, `deposito_confirmado`, `deposito_rejeitado`

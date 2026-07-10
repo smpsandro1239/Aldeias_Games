@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 
 export async function PUT(
   request: NextRequest,
@@ -97,6 +98,20 @@ export async function PUT(
         },
       });
 
+      // Log audit
+      const ipConfirm = request.headers.get('x-forwarded-for') || undefined;
+      const uaConfirm = request.headers.get('user-agent') || undefined;
+      logAudit({
+        userId: user.id,
+        aldeiaId: pedido.aldeiaId,
+        action: 'deposito.confirmado',
+        resource: 'pedido-deposito',
+        resourceId: pedido.id,
+        metadata: { valor: pedido.valor, vendedorId: pedido.vendedorId, vendedorNome: pedido.vendedor.nome },
+        ip: ipConfirm,
+        userAgent: uaConfirm,
+      });
+
       return NextResponse.json({ success: true, message: 'Depósito confirmado' });
     }
 
@@ -119,6 +134,20 @@ export async function PUT(
           mensagem: `O teu depósito de ${pedido.valor}€ foi rejeitado${observacoes ? `: ${observacoes}` : ''}`,
           lida: false,
         },
+      });
+
+      // Log audit
+      const ipReject = request.headers.get('x-forwarded-for') || undefined;
+      const uaReject = request.headers.get('user-agent') || undefined;
+      logAudit({
+        userId: user.id,
+        aldeiaId: pedido.aldeiaId,
+        action: 'deposito.rejeitado',
+        resource: 'pedido-deposito',
+        resourceId: pedido.id,
+        metadata: { valor: pedido.valor, vendedorId: pedido.vendedorId, motivo: observacoes || null },
+        ip: ipReject,
+        userAgent: uaReject,
       });
 
       return NextResponse.json({ success: true, message: 'Depósito rejeitado' });

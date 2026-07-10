@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +38,20 @@ export async function POST(request: NextRequest) {
         referencias: referencias ? JSON.stringify(referencias) : null,
         criadoPorId: user.id,
       }
+    });
+
+    // Log audit
+    const ip = request.headers.get('x-forwarded-for') || undefined;
+    const userAgent = request.headers.get('user-agent') || undefined;
+    logAudit({
+      userId: user.id,
+      aldeiaId: user.aldeiaId ?? undefined,
+      action: 'deposito.criado',
+      resource: 'pedido-deposito',
+      resourceId: pedido.id,
+      metadata: { valor, descricao: descricao || null },
+      ip,
+      userAgent,
     });
 
     // Notify admins of this aldeia
