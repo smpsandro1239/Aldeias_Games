@@ -18,7 +18,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "postinstall": "node node_modules/prisma/build/index.js generate",
+    "postinstall": "npx --yes prisma@6.19.3 generate",
     "db:seed:full": "tsx prisma/seed-full.ts"
   },
   "dependencies": {
