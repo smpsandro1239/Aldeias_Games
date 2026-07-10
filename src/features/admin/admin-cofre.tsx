@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Banknote, Send, Check, X, Clock, RefreshCw, History, ShieldCheck } from "lucide-react";
+import { Banknote, Send, Check, X, Clock, RefreshCw, History, ShieldCheck, Scale } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -181,10 +181,16 @@ export function AdminCofre({ token }: { token: string }) {
             <TabsTrigger value="rejeitados">Rejeitados</TabsTrigger>
             <TabsTrigger value="historico">Movimentos</TabsTrigger>
           </TabsList>
-          <Button variant="outline" size="sm" onClick={fetchData}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => window.location.href = '/admindashboard/cofre/reconciliacao'}>
+              <Scale className="w-4 h-4 mr-2" />
+              Reconciliação
+            </Button>
+            <Button variant="outline" size="sm" onClick={fetchData}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         <TabsContent value="pendentes" className="space-y-3 mt-4">

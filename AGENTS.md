@@ -69,6 +69,8 @@ API Endpoints:
 
 Pages:
 - `/admindashboard/cofre` — admin manages deposit requests + vault history
+- `/admindashboard/cofre/reconciliacao` — reconciliation page comparing cashbox vs vault per seller
+- `GET /api/cofre/reconciliacao` — reconciliation data (total received, deposited, current balances, discrepancies per seller)
 - Seller dashboard "Caixa" tab — seller sees cashbox + creates deposit requests
 
 ### Key Files
