@@ -170,7 +170,6 @@ export async function POST(request: NextRequest) {
           jogadorEmail: jogador.email || null,
           vendedorId: vendedorId || user?.id || null,
           pago: pago || usarSaldo || false,
-          userId: user?.id || null,
         },
       });
 
