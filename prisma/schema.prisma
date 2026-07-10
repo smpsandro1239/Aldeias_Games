@@ -445,6 +445,7 @@ model Participacao {
   jogo                Jogo                    @relation(fields: [jogoId], references: [id])
   user                User?                   @relation(fields: [userId], references: [id])
   vendedor            User?                   @relation("vendedor", fields: [vendedorId], references: [id])
+  numerosVendidos     NumeroVendido[]
 
   @@index([jogoId])
   @@index([userId])
@@ -981,12 +982,14 @@ enum EstadoEntrega {
 }
 
 model NumeroVendido {
-  id        String   @id @default(cuid())
-  jogoId    String
-  numero    Int
-  createdAt DateTime @default(now())
+  id             String         @id @default(cuid())
+  jogoId         String
+  numero         Int
+  participacaoId String?
+  createdAt      DateTime       @default(now())
 
-  jogo      Jogo     @relation("NumeroVendidoJogo", fields: [jogoId], references: [id])
+  jogo         Jogo         @relation("NumeroVendidoJogo", fields: [jogoId], references: [id])
+  participacao Participacao? @relation(fields: [participacaoId], references: [id])
 
   @@index([jogoId])
   @@index([numero])
