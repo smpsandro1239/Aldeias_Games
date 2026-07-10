@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
           where: {
             tipo: 'carregamento_saldo',
             dadosAdicionais: {
-              path: ['transactionId'],
+              path: '$.transactionId',
               equals: result.transactionId,
             },
           },
