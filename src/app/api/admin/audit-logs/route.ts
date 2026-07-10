@@ -85,14 +85,22 @@ export async function GET(request: NextRequest) {
       })),
     ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+    const filtered = tipo === 'audit'
+      ? allLogs.filter(l => l.tipo === 'audit')
+      : tipo === 'acesso'
+      ? allLogs.filter(l => l.tipo === 'acesso')
+      : allLogs;
+    const total = tipo === 'audit' ? totalAudit : tipo === 'acesso' ? totalAcesso : totalAudit + totalAcesso;
+
     return NextResponse.json({
-      ...createPaginatedResponse(
-        tipo === 'audit' ? auditLogs : tipo === 'acesso' ? logsAcesso : allLogs.slice(0, limit),
-        tipo === 'audit' ? totalAudit : tipo === 'acesso' ? totalAcesso : totalAudit + totalAcesso,
+      success: true,
+      data: filtered.slice(0, limit),
+      pagination: {
         page,
         limit,
-      ),
-      success: true,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Erro ao obter audit logs:', error);
