@@ -70,6 +70,20 @@ model User {
   entregasVendidas    EntregaSaldo[] @relation("VendedorEntregas")
   entregasConfirmadas EntregaSaldo[] @relation("AdminEntregas")
 
+  // Cashbox do vendedor
+  cashbox VendedorCashbox?
+  cashboxTransacoes VendedorCashboxTransaction[] @relation("CashboxCriadoPor")
+
+  // Vault transactions created/approved by user
+  vaultTransacoesCriadas  VaultTransaction[] @relation("VaultCriadoPor")
+  vaultTransacoesAprovadas VaultTransaction[] @relation("VaultAprovadoPor")
+
+  // Deposito cofre
+  depositosVendedor     PedidoDepositoCofre[] @relation("DepositoVendedor")
+  depositosCriados      PedidoDepositoCofre[] @relation("DepositoCriadoPor")
+  depositosConfirmados  PedidoDepositoCofre[] @relation("DepositoConfirmadoPor")
+  depositosRejeitados   PedidoDepositoCofre[] @relation("DepositoRejeitadoPor")
+
   @@index([email])
   @@index([role])
   @@index([aldeiaId])
@@ -274,6 +288,7 @@ model Aldeia {
   userAldeiaRoles         UserAldeiaRole[]
   userPermissions         UserPermission[]
   auditLogs               AuditLog[]
+  vault                   Vault?
 
   @@index([slug])
   @@index([tipoOrganizacao])
@@ -994,4 +1009,120 @@ model NumeroVendido {
   @@index([jogoId])
   @@index([numero])
   @@map("numeros_vendidos")
+}
+
+model Vault {
+  id        String   @id @default(cuid())
+  aldeiaId  String   @unique
+  aldeia    Aldeia   @relation(fields: [aldeiaId], references: [id])
+  saldo     Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  transacoes VaultTransaction[]
+
+  @@index([aldeiaId])
+  @@map("vaults")
+}
+
+model VaultTransaction {
+  id            String       @id @default(cuid())
+  vaultId       String
+  vault         Vault        @relation(fields: [vaultId], references: [id])
+  tipo          VaultTipo    // deposito, levantamento, transferencia
+  valor         Float
+  descricao     String
+  referencia    String?      // id do PedidoCarregamento ou PedidoDepositoCofre
+  estado        VaultEstado  @default(pendente) // pendente, confirmado, rejeitado, cancelado
+  criadoPorId   String
+  criadoPor     User         @relation("VaultCriadoPor", fields: [criadoPorId], references: [id])
+  aprovadoPorId String?
+  aprovadoPor   User?        @relation("VaultAprovadoPor", fields: [aprovadoPorId], references: [id])
+  dataCriacao   DateTime     @default(now())
+  dataAprovacao DateTime?
+  observacoes   String?
+  createdAt     DateTime     @default(now())
+
+  @@index([vaultId])
+  @@index([criadoPorId])
+  @@index([estado])
+  @@map("vault_transactions")
+}
+
+enum VaultTipo {
+  deposito
+  levantamento
+  transferencia
+}
+
+enum VaultEstado {
+  pendente
+  confirmado
+  rejeitado
+  cancelado
+}
+
+model VendedorCashbox {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  saldo      Float    @default(0)
+  updatedAt  DateTime @updatedAt
+  transacoes VendedorCashboxTransaction[]
+
+  @@index([userId])
+  @@map("vendedor_cashbox")
+}
+
+model VendedorCashboxTransaction {
+  id          String       @id @default(cuid())
+  cashboxId   String
+  cashbox     VendedorCashbox @relation(fields: [cashboxId], references: [id])
+  tipo        CashboxTipo  // RECEBIDO_DO_JOGADOR | DEPOSITADO_NO_COFRE
+  valor       Float
+  descricao   String
+  referencia  String?      // id do PedidoCarregamento ou PedidoDepositoCofre
+  criadoPorId String
+  criadoPor   User         @relation("CashboxCriadoPor", fields: [criadoPorId], references: [id])
+  createdAt   DateTime     @default(now())
+
+  @@index([cashboxId])
+  @@index([criadoPorId])
+  @@map("vendedor_cashbox_transactions")
+}
+
+enum CashboxTipo {
+  RECEBIDO_DO_JOGADOR
+  DEPOSITADO_NO_COFRE
+}
+
+model PedidoDepositoCofre {
+  id              String        @id @default(cuid())
+  vendedorId      String
+  vendedor        User          @relation("DepositoVendedor", fields: [vendedorId], references: [id])
+  aldeiaId        String
+  valor           Float
+  descricao       String?
+  estado          DepositoEstado @default(pendente)
+  referencias     String?        // JSON array de IDs de PedidoCarregamento
+  criadoPorId     String
+  criadoPor       User           @relation("DepositoCriadoPor", fields: [criadoPorId], references: [id])
+  confirmadoPorId String?
+  confirmadoPor   User?          @relation("DepositoConfirmadoPor", fields: [confirmadoPorId], references: [id])
+  confirmadoAt    DateTime?
+  rejeitadoPorId  String?
+  rejeitadoPor    User?          @relation("DepositoRejeitadoPor", fields: [rejeitadoPorId], references: [id])
+  motivoRejeicao  String?
+  observacoes     String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([vendedorId, estado])
+  @@index([aldeiaId, estado])
+  @@map("pedidos_deposito_cofre")
+}
+
+enum DepositoEstado {
+  pendente
+  confirmado
+  rejeitado
 }

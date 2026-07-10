@@ -161,10 +161,29 @@ export async function PUT(request: NextRequest) {
       }
     });
 
-    // Credit saldo ao jogador
-    await prisma.user.update({
-      where: { id: pedido.id },
-      data: { saldo: { increment: pedido.valor } }
+    // Credit saldo ao jogador + cashbox do vendedor (transação atómica)
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: pedido.userId },
+        data: { saldo: { increment: pedido.valor } }
+      });
+
+      const cashbox = await tx.vendedorCashbox.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, saldo: pedido.valor },
+        update: { saldo: { increment: pedido.valor } }
+      });
+
+      await tx.vendedorCashboxTransaction.create({
+        data: {
+          cashboxId: cashbox.id,
+          tipo: 'RECEBIDO_DO_JOGADOR',
+          valor: pedido.valor,
+          descricao: `Carregamento de ${pedido.valor}€ para ${pedido.user.nome || pedido.user.email}`,
+          referencia: pedido.id,
+          criadoPorId: user.id,
+        }
+      });
     });
 
     // Criar notificação para o jogador

@@ -1,0 +1,112 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getFullUserFromRequest(request);
+    if (!user || !hasRole(user.role, ['aldeia_admin', 'super_admin'])) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { acao, observacoes } = body;
+
+    const pedido = await prisma.pedidoDepositoCofre.findUnique({
+      where: { id },
+      include: { vendedor: true }
+    });
+
+    if (!pedido) {
+      return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 });
+    }
+
+    if (pedido.estado !== 'pendente') {
+      return NextResponse.json({ error: 'Pedido já foi processado' }, { status: 400 });
+    }
+
+    if (acao === 'confirmar') {
+      await prisma.$transaction(async (tx) => {
+        await tx.pedidoDepositoCofre.update({
+          where: { id },
+          data: {
+            estado: 'confirmado',
+            confirmadoPorId: user.id,
+            confirmadoAt: new Date(),
+            observacoes: observacoes || null,
+          }
+        });
+
+        const cashbox = await tx.vendedorCashbox.findUnique({
+          where: { userId: pedido.vendedorId }
+        });
+
+        if (!cashbox || cashbox.saldo < pedido.valor) {
+          throw new Error('Saldo insuficiente na caixa do vendedor');
+        }
+
+        await tx.vendedorCashbox.update({
+          where: { userId: pedido.vendedorId },
+          data: { saldo: { decrement: pedido.valor } }
+        });
+
+        await tx.vendedorCashboxTransaction.create({
+          data: {
+            cashboxId: cashbox.id,
+            tipo: 'DEPOSITADO_NO_COFRE',
+            valor: pedido.valor,
+            descricao: `Depósito no cofre: ${pedido.descricao || `${pedido.valor}€`}`,
+            referencia: pedido.id,
+            criadoPorId: user.id,
+          }
+        });
+
+        const vault = await tx.vault.upsert({
+          where: { aldeiaId: pedido.aldeiaId },
+          create: { aldeiaId: pedido.aldeiaId, saldo: pedido.valor },
+          update: { saldo: { increment: pedido.valor } }
+        });
+
+        await tx.vaultTransaction.create({
+          data: {
+            vaultId: vault.id,
+            tipo: 'deposito',
+            valor: pedido.valor,
+            descricao: `Depósito de ${pedido.vendedor.nome}: ${pedido.descricao || `${pedido.valor}€`}`,
+            referencia: pedido.id,
+            estado: 'confirmado',
+            criadoPorId: pedido.vendedorId,
+            aprovadoPorId: user.id,
+            dataAprovacao: new Date(),
+          }
+        });
+      });
+
+      return NextResponse.json({ success: true, message: 'Depósito confirmado' });
+    }
+
+    if (acao === 'rejeitar') {
+      await prisma.pedidoDepositoCofre.update({
+        where: { id },
+        data: {
+          estado: 'rejeitado',
+          rejeitadoPorId: user.id,
+          motivoRejeicao: observacoes || 'Rejeitado',
+        }
+      });
+
+      return NextResponse.json({ success: true, message: 'Depósito rejeitado' });
+    }
+
+    return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
+  } catch (error: any) {
+    console.error('Error processing deposit request:', error);
+    return NextResponse.json({
+      error: error.message || 'Erro interno'
+    }, { status: 500 });
+  }
+}

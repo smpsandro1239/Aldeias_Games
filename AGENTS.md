@@ -1,0 +1,49 @@
+# Aldeias Games — Project Guide for AI Agents
+
+## Deploy Workflow (Vercel)
+
+### Pre-deploy Checklist
+1. **Prisma versions pinned**: `package.json` must have exact versions `"prisma": "6.19.3"` and `"@prisma/client": "6.19.3"` (no caret).
+2. **postinstall script**: `npx --yes prisma@6.19.3 generate` (NOT `node node_modules/.bin/prisma generate` — `.bin/prisma` does not exist on Vercel).
+3. **vercel.json buildCommand**: `npx prisma@6.19.3 generate && next build` (must match pinned version).
+4. **TypeScript/React types** in `dependencies` (not `devDependencies`) — Vercel cannot find them in devDependencies.
+5. **Git author**: `git config user.name sandropereira` / `git config user.email 94222305+smpsandro1239@users.noreply.github.com` — must match GitHub account for Vercel author identification.
+
+### Common Build Errors & Fixes
+
+| Error | Fix |
+|-------|-----|
+| `Prisma 7 installed by npx` | Pin versions in `package.json` and `vercel.json` to `6.19.3` |
+| `params: { id: string }` → `params: Promise<{ id: string }>` | Next.js 16 requires async params in route handlers |
+| `Field does not exist in type` (missing schema field) | Add field to `prisma/schema.prisma`, run `prisma db push` |
+| `Cannot find name 'apiRequest'` | Add `import { apiRequest } from "@/lib/api-client"` |
+| `location is not defined` (non-blocking) | Caused by 3rd-party lib accessing `location` at module scope during SSR. Build still succeeds. |
+| `Turbopack not supported on win32` | Local Windows cannot run Turbopack — use `npx next build --webpack` locally or rely on Vercel (Linux) for Turbopack builds |
+
+### Commit Flow
+```bash
+git add -A
+git commit -m "type: description"
+git push origin main
+```
+Wait for Vercel build (~2 min). If it fails, read the error, fix, commit again.
+
+### Schema Changes
+1. Edit `prisma/schema.prisma`
+2. Run locally: `node node_modules/prisma/build/index.js db push` (or `npx prisma@6.19.3 db push`)
+3. If adding a relation field, ensure both sides of the relation exist
+4. If the seed file references new fields, update `prisma/seed-full.ts`
+5. Test seed: `npx tsx prisma/seed-full.ts`
+
+### Local Build (Windows)
+Turbopack does not work on Windows. Use instead:
+```
+npx next build --webpack
+```
+
+### Key Files
+- `package.json` — scripts, dependencies, prisma version
+- `vercel.json` — build command
+- `prisma/schema.prisma` — database schema
+- `prisma/seed-full.ts` — comprehensive seed
+- `next.config.js` — Next.js config (no Sentry config exists)

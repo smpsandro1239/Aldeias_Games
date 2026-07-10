@@ -42,6 +42,7 @@ import { useRouter } from "next/navigation";
 import { PedidosCarregamentoInline } from "./pedidos-inline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";
+import { VendedorCashbox } from "./vendedor-cashbox";
 
 interface VendedorDashboardProps {
   token: string;
@@ -395,6 +396,12 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
             </div>
             <span className="text-xs font-medium">Angariação</span>
           </TabsTrigger>
+          <TabsTrigger value="cofre" className="flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <div className="w-5 h-5 mb-1">
+              🏦
+            </div>
+            <span className="text-xs font-medium">Caixa</span>
+          </TabsTrigger>
           <TabsTrigger value="historico" className="flex-col gap-1 py-3 px-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <div className="w-5 h-5 mb-1">
               📊
@@ -728,6 +735,10 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="cofre" className="space-y-4">
+          <VendedorCashbox token={token} />
         </TabsContent>
 
         <TabsContent value="historico" className="space-y-4">
