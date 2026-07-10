@@ -73,6 +73,10 @@ Pages:
 - `GET /api/cofre/reconciliacao` — reconciliation data (total received, deposited, current balances, discrepancies per seller)
 - Seller dashboard "Caixa" tab — seller sees cashbox + creates deposit requests
 
+### Export CSV
+- Utility: `src/lib/export-utils.ts` — `generateCSV()`, `downloadCSV()` (with BOM for Excel)
+- Export buttons in: `admin-cofre.tsx` (histórico do cofre), `reconciliacao-cofre.tsx` (vendedores), `superadmin-cofre.tsx` (aldeias global)
+
 ### Notifications System
 - `Notificacao` model already exists with `tipo` (TipoNotificacao enum), `titulo`, `mensagem`, `lida`, `userId`
 - Types added: `deposito_criado`, `deposito_confirmado`, `deposito_rejeitado`

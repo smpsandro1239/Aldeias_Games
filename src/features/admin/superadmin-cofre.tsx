@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import {
   Banknote, ShieldCheck, Building2, Users, Clock,
   RefreshCw, History, Search, AlertTriangle,
-  ArrowUpRight, TrendingUp
+  ArrowUpRight, TrendingUp, Download
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { generateCSV, downloadCSV } from "@/lib/export-utils";
 import { toast } from "sonner";
 
 interface AldeiaResumo {
@@ -186,6 +187,23 @@ export function SuperAdminCofre({ token }: { token: string }) {
             className="pl-9"
           />
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const headers = ['Aldeia', 'Saldo Cofre', 'Vendedores', 'Total Angariado'];
+            const rows = aldeias.map(a => [
+              a.nome,
+              a.saldoCofre.toFixed(2),
+              String(a.numVendedores),
+              a.totalAngariado.toFixed(2),
+            ]);
+            downloadCSV(generateCSV(headers, rows), `cofre-global-${new Date().toISOString().slice(0, 10)}.csv`);
+          }}
+        >
+          <Download className="w-4 h-4 mr-2" />
+          CSV
+        </Button>
         <Button variant="outline" size="icon" onClick={fetchData}>
           <RefreshCw className="w-4 h-4" />
         </Button>

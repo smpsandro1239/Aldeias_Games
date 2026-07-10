@@ -7,11 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Banknote, ShieldCheck, Scale, AlertTriangle, CheckCircle2,
-  RefreshCw, Search, TrendingUp, TrendingDown, Users, FileSpreadsheet
+  RefreshCw, Search, TrendingUp, TrendingDown, Users, FileSpreadsheet, Download
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { generateCSV, downloadCSV } from "@/lib/export-utils";
 
 interface VendedorRec {
   id: string;
@@ -109,10 +110,32 @@ export function ReconciliacaoCofre({ token }: { token: string }) {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchData} className="absolute top-4 right-4">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar
-        </Button>
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const headers = ['Vendedor', 'Email', 'Total Recebido', 'Total Depositado', 'Saldo Cashbox', 'Saldo Esperado', 'Discrepância'];
+              const rows = vendedores.map(v => [
+                v.nome,
+                v.email,
+                v.totalRecebido.toFixed(2),
+                v.totalDepositado.toFixed(2),
+                v.saldoCashbox.toFixed(2),
+                v.saldoEsperado.toFixed(2),
+                v.discrepancia.toFixed(2),
+              ]);
+              downloadCSV(generateCSV(headers, rows), `reconciliacao-${new Date().toISOString().slice(0, 10)}.csv`);
+            }}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Exportar CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={fetchData}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}

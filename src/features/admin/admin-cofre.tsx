@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Banknote, Send, Check, X, Clock, RefreshCw, History, ShieldCheck, Scale } from "lucide-react";
+import { Banknote, Send, Check, X, Clock, RefreshCw, History, ShieldCheck, Scale, Download } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
+import { generateCSV, downloadCSV, formatDateISO } from "@/lib/export-utils";
 
 interface DepositoData {
   id: string;
@@ -324,10 +325,33 @@ export function AdminCofre({ token }: { token: string }) {
         <TabsContent value="historico" className="space-y-3 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="w-5 h-5" />
-                Movimentos do Cofre
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  <CardTitle>Movimentos do Cofre</CardTitle>
+                </div>
+                {vault && vault.transacoes.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const headers = ['Data', 'Tipo', 'Valor', 'Descrição', 'Criado por', 'Aprovado por'];
+                      const rows = vault.transacoes.map(tx => [
+                        formatDateISO(tx.dataCriacao),
+                        tx.tipo === 'deposito' ? 'Depósito' : tx.tipo,
+                        tx.valor.toFixed(2),
+                        tx.descricao,
+                        tx.criadoPor.nome,
+                        tx.aprovadoPor?.nome ?? '-',
+                      ]);
+                      downloadCSV(generateCSV(headers, rows), `cofre-movimentos-${new Date().toISOString().slice(0, 10)}.csv`);
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar CSV
+                  </Button>
+                )}
+              </div>
               <CardDescription>
                 Todas as entradas e saídas registadas no cofre
               </CardDescription>
