@@ -687,6 +687,9 @@ enum TipoNotificacao {
   premio
   campanha
   alerta
+  deposito_criado
+  deposito_confirmado
+  deposito_rejeitado
 }
 
 model GamificacaoEvento {
@@ -1126,3 +1129,5 @@ enum DepositoEstado {
   confirmado
   rejeitado
 }
+
+

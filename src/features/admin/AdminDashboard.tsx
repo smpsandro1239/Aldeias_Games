@@ -23,6 +23,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { logJogoToggle } from "@/lib/audit";
+import { NotificationBell } from "@/components/notification-bell";
 
 import {
    CreateEventoModal,
@@ -792,7 +793,9 @@ export default function AdminDashboard({
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-3">
+          <NotificationBell token={token} />
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:w-auto">
           {userRole === "super_admin" && (
             <Button
               variant="outline"
@@ -827,6 +830,7 @@ export default function AdminDashboard({
           >
             <Globe className="h-4 w-4 mr-2" /> Lotaria Externa
           </Button>
+          </div>
         </div>
       </div>
 

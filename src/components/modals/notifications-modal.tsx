@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Check, Trash2, Trophy, CreditCard, AlertCircle, Info } from "lucide-react";
+import { Bell, Check, Trash2, Trophy, CreditCard, AlertCircle, Info, Banknote, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/utils";
 
@@ -21,7 +21,10 @@ const NOTIFICATION_TYPES = {
   SORTEIO: 'sorteio',
   PREMIO: 'premio',
   CAMPANHA: 'campanha',
-  ALERTA: 'alerta'
+  ALERTA: 'alerta',
+  DEPOSITO_CRIADO: 'deposito_criado',
+  DEPOSITO_CONFIRMADO: 'deposito_confirmado',
+  DEPOSITO_REJEITADO: 'deposito_rejeitado',
 } as const;
 
 type NotificationType = typeof NOTIFICATION_TYPES[keyof typeof NOTIFICATION_TYPES];
@@ -34,6 +37,9 @@ const ICONES_POR_TIPO = {
   [NOTIFICATION_TYPES.PREMIO]: Trophy,
   [NOTIFICATION_TYPES.CAMPANHA]: Bell,
   [NOTIFICATION_TYPES.ALERTA]: AlertCircle,
+  [NOTIFICATION_TYPES.DEPOSITO_CRIADO]: Banknote,
+  [NOTIFICATION_TYPES.DEPOSITO_CONFIRMADO]: ShieldCheck,
+  [NOTIFICATION_TYPES.DEPOSITO_REJEITADO]: AlertCircle,
 } as const;
 
 const CORES_POR_TIPO = {
@@ -43,6 +49,9 @@ const CORES_POR_TIPO = {
   [NOTIFICATION_TYPES.PREMIO]: "text-accent",
   [NOTIFICATION_TYPES.CAMPANHA]: "text-indigo-500",
   [NOTIFICATION_TYPES.ALERTA]: "text-destructive",
+  [NOTIFICATION_TYPES.DEPOSITO_CRIADO]: "text-blue-500",
+  [NOTIFICATION_TYPES.DEPOSITO_CONFIRMADO]: "text-green-500",
+  [NOTIFICATION_TYPES.DEPOSITO_REJEITADO]: "text-destructive",
 } as const;
 
 interface Notificacao {

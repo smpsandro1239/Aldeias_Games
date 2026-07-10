@@ -86,6 +86,17 @@ export async function PUT(
         });
       });
 
+      // Notify seller
+      await prisma.notificacao.create({
+        data: {
+          userId: pedido.vendedorId,
+          tipo: 'deposito_confirmado',
+          titulo: 'Depósito confirmado',
+          mensagem: `O teu depósito de ${pedido.valor}€ foi confirmado por ${user.nome}`,
+          lida: false,
+        },
+      });
+
       return NextResponse.json({ success: true, message: 'Depósito confirmado' });
     }
 
@@ -97,6 +108,17 @@ export async function PUT(
           rejeitadoPorId: user.id,
           motivoRejeicao: observacoes || 'Rejeitado',
         }
+      });
+
+      // Notify seller
+      await prisma.notificacao.create({
+        data: {
+          userId: pedido.vendedorId,
+          tipo: 'deposito_rejeitado',
+          titulo: 'Depósito rejeitado',
+          mensagem: `O teu depósito de ${pedido.valor}€ foi rejeitado${observacoes ? `: ${observacoes}` : ''}`,
+          lida: false,
+        },
       });
 
       return NextResponse.json({ success: true, message: 'Depósito rejeitado' });

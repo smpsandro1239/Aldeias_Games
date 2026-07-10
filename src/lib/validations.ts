@@ -259,7 +259,7 @@ export const revealSorteioSchema = z.object({
 // ============================================
 
 export const createNotificacaoSchema = z.object({
-  tipo: z.enum(['sistema', 'pagamento', 'sorteio', 'premio', 'campanha', 'alerta']),
+  tipo: z.enum(['sistema', 'pagamento', 'sorteio', 'premio', 'campanha', 'alerta', 'deposito_criado', 'deposito_confirmado', 'deposito_rejeitado']),
   titulo: z.string().min(1, 'Título é obrigatório'),
   mensagem: z.string().min(1, 'Mensagem é obrigatória'),
   dados: z.record(z.any()).optional(),

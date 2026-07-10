@@ -39,6 +39,28 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Notify admins of this aldeia
+    const admins = await prisma.user.findMany({
+      where: {
+        aldeiaId: user.aldeiaId,
+        role: 'aldeia_admin',
+        ativo: true,
+      },
+      select: { id: true },
+    });
+
+    if (admins.length > 0) {
+      await prisma.notificacao.createMany({
+        data: admins.map(admin => ({
+          userId: admin.id,
+          tipo: 'deposito_criado',
+          titulo: 'Novo pedido de depósito',
+          mensagem: `${user.nome} criou um pedido de depósito de ${valor}€`,
+          lida: false,
+        })),
+      });
+    }
+
     return NextResponse.json({ success: true, data: pedido });
   } catch (error) {
     console.error('Error creating deposit request:', error);

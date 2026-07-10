@@ -73,6 +73,16 @@ Pages:
 - `GET /api/cofre/reconciliacao` — reconciliation data (total received, deposited, current balances, discrepancies per seller)
 - Seller dashboard "Caixa" tab — seller sees cashbox + creates deposit requests
 
+### Notifications System
+- `Notificacao` model already exists with `tipo` (TipoNotificacao enum), `titulo`, `mensagem`, `lida`, `userId`
+- Types added: `deposito_criado`, `deposito_confirmado`, `deposito_rejeitado`
+- API: `GET /api/notificacoes` (list + pagination + unread count), `POST` (create), `PATCH` (mark all read)
+- `PUT /api/notificacoes/[id]` (mark single read), `DELETE /api/notificacoes/[id]`
+- `NotificationBell` component at `src/components/notification-bell.tsx` — polls every 30s, shows badge, opens modal
+- `NotificationsModal` at `src/components/modals/notifications-modal.tsx` — filterable list with mark-read/delete
+- Notifications auto-created on: deposit request (→ admins), deposit confirm (→ seller), deposit reject (→ seller)
+- NotificationBell integrated in AdminDashboard header (visible for both `aldeia_admin` and `super_admin`)
+
 ### Key Files
 - `package.json` — scripts, dependencies, prisma version
 - `vercel.json` — build command
