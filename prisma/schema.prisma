@@ -355,6 +355,8 @@ model Jogo {
   sorteado               Int?           // Stores the drawn number (1-50) or null
   isFinalizado           Boolean        @default(false) // Tracks if game is finalized
   dataSorteio            DateTime?
+  hashSorteio            String?        // Hash commitado antes do sorteio
+  seedSorteio            String?        // Seed usada no sorteio
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
   eventoId               String
