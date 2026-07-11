@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       where: {
         role: 'vendedor',
         aldeiaId: aldeiaId || undefined,
-        ativo: true,
+        deletedAt: null,
       },
       include: {
         cashbox: {
