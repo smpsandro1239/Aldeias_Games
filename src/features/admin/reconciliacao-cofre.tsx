@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Banknote, ShieldCheck, Scale, AlertTriangle, CheckCircle2,
-  RefreshCw, Search, TrendingUp, TrendingDown, Users, FileSpreadsheet, Download
+  RefreshCw, Search, TrendingUp, TrendingDown, Users, FileSpreadsheet, Download, Clock
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
