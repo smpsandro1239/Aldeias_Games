@@ -56,7 +56,7 @@ const CORES_POR_TIPO = {
 
 interface Notificacao {
   id: string;
-  tipo: NotificationType;
+  tipo: string;
   titulo: string;
   mensagem: string;
   lida: boolean;
@@ -157,8 +157,8 @@ export function NotificationsModal({
           ) : (
             <div className="space-y-2" role="list">
               {notificacoesFiltradas.map((notificacao) => {
-                const Icone = ICONES_POR_TIPO[notificacao.tipo];
-                const cor = CORES_POR_TIPO[notificacao.tipo];
+                const Icone = ICONES_POR_TIPO[notificacao.tipo as keyof typeof ICONES_POR_TIPO] || Info;
+                const cor = CORES_POR_TIPO[notificacao.tipo as keyof typeof CORES_POR_TIPO] || "text-muted-foreground";
 
                 return (
                   <div
