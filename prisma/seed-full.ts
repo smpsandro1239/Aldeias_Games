@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, TipoJogo, EstadoJogo, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey } from '@prisma/client';
+import { PrismaClient, UserRole, TipoJogo, EstadoJogo, GrelhaEstado, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -30,6 +30,7 @@ async function main() {
   await prisma.userAldeiaRole.deleteMany();
   await prisma.userGlobalRole.deleteMany();
   await prisma.rolePermission.deleteMany();
+  await prisma.grelhaEuromilhoes.deleteMany();
   await prisma.premio.deleteMany();
   await prisma.jogo.deleteMany();
   await prisma.evento.deleteMany();
@@ -420,7 +421,45 @@ async function main() {
     },
   });
 
-  console.log('✅ 2 jogos');
+  const jogoEuromilhoes = await prisma.jogo.create({
+    data: {
+      id: 'euromilhoes-teste-001',
+      nome: 'Euromilhões Solidário',
+      tipo: 'euromilhoes',
+      descricao: 'Euromilhões da aldeia - escolha 5 números de 1 a 50',
+      preco: 5,
+      stockInicial: 10000,
+      stockAtual: 10000,
+      limitePorUsuario: 10,
+      estado: 'aberto',
+      dataAbertura: new Date(),
+      lucroMinimoPercent: 70,
+      percentagemTotalPremios: 30,
+      eventoId: evento1.id,
+      aldeiaId: aldeia1.id,
+      totalParticipacoes: 0,
+      totalAngariado: 0,
+      configuracao: JSON.stringify({
+        permitirStripe: true,
+        valorPremios: '1000',
+        premioDescricao: 'Prémio principal: 1.000€',
+      }),
+    },
+  });
+
+  await prisma.grelhaEuromilhoes.create({
+    data: {
+      id: 'grelha-eurom-001',
+      jogoId: jogoEuromilhoes.id,
+      numero: 1,
+      estado: 'aberta',
+      numerosOcupados: '[]',
+      premioDescricao: 'Prémio principal: 1.000€',
+      premioValor: 1000,
+    },
+  });
+
+  console.log('✅ 3 jogos (inclui Euromilhões)');
 
   // ──────────────────────────────────────────────
   // 8. PRÉMIOS
@@ -787,7 +826,7 @@ async function main() {
   console.log('═'.repeat(40));
   console.log(`✅ Aldeias:             2`);
   console.log(`✅ Eventos:             4`);
-  console.log(`✅ Jogos:               2 (1 rifa, 1 raspadinha)`);
+  console.log(`✅ Jogos:               3 (1 rifa, 1 raspadinha, 1 euromilhoes)`);
   console.log(`✅ Utilizadores:        ${usersData.length}`);
   console.log(`✅ Participações:       3`);
   console.log(`✅ Prémios:             4`);
@@ -806,6 +845,9 @@ async function main() {
   console.log(`\n🎮 Rifa ID: ${jogoRifa.id}`);
   console.log('   Aceder: http://localhost:3000/jogos/rifa?id=' + jogoRifa.id);
   console.log('   Números ocupados: ' + numerosVendidos.join(', '));
+  console.log(`\n🎰 Euromilhões ID: ${jogoEuromilhoes.id}`);
+  console.log('   Aceder: http://localhost:3000/jogos/euromilhoes?id=' + jogoEuromilhoes.id);
+  console.log('   Grelha ID: grelha-eurom-001');
   console.log('\n🎉 SEED COMPLETO CONCLUÍDO!');
 }
 
