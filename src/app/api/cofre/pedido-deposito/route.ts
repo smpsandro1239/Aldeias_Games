@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       where: {
         aldeiaId: user.aldeiaId,
         role: 'aldeia_admin',
-        ativo: true,
+        deletedAt: null,
       },
       select: { id: true },
     });
