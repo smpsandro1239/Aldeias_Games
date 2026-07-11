@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
               grid = buildGridFromOutcome(outcome, config);
               resultadoRaspe = outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win';
               hashParticipacao = generateHash(seed, resultadoRaspe, uniqueSalt, timestamp);
-            } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
+            } else if (jogo.tipo === 'rifa') {
               const num = Array.isArray(numerosArray) ? numerosArray[i] : null;
               resultadoRaspe = num ? num.toString() : null;
               hashParticipacao = generateHash(seed, resultadoRaspe || 'rifa', uniqueSalt, timestamp);
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            if ((jogo.tipo === 'rifa' || jogo.tipo === 'tombola') && Array.isArray(numerosArray) && numerosArray[i]) {
+            if ((jogo.tipo === 'rifa') && Array.isArray(numerosArray) && numerosArray[i]) {
               await prisma.numeroVendido.create({
                 data: { jogoId, numero: parseInt(numerosArray[i]), participacaoId: p.id }
               });
