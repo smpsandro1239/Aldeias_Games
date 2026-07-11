@@ -152,7 +152,7 @@ export interface Log {
   sucesso: boolean;
   motivo?: string;
   createdAt: string;
-  tipo?: 'acesso' | 'audit';
+  tipo: 'acesso' | 'audit';
   action?: string;
   resource?: string;
   resourceId?: string;
