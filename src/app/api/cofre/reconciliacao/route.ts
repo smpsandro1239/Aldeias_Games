@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
                 transacoes: { where: { estado: 'confirmado' } }
               }
             },
-            _count: { select: { users: { where: { role: 'vendedor', ativo: true } } } }
+            _count: { select: { users: { where: { role: 'vendedor', deletedAt: null } } } }
           }
         })
       : null;
