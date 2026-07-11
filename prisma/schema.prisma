@@ -289,6 +289,7 @@ model Aldeia {
   userPermissions         UserPermission[]
   auditLogs               AuditLog[]
   vault                   Vault?
+  pedidosDepositoCofre    PedidoDepositoCofre[]
 
   @@index([slug])
   @@index([tipoOrganizacao])
@@ -1113,6 +1114,7 @@ model PedidoDepositoCofre {
   vendedorId      String
   vendedor        User          @relation("DepositoVendedor", fields: [vendedorId], references: [id])
   aldeiaId        String
+  aldeia          Aldeia        @relation(fields: [aldeiaId], references: [id])
   valor           Float
   descricao       String?
   estado          DepositoEstado @default(pendente)
