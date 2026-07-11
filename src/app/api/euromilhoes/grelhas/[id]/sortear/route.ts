@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { TipoNotificacao } from "@prisma/client";
 
 export async function PUT(
   request: NextRequest,
@@ -65,6 +66,40 @@ export async function PUT(
           where: { id: participacao.id },
           data: { ganhador: true },
         });
+
+        // Credit prize to winner's wallet
+        const premioValor = grelha.premioValor ?? 0;
+        if (premioValor > 0 && participacao.userId) {
+          await prisma.user.update({
+            where: { id: participacao.userId },
+            data: { saldo: { increment: premioValor } },
+          });
+
+          await prisma.transacao.create({
+            data: {
+              valor: premioValor,
+              tipo: "premio_dinheiro",
+              descricao: `Prémio Euromilhões - Grelha #${grelha.numero}`,
+              referencia: `SORTEIO-${id.slice(0, 8)}`,
+              estado: "concluido",
+              userId: participacao.userId,
+            },
+          });
+
+          const jogo = await prisma.jogo.findUnique({
+            where: { id: grelha.jogoId },
+            select: { nome: true },
+          });
+
+          await prisma.notificacao.create({
+            data: {
+              tipo: TipoNotificacao.premio,
+              titulo: "Parabéns! Ganhaste o Euromilhões!",
+              mensagem: `Ganhaste ${premioValor}€ no ${jogo?.nome ?? "Euromilhões"} com o número sorteado ${String(grelha.numeroSorteado)}. O prémio já foi creditado na tua carteira.`,
+              userId: participacao.userId,
+            },
+          });
+        }
       }
     }
 
