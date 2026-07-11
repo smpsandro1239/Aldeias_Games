@@ -19,7 +19,7 @@ interface Premio {
   nome: string;
   descricao: string;
   data: string;
-  tipo: "raspadinha" | "poio_vaca" | "rifa" | "tombola";
+  tipo: "raspadinha" | "poio_vaca" | "rifa" | "euromilhoes";
   valor?: number;
   premioEntregue?: boolean;
   jogoNome?: string;
@@ -188,7 +188,7 @@ export default function PremiosPage() {
         return <Trophy className="w-5 h-5" />;
       case "rifa":
         return <Star className="w-5 h-5" />;
-      case "tombola":
+      case "euromilhoes":
         return <Award className="w-5 h-5" />;
       default:
         return <Gift className="w-5 h-5" />;
@@ -203,8 +203,8 @@ export default function PremiosPage() {
         return "Poio da Vaca";
       case "rifa":
         return "Rifa";
-      case "tombola":
-        return "Tombola";
+      case "euromilhoes":
+        return "Euromilhões";
       default:
         return "Prémio";
     }
@@ -298,7 +298,7 @@ export default function PremiosPage() {
             </li>
             <li className="flex items-start gap-2">
               <Award className="w-4 h-4 text-primary mt-0.5" />
-              <span>As Tombolas e Rifas sorteiam prémios em dinheiro para a tua aldeia</span>
+              <span>Os Euromilhões e Rifas sorteiam prémios em dinheiro para a tua aldeia</span>
             </li>
           </ul>
         </div>

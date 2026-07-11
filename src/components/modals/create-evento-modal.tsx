@@ -21,7 +21,7 @@ import { Gift, Star, Award, Gamepad2 } from "lucide-react";
 const GAME_TYPES = [
   { id: "raspadinha", nome: "Raspadinha", descricao: "Jogo de raspar instantâneo", icon: Gift },
   { id: "rifa", nome: "Rifa", descricao: "Sorteio de números", icon: Star },
-  { id: "tombola", nome: "Tombola", descricao: "Lotaria tradicional", icon: Award },
+  { id: "euromilhoes", nome: "Euromilhões", descricao: "Lotaria tradicional", icon: Award },
   { id: "poio_vaca", nome: "Poio da Vaca", descricao: "Jogo rápido", icon: Gamepad2 },
 ] as const;
 

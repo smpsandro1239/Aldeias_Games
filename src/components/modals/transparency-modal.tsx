@@ -23,7 +23,7 @@ import { toast } from "sonner";
 const GAME_TYPES = {
   RASPADINHA: 'raspadinha',
   RIFA: 'rifa',
-  TOMBOLA: 'tombola',
+  EUROMILHOES: 'euromilhoes',
   POIO_DA_VACA: 'poio_da_vaca'
 } as const;
 
@@ -93,7 +93,7 @@ export function TransparencyModal({
           percentagemTotal += p.percentagem;
         }
       });
-    } else if (data.tipoJogo === GAME_TYPES.RIFA || data.tipoJogo === GAME_TYPES.TOMBOLA) {
+    } else if (data.tipoJogo === GAME_TYPES.RIFA || data.tipoJogo === GAME_TYPES.EUROMILHOES) {
       receitaTotal = data.preco * (data.stock || 0);
       custoTotalPremios = data.premios.reduce((acc, p) => acc + p.valor, 0);
     } else if (data.tipoJogo === GAME_TYPES.POIO_DA_VACA) {
@@ -159,7 +159,7 @@ export function TransparencyModal({
   const gameTypeLabels = useMemo(() => ({
     [GAME_TYPES.RASPADINHA]: "Raspadinha",
     [GAME_TYPES.RIFA]: "Rifa",
-    [GAME_TYPES.TOMBOLA]: "Tombola",
+    [GAME_TYPES.EUROMILHOES]: "Euromilhões",
     [GAME_TYPES.POIO_DA_VACA]: "Poio da Vaca"
   }), []);
 
@@ -259,7 +259,7 @@ export function TransparencyModal({
     const nomes: Record<string, string> = {
       "raspadinha": "Raspadinha",
       "rifa": "Rifa",
-      "tombola": "Tombola",
+      "euromilhoes": "Euromilhões",
       "poio_da_vaca": "Poio da Vaca"
     };
     return nomes[data.tipoJogo] || data.tipoJogo;

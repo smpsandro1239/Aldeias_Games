@@ -47,7 +47,7 @@ function calcularRentabilidade(tipo: string, dados: any) {
     resultado.custoMedioPrevisto = premios.reduce((acc: number, p: any) => 
       acc + ((p.valorDinheiroAlternative || 0) * (p.percentagem || 0) / 100), 0);
     resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - (resultado.custoMedioPrevisto * stock);
-  } else if (tipo === 'rifa' || tipo === 'tombola') {
+  } else if (tipo === 'rifa') {
     const premios = dados.premios || [];
     const custoTotalPremios = premios.reduce((acc: number, p: any) => acc + (p.valorDinheiroAlternative || 0), 0);
     resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - custoTotalPremios;
@@ -211,22 +211,22 @@ export async function POST(request: NextRequest) {
 
      const data = validation.data;
 
-     // Validação defensiva no backend para rifa/tombola
-     if (data.tipo === 'rifa' || data.tipo === 'tombola') {
+     // Validação defensiva no backend para rifa
+     if (data.tipo === 'rifa') {
        const config = data.configuracao as any;
        const numeroInicial = config?.numeroInicial;
        const numeroFinal = config?.numeroFinal;
 
        if (typeof numeroInicial !== 'number' || typeof numeroFinal !== 'number') {
          return NextResponse.json(
-           { error: 'Configuração de números inicial/final é obrigatória para rifa/tombola' },
+           { error: 'Configuração de números inicial/final é obrigatória para rifa' },
            { status: 400 }
          );
        }
 
        if (numeroFinal <= numeroInicial) {
          return NextResponse.json(
-           { error: 'Número final deve ser maior que número inicial para rifa/tombola' },
+           { error: 'Número final deve ser maior que número inicial para rifa' },
            { status: 400 }
          );
        }

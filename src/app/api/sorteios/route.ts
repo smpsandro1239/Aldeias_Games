@@ -62,16 +62,6 @@ export async function POST(request: NextRequest) {
     let winningNumber: number | null = null;
     let combinedSeed = `${jogo.seedSorteio}:${clientSeed || 'no-client-seed'}`;
 
-    // LÓGICA ESPECIAL PARA TOMBOLA (EURO MILLIONS)
-    if (jogo.tipo === 'tombola') {
-      try {
-        winningNumber = await euromillionsApiService.getFirstMainNumber();
-        combinedSeed += `:euromillions:${winningNumber}`;
-      } catch (e) {
-        console.error('EuroMillions API fail, falling back to combined seed only');
-      }
-    }
-
     const finalHash = crypto.createHash('sha256').update(combinedSeed).digest('hex');
     let vencedorId: string;
     let winningCoord: string | null = null;
@@ -92,14 +82,6 @@ export async function POST(request: NextRequest) {
       });
       if (!vencedor) return NextResponse.json({ success: true, message: 'Ninguém ganhou', resultado: winningCoord });
       vencedorId = vencedor.id;
-    } else if (jogo.tipo === 'tombola' && winningNumber !== null) {
-      const vencedor = jogo.participacoes.find(p => {
-        const d = JSON.parse(p.dadosParticipacao);
-        return d.numero === winningNumber;
-      });
-      if (!vencedor) return NextResponse.json({ success: true, message: 'Ninguém ganhou', resultado: winningNumber });
-      vencedorId = vencedor.id;
-      numeroSorteado = winningNumber;
     } else {
       const index = Number(BigInt('0x' + finalHash.substring(0, 12)) % BigInt(jogo.participacoes.length));
       vencedorId = jogo.participacoes[index].id;

@@ -54,7 +54,7 @@ export const LEVELS: Level[] = [
     maxXP: 300,
     icon: <Target className="h-5 w-5" />,
     color: "#00ff88",
-    benefits: ["Acesso a tombolas"],
+    benefits: ["Acesso a euromilhoes"],
   },
   {
     level: 3,

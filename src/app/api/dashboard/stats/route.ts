@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       jogosPorTipo: jogos.reduce((acc: Record<string, number>, j: any) => {
         const tipoMap: Record<string, string> = {
           rifa: 'Rifas',
-          tombola: 'Tombolas',
+          euromilhoes: 'Euromilhões',
           poio_da_vaca: 'Poio da Vaca',
           raspadinha: 'Raspadinhas',
         };

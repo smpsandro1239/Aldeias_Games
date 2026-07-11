@@ -80,7 +80,7 @@ const TIPOS_ORGANIZACAO = [
 
 const TIPOS_JOGO = [
   { id: "rifa", label: "Rifa", desc: "Sorteio de números" },
-  { id: "tombola", label: "Tombola", desc: "Múltiplos prémios" },
+  { id: "euromilhoes", label: "Euromilhões", desc: "Múltiplos prémios" },
   { id: "poio_da_vaca", label: "Poio da Vaca", desc: "Tabuleiro tradicional" },
   { id: "raspadinha", label: "Raspadinha", desc: "Cartões instantâneos" },
 ];
@@ -254,7 +254,7 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
   const getJogoConfiguracao = (tipo: string) => {
     switch (tipo) {
       case "rifa":
-      case "tombola":
+      case "euromilhoes":
         return JSON.stringify({ numeroInicial: 1, numeroFinal: jogoData.stockInicial });
       case "poio_da_vaca":
         return JSON.stringify({ letras: ["A", "B", "C", "D", "E"], numerosPorLetra: 20 });

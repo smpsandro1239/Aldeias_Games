@@ -77,7 +77,7 @@ interface Participacao {
 interface Jogo {
   id: string;
   nome: string;
-  tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+  tipo: "poio_da_vaca" | "rifa" | "euromilhoes" | "raspadinha";
   descricao?: string;
   preco: number;
   stockAtual: number;
@@ -259,7 +259,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
     let dadosParticipacao: Record<string, unknown> = {};
 
-    if (selectedJogo.tipo === "rifa" || selectedJogo.tipo === "tombola") {
+    if (selectedJogo.tipo === "rifa" || selectedJogo.tipo === "euromilhoes") {
       dadosParticipacao = { numeros: numerosSelecionados };
     } else if (selectedJogo.tipo === "poio_da_vaca") {
       dadosParticipacao = { coordenadas: selecaoPoioDaVaca };
@@ -532,7 +532,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                              </p>
 
                              {/* Números jogados */}
-                             {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "tombola" ? (
+                              {participacao.jogo?.tipo === "rifa" || participacao.jogo?.tipo === "euromilhoes" ? (
                                <div className="mt-2">
                                  <p className="text-xs text-muted-foreground/50">Números:</p>
                                  <div className="flex flex-wrap gap-1 mt-1">
@@ -758,7 +758,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         />
       )}
 
-      {selectedJogo && (selectedJogo.tipo === "rifa" || selectedJogo.tipo === "tombola") && (
+      {selectedJogo && (selectedJogo.tipo === "rifa" || selectedJogo.tipo === "euromilhoes") && (
         <NumberSelectorModal
           open={numberSelectorOpen}
           onOpenChange={setNumberSelectorOpen}

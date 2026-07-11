@@ -102,7 +102,7 @@ export function ParticipacaoConfirmacaoModal({
   const getJogoIcon = (tipo: string) => {
     switch (tipo) {
       case 'rifa': return '🎯';
-      case 'tombola': return '🎲';
+      case 'euromilhoes': return '🎲';
       case 'poio_da_vaca': return '🐄';
       case 'raspadinha': return '🎰';
       default: return '🎮';
@@ -112,7 +112,7 @@ export function ParticipacaoConfirmacaoModal({
   const getJogoNome = (tipo: string) => {
     switch (tipo) {
       case 'rifa': return 'Rifa';
-      case 'tombola': return 'Tombola';
+      case 'euromilhoes': return 'Euromilhões';
       case 'poio_da_vaca': return 'Poio da Vaca';
       case 'raspadinha': return 'Raspadinha';
       default: return tipo;

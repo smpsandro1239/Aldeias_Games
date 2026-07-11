@@ -47,7 +47,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
       case "raspadinha": return <Sparkles className="text-3xl" />;
       case "poio_da_vaca": return <Leaf className="text-3xl" />;
       case "rifa": return <Ticket className="text-3xl" />;
-      case "tombola": return <Award className="text-3xl" />;
+      case "euromilhoes": return <Award className="text-3xl" />;
       default: return <Gamepad2 className="text-3xl" />;
     }
   };
@@ -100,7 +100,7 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { icon: Gamepad2, title: "Jogos que são Memórias", desc: "O Poio da Vaca, as Rifas, Tombolas e Raspadinhas que conheces desde pequeno, agora na ponta dos teus dedos.", color: "primary", tags: ["Tradição", "Nostalgia"] },
+            { icon: Gamepad2, title: "Jogos que são Memórias", desc: "O Poio da Vaca, as Rifas, Euromilhões e Raspadinhas que conheces desde pequeno, agora na ponta dos teus dedos.", color: "primary", tags: ["Tradição", "Nostalgia"] },
             { icon: Shield, title: "Sorteio com Honra", desc: "Algoritmos SHA-256 auditáveis. Aqui, nada é manipulado. A sorte é tua, como sempre foi.", color: "secondary", tags: ["Justo", "Auditado"] },
             { icon: CreditCard, title: "Pagamentos que Chegam Longe", desc: "Stripe + MBWay. O dinheiro que angarias vai direto para a tua aldeia, esteja ela a 100km ou a 10000km.", color: "accent", tags: ["Rápido", "Seguro"] },
           ].map((feature, i) => (

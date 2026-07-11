@@ -500,8 +500,8 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             <Button 
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
               onClick={() => {
-                // Show number selection for rifa/tombola
-                if (selectedJogo?.tipo === 'rifa' || selectedJogo?.tipo === 'tombola') {
+                // Show number selection for rifa or euromilhoes
+                if (selectedJogo?.tipo === 'rifa' || selectedJogo?.tipo === 'euromilhoes') {
                   setStep(2.5);
                 } else {
                   setStep(3);
@@ -515,8 +515,97 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
         </motion.div>
       )}
 
-      {/* Step 2.5: Number Selection for Rifa/Tombola */}
-      {step === 2.5 && selectedJogo && (
+      {/* Step 2.5: Number Selection for Rifa or Euromilhões */}
+      {step === 2.5 && selectedJogo && selectedJogo.tipo === 'euromilhoes' && (
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="space-y-4"
+        >
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Hash className="h-5 w-5 text-primary" />
+            Escolher Números — Euromilhões
+          </h3>
+
+          <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
+              Selecione até 5 números (1–50)
+            </p>
+            
+            <div className="grid grid-cols-10 gap-1.5 mb-4">
+              {Array.from({ length: 50 }, (_, i) => i + 1).map(num => {
+                const isSelected = numerosSelecionados.includes(num);
+                return (
+                  <button
+                    key={num}
+                    onClick={() => {
+                      if (isSelected) {
+                        setNumerosSelecionados(numerosSelecionados.filter(n => n !== num));
+                      } else if (numerosSelecionados.length < 5) {
+                        setNumerosSelecionados([...numerosSelecionados, num].sort((a, b) => a - b));
+                      } else {
+                        toast.error("Máximo de 5 números");
+                      }
+                    }}
+                    className={`w-full aspect-square rounded-lg text-xs font-bold flex items-center justify-center transition-all ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground scale-105"
+                        : "bg-surface-container-low text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {num}
+                  </button>
+                );
+              })}
+            </div>
+
+            {numerosSelecionados.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {numerosSelecionados.map(num => (
+                  <span
+                    key={num}
+                    onClick={() => setNumerosSelecionados(numerosSelecionados.filter(n => n !== num))}
+                    className="w-10 h-10 rounded-lg bg-primary text-primary-foreground font-bold flex items-center justify-center cursor-pointer"
+                  >
+                    {num}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              Selecionados: {numerosSelecionados.length} de 5
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1 border-primary/30 text-primary"
+              onClick={() => setStep(2)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <Button 
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+              onClick={() => {
+                if (numerosSelecionados.length > 0 && numerosSelecionados.length <= 5) {
+                  setStep(3);
+                } else {
+                  toast.error("Selecione entre 1 e 5 números");
+                }
+              }}
+            >
+              Próximo
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Step 2.5: Number Selection for Rifa */}
+      {step === 2.5 && selectedJogo && selectedJogo.tipo === 'rifa' && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -529,7 +618,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
 
           <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
-              {selectedJogo.tipo === 'rifa' ? 'Número da Rifa' : 'Número da Tombola'}
+              {selectedJogo.tipo === 'rifa' ? 'Número da Rifa' : 'Número'}
             </p>
             
             {/* Manual input */}

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 interface Jogo {
   id: string;
   nome: string;
-  tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+  tipo: "poio_da_vaca" | "rifa" | "raspadinha" | "euromilhoes";
   descricao?: string;
   configuracao: Record<string, unknown>;
   preco: number;
@@ -36,7 +36,7 @@ interface Jogo {
 
 interface CreateJogoData {
   nome: string;
-  tipo: "poio_da_vaca" | "rifa" | "tombola" | "raspadinha";
+  tipo: "poio_da_vaca" | "rifa" | "raspadinha" | "euromilhoes";
   descricao?: string;
   configuracao: Record<string, unknown>;
   preco: number;

@@ -28,7 +28,7 @@ interface TutorialStep {
 interface GameTutorialProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  gameType: "rifa" | "tombola" | "poio_da_vaca" | "raspadinha";
+  gameType: "rifa" | "euromilhoes" | "poio_da_vaca" | "raspadinha";
   onComplete?: () => void;
 }
 
@@ -59,11 +59,11 @@ const TUTORIALS: Record<string, TutorialStep[]> = {
       icon: <Trophy className="h-8 w-8" />,
     },
   ],
-  tombola: [
+  euromilhoes: [
     {
       id: "welcome",
-      title: "Bem-vindo à Tombola!",
-      description: "A tombolada é um jogo clássico português com múltiplos prémios. Cada número pode ganhar!",
+      title: "Bem-vindo aos Euromilhões!",
+      description: "Os Euromilhões é um jogo clássico com múltiplos prémios. Cada número pode ganhar!",
       icon: <Trophy className="h-8 w-8" />,
     },
     {
@@ -81,7 +81,7 @@ const TUTORIALS: Record<string, TutorialStep[]> = {
     {
       id: "win",
       title: "Celebra as vitórias!",
-      description: "A tombolada tem vários prémios. Quanto mais números tiveres, mais hipóteses de ganhar!",
+      description: "Os Euromilhões têm vários prémios. Quanto mais números tiveres, mais hipóteses de ganhar!",
       icon: <Sparkles className="h-8 w-8" />,
     },
   ],

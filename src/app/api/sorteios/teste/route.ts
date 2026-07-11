@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         letra: (v.dados as any).letra,
         numero: (v.dados as any).numero,
       }));
-    } else if (jogo.tipo === 'rifa' || jogo.tipo === 'tombola') {
+    } else if (jogo.tipo === 'rifa') {
       const config = JSON.parse(jogo.configuracao);
       const seedNum = parseInt(seed.slice(0, 8), 16);
       const numeroVencedor = (seedNum % (config.numeroFinal - config.numeroInicial + 1)) + config.numeroInicial;

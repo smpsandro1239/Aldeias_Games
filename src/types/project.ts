@@ -141,7 +141,7 @@ export interface Evento {
 // TIPOS DE JOGO
 // ============================================
 
-export type TipoJogo = 'poio_da_vaca' | 'rifa' | 'tombola' | 'raspadinha';
+export type TipoJogo = 'poio_da_vaca' | 'rifa' | 'raspadinha' | 'euromilhoes';
 export type EstadoJogo = 'rascunho' | 'aberto' | 'pausado' | 'fechado' | 'finalizado';
 
 export interface Jogo {

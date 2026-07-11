@@ -28,7 +28,7 @@ interface VictoryCelebrationProps {
     valorDinheiroAlternative?: number | null;
   };
   jogoNome: string;
-  tipoJogo: "raspadinha" | "rifa" | "tombola" | "poio_da_vaca";
+  tipoJogo: "raspadinha" | "rifa" | "euromilhoes" | "poio_da_vaca";
   onShare?: () => void;
 }
 
@@ -146,7 +146,7 @@ export function VictoryCelebration({
       case "poio_da_vaca":
         return <Trophy className="w-8 h-8" />;
       case "rifa":
-      case "tombola":
+      case "euromilhoes":
         return <Gift className="w-8 h-8" />;
       default:
         return <Trophy className="w-8 h-8" />;

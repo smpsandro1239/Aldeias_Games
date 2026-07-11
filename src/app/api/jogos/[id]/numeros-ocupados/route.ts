@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-// GET público - Retorna números ocupados de um jogo (rifa/tombola)
+// GET público - Retorna números ocupados de um jogo (rifa)
 // Não requer autenticação - apenas retorna números, sem dados sensíveis
 export async function GET(
   request: NextRequest,

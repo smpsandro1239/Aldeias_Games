@@ -33,7 +33,7 @@ import { TransparencyModal } from "./transparency-modal";
 const GAME_TYPES = {
   POIO_DA_VACA: 'poio_da_vaca',
   RIFA: 'rifa',
-  TOMBOLA: 'tombola',
+  EUROMILHOES: 'euromilhoes',
   RASPADINHA: 'raspadinha'
 } as const;
 
@@ -331,7 +331,7 @@ function useJogoForm(initialData?: JogoData) {
       case GAME_TYPES.RASPADINHA:
         return metricsRaspadinha;
       case GAME_TYPES.RIFA:
-      case GAME_TYPES.TOMBOLA:
+      case GAME_TYPES.EUROMILHOES:
         return metricsRifa;
       case GAME_TYPES.POIO_DA_VACA:
         return metricsPoioDaVaca;
@@ -393,14 +393,14 @@ function useJogoForm(initialData?: JogoData) {
       }
     }
 
-    // Validação específica para rifa/tombola: intervalo numérico
-    if (state.formData.tipo === GAME_TYPES.RIFA || state.formData.tipo === GAME_TYPES.TOMBOLA) {
+    // Validação específica para rifa: intervalo numérico
+    if (state.formData.tipo === GAME_TYPES.RIFA) {
       const numInicial = safeParseInt(state.formData.numeroInicial, 1);
       const numFinal = safeParseInt(state.formData.numeroFinal, 1000);
       const stock = safeParseInt(state.formData.stockInicial, 100);
 
       if (numFinal <= numInicial) {
-        toast.error('Número final deve ser maior que número inicial para rifa/tombola');
+        toast.error('Número final deve ser maior que número inicial para rifa');
         return;
       }
 
@@ -460,7 +460,7 @@ function buildJogoData(
     detalhesSorteioExterno: formData.detalhesSorteioExterno,
   };
 
-  if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) {
+  if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.EUROMILHOES) {
     config.dataSorteio = formData.dataSorteio;
     config.horaSorteio = formData.horaSorteio;
     config.localSorteio = formData.localSorteio;
@@ -496,7 +496,7 @@ function buildJogoData(
         percentagem: p.percentagem,
         ordem: idx
       }));
-  } else if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) {
+  } else if (formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.EUROMILHOES) {
     premiosData = rifaPremios
       .filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0)
       .map((p, idx) => ({
@@ -542,10 +542,10 @@ function getTransparencyData(formData: JogoFormData, raspadinhaPremios: Premio[]
           }))
       };
     case GAME_TYPES.RIFA:
-    case GAME_TYPES.TOMBOLA:
+    case GAME_TYPES.EUROMILHOES:
       return {
         tipoJogo: formData.tipo,
-        nome: formData.nome || (formData.tipo === GAME_TYPES.TOMBOLA ? "Tombola" : "Rifa"),
+        nome: formData.nome || (formData.tipo === GAME_TYPES.EUROMILHOES ? "Euromilhões" : "Rifa"),
         preco: safeParseFloat(formData.preco, 0),
         stock: safeParseInt(formData.stockInicial, 0),
         premios: rifaPremios
@@ -687,7 +687,7 @@ export function CreateJogoModal({
           </div>
         )}
 
-        {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) && (
+              {(formData.tipo === GAME_TYPES.RIFA) && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Prémios:</span>
@@ -771,7 +771,7 @@ export function CreateJogoModal({
                   <SelectContent>
                     <SelectItem value={GAME_TYPES.RASPADINHA}>Raspadinha</SelectItem>
                     <SelectItem value={GAME_TYPES.RIFA}>Rifa</SelectItem>
-                    <SelectItem value={GAME_TYPES.TOMBOLA}>Tombola</SelectItem>
+                    <SelectItem value={GAME_TYPES.EUROMILHOES}>Euromilhões</SelectItem>
                     <SelectItem value={GAME_TYPES.POIO_DA_VACA}>Poio da Vaca</SelectItem>
                   </SelectContent>
                 </Select>
@@ -788,7 +788,7 @@ export function CreateJogoModal({
                 />
               </div>
 
-              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA || formData.tipo === GAME_TYPES.RASPADINHA) && (
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.RASPADINHA) && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="preco">Preço (€) *</Label>
@@ -922,7 +922,7 @@ export function CreateJogoModal({
                 </>
               )}
 
-              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.TOMBOLA) && (
+        {(formData.tipo === GAME_TYPES.RIFA) && (
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <h3 className="text-sm font-semibold">Prémios</h3>

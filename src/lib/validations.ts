@@ -133,7 +133,7 @@ export const updateEventoSchema = createEventoSchema.partial().omit({ aldeiaId: 
 
 const baseJogoSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  tipo: z.enum(['poio_da_vaca', 'rifa', 'tombola', 'raspadinha']),
+  tipo: z.enum(['poio_da_vaca', 'rifa', 'raspadinha', 'euromilhoes']),
   descricao: z.string().optional(),
   configuracao: z.record(z.any()),
   preco: z.number().min(0.5, 'Preço mínimo é 0.50€'),
@@ -174,8 +174,8 @@ export const createJogoSchema = baseJogoSchema
     path: ['premios'],
   })
   .refine((data) => {
-    // Validação específica para rifa/tombola: intervalo numérico válido
-    if (data.tipo === 'rifa' || data.tipo === 'tombola') {
+    // Validação específica para rifa: intervalo numérico válido
+    if (data.tipo === 'rifa') {
       const config = data.configuracao as any;
       const numeroInicial = config?.numeroInicial;
       const numeroFinal = config?.numeroFinal;
@@ -191,7 +191,7 @@ export const createJogoSchema = baseJogoSchema
     }
     return true;
   }, {
-    message: 'Para rifa/tombola: número final deve ser maior que inicial e o stock deve caber no intervalo',
+    message: 'Para rifa: número final deve ser maior que inicial e o stock deve caber no intervalo',
     path: ['configuracao'],
   });
 
@@ -230,6 +230,8 @@ export const createParticipacaoSchema = z.object({
     message: "Deve fornecer pelo menos um telefone ou email",
     path: ["telefone"],
   }).optional(),
+  grelhaId: z.string().optional(),
+  numerosSelecionados: z.array(z.number().int().min(1).max(50)).min(1).max(5).optional(),
 });
 
 export const revelarRaspadinhaSchema = z.object({

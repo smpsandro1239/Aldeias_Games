@@ -388,6 +388,7 @@ model Jogo {
   gameAnalytics         GameAnalytics[]
   sorteios               Sorteio[]
   numerosVendidos       NumeroVendido[] @relation("NumeroVendidoJogo")
+  grelhasEuromilhoes    GrelhaEuromilhoes[]
 
   @@index([eventoId])
   @@index([tipo])
@@ -452,6 +453,8 @@ model Participacao {
   emailCliente        String?
   ganhador            Boolean                 @default(false)
   premioEntregue      Boolean                 @default(false)
+  numerosSelecionados String?
+  grelhaId            String?
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
   jogoId              String
@@ -640,8 +643,8 @@ enum EstadoEvento {
 enum TipoJogo {
   poio_da_vaca
   rifa
-  tombola
   raspadinha
+  euromilhoes
 }
 
 enum EstadoJogo {
@@ -1135,6 +1138,33 @@ enum DepositoEstado {
   pendente
   confirmado
   rejeitado
+}
+
+enum GrelhaEstado {
+  aberta
+  preenchida
+  sorteada
+}
+
+model GrelhaEuromilhoes {
+  id              String       @id @default(cuid())
+  jogoId          String
+  jogo            Jogo         @relation(fields: [jogoId], references: [id])
+  numero          Int
+  estado          GrelhaEstado @default(aberta)
+  numerosOcupados String       @default("[]")
+  premioDescricao String?
+  premioValor     Float?
+  dataFecho       DateTime?
+  dataSorteio     DateTime?
+  numeroSorteado  Int?
+  vencedorId      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([jogoId, numero])
+  @@index([jogoId, estado])
+  @@map("grelhas_euromilhoes")
 }
 
 

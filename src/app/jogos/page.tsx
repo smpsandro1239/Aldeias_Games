@@ -10,7 +10,7 @@ const GAME_ROUTES = {
   raspadinha: "/jogos/raspadinha-premium",
   poio_da_vaca: "/jogos/poio-da-vaca",
   rifa: "/jogos/rifa",
-  tombola: "/jogos/rifa",
+  euromilhoes: "/jogos/euromilhoes",
   default: "/jogos/raspadinha-premium",
 } as const;
 

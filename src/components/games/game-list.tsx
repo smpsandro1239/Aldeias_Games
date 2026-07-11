@@ -55,7 +55,7 @@ export function GameList({
       case "raspadinha": return Sparkles;
       case "poio_da_vaca": return Leaf;
       case "rifa": return Ticket;
-      case "tombola": return Trophy;
+      case "euromilhoes": return Trophy;
       default: return Gamepad2;
     }
   };

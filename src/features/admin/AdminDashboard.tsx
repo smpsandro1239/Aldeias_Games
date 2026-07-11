@@ -347,7 +347,7 @@ export default function AdminDashboard({
                 nome: `${data.nome} - ${tipoJogo}`,
                 tipo: tipoJogo,
                 configuracao: "{}",
-                preco: tipoJogo === 'tombola' ? 5 : tipoJogo === 'rifa' ? 2 : 3,
+                preco: tipoJogo === 'rifa' ? 2 : 3,
                 stockInicial: 100,
                 eventoId,
                 aldeiaId: data.aldeiaId,
@@ -673,7 +673,7 @@ export default function AdminDashboard({
     const jogoData: JogoData = {
       id: jogo.id,
       nome: jogo.nome,
-      tipo: jogo.tipo as "poio_da_vaca" | "rifa" | "tombola" | "raspadinha",
+      tipo: jogo.tipo as "poio_da_vaca" | "rifa" | "euromilhoes" | "raspadinha",
       descricao: (jogo as any).descricao,
       preco: jogo.preco,
       stockInicial: jogo.stockInicial ?? 100,
@@ -917,6 +917,11 @@ export default function AdminDashboard({
             <TabsTrigger value="cofre" onClick={() => router.push('/admindashboard/cofre')} className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
               <ShieldCheck className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Cofre</span>
+            </TabsTrigger>
+
+            <TabsTrigger value="euromilhoes" onClick={() => router.push('/admindashboard/euromilhoes')} className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <Trophy className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Euromilhões</span>
             </TabsTrigger>
 
             <TabsTrigger value="verificar" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
