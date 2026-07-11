@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, TipoJogo, EstadoJogo, GrelhaEstado, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey } from '@prisma/client';
+import { PrismaClient, UserRole, TipoJogo, EstadoJogo, GrelhaEstado, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey, CashboxTipo, DepositoEstado, EstadoEntrega, VaultTipo, VaultEstado, TipoNotificacao } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -43,6 +43,12 @@ async function main() {
   await prisma.rateLimit.deleteMany();
   await prisma.gamificacaoEvento.deleteMany();
   await prisma.auditLog.deleteMany();
+  await prisma.logAcesso.deleteMany();
+  await prisma.vendedorCashboxTransaction.deleteMany();
+  await prisma.vendedorCashbox.deleteMany();
+  await prisma.vaultTransaction.deleteMany();
+  await prisma.vault.deleteMany();
+  await prisma.pedidoDepositoCofre.deleteMany();
   await prisma.badge.deleteMany();
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
@@ -285,6 +291,33 @@ async function main() {
   await prisma.userAldeiaRole.create({
     data: { userId: createdUsers['user-jogador2'].id, aldeiaId: aldeia1.id, roleId: createdRoles[RoleName.VIEWER].id },
   });
+
+  // ──────────────────────────────────────────────
+  // 5b. VAULT + VENDEDOR CASHBOX
+  // ──────────────────────────────────────────────
+  const vault1 = await prisma.vault.create({
+    data: {
+      id: 'vault-aldeia-001',
+      aldeiaId: aldeia1.id,
+      saldo: 250,
+    },
+  });
+  await prisma.vault.create({
+    data: {
+      id: 'vault-aldeia-002',
+      aldeiaId: aldeia2.id,
+      saldo: 100,
+    },
+  });
+
+  await prisma.vendedorCashbox.create({
+    data: {
+      id: 'cashbox-vendedor-001',
+      userId: createdUsers['user-vendedor'].id,
+      saldo: 40,
+    },
+  });
+  console.log('✅ 2 vaults + 1 vendedor cashbox');
 
   // ──────────────────────────────────────────────
   // 6. EVENTOS (2 por aldeia)
@@ -589,6 +622,52 @@ async function main() {
   console.log('✅ 3 participações');
 
   // ──────────────────────────────────────────────
+  // 10b. EUROMILHÕES PARTICIPAÇÕES
+  // ──────────────────────────────────────────────
+  const partEurom1 = await prisma.participacao.create({
+    data: {
+      id: 'part-eurom-001',
+      dadosParticipacao: JSON.stringify({ numeros: [3, 12, 25, 38, 44], tipo: 'euromilhoes' }),
+      valorPago: 5,
+      metodoPagamento: 'saldo',
+      estadoPagamento: 'concluido',
+      dataPagamento: new Date(),
+      hashParticipacao: 'eurom-hash-001',
+      dadosVerificacao: JSON.stringify({ metodo: 'saldo' }),
+      ganhador: false,
+      premioEntregue: false,
+      jogoId: jogoEuromilhoes.id,
+      userId: createdUsers['user-jogador'].id,
+      grelhaId: 'grelha-eurom-001',
+      numerosSelecionados: '3,12,25,38,44',
+    },
+  });
+
+  const partEurom2 = await prisma.participacao.create({
+    data: {
+      id: 'part-eurom-002',
+      dadosParticipacao: JSON.stringify({ numeros: [7, 15, 28, 41, 49], tipo: 'euromilhoes' }),
+      valorPago: 5,
+      metodoPagamento: 'dinheiro',
+      estadoPagamento: 'pendente',
+      ganhador: false,
+      premioEntregue: false,
+      jogoId: jogoEuromilhoes.id,
+      userId: createdUsers['user-jogador2'].id,
+      grelhaId: 'grelha-eurom-001',
+      numerosSelecionados: '7,15,28,41,49',
+    },
+  });
+
+  // Atualizar numerosOcupados na grelha
+  await prisma.grelhaEuromilhoes.update({
+    where: { id: 'grelha-eurom-001' },
+    data: { numerosOcupados: JSON.stringify(['3,12,25,38,44', '7,15,28,41,49']) },
+  });
+
+  console.log('✅ 2 participações euromilhões');
+
+  // ──────────────────────────────────────────────
   // 11. TRANSAÇÕES
   // ──────────────────────────────────────────────
   // Carregamento de saldo para Jogador 1
@@ -669,6 +748,151 @@ async function main() {
   console.log('✅ 6 transações');
 
   // ──────────────────────────────────────────────
+  // 11b. COMISSÕES + VENDAS + ENTREGAS
+  // ──────────────────────────────────────────────
+  await prisma.comissao.create({
+    data: {
+      id: 'comissao-vendedor-001',
+      vendedorId: createdUsers['user-vendedor'].id,
+      percentual: 5,
+      metaVendas: 1000,
+      bonusMeta: 2.5,
+      aldeiaId: aldeia1.id,
+    },
+  });
+
+  await prisma.venda.create({
+    data: {
+      id: 'venda-vendedor-001',
+      valor: 10,
+      comissao: 0.5,
+      metodoPagamento: 'dinheiro',
+      dadosCliente: JSON.stringify({ nome: 'Jogador', email: 'jogador@gmail.com' }),
+      vendedorId: createdUsers['user-vendedor'].id,
+    },
+  });
+
+  await prisma.entregaSaldo.create({
+    data: {
+      id: 'entrega-vendedor-001',
+      vendedorId: createdUsers['user-vendedor'].id,
+      adminId: createdUsers['user-aldeia-admin'].id,
+      aldeiaId: aldeia1.id,
+      valor: 30,
+      estado: 'confirmado',
+      dataSolicitacao: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      dataConfirmacao: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      observacoes: 'Entrega referente a vendas de rifa',
+    },
+  });
+
+  console.log('✅ 1 comissão, 1 venda, 1 entrega');
+
+  // ──────────────────────────────────────────────
+  // 11c. PEDIDOS DEPÓSITO COFRE + VAULT TRANSACTIONS + CASHBOX TRANSACTIONS
+  // ──────────────────────────────────────────────
+  // Pedido pendente
+  const pedidoDepPendente = await prisma.pedidoDepositoCofre.create({
+    data: {
+      id: 'dep-pendente-001',
+      vendedorId: createdUsers['user-vendedor'].id,
+      aldeiaId: aldeia1.id,
+      valor: 20,
+      descricao: 'Depósito de vendas de rifa',
+      estado: 'pendente',
+      referencias: JSON.stringify(['carregamento-pendente-001']),
+      criadoPorId: createdUsers['user-vendedor'].id,
+    },
+  });
+
+  // Pedido confirmado
+  const pedidoDepConfirmado = await prisma.pedidoDepositoCofre.create({
+    data: {
+      id: 'dep-confirmado-001',
+      vendedorId: createdUsers['user-vendedor'].id,
+      aldeiaId: aldeia1.id,
+      valor: 30,
+      descricao: 'Depósito de vendas de rifa - confirmado',
+      estado: 'confirmado',
+      referencias: JSON.stringify(['carregamento-aprovado-001']),
+      criadoPorId: createdUsers['user-vendedor'].id,
+      confirmadoPorId: createdUsers['user-aldeia-admin'].id,
+      confirmadoAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      observacoes: 'Valor conferido e depositado no cofre',
+    },
+  });
+
+  // Pedido rejeitado
+  await prisma.pedidoDepositoCofre.create({
+    data: {
+      id: 'dep-rejeitado-001',
+      vendedorId: createdUsers['user-vendedor'].id,
+      aldeiaId: aldeia1.id,
+      valor: 100,
+      descricao: 'Valor incorreto',
+      estado: 'rejeitado',
+      criadoPorId: createdUsers['user-vendedor'].id,
+      rejeitadoPorId: createdUsers['user-aldeia-admin'].id,
+      motivoRejeicao: 'Valor não corresponde ao registado no cashbox',
+      observacoes: 'Vendedor deve conferir o montante em caixa',
+    },
+  });
+
+  // Vault transactions
+  await prisma.vaultTransaction.create({
+    data: {
+      vaultId: vault1.id,
+      tipo: 'deposito',
+      valor: 30,
+      descricao: 'Depósito confirmado - vendas rifa',
+      referencia: pedidoDepConfirmado.id,
+      estado: 'confirmado',
+      criadoPorId: createdUsers['user-aldeia-admin'].id,
+      aprovadoPorId: createdUsers['user-aldeia-admin'].id,
+      dataCriacao: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      dataAprovacao: new Date(Date.now() - 1 * 60 * 60 * 1000),
+    },
+  });
+
+  await prisma.vaultTransaction.create({
+    data: {
+      vaultId: vault1.id,
+      tipo: 'deposito',
+      valor: 20,
+      descricao: 'Depósito pendente - vendas rifa',
+      referencia: pedidoDepPendente.id,
+      estado: 'pendente',
+      criadoPorId: createdUsers['user-vendedor'].id,
+      dataCriacao: new Date(),
+    },
+  });
+
+  // Vendedor cashbox transactions
+  await prisma.vendedorCashboxTransaction.create({
+    data: {
+      cashboxId: 'cashbox-vendedor-001',
+      tipo: 'RECEBIDO_DO_JOGADOR',
+      valor: 20,
+      descricao: 'Recebido do Jogador - carregamento pendente',
+      referencia: 'carregamento-pendente-001',
+      criadoPorId: createdUsers['user-vendedor'].id,
+    },
+  });
+
+  await prisma.vendedorCashboxTransaction.create({
+    data: {
+      cashboxId: 'cashbox-vendedor-001',
+      tipo: 'DEPOSITADO_NO_COFRE',
+      valor: 30,
+      descricao: 'Depositado no cofre - confirmado',
+      referencia: pedidoDepConfirmado.id,
+      criadoPorId: createdUsers['user-aldeia-admin'].id,
+    },
+  });
+
+  console.log('✅ 3 pedidos depósito, 2 vault transactions, 2 cashbox transactions');
+
+  // ──────────────────────────────────────────────
   // 12. PEDIDOS DE CARREGAMENTO
   // ──────────────────────────────────────────────
   // Pedido pendente
@@ -739,6 +963,69 @@ async function main() {
   });
 
   console.log('✅ 3 pedidos de carregamento');
+
+  // ──────────────────────────────────────────────
+  // 12b. AUDIT LOGS + LOGS ACESSO
+  // ──────────────────────────────────────────────
+  await prisma.auditLog.create({
+    data: {
+      userId: createdUsers['user-vendedor'].id,
+      aldeiaId: aldeia1.id,
+      action: 'deposito_criado',
+      resource: 'PedidoDepositoCofre',
+      resourceId: pedidoDepPendente.id,
+      ip: '192.168.1.100',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+      metadata: JSON.stringify({ valor: 20, estado: 'pendente' }),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: createdUsers['user-aldeia-admin'].id,
+      aldeiaId: aldeia1.id,
+      action: 'deposito_confirmado',
+      resource: 'PedidoDepositoCofre',
+      resourceId: pedidoDepConfirmado.id,
+      ip: '192.168.1.50',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/121.0',
+      metadata: JSON.stringify({ valor: 30, confirmadoPor: 'Admin Aldeia' }),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: createdUsers['user-aldeia-admin'].id,
+      aldeiaId: aldeia1.id,
+      action: 'deposito_rejeitado',
+      resource: 'PedidoDepositoCofre',
+      resourceId: 'dep-rejeitado-001',
+      ip: '192.168.1.50',
+      metadata: JSON.stringify({ valor: 100, motivo: 'Valor incorreto' }),
+    },
+  });
+
+  await prisma.logAcesso.create({
+    data: {
+      userId: createdUsers['user-super-admin'].id,
+      email: 'admin@aldeias.pt',
+      sucesso: true,
+      ip: '10.0.0.1',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+    },
+  });
+
+  await prisma.logAcesso.create({
+    data: {
+      email: 'desconhecido@teste.com',
+      sucesso: false,
+      motivo: 'Credenciais inválidas',
+      ip: '10.0.0.99',
+      userAgent: 'curl/7.68.0',
+    },
+  });
+
+  console.log('✅ 3 audit logs + 2 logs acesso');
 
   // ──────────────────────────────────────────────
   // 13. BADGES + USER_BADGES (gamificação)
@@ -819,6 +1106,51 @@ async function main() {
   console.log('✅ 4 eventos de gamificação');
 
   // ──────────────────────────────────────────────
+  // 15b. GAME ANALYTICS
+  // ──────────────────────────────────────────────
+  await prisma.gameAnalytics.create({
+    data: {
+      type: 'game_view',
+      gameId: jogoRifa.id,
+      gameType: 'rifa',
+      source: 'pagina_jogos',
+      description: 'Visualização da página da rifa',
+      aldeiaId: aldeia1.id,
+      userId: createdUsers['user-jogador'].id,
+      sessionId: 'session-001',
+    },
+  });
+
+  await prisma.gameAnalytics.create({
+    data: {
+      type: 'payment_success',
+      gameId: jogoRifa.id,
+      gameType: 'rifa',
+      method: 'saldo',
+      amount: 10,
+      description: 'Pagamento bem-sucedido de participação na rifa',
+      aldeiaId: aldeia1.id,
+      userId: createdUsers['user-jogador'].id,
+      sessionId: 'session-001',
+    },
+  });
+
+  await prisma.gameAnalytics.create({
+    data: {
+      type: 'game_view',
+      gameId: jogoEuromilhoes.id,
+      gameType: 'euromilhoes',
+      source: 'pagina_jogos',
+      description: 'Visualização da página do Euromilhões',
+      aldeiaId: aldeia1.id,
+      userId: createdUsers['user-jogador'].id,
+      sessionId: 'session-002',
+    },
+  });
+
+  console.log('✅ 3 game analytics');
+
+  // ──────────────────────────────────────────────
   // RESUMO
   // ──────────────────────────────────────────────
   console.log('\n' + '═'.repeat(40));
@@ -828,11 +1160,21 @@ async function main() {
   console.log(`✅ Eventos:             4`);
   console.log(`✅ Jogos:               3 (1 rifa, 1 raspadinha, 1 euromilhoes)`);
   console.log(`✅ Utilizadores:        ${usersData.length}`);
-  console.log(`✅ Participações:       3`);
+  console.log(`✅ Participações:       5 (3 gerais + 2 euromilhoes)`);
   console.log(`✅ Prémios:             4`);
   console.log(`✅ Transações:          6`);
   console.log(`✅ Números Vendidos:    ${numerosVendidos.length}`);
   console.log(`✅ Pedidos Carregamento: 3`);
+  console.log(`✅ Pedidos Depósito:     3 (1 pendente, 1 confirmado, 1 rejeitado)`);
+  console.log(`✅ Vaults:              2`);
+  console.log(`✅ Vault Transactions:   2 (1 confirmada, 1 pendente)`);
+  console.log(`✅ Cashbox Transactions: 2 (1 recebido, 1 depositado)`);
+  console.log(`✅ Comissões:           1`);
+  console.log(`✅ Vendas:              1`);
+  console.log(`✅ Entregas Saldo:      1`);
+  console.log(`✅ Audit Logs:          3`);
+  console.log(`✅ Logs Acesso:         2`);
+  console.log(`✅ Game Analytics:      3`);
   console.log(`✅ Badges:              ${badges.length}`);
   console.log(`✅ Notificações:        3`);
   console.log('═'.repeat(40));
