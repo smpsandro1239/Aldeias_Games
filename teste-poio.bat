@@ -108,7 +108,7 @@ echo.
 echo === 4c. Saldo depois ===
 curl -s "%BASE_URL%/api/wallet" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_wallet2.json
 call :extract_json _resp_wallet2.json "saldo" SALDO_DEPOIS
-set /a DIF = SALDO_ANTES - SALDO_DEPOIS
+for /f %%d in ('powershell -Command "%SALDO_ANTES% - %SALDO_DEPOIS%"') do set DIF=%%d
 echo Saldo: !SALDO_DEPOIS!@  (diferenca: !DIF!@)
 del _resp_wallet2.json >nul 2>&1
 echo.

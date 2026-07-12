@@ -838,17 +838,6 @@ export default function RifaPage() {
                 );
               })}
             </div>
-            <p className="text-xs text-muted-foreground/60 mt-2 flex flex-wrap justify-between gap-3">
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-surface-container-highest border border-gray-600/30"></span> Disponível
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-orange-500/70 border border-orange-400"></span> Jogados
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-gray-800/50 border border-gray-700/30"></span> Ocupado
-              </span>
-            </p>
           </div>
 
           {numerosSelecionados.length > 0 && (

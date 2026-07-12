@@ -67,7 +67,7 @@ del _resp_evento.json >nul 2>&1
 echo.
 
 echo === 3. Criar Jogo Rifa ===
-curl -s -X POST "%BASE_URL%/api/jogos" -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -d "{\"nome\":\"Rifa Teste Bat\",\"tipo\":\"rifa\",\"eventoId\":\"%EVENTO_ID%\",\"preco\":2,\"stockInicial\":100,\"limitePorUsuario\":10,\"configuracao\":{\"numeroInicial\":1,\"numeroFinal\":100},\"premios\":[{\"nome\":\"1o Premio\",\"valorDinheiroAlternative\":50,\"ordem\":1},{\"nome\":\"2o Premio\",\"valorDinheiroAlternative\":20,\"ordem\":2}]}" > _resp_jogo.json
+curl -s -X POST "%BASE_URL%/api/jogos" -H "Authorization: Bearer %TOKEN%" -H "Content-Type: application/json" -d "{\"nome\":\"Rifa Teste Bat\",\"tipo\":\"rifa\",\"eventoId\":\"%EVENTO_ID%\",\"preco\":2,\"stockInicial\":100,\"limitePorUsuario\":10,\"configuracao\":{\"numeroInicial\":1,\"numeroFinal\":100,\"dataSorteio\":\"2026-07-19\",\"horaSorteio\":\"20:00\",\"localSorteio\":\"Salao da Aldeia\"},\"premios\":[{\"nome\":\"1o Premio\",\"valorDinheiroAlternative\":50,\"ordem\":1},{\"nome\":\"2o Premio\",\"valorDinheiroAlternative\":20,\"ordem\":2}]}" > _resp_jogo.json
 call :extract_json _resp_jogo.json "id" JOGO_ID
 if "%JOGO_ID%"=="" (
     echo ERRO: Criacao de jogo falhou
@@ -108,7 +108,7 @@ echo.
 echo === 4c. Saldo depois ===
 curl -s "%BASE_URL%/api/wallet" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_wallet2.json
 call :extract_json _resp_wallet2.json "saldo" SALDO_DEPOIS
-set /a DIF = SALDO_ANTES - SALDO_DEPOIS
+for /f %%d in ('powershell -Command "%SALDO_ANTES% - %SALDO_DEPOIS%"') do set DIF=%%d
 echo Saldo: !SALDO_DEPOIS!@  (diferenca: !DIF!@)
 del _resp_wallet2.json >nul 2>&1
 echo.

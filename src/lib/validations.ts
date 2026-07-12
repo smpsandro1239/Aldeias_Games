@@ -193,6 +193,19 @@ export const createJogoSchema = baseJogoSchema
   }, {
     message: 'Para rifa: número final deve ser maior que inicial e o stock deve caber no intervalo',
     path: ['configuracao'],
+  })
+  .refine((data) => {
+    // Validação para rifa: data, hora e local obrigatórios
+    if (data.tipo === 'rifa') {
+      const config = data.configuracao as any;
+      if (!config?.dataSorteio || !config?.horaSorteio || !config?.localSorteio) {
+        return false;
+      }
+    }
+    return true;
+  }, {
+    message: 'Data, hora e local do sorteio são obrigatórios para rifa',
+    path: ['configuracao'],
   });
 
 export const updateJogoSchema = baseJogoSchema.partial().omit({ eventoId: true });

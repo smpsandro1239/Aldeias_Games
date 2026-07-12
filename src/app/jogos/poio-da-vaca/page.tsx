@@ -474,7 +474,10 @@ export default function PoioDaVacaPage() {
 
       if (response.ok) {
         const novaAposta = await response.json();
-        setApostas(prev => [...prev, novaAposta.data]);
+        setApostas(prev => [...prev, {
+          ...novaAposta.data,
+          numeros: typeof novaAposta.data.numeros === 'string' ? JSON.parse(novaAposta.data.numeros) : novaAposta.data.numeros
+        }]);
         setPaymentModalOpen(false);
         
         const labels = pagamentoPendente.numeros.map((id: number) => cells[id - 1]?.display || `N${id}`).join(", ");

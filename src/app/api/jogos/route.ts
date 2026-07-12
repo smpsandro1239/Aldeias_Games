@@ -211,34 +211,41 @@ export async function POST(request: NextRequest) {
 
      const data = validation.data;
 
-     // Validação defensiva no backend para rifa
-     if (data.tipo === 'rifa') {
-       const config = data.configuracao as any;
-       const numeroInicial = config?.numeroInicial;
-       const numeroFinal = config?.numeroFinal;
+      // Validação defensiva no backend para rifa
+      if (data.tipo === 'rifa') {
+        const config = data.configuracao as any;
+        const numeroInicial = config?.numeroInicial;
+        const numeroFinal = config?.numeroFinal;
 
-       if (typeof numeroInicial !== 'number' || typeof numeroFinal !== 'number') {
-         return NextResponse.json(
-           { error: 'Configuração de números inicial/final é obrigatória para rifa' },
-           { status: 400 }
-         );
-       }
+        if (typeof numeroInicial !== 'number' || typeof numeroFinal !== 'number') {
+          return NextResponse.json(
+            { error: 'Configuração de números inicial/final é obrigatória para rifa' },
+            { status: 400 }
+          );
+        }
 
-       if (numeroFinal <= numeroInicial) {
-         return NextResponse.json(
-           { error: 'Número final deve ser maior que número inicial para rifa' },
-           { status: 400 }
-         );
-       }
+        if (numeroFinal <= numeroInicial) {
+          return NextResponse.json(
+            { error: 'Número final deve ser maior que número inicial para rifa' },
+            { status: 400 }
+          );
+        }
 
-       const intervalo = numeroFinal - numeroInicial + 1;
-       if (intervalo < data.stockInicial) {
-         return NextResponse.json(
-           { error: 'Stock inicial excede o intervalo numérico disponível' },
-           { status: 400 }
-         );
-       }
-     }
+        const intervalo = numeroFinal - numeroInicial + 1;
+        if (intervalo < data.stockInicial) {
+          return NextResponse.json(
+            { error: 'Stock inicial excede o intervalo numérico disponível' },
+            { status: 400 }
+          );
+        }
+
+        if (!config?.dataSorteio || !config?.horaSorteio || !config?.localSorteio) {
+          return NextResponse.json(
+            { error: 'Data, hora e local do sorteio são obrigatórios para rifa' },
+            { status: 400 }
+          );
+        }
+      }
 
      // Verificar se evento exists
     const evento = await prisma.evento.findUnique({

@@ -16,6 +16,7 @@ import {
   Award
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { toast } from "sonner";
 import { Evento, Jogo, Stats } from "../types";
 
 interface OverviewTabProps {
@@ -24,6 +25,7 @@ interface OverviewTabProps {
   setSelectedEvento: (evento: Evento | null) => void;
   setEventoModalOpen: (open: boolean) => void;
   setJogoModalOpen: (open: boolean) => void;
+  setSelectedEventoIdParaJogo?: (id: string) => void;
   getEstadoBadge: (estado: string) => React.ReactNode;
   userRole?: string;
 }
@@ -34,6 +36,7 @@ export function OverviewTab({
   setSelectedEvento,
   setEventoModalOpen,
   setJogoModalOpen,
+  setSelectedEventoIdParaJogo,
   getEstadoBadge,
   userRole = "aldeia_admin",
 }: OverviewTabProps) {
@@ -44,7 +47,14 @@ export function OverviewTab({
         <Button onClick={() => setEventoModalOpen(true)} className="bg-primary hover:bg-primary/90 w-full">
           <Plus className="h-4 w-4 mr-2" /> Novo Evento
         </Button>
-        <Button onClick={() => setJogoModalOpen(true)} variant="outline" className="border-primary/30 w-full">
+        <Button onClick={() => {
+          if (!eventos.length) {
+            toast.error("Crie um evento primeiro");
+            return;
+          }
+          setSelectedEventoIdParaJogo?.(eventos[0].id);
+          setJogoModalOpen(true);
+        }} variant="outline" className="border-primary/30 w-full">
           <Gamepad2 className="h-4 w-4 mr-2" /> Novo Jogo
         </Button>
         <Button variant="outline" className="border-primary/30 w-full" disabled>

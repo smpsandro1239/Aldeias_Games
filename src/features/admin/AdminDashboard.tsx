@@ -981,6 +981,7 @@ export default function AdminDashboard({
             setSelectedEvento={setSelectedEvento}
             setEventoModalOpen={setEventoModalOpen}
             setJogoModalOpen={setJogoModalOpen}
+            setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
             getEstadoBadge={getEstadoBadge}
             userRole={userRole}
           />

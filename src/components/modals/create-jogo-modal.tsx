@@ -224,7 +224,7 @@ function jogoFormReducer(state: ReturnType<typeof getInitialState>, action: Acti
 }
 
 // Hook customizado para gerenciar estado do jogo
-function useJogoForm(initialData?: JogoData) {
+function useJogoForm(initialData?: JogoData, eventoId?: string) {
   const [state, dispatch] = useReducer(jogoFormReducer, getInitialState(initialData));
 
   const updateFormData = useCallback((updates: Partial<JogoFormData>) => {
@@ -409,12 +409,17 @@ function useJogoForm(initialData?: JogoData) {
         toast.error('Stock inicial excede o intervalo numérico disponível');
         return;
       }
+
+      if (!state.formData.dataSorteio || !state.formData.horaSorteio || !state.formData.localSorteio) {
+        toast.error('Data, hora e local do sorteio são obrigatórios para rifa');
+        return;
+      }
     }
 
-    const jogoData = buildJogoData(state.formData, state.raspadinhaPremios, state.rifaPremios, "");
+    const jogoData = buildJogoData(state.formData, state.raspadinhaPremios, state.rifaPremios, eventoId || "");
     setSubmittedData(jogoData);
     setShowTransparency(true);
-  }, [state.formData, state.raspadinhaPremios, state.rifaPremios, setSubmittedData, setShowTransparency]);
+  }, [state.formData, state.raspadinhaPremios, state.rifaPremios, setSubmittedData, setShowTransparency, eventoId]);
 
   return {
     ...state,
@@ -618,7 +623,7 @@ export function CreateJogoModal({
     removerPremioRaspadinha,
     removerPremioRifa,
     handleSubmit,
-  } = useJogoForm(initialData);
+  } = useJogoForm(initialData, propEventoId);
 
   const handleConfirmCreate = useCallback(async () => {
     if (!submittedData) return;
@@ -924,6 +929,46 @@ export function CreateJogoModal({
 
         {(formData.tipo === GAME_TYPES.RIFA) && (
                 <>
+                  <div className="border-t pt-4 mt-2 space-y-4">
+                    <h3 className="text-sm font-semibold">Detalhes do Sorteio</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="dataSorteio" className="text-xs">Data *</Label>
+                        <Input
+                          id="dataSorteio"
+                          type="date"
+                          value={formData.dataSorteio}
+                          onChange={(e) => updateFormData({ dataSorteio: e.target.value })}
+                          className="h-9 text-sm"
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="horaSorteio" className="text-xs">Hora *</Label>
+                        <Input
+                          id="horaSorteio"
+                          type="time"
+                          value={formData.horaSorteio}
+                          onChange={(e) => updateFormData({ horaSorteio: e.target.value })}
+                          className="h-9 text-sm"
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="localSorteio" className="text-xs">Local *</Label>
+                        <Input
+                          id="localSorteio"
+                          type="text"
+                          placeholder="Ex: Salão da Junta"
+                          value={formData.localSorteio}
+                          onChange={(e) => updateFormData({ localSorteio: e.target.value })}
+                          className="h-9 text-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <h3 className="text-sm font-semibold">Prémios</h3>
 

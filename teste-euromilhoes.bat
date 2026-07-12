@@ -181,7 +181,7 @@ curl -s "%BASE_URL%/api/wallet" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_w
 call :extract_json _resp_wallet2.json "saldo" SALDO_DEPOIS
 if not "%SALDO_DEPOIS%"=="" (
     echo Saldo: %SALDO_DEPOIS%�
-    set /a DIF = %SALDO_ANTES% - %SALDO_DEPOIS%
+    for /f %%d in ('powershell -Command "%SALDO_ANTES% - %SALDO_DEPOIS%"') do set DIF=%%d
     echo Diferenca: !DIF!�
 )
 del _resp_wallet2.json >nul 2>&1
