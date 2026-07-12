@@ -190,16 +190,29 @@ Se ambas falharem, o admin pode inserir o número manualmente (`fonte: "manual"`
 | `/jogos/euromilhoes` | Página pública de participação (seleção de 1–50 números, preço dinâmico, botões aleatórios) |
 | `/admindashboard/euromilhoes` | Gestão de grelhas (criar, fechar, sortear, ver datas agendadas) |
 
-#### Test Script (Windows)
+#### Test Scripts — Fluxo Completo (Windows)
 
-`teste-euromilhoes.bat` — script de teste do fluxo completo com `curl`:
-1. Login super admin → criar jogo → criar grelha
-2. Verificar `sorteioData` / `bloqueioData`
-3. Jogador participa (5 números) → saldo deduzido (100€ → 90€)
-4. Vendedor regista anónimo
-5. Fechar grelha → sortear (API oficial → número 13)
-6. Prémio creditado (90€ + 1000€ = 1090€)
-7. Verificar estado final da grelha e logs de auditoria
+Todos os scripts de teste estão na raiz do projecto e usam `curl` para simular o fluxo completo de cada jogo. Requerem o servidor a correr em `http://localhost:3000`.
+
+| Script | Jogo | Fluxo |
+|--------|------|-------|
+| `teste-euromilhoes.bat` | Euromilhões | login → criar jogo → criar grelha → verificar datas → jogador participa (saldo deduzido) → vendedor regista anónimo → fechar grelha → sortear (API oficial) → prémio creditado | logs |
+| `teste-poio.bat` | Poio da Vaca | login → criar jogo → jogador participa (coordenada A5) → saldo deduzido → commit hash → sortear → verificar resultado |
+| `teste-rifa.bat` | Rifa | login → criar jogo → jogador participa (número 7) → saldo deduzido → commit hash → sortear → verificar vencedor |
+| `teste-raspadinha.bat` | Raspadinha | login → criar jogo → jogador compra raspadinha (saldo) → saldo deduzido → revelar → reclamar prémio |
+| `teste-tudo.bat` | Todos | Executa os 4 scripts acima sequencialmente, reporta **X/4 passed** no final |
+
+##### Como usar
+
+```bash
+# Windows Command Prompt (cmd.exe)
+teste-euromilhoes.bat
+
+# Ou executar todos os jogos
+teste-tudo.bat
+```
+
+> ⚠️ **Importante**: Os scripts devem ser executados no **cmd.exe** (não PowerShell) e com terminações de linha **CRLF** (Windows). LF (Unix) pode causar saltos de instruções no parser do batch.
 
 ## 🏗️ Stack Tecnológica
 
@@ -361,17 +374,76 @@ MIT License - ver [LICENSE](LICENSE) para detalhes.
 
 ### 🪟 Windows — Local Build
 
-Turbopack não funciona no Windows (erro `invalid type: unit value, expected usize` no SWC). Use o Webpack:
+Turbopack não funciona no Windows (erro `invalid type: unit value, expected usize` no SWC do Next.js 16.2.7 com Node 24). Use o Webpack:
 
 ```bash
 npx next build --webpack
 ```
 
-Em desenvolvimento, limpar cache `.next` resolve problemas de CSS não atualizar:
+Se o TypeScript checker falhar com `Error: invalid type: unit value, expected usize` (WASM), usar o workaround de compilação sem TS checker:
+
+```bash
+npx next build --webpack --no-typescript
+# Ou, se a flag não existir:
+set NODE_OPTIONS=--experimental-vm-modules
+npx next build --webpack
+```
+
+Limpar cache `.next` resolve CSS não atualizar ou erros estranhos de compilação:
 
 ```bash
 Remove-Item -Recurse -Force .next
-npm run dev
+if ($?) { npm run dev }
+```
+
+### 🐚 Batch Scripts (cmd.exe) — Troubleshooting
+
+Todos os scripts de teste (`.bat`) devem ser executados no **cmd.exe** (Command Prompt), não no PowerShell.
+
+#### CRLF vs LF — Erro Silencioso
+
+O parser do cmd.exe **não interpreta corretamente** ficheiros com terminações de linha Unix (LF). As instruções podem ser saltadas sem aviso. Sintomas:
+- O output salta de `=== 2. Criar Jogo ===` diretamente para `=== 8. Verificar premio ===`
+- Comandos `findstr` falham com `FINDSTR: Cannot open ficheiro`
+- Variáveis aparecem vazias
+
+**Fix**: Converter para CRLF antes de editar ou correr:
+
+```powershell
+# PowerShell
+$content = [System.IO.File]::ReadAllText("ficheiro.bat")
+$content = $content -replace "`r`n", "`n"
+$content = $content -replace "`n", "`r`n"
+[System.IO.File]::WriteAllText("ficheiro.bat", $content, [System.Text.Encoding]::Default)
+```
+
+#### extract_json — JSON Multi-Linha
+
+O Next.js dev server imprime JSON com indentação (pretty-print). A função `extract_json` original só capturava a **última linha** porque usava `findstr /n` + `find`. **Fix**: Usar `for /f "usebackq delims="` + `!LINE!` para concatenar todas as linhas:
+
+```batch
+:extract_json
+for /f "usebackq delims=" %%L in (%1) do set "jsonLine=%%L"
+exit /b
+```
+
+#### Delayed Expansion em Blocos `if`
+
+Variáveis dentro de blocos `if (...) else (...)` com `set /a` precisam de `!VAR!` (delayed expansion) em vez de `%VAR%`, senão expandem antes do bloco executar:
+
+```batch
+:: ERRADO: %DIF% expande antes de set /a executar
+if ... (
+    set /a DIF = %ANTES% - %DEPOIS%
+    echo Diferenca: %DIF%@
+)
+
+:: CORRETO: delayed expansion com !DIF!
+setlocal enabledelayedexpansion
+if ... (
+    set /a DIF = ANTES - DEPOIS
+    echo Diferenca: !DIF!@
+)
 ```
 
 ### 🔄 Prisma — Migrações Locais
@@ -385,7 +457,22 @@ npx tsx prisma/seed-full.ts   # após reiniciar servidor
 
 ## 🚨 Troubleshooting
 
-[Section remains largely unchanged - omitted for brevity in this example]
+### Common Build, Runtime & Test Errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `invalid type: unit value, expected usize` | SWC/WASM bug in Next.js 16.2.7 + Node 24 on Windows | Use `npx next build --webpack` (no Turbopack). Se o TypeScript checker falhar, passar `--no-typescript` |
+| CSS não atualiza / stylesheet 404 | Cache `.next` corrompido | `Remove-Item -Recurse -Force .next` + reiniciar servidor |
+| Login 500 error | Build parcial corrompida ou base de dados inconsistente | Limpar `.next`, reiniciar servidor, verificar seed |
+| `FINDSTR: Cannot open _resp_*.json` | Ficheiro não existe, caminho incorreto, ou LF line endings no batch | Verificar se o passo anterior criou o ficheiro; converter batch para CRLF |
+| Variáveis `%VAR%` vazias em `if` | Batch sem delayed expansion | Usar `!VAR!` com `setlocal enabledelayedexpansion` |
+| Script salta passos (ex: 2→8) | LF line endings no `.bat` | Converter para CRLF (ver secção Windows acima) |
+| `loadManifest` crash (dev server) | Next.js dev server corrompe `manifest.json` após vários requests | Reiniciar servidor; usar produção (`next start`) para testes intensivos |
+| `params: { id: string }` → `params: Promise<{ id: string }>` | Next.js 16 requires async params | Atualizar tipo do parâmetro para `Promise<...>` |
+| `Cannot find name 'apiRequest'` | Import em falta | Adicionar `import { apiRequest } from "@/lib/api-client"` |
+| Import não usado (TypeScript error) | Import residual após refactor | Remover import não utilizado |
+| `export` indevido em função local | Função helper marcada como `export` quando só é usada no mesmo ficheiro | Remover `export` |
+| `getOfficialTime()` timeout na WorldTimeAPI | Timeout de 5s excedido durante dev; pode corromper compilações | Verificar conectividade; o sistema usa fallback com hora local em caso de falha |
 
 ## 🎯 Transparência e Segurança nos Jogos - Detalhes Técnicos
 
