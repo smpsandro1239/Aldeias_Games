@@ -1,19 +1,20 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { getOfficialTime, getNextFriday, getBloqueioData } from "@/lib/time";
+import { getFullUserFromRequest, hasRole } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const jogoId = url.searchParams.get("jogoId");
 
-    if (!jogoId) {
-      return NextResponse.json({ error: "jogoId é obrigatório" }, { status: 400 });
+    const where: Record<string, unknown> = {};
+    if (jogoId) {
+      where.jogoId = jogoId;
     }
 
     const grelhas = await prisma.grelhaEuromilhoes.findMany({
-      where: { jogoId },
+      where,
       orderBy: { numero: "desc" },
     });
 
@@ -26,11 +27,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (
-      !session?.user ||
-      (session.user.role !== "aldeia_admin" && session.user.role !== "super_admin")
-    ) {
+    const user = await getFullUserFromRequest(request);
+    if (!user || !hasRole(user.role, ["aldeia_admin", "super_admin"])) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
@@ -59,6 +57,10 @@ export async function POST(request: NextRequest) {
       nextNumero++;
     }
 
+    const horaOficial = await getOfficialTime();
+    const sorteioData = getNextFriday(horaOficial);
+    const bloqueioData = getBloqueioData(sorteioData);
+
     const grelha = await prisma.grelhaEuromilhoes.create({
       data: {
         jogoId,
@@ -67,6 +69,8 @@ export async function POST(request: NextRequest) {
         numerosOcupados: "[]",
         premioDescricao: premioDescricao || null,
         premioValor: premioValor || null,
+        sorteioData,
+        bloqueioData,
       },
     });
 

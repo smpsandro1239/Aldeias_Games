@@ -13,7 +13,7 @@
 ## 🚀 Funcionalidades Principais
 
 ### Para Utilizadores (Jogadores)
-- **Jogos Interativos**: Poio da Vaca (grelha), Rifa/Tombola e Raspadinhas Digitais.
+- **Jogos Interativos**: Poio da Vaca (grelha), Rifa/Tombola, Raspadinhas Digitais e **Euromilhões** (Tombola com números oficiais).
 - **Experiência Imersiva**: Efeitos sonoros processuais e visuais (confetti) via Web Audio API.
 - **Pagamentos Seguros**: Integração com Stripe e **MBWay real**.
 - **App PWA**: Instalável em qualquer smartphone com suporte offline.
@@ -141,6 +141,66 @@ Qualquer jogador pode verificar a justiça de um sorteio seguindo estes passos:
 4. Comparar `hash_calculado` com o hash de commitment original
 5. Se coincidirem, o sorteio foi justo e não foi manipulado
 
+---
+
+### 🎰 Euromilhões — Sistema de Tombola com Números Oficiais
+
+O módulo **Euromilhões** é uma tombola digital onde os jogadores escolhem números (1–50) e o número vencedor é o **primeiro número do sorteio oficial do Euromilhões** da sexta-feira seguinte, obtido via API pública.
+
+#### Fluxo Completo
+
+1. **Admin cria grelha**: Define preço por número, data de sorteio automática (próxima sexta 21:30) e bloqueio automático 3h antes.
+2. **Jogadores escolhem números**: Seleção flexível de 1 a 50 números. Jogador paga `números × preço` (ex: 5 números × 2€ = 10€).
+3. **Vendedor regista anónimos**: Interface POS para registar participações de jogadores sem conta.
+4. **Grelha fecha automaticamente** ao atingir o `bloqueioData` (18:30 da sexta). Admin pode fechar manualmente.
+5. **Sorteio automático na API**: Ao sortear, o sistema consulta o resultado oficial do Euromilhões (`getLatestFirstNumber()`) e usa o primeiro número como vencedor.
+6. **Distribuição de prémios**: O sistema identifica automaticamente participantes com o número sorteado, creditando o prémio (configurado pelo admin) na carteira digital.
+
+#### Sistema de Bloqueio Temporal
+
+- **`sorteioData`**: Data/hora do sorteio oficial (sexta 21:30) — calculado por `getNextFriday()`.
+- **`bloqueioData`**: 3 horas antes do sorteio (18:30 da sexta) — calculado por `getBloqueioData()`.
+- Antes do bloqueio: jogadores podem participar livremente; admin pode sortear manualmente.
+- Após bloqueio: participações bloqueadas; sorteio manual permitido a qualquer momento.
+- A verificação horária no endpoint de sorteio permite usar um **fallback manual** (admin escolhe número) se a API oficial não responder.
+
+#### Fontes de Resultados Oficiais
+
+O sistema tenta múltiplas APIs em cascata com timeout de 8s cada:
+
+1. `euromillions-api.vercel.app` — formato `{ numeros: [...] }`
+2. `api.fugete.com` — formato `{ numbers: [...] }`
+
+Se ambas falharem, o admin pode inserir o número manualmente (`fonte: "manual"`).
+
+#### API Endpoints
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/api/euromilhoes/grelhas?jogoId=X` | Lista grelhas (todas ou filtradas por jogo) |
+| `POST` | `/api/euromilhoes/grelhas` | Criar nova grelha (admin) |
+| `PUT` | `/api/euromilhoes/grelhas/[id]/fechar` | Fechar grelha para participações |
+| `PUT` | `/api/euromilhoes/grelhas/[id]/sortear` | Sortear (usa API oficial ou fallback manual) |
+| `GET` | `/api/participacoes` | Listar participações do jogador/logado |
+
+#### Páginas
+
+| Rota | Descrição |
+|------|-----------|
+| `/jogos/euromilhoes` | Página pública de participação (seleção de 1–50 números, preço dinâmico, botões aleatórios) |
+| `/admindashboard/euromilhoes` | Gestão de grelhas (criar, fechar, sortear, ver datas agendadas) |
+
+#### Test Script (Windows)
+
+`teste-euromilhoes.bat` — script de teste do fluxo completo com `curl`:
+1. Login super admin → criar jogo → criar grelha
+2. Verificar `sorteioData` / `bloqueioData`
+3. Jogador participa (5 números) → saldo deduzido (100€ → 90€)
+4. Vendedor regista anónimo
+5. Fechar grelha → sortear (API oficial → número 13)
+6. Prémio creditado (90€ + 1000€ = 1090€)
+7. Verificar estado final da grelha e logs de auditoria
+
 ## 🏗️ Stack Tecnológica
 
 - **Frontend**: React 19, Next.js 16, TypeScript, Tailwind CSS 4, Framer Motion.
@@ -199,12 +259,12 @@ src/
 
 ## 🔑 Credenciais de Teste (Seed)
 
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | admin@aldeias.pt | 123456 |
-| Admin Aldeia | aldeia@gmail.com | 123456 |
-| Vendedor | vendedor@gmail.com | 123456 |
-| Jogador | smpsandro1239@gmail.com | 123456 |
+| Role | Email | Password | aldeiaId |
+|------|-------|----------|----------|
+| Super Admin | admin@aldeias.pt | 123456 | — |
+| Admin Aldeia | aldeia@gmail.com | 123456 | aldeia-vale-azenha |
+| Vendedor | vendedor@gmail.com | 123456 | aldeia-vale-azenha |
+| Jogador | jogador@gmail.com | 123456 | — (multi-aldeia) |
 
 ## 🛡️ Controlo de Acesso por Role (RBAC)
 
@@ -298,6 +358,30 @@ MIT License - ver [LICENSE](LICENSE) para detalhes.
 ## 🔄 Account Linking (Vinculação de Contas)
 
 [Section remains largely unchanged - omitted for brevity in this example]
+
+### 🪟 Windows — Local Build
+
+Turbopack não funciona no Windows (erro `invalid type: unit value, expected usize` no SWC). Use o Webpack:
+
+```bash
+npx next build --webpack
+```
+
+Em desenvolvimento, limpar cache `.next` resolve problemas de CSS não atualizar:
+
+```bash
+Remove-Item -Recurse -Force .next
+npm run dev
+```
+
+### 🔄 Prisma — Migrações Locais
+
+Após alterar `prisma/schema.prisma`, executar:
+
+```bash
+npx prisma@6.19.3 db push
+npx tsx prisma/seed-full.ts   # após reiniciar servidor
+```
 
 ## 🚨 Troubleshooting
 

@@ -15,6 +15,7 @@ import {
   Info,
   X,
   Hash,
+  Shuffle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,11 +62,14 @@ interface Grelha {
   premioDescricao?: string;
   premioValor?: number;
   dataSorteio?: string;
+  sorteioData?: string;
+  bloqueioData?: string;
   createdAt: string;
 }
 
-const MAX_NUMEROS = 5;
+const MAX_NUMEROS = 50;
 const TOTAL_NUMEROS = 50;
+const randomOptions = [1, 2, 3, 4, 5];
 
 export default function EuromilhoesPage() {
   const router = useRouter();
@@ -197,6 +201,22 @@ export default function EuromilhoesPage() {
     [numerosSelecionados, numerosOcupados]
   );
 
+  const selectRandomNumbers = useCallback((count: number) => {
+    const available = Array.from({ length: TOTAL_NUMEROS }, (_, i) => i + 1).filter(
+      n => !numerosSelecionados.includes(n) && !numerosOcupados.includes(n)
+    );
+    if (available.length === 0) {
+      toast.warning("Não há números disponíveis");
+      return;
+    }
+    const shuffled = available.sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, Math.min(count, MAX_NUMEROS - numerosSelecionados.length));
+    if (selected.length < count) {
+      toast.warning(`Apenas ${selected.length} número(s) disponível(is)`);
+    }
+    setNumerosSelecionados([...numerosSelecionados, ...selected]);
+  }, [numerosSelecionados, numerosOcupados]);
+
   const handleParticipar = () => {
     if (!participante.nome.trim()) {
       toast.error("Por favor, insira o seu nome.");
@@ -206,8 +226,8 @@ export default function EuromilhoesPage() {
       toast.error("Insira telefone ou email para contacto.");
       return;
     }
-    if (numerosSelecionados.length !== MAX_NUMEROS) {
-      toast.error(`Selecione exatamente ${MAX_NUMEROS} números.`);
+    if (numerosSelecionados.length < 1) {
+      toast.error(`Selecione pelo menos 1 número.`);
       return;
     }
     setPaymentModalOpen(true);
@@ -385,7 +405,7 @@ export default function EuromilhoesPage() {
                       Total Pago
                     </p>
                     <p className="text-xl font-bold text-green-400">
-                      {jogo?.preco?.toFixed(2) || "0.00"}€
+                      {((jogo?.preco || 0) * numerosSelecionados.length).toFixed(2)}€
                     </p>
                   </div>
                   <div className="bg-surface-container-high rounded-xl p-4 text-center">
@@ -507,7 +527,7 @@ export default function EuromilhoesPage() {
                 </h2>
               </div>
               <p className="text-primary text-lg font-medium">
-                Escolhe 5 números de 1 a 50
+                Escolhe 1 a 50 números de 1 a 50
               </p>
             </div>
           </div>
@@ -516,9 +536,9 @@ export default function EuromilhoesPage() {
           <div className="bg-surface-container rounded-2xl p-6">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <p className="text-secondary text-sm font-semibold tracking-widest uppercase mb-1">
-                  Preço por Aposta
-                </p>
+                  <p className="text-secondary text-sm font-semibold tracking-widest uppercase mb-1">
+                    Preço por Número
+                  </p>
                 <div className="flex items-center gap-2">
                   <Euro className="w-5 h-5 text-primary" />
                   <span className="text-2xl font-headline font-bold text-on-surface">
@@ -562,6 +582,24 @@ export default function EuromilhoesPage() {
             </div>
           </div>
 
+          {/* Sorteio Info */}
+          {grelha?.sorteioData && (
+            <div className="bg-surface-container rounded-2xl p-4 flex items-start gap-3">
+              <Info className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">
+                  Próximo Sorteio
+                </p>
+                <p>{new Date(grelha.sorteioData).toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                {grelha.bloqueioData && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    As participações encerram em {new Date(grelha.bloqueioData).toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Number Grid */}
           <div className="bg-surface-container rounded-3xl p-6 space-y-4">
             <div className="flex items-center gap-3 border-b border-outline-variant/15 pb-4">
@@ -589,20 +627,38 @@ export default function EuromilhoesPage() {
               </div>
             </div>
 
-            {/* Counter */}
-            <div className="flex justify-between items-center">
-              <p className="text-sm font-medium text-muted-foreground">
-                {numerosSelecionados.length}/{MAX_NUMEROS} números selecionados
-              </p>
-              {numerosSelecionados.length > 0 && (
-                <button
-                  onClick={() => setNumerosSelecionados([])}
-                  className="px-3 py-1 rounded-lg text-xs font-medium bg-destructive/20 text-red-400 hover:bg-destructive/30 transition-all flex items-center gap-1"
-                >
-                  <X className="w-3 h-3" />
-                  Limpar
-                </button>
-              )}
+            {/* Counter + Random */}
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {numerosSelecionados.length}/{MAX_NUMEROS} números selecionados
+                </p>
+                <div className="flex items-center gap-1">
+                  {numerosSelecionados.length > 0 && (
+                    <button
+                      onClick={() => setNumerosSelecionados([])}
+                      className="px-3 py-1 rounded-lg text-xs font-medium bg-destructive/20 text-red-400 hover:bg-destructive/30 transition-all flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" />
+                      Limpar
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Aleatório:</span>
+                {randomOptions.map((count) => (
+                  <button
+                    key={count}
+                    onClick={() => selectRandomNumbers(count)}
+                    disabled={numerosSelecionados.length >= MAX_NUMEROS}
+                    className="px-2 py-1 rounded-lg text-xs font-medium bg-primary/20 text-primary hover:bg-primary/30 transition-all disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <Shuffle className="w-3 h-3" />
+                    {count}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* 5x10 Grid */}
@@ -737,20 +793,19 @@ export default function EuromilhoesPage() {
           {/* Submit Button */}
           <Button
             onClick={handleParticipar}
-            disabled={
-              numerosSelecionados.length !== MAX_NUMEROS ||
+              disabled={
+              numerosSelecionados.length < 1 ||
               !participante.nome.trim() ||
               submetendo
             }
             className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-full text-lg transition-all hover:shadow-[0_0_20px_rgba(255,115,75,0.4)]"
           >
             <Ticket className="w-5 h-5 mr-2" />
-            Participar — {(jogo?.preco || 0).toFixed(2)}€
+            Participar — {((jogo?.preco || 0) * numerosSelecionados.length).toFixed(2)}€
           </Button>
 
           <p className="text-center text-on-surface/40 text-xs">
-            Ao participar, concorda com os termos do jogo. Escolha{" "}
-            {MAX_NUMEROS} números de 1 a {TOTAL_NUMEROS}.
+              Ao participar, concorda com os termos do jogo. Escolha 1 a 50 números de 1 a 50.
           </p>
 
           {/* Info Note */}
@@ -761,7 +816,7 @@ export default function EuromilhoesPage() {
                 Como funciona o Euromilhões
               </p>
               <p>
-                Selecione 5 números entre 1 e 50. O sorteio será realizado na
+                Selecione entre 1 a 50 números. O sorteio será realizado na
                 data indicada pelo organizador. Todos os lucros revertem para a
                 associação cultural.
               </p>
@@ -782,7 +837,7 @@ export default function EuromilhoesPage() {
               {numerosSelecionados.length} número
               {numerosSelecionados.length > 1 ? "s" : ""} selecionado
               {numerosSelecionados.length > 1 ? "s" : ""} — Total:{" "}
-              <strong>{(jogo?.preco || 0).toFixed(2)}€</strong>
+              <strong>{((jogo?.preco || 0) * numerosSelecionados.length).toFixed(2)}€</strong>
             </DialogDescription>
           </DialogHeader>
 

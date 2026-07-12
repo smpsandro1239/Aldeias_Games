@@ -25,6 +25,7 @@
     "@aws-sdk/client-sns": "^3.1014.0",
     "@hookform/resolvers": "^3.9.0",
     "@next-auth/prisma-adapter": "^1.0.7",
+    "@next/swc-wasm-nodejs": "^16.2.10",
     "@prisma/client": "6.19.3",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.0",
@@ -52,6 +53,8 @@
     "@types/canvas-confetti": "^1.9.0",
     "@types/nodemailer": "^7.0.11",
     "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "axios": "^1.7.0",
@@ -88,12 +91,10 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "twilio": "^5.13.0",
+    "typescript": "^5.7.0",
     "uuid": "^11.0.0",
     "vaul": "^1.1.0",
-    "zod": "^3.24.0",
-    "typescript": "^5.7.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

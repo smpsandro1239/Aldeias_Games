@@ -59,7 +59,7 @@ const demoUsers: Record<string, DemoUser> = {
     email: 'vendedor@gmail.com',
     nome: 'Vendedor',
     role: 'vendedor',
-    aldeiaId: null,
+    aldeiaId: 'aldeia-vale-azenha',
     aldeia: null,
     emailVerificado: true,
     notificacoesEmail: true,

@@ -59,6 +59,11 @@ GREALHA_ID=$(curl -s -X POST "$BASE_URL/api/euromilhoes/grelhas" \
     \"premioValor\": 1000
   }" | jq -r '.data.id')
 echo "GREALHA_ID: $GREALHA_ID"
+
+echo ""
+echo "=== 3a. Verificar sorteioData e bloqueioData ==="
+curl -s "$BASE_URL/api/euromilhoes/grelhas/$GREALHA_ID" \
+  -H "Authorization: Bearer $TOKEN" | jq '{sorteioData: .data.sorteioData, bloqueioData: .data.bloqueioData, estado: .data.estado}'
 echo ""
 
 # ─────────────────────────────────────────────────
@@ -91,7 +96,7 @@ PART_ID=$(curl -s -X POST "$BASE_URL/api/participacoes" \
 echo "Participação ID: $PART_ID"
 
 echo ""
-echo "=== 4c. Saldo depois (deve ter -2€) ==="
+echo "=== 4c. Saldo depois (deve ter -10€ = 5 números × 2€) ==="
 curl -s "$BASE_URL/api/wallet" \
   -H "Authorization: Bearer $TOKEN_JOG" | jq '{saldo}'
 echo ""
@@ -135,10 +140,11 @@ echo ""
 # ─────────────────────────────────────────────────
 # 7. Sortear (admin)
 # ─────────────────────────────────────────────────
-echo "=== 7. Sortear ==="
+echo "=== 7. Sortear (com fallback manual — número 13) ==="
 SORTEIO=$(curl -s -X PUT "$BASE_URL/api/euromilhoes/grelhas/$GREALHA_ID/sortear" \
   -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json")
+  -H "Content-Type: application/json" \
+  -d '{"numeroManual": 13}')
 echo "$SORTEIO" | jq '{estado: .data.estado, numeroSorteado: .sorteio.numeroSorteado, isVendido: .sorteio.isVendido, vencedorId: .sorteio.vencedorId}'
 echo ""
 

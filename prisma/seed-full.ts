@@ -480,6 +480,15 @@ async function main() {
     },
   });
 
+  const agora = new Date();
+  const proxSexta = new Date(agora);
+  const diaSemana = agora.getDay();
+  let diasAteSexta = diaSemana <= 5 ? 5 - diaSemana : 5 + 7 - diaSemana;
+  if (diaSemana === 5 && agora.getHours() >= 21 && agora.getMinutes() >= 30) diasAteSexta = 7;
+  proxSexta.setDate(proxSexta.getDate() + diasAteSexta);
+  proxSexta.setHours(21, 30, 0, 0);
+  const bloqueio = new Date(proxSexta.getTime() - 2 * 60 * 60 * 1000);
+
   await prisma.grelhaEuromilhoes.create({
     data: {
       id: 'grelha-eurom-001',
@@ -489,6 +498,8 @@ async function main() {
       numerosOcupados: '[]',
       premioDescricao: 'Prémio principal: 1.000€',
       premioValor: 1000,
+      sorteioData: proxSexta,
+      bloqueioData: bloqueio,
     },
   });
 

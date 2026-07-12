@@ -1,18 +1,15 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { getOfficialTime } from "@/lib/time";
+import { getFullUserFromRequest, hasRole } from "@/lib/auth";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (
-      !session?.user ||
-      (session.user.role !== "aldeia_admin" && session.user.role !== "super_admin")
-    ) {
+    const user = await getFullUserFromRequest(request);
+    if (!user || !hasRole(user.role, ["aldeia_admin", "super_admin"])) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
@@ -33,6 +30,9 @@ export async function PUT(
         { status: 400 }
       );
     }
+
+    // Se bloqueioData já passou, o fecho manual pode ser feito mesmo assim
+    // (o bloqueio só impede novas participações)
 
     const updated = await prisma.grelhaEuromilhoes.update({
       where: { id },

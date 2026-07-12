@@ -1157,9 +1157,12 @@ model GrelhaEuromilhoes {
   numerosOcupados String       @default("[]")
   premioDescricao String?
   premioValor     Float?
+  sorteioData     DateTime?    // data/hora do sorteio oficial (próxima sexta 21:30)
+  bloqueioData    DateTime?    // momento a partir do qual a grelha fica bloqueada
   dataFecho       DateTime?
   dataSorteio     DateTime?
   numeroSorteado  Int?
+  fonteResultado  String?      // "api" ou "manual"
   vencedorId      String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt

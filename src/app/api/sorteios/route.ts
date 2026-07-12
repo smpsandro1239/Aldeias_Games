@@ -3,7 +3,6 @@ import { prisma } from '@/lib/db'
 import { getFullUserFromRequest, hasRole } from '@/lib/auth'
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit'
 import crypto from 'crypto'
-import { euromillionsApiService } from '@/lib/euromillions-api'
 
 export async function PATCH(request: NextRequest) {
   try {

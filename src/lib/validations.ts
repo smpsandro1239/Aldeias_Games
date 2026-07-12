@@ -231,7 +231,7 @@ export const createParticipacaoSchema = z.object({
     path: ["telefone"],
   }).optional(),
   grelhaId: z.string().optional(),
-  numerosSelecionados: z.array(z.number().int().min(1).max(50)).min(1).max(5).optional(),
+  numerosSelecionados: z.array(z.number().int().min(1).max(50)).min(1).max(50).optional(),
 });
 
 export const revelarRaspadinhaSchema = z.object({

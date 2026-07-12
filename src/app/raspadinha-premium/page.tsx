@@ -63,7 +63,7 @@ function generatePrizes(): Prize[] {
 }
 
 // Gera prizes para o grid a partir dos dados do jogo
-export function generatePrizesFromConfig(premios: Array<{ nome: string; valor: number }>): Prize[] {
+function generatePrizesFromConfig(premios: Array<{ nome: string; valor: number }>): Prize[] {
   if (!premios || premios.length === 0) {
     return generatePrizes(); // Fallback
   }

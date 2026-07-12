@@ -63,6 +63,8 @@ interface Grelha {
   premioValor: number | null;
   dataFecho: string | null;
   dataSorteio: string | null;
+  sorteioData: string | null;
+  bloqueioData: string | null;
   numeroSorteado: number | null;
   vencedorId: string | null;
   createdAt: string;
@@ -504,6 +506,24 @@ function AdminEuromilhoes({ token }: { token: string }) {
                       />
                     </div>
                   </div>
+
+                  {/* Scheduled draw info */}
+                  {(grelha.sorteioData || grelha.bloqueioData) && (
+                    <div className="bg-muted/30 rounded-lg p-3 text-xs space-y-1">
+                      {grelha.sorteioData && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Sorteio marcado:</span>
+                          <span className="font-medium">{new Date(grelha.sorteioData).toLocaleString("pt-PT")}</span>
+                        </div>
+                      )}
+                      {grelha.bloqueioData && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Bloqueio:</span>
+                          <span className="font-medium">{new Date(grelha.bloqueioData).toLocaleString("pt-PT")}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Mini number grid */}
                   <MiniNumberGrid

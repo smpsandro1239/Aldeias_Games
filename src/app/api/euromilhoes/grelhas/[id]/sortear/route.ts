@@ -1,19 +1,17 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { TipoNotificacao } from "@prisma/client";
+import { getOfficialTime } from "@/lib/time";
+import { getLatestFirstNumber } from "@/lib/euromillions-api";
+import { getFullUserFromRequest, hasRole } from "@/lib/auth";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (
-      !session?.user ||
-      (session.user.role !== "aldeia_admin" && session.user.role !== "super_admin")
-    ) {
+    const user = await getFullUserFromRequest(request);
+    if (!user || !hasRole(user.role, ["aldeia_admin", "super_admin"])) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
@@ -40,16 +38,39 @@ export async function PUT(
       );
     }
 
-    // Generate random winning number between 1 and 50
-    const numeroSorteado = Math.floor(Math.random() * 50) + 1;
+    // Tentar obter número da API; se falhar, usar body.manualNumber
+    const body = await request.json().catch(() => ({}));
+    let numeroSorteado: number;
+    let fonteResultado: string;
 
-    // Check if the drawn number was sold
+    const apiResult = await getLatestFirstNumber();
+    if (apiResult.numero !== null && apiResult.numero >= 1 && apiResult.numero <= 50) {
+      numeroSorteado = apiResult.numero;
+      fonteResultado = "api";
+
+      // Só verificar hora oficial se for sorteio via API
+      const horaOficial = await getOfficialTime();
+      if (grelha.sorteioData && horaOficial < grelha.sorteioData) {
+        return NextResponse.json(
+          { error: `O sorteio oficial ainda não ocorreu. Sorteio marcado para ${grelha.sorteioData.toISOString()}.` },
+          { status: 400 }
+        );
+      }
+    } else if (typeof body.numeroManual === "number" && body.numeroManual >= 1 && body.numeroManual <= 50) {
+      numeroSorteado = body.numeroManual;
+      fonteResultado = "manual";
+    } else {
+      return NextResponse.json(
+        { error: "Não foi possível obter o número do sorteio. Tente novamente mais tarde ou insira manualmente." },
+        { status: 503 }
+      );
+    }
+
     const isVendido = numerosOcupados.includes(numeroSorteado);
 
     let vencedorId: string | null = null;
 
     if (isVendido) {
-      // Find the participation that has this number
       const participacao = await prisma.participacao.findFirst({
         where: {
           grelhaId: grelha.id,
@@ -61,13 +82,11 @@ export async function PUT(
       if (participacao) {
         vencedorId = participacao.userId;
 
-        // Mark the participation as winner
         await prisma.participacao.update({
           where: { id: participacao.id },
           data: { ganhador: true },
         });
 
-        // Credit prize to winner's wallet
         const premioValor = grelha.premioValor ?? 0;
         if (premioValor > 0 && participacao.userId) {
           await prisma.user.update({
@@ -95,7 +114,7 @@ export async function PUT(
             data: {
               tipo: TipoNotificacao.premio,
               titulo: "Parabéns! Ganhaste o Euromilhões!",
-              mensagem: `Ganhaste ${premioValor}€ no ${jogo?.nome ?? "Euromilhões"} com o número sorteado ${String(grelha.numeroSorteado)}. O prémio já foi creditado na tua carteira.`,
+              mensagem: `Ganhaste ${premioValor}€ no ${jogo?.nome ?? "Euromilhões"} com o número sorteado ${numeroSorteado}. O prémio já foi creditado na tua carteira.`,
               userId: participacao.userId,
             },
           });
@@ -110,6 +129,7 @@ export async function PUT(
         numeroSorteado,
         dataSorteio: new Date(),
         vencedorId,
+        fonteResultado,
       },
     });
 
@@ -120,6 +140,7 @@ export async function PUT(
         numeroSorteado,
         isVendido,
         vencedorId,
+        fonte: fonteResultado,
       },
     });
   } catch (error) {

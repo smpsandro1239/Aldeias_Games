@@ -10,6 +10,7 @@ import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
 
 import { Prisma } from '@prisma/client';
+import { getOfficialTime } from '@/lib/time';
 
 
 // GET - Listar participações
@@ -239,7 +240,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Calcular valor total
-    const valorTotal = jogo.preco * data.quantidade;
+    const valorTotal = jogo.tipo === 'euromilhoes'
+      ? (data.numerosSelecionados?.length || 1) * jogo.preco
+      : jogo.preco * data.quantidade;
 
     // Verificar pagamento por saldo
     if (data.metodoPagamento === 'saldo') {
@@ -313,19 +316,29 @@ export async function POST(request: NextRequest) {
 
      // Validação adicional para euromilhoes
      if (jogo.tipo === 'euromilhoes') {
-       if (!data.grelhaId) {
-         return NextResponse.json(
-           { error: 'Grelha ID é obrigatório para Euromilhões' },
-           { status: 400 }
-         );
-       }
+        if (!data.grelhaId) {
+          return NextResponse.json(
+            { error: 'Grelha ID é obrigatório para Euromilhões' },
+            { status: 400 }
+          );
+        }
+        const grelhaAtual = await prisma.grelhaEuromilhoes.findUnique({ where: { id: data.grelhaId } });
+        if (!grelhaAtual) {
+          return NextResponse.json({ error: 'Grelha não encontrada' }, { status: 404 });
+        }
+        if (grelhaAtual.estado !== 'aberta') {
+          return NextResponse.json({ error: 'Grelha não está disponível para participação' }, { status: 400 });
+        }
+        if (grelhaAtual.bloqueioData && (await getOfficialTime()) >= grelhaAtual.bloqueioData) {
+          return NextResponse.json({ error: 'Grelha bloqueada — o prazo de participação terminou' }, { status: 400 });
+        }
        const numeros = data.numerosSelecionados;
-       if (!Array.isArray(numeros) || numeros.length < 1 || numeros.length > 5) {
-         return NextResponse.json(
-           { error: 'Selecione entre 1 a 5 números para o Euromilhões' },
-           { status: 400 }
-         );
-       }
+       if (!Array.isArray(numeros) || numeros.length < 1 || numeros.length > 50) {
+          return NextResponse.json(
+            { error: 'Selecione entre 1 a 50 números para o Euromilhões' },
+            { status: 400 }
+          );
+        }
        for (const num of numeros) {
          if (num < 1 || num > 50) {
            return NextResponse.json(
