@@ -5,7 +5,7 @@ import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['vendedor'])) {
+    if (!user || !hasRole(user.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 

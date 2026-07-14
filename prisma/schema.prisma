@@ -1108,6 +1108,7 @@ model VendedorCashboxTransaction {
 enum CashboxTipo {
   RECEBIDO_DO_JOGADOR
   DEPOSITADO_NO_COFRE
+  LEVANTAMENTO_COFRE
 }
 
 model PedidoDepositoCofre {

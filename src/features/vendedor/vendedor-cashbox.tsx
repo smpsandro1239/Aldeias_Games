@@ -34,12 +34,23 @@ interface DepositoData {
   confirmadoPor: { nome: string } | null;
 }
 
-export function VendedorCashbox({ token }: { token: string }) {
+function getRoleLabel(role: string) {
+  switch (role) {
+    case 'vendedor': return 'Vendedor';
+    case 'aldeia_admin': return 'Admin da Aldeia';
+    case 'super_admin': return 'Super Admin';
+    default: return 'Utilizador';
+  }
+}
+
+export function VendedorCashbox({ token, userRole }: { token: string; userRole?: string }) {
   const [cashbox, setCashbox] = useState<CashboxData | null>(null);
   const [depositos, setDepositos] = useState<DepositoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [depositoModalOpen, setDepositoModalOpen] = useState(false);
   const [valorDeposito, setValorDeposito] = useState("");
+
+  const roleLabel = getRoleLabel(userRole || 'vendedor');
 
   const fetchData = async () => {
     try {
@@ -89,7 +100,7 @@ export function VendedorCashbox({ token }: { token: string }) {
         },
         body: JSON.stringify({
           valor,
-          descricao: `Depósito manual de ${valor}€`,
+          descricao: `Depósito manual de ${valor}€ por ${roleLabel}`,
         })
       });
 
@@ -117,13 +128,12 @@ export function VendedorCashbox({ token }: { token: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Cards de Resumo */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/50 dark:to-green-900/20 border-green-200/50 dark:border-green-800/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
               <Wallet className="w-4 h-4" />
-              Saldo na Caixa
+              Saldo na Caixa ({roleLabel})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -160,7 +170,6 @@ export function VendedorCashbox({ token }: { token: string }) {
         </Card>
       </div>
 
-      {/* Últimas Movimentações */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -195,11 +204,15 @@ export function VendedorCashbox({ token }: { token: string }) {
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       tx.tipo === 'RECEBIDO_DO_JOGADOR'
                         ? 'bg-green-500/20'
-                        : 'bg-blue-500/20'
+                        : tx.tipo === 'LEVANTAMENTO_COFRE'
+                          ? 'bg-purple-500/20'
+                          : 'bg-blue-500/20'
                     }`}>
                       {tx.tipo === 'RECEBIDO_DO_JOGADOR'
                         ? <Check className="w-4 h-4 text-green-600" />
-                        : <Banknote className="w-4 h-4 text-blue-600" />
+                        : tx.tipo === 'LEVANTAMENTO_COFRE'
+                          ? <Banknote className="w-4 h-4 text-purple-600" />
+                          : <Banknote className="w-4 h-4 text-blue-600" />
                       }
                     </div>
                     <div>
@@ -211,11 +224,11 @@ export function VendedorCashbox({ token }: { token: string }) {
                   </div>
                   <div className="text-right">
                     <p className={`font-bold ${
-                      tx.tipo === 'RECEBIDO_DO_JOGADOR'
+                      tx.tipo === 'RECEBIDO_DO_JOGADOR' || tx.tipo === 'LEVANTAMENTO_COFRE'
                         ? 'text-green-600'
                         : 'text-blue-600'
                     }`}>
-                      {tx.tipo === 'RECEBIDO_DO_JOGADOR' ? '+' : '-'}
+                      {tx.tipo === 'DEPOSITADO_NO_COFRE' ? '-' : '+'}
                       {formatCurrency(tx.valor)}
                     </p>
                   </div>
@@ -226,7 +239,6 @@ export function VendedorCashbox({ token }: { token: string }) {
         </CardContent>
       </Card>
 
-      {/* Histórico de Pedidos de Depósito */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -288,7 +300,6 @@ export function VendedorCashbox({ token }: { token: string }) {
         </CardContent>
       </Card>
 
-      {/* Modal de Depósito */}
       <Dialog open={depositoModalOpen} onOpenChange={setDepositoModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -322,7 +333,7 @@ export function VendedorCashbox({ token }: { token: string }) {
               )}
             </div>
             <div className="text-xs text-muted-foreground bg-accent/10 p-3 rounded-lg border border-accent/20">
-              <p className="font-medium text-accent mb-1">🚨 Nota:</p>
+              <p className="font-medium text-accent mb-1">Nota:</p>
               <p>Este pedido ficará pendente até o administrador da aldeia confirmar a receção do dinheiro físico.</p>
             </div>
           </div>

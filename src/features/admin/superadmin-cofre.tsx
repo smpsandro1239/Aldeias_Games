@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   Banknote, ShieldCheck, Building2, Users, Clock,
   RefreshCw, History, Search, AlertTriangle,
-  ArrowUpRight, TrendingUp, Download
+  ArrowUpRight, TrendingUp, Download, ArrowUpFromLine, BarChart3
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { generateCSV, downloadCSV } from "@/lib/export-utils";
@@ -189,6 +189,14 @@ export function SuperAdminCofre() {
             className="pl-9"
           />
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.location.href = '/superadmindashboard/financeiro'}
+        >
+          <BarChart3 className="w-4 h-4 mr-2" />
+          Visão Financeira
+        </Button>
         <Button
           variant="outline"
           size="sm"

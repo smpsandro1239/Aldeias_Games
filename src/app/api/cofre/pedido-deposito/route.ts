@@ -6,8 +6,8 @@ import { logAudit } from '@/lib/audit';
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['vendedor'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    if (!user || !hasRole(user.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
+      return NextResponse.json({ error: 'Apenas vendedores, admins de aldeia e super admins podem depositar no cofre' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user) {
+    if (!user || !hasRole(user.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
