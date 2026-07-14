@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
 
-    const rateLimit = checkRateLimit(user.id, rateLimitConfigs.sorteios);
+    const rateLimit = await checkRateLimit(user.id, rateLimitConfigs.sorteios);
     if (!rateLimit.allowed) return createRateLimitResponse(rateLimit.resetTime)
 
     const body = await request.json()
@@ -30,11 +30,25 @@ export async function PATCH(request: NextRequest) {
       }
 
       const serverSeed = crypto.randomBytes(64).toString('hex');
-      const hashSorteio = crypto.createHash('sha256').update(serverSeed).digest('hex');
+      const commitSalt = crypto.randomBytes(32).toString('hex');
+      const hashSorteio = crypto.createHash('sha256').update(`${commitSalt}:${jogoId}:${new Date().toISOString()}`).digest('hex');
 
       await prisma.jogo.update({
         where: { id: jogoId },
         data: { seedSorteio: serverSeed, hashSorteio }
+      });
+
+      // Create Sorteio in commit phase for public verification
+      await prisma.sorteio.create({
+        data: {
+          seed: serverSeed,
+          hash: hashSorteio,
+          resultado: '',
+          fase: 'pendente',
+          preCommitHash: hashSorteio,
+          commitSalt,
+          jogoId,
+        }
       });
 
       return NextResponse.json({ success: true, hash: hashSorteio });
@@ -52,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
 
-    const rateLimit = checkRateLimit(user.id, rateLimitConfigs.sorteios);
+    const rateLimit = await checkRateLimit(user.id, rateLimitConfigs.sorteios);
     if (!rateLimit.allowed) return createRateLimitResponse(rateLimit.resetTime)
 
     const { jogoId, clientSeed } = await request.json()
@@ -70,6 +84,12 @@ export async function POST(request: NextRequest) {
     }
     if (!jogo.seedSorteio) return NextResponse.json({ error: 'Commit necessário' }, { status: 400 })
     if (jogo.participacoes.length === 0) return NextResponse.json({ error: 'Sem participações' }, { status: 400 })
+
+    // Find existing pendente Sorteio (from commit phase)
+    const existingSorteio = await prisma.sorteio.findFirst({
+      where: { jogoId, fase: 'pendente' },
+      orderBy: { createdAt: 'desc' },
+    });
 
     let winningNumber: number | null = null;
     let combinedSeed = `${jogo.seedSorteio}:${clientSeed || 'no-client-seed'}`;
@@ -101,6 +121,36 @@ export async function POST(request: NextRequest) {
       numeroSorteado = dadosPart.numeros?.[0] ?? (dadosPart.numero ?? null);
     }
 
+    const resultado = winningCoord || String(numeroSorteado || winningNumber || '');
+
+    // Upsert sorteio to get ID, then create vencedor in transaction
+    let sorteioId: string;
+    if (existingSorteio) {
+      await prisma.sorteio.update({
+        where: { id: existingSorteio.id },
+        data: {
+          seed: finalHash,
+          hash: jogo.hashSorteio || '',
+          resultado,
+          fase: 'revelado',
+          revealedAt: new Date(),
+        }
+      });
+      sorteioId = existingSorteio.id;
+    } else {
+      const created = await prisma.sorteio.create({
+        data: {
+          seed: finalHash,
+          hash: jogo.hashSorteio || '',
+          resultado,
+          fase: 'revelado',
+          revealedAt: new Date(),
+          jogoId,
+        }
+      });
+      sorteioId = created.id;
+    }
+
     await prisma.$transaction([
       prisma.participacao.update({ where: { id: vencedorId }, data: { ganhador: true } }),
       prisma.jogo.update({
@@ -112,20 +162,11 @@ export async function POST(request: NextRequest) {
           dadosVerificacao: JSON.stringify({ clientSeed, combinedSeed, finalHash, winningNumber, winningCoord })
         }
       }),
-      prisma.sorteio.create({
+      prisma.vencedorSorteio.create({
         data: {
-          seed: finalHash,
-          hash: jogo.hashSorteio || '',
-          resultado: winningCoord || String(numeroSorteado || winningNumber || ''),
-          fase: 'revelado',
-          revealedAt: new Date(),
-          jogoId,
-          vencedores: {
-            create: {
-              posicao: 1,
-              dadosVencedor: JSON.stringify({ participacaoId: vencedorId }),
-            }
-          }
+          posicao: 1,
+          dadosVencedor: JSON.stringify({ participacaoId: vencedorId }),
+          sorteioId,
         }
       })
     ]);

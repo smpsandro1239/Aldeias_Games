@@ -57,6 +57,11 @@ export const rateLimitConfigs = {
     maxRequests: 10,
     windowMs: 60 * 1000,
   },
+  // 2FA verify: 5 tentativas por 5 minutos (brute-force protection)
+  twoFactor: {
+    maxRequests: 5,
+    windowMs: 5 * 60 * 1000,
+  },
 };
 
 // === IN-MEMORY STORE (development fallback) ===

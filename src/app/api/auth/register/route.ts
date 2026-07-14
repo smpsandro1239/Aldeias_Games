@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting
     const clientId = getClientIdentifier(request);
-    const rateLimit = checkRateLimit(clientId, rateLimitConfigs.register);
+    const rateLimit = await checkRateLimit(clientId, rateLimitConfigs.register);
 
     if (!rateLimit.allowed) {
       return createRateLimitResponse(rateLimit.resetTime);

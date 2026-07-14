@@ -77,7 +77,7 @@ export function useAuth() {
       initAuth();
     }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials & { totpCode?: string }) => {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -89,6 +89,11 @@ export function useAuth() {
 
       if (!response.ok) {
         throw new Error(data.error || "Erro ao fazer login");
+      }
+
+      // 2FA required — return intermediate state (don't store user yet)
+      if (data.requiresTwoFactor) {
+        return { success: false, requiresTwoFactor: true, error: data.message || "Código 2FA necessário" };
       }
 
       localStorage.setItem("user", JSON.stringify(data.user));

@@ -13,9 +13,7 @@ import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { getClientIdentifier } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
-
-const otplib = require('otplib');
-const authenticator = otplib.authenticator;
+import { verifyMFAOTP } from '@/lib/mfa';
 
 // Account lockout: bloquear após 5 falhas consecutivas
 const MAX_FAILED_ATTEMPTS = 5;
@@ -95,7 +93,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting
     const clientId = getClientIdentifier(request);
-    const rateLimit = checkRateLimit(clientId, rateLimitConfigs.login);
+    const rateLimit = await checkRateLimit(clientId, rateLimitConfigs.login);
 
     if (!rateLimit.allowed) {
       return createRateLimitResponse(rateLimit.resetTime);
@@ -289,10 +287,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const isValidCode = authenticator.verify({
-          token: totpCode,
-          secret: tfa.secret,
-        });
+        const isValidCode = verifyMFAOTP(totpCode, tfa.secret);
 
         if (!isValidCode) {
           await logAccess(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest, context: { params: Promise<{id: string}> }) {
   try {
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
         reveal: sorteio.fase === 'revelado' ? {
           seed: sorteio.seed,
           hash: sorteio.hash,
-          resultado: sorteio.resultado ? JSON.parse(sorteio.resultado) : null,
+          resultado: sorteio.resultado ? (() => { try { return JSON.parse(sorteio.resultado); } catch { return sorteio.resultado; } })() : null,
           reveladoEm: sorteio.revealedAt?.toISOString() ?? null
         } : null,
         vencedores: sorteio.vencedores.map(v => ({

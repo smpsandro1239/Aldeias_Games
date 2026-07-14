@@ -86,6 +86,8 @@ export default function Home() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
 
   const [formState, dispatchForm] = useReducer(formReducer, {
     login: { email: "", password: "" },
@@ -139,13 +141,20 @@ export default function Home() {
     }
   }, [mounted, isAuthenticated, user, router]);
 
-  const doLogin = useCallback(async (email: string, password: string) => {
+  const doLogin = useCallback(async (email: string, password: string, totpCode?: string) => {
     setIsLoggingIn(true);
     try {
-      const result = await login({ email, password });
+      const result = await login({ email, password, totpCode });
+
+      if (result.requiresTwoFactor) {
+        setRequiresTwoFactor(true);
+        return result;
+      }
 
       if (result.success) {
         setLoginModalOpen(false);
+        setRequiresTwoFactor(false);
+        setTotpCode("");
         dispatchForm({ type: 'RESET_LOGIN' });
         const targetPath = ROLE_PATHS[result.data?.user?.role as keyof typeof ROLE_PATHS] || ROLE_PATHS.user;
 
@@ -167,6 +176,11 @@ export default function Home() {
     e.preventDefault();
     await doLogin(formState.login.email, formState.login.password);
   }, [doLogin, formState.login]);
+
+  const handleTotpSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    await doLogin(formState.login.email, formState.login.password, totpCode);
+  }, [doLogin, formState.login, totpCode]);
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,58 +223,92 @@ export default function Home() {
             </DialogDescription>
           </DialogHeader>
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="px-8 pb-8 space-y-6">
+          <form onSubmit={requiresTwoFactor ? handleTotpSubmit : handleLogin} className="px-8 pb-8 space-y-6">
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="teu@email.com"
-                  value={formState.login.email}
-                  onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'email', value: e.target.value })}
-                  required
-                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={formState.login.password}
-                  onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'password', value: e.target.value })}
-                  required
-                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
-                />
-                {/* Esqueci-me da password link */}
-                <div className="text-right mt-1">
-                  <a href="/forgot-password" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                    Esqueci-me da password
-                  </a>
+              {!requiresTwoFactor && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="teu@email.com"
+                      value={formState.login.email}
+                      onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'email', value: e.target.value })}
+                      required
+                      className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={formState.login.password}
+                      onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'password', value: e.target.value })}
+                      required
+                      className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                    />
+                    {/* Esqueci-me da password link */}
+                    <div className="text-right mt-1">
+                      <a href="/forgot-password" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                        Esqueci-me da password
+                      </a>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {requiresTwoFactor && (
+                <div className="space-y-2">
+                  <Label htmlFor="totpCode" className="text-xs font-bold uppercase tracking-widest ml-1">Código 2FA</Label>
+                  <Input
+                    id="totpCode"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                    required
+                    autoFocus
+                    className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-center text-lg tracking-[0.5em]"
+                  />
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Introduza o código de 6 dígitos da sua aplicação autenticadora
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
 
             <DialogFooter className="mt-6 flex-col gap-4">
               <div className="flex gap-2 w-full">
-                <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
-                  Cancelar
-                </Button>
+                {requiresTwoFactor ? (
+                  <Button type="button" variant="outline" onClick={() => { setRequiresTwoFactor(false); setTotpCode(""); }} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
+                    Voltar
+                  </Button>
+                ) : (
+                  <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
+                    Cancelar
+                  </Button>
+                )}
                 <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold" disabled={isLoggingIn}>
                   <Zap className="h-4 w-4 mr-2" />
-                  {isLoggingIn ? 'Entrando...' : 'Entrar'}
+                  {isLoggingIn ? 'Entrando...' : requiresTwoFactor ? 'Verificar Código' : 'Entrar'}
                 </Button>
               </div>
             </DialogFooter>
 
             {/* Divider */}
-            <div className="flex items-center my-6">
-              <div className="w-1 bg-outline-variant/20 flex-1"></div>
-              <span className="px-3 text-[10px] text-muted-foreground">ou continue com</span>
-              <div className="w-1 bg-outline-variant/20 flex-1"></div>
-            </div>
+            {!requiresTwoFactor && (
+              <>
+                <div className="flex items-center my-6">
+                  <div className="w-1 bg-outline-variant/20 flex-1"></div>
+                  <span className="px-3 text-[10px] text-muted-foreground">ou continue com</span>
+                  <div className="w-1 bg-outline-variant/20 flex-1"></div>
+                </div>
 
             {/* Social Login Buttons */}
             <div className="pt-4 space-y-3">
@@ -315,6 +363,8 @@ export default function Home() {
                 </p>
               </div>
             </div>
+            </>
+            )}
 
             {/* Botões de Atalho para Testes (apenas dev) */}
               {process.env.NODE_ENV !== 'production' && (

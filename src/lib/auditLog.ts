@@ -10,9 +10,13 @@ export type AuditAction =
   | "payment"
   | "config_change"
   | "export_data"
-  | "permission_change";
+  | "permission_change"
+  | "2fa_setup"
+  | "2fa_enable"
+  | "2fa_disable"
+  | "2fa_verify_fail";
 
-export type AuditResource = "user" | "evento" | "jogo" | "aldeia" | "pagamento" | "config" | "participacao";
+export type AuditResource = "user" | "evento" | "jogo" | "aldeia" | "pagamento" | "config" | "participacao" | "security";
 
 /**
  * Registrar ação de auditoria

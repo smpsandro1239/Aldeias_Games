@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, User as UserIcon, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet, Shield, FileText } from "lucide-react";
+import { ArrowLeft, User as UserIcon, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet, Shield, FileText, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
+import { TwoFactorSetup } from "@/components/two-factor-setup";
 import { LayoutHeader } from "@/components/layout-header";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -431,6 +432,16 @@ export default function PerfilPage() {
               <FileText className="w-4 h-4" />
               Aceder ao Portal de Dados
             </a>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface-container/50 border-outline-variant/20">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-accent mb-4 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" />
+              Segurança
+            </h3>
+            <TwoFactorSetup isMandatory={user?.role === "super_admin" || user?.role === "aldeia_admin"} />
           </CardContent>
         </Card>
 

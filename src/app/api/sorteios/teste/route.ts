@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // RATE LIMITING: limite de testes de sorteio (10/min - mais restritivo)
     const rateLimitKey = `sorteio-teste:${user.id}`;
-    const rateLimit = checkRateLimit(rateLimitKey, {
+    const rateLimit = await checkRateLimit(rateLimitKey, {
       ...rateLimitConfigs.api,
       maxRequests: 10,
       windowMs: 60 * 1000,
