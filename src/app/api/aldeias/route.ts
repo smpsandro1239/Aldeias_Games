@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/db'
 import { getUserFromRequest } from '@/lib/auth'
 import { z } from 'zod'
 
@@ -117,6 +117,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Verify the creator user exists in the database
+    const creatorUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { id: true }
+    })
+
     const aldeia = await prisma.aldeia.create({
       data: {
         nome,
@@ -124,10 +130,12 @@ export async function POST(request: NextRequest) {
         descricao,
         logoUrl,
         tipoOrganizacao,
-        // Set the creator as admin of the aldeia
-        admins: {
-          connect: { id: user.userId }
-        }
+        // Only connect admin if the user actually exists in DB
+        ...(creatorUser ? {
+          admins: {
+            connect: { id: creatorUser.id }
+          }
+        } : {})
       }
     })
 

@@ -80,6 +80,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email já registado' }, { status: 400 });
     }
 
+    // Validate aldeiaId references an existing aldeia
+    if (data.aldeiaId) {
+      const aldeiaExists = await prisma.aldeia.findUnique({
+        where: { id: data.aldeiaId },
+        select: { id: true }
+      });
+      if (!aldeiaExists) {
+        return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 400 });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const newUser = await prisma.user.create({
