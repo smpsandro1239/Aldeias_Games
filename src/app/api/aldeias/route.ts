@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     ])
 
     return NextResponse.json({
-      aldeias: aldeias.map(aldeia => ({
+      aldeias: aldeias.map((aldeia: any) => ({
         ...aldeia,
         membrosAtivos: aldeia._count.userAldeiaRoles
       })),

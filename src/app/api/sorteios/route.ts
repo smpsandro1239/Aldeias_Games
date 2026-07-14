@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       const letra = config.letras[letraIdx];
       winningCoord = `${letra}${num}`;
 
-      const vencedor = jogo.participacoes.find(p => {
+      const vencedor = jogo.participacoes.find((p: any) => {
         const d = JSON.parse(p.dadosParticipacao);
         return d.letra === letra && d.numero === num;
       });

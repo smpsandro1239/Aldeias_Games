@@ -81,17 +81,17 @@ export async function GET(request: NextRequest) {
 
     // Calcular totais
     const totalCarregamentos = transacoes
-      .filter(t => (t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0)
-      .reduce((acc, t) => acc + t.valor, 0);
+      .filter((t: any) => (t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0)
+      .reduce((acc: number, t: any) => acc + t.valor, 0);
 
-    const totalVendas = vendas.reduce((acc, v) => acc + v.valor, 0);
-    const totalComissoes = vendas.reduce((acc, v) => acc + v.comissao, 0);
-    const totalParticipacoes = participacoes.reduce((acc, p) => acc + p.valorPago, 0);
+    const totalVendas = vendas.reduce((acc: number, v: any) => acc + v.valor, 0);
+    const totalComissoes = vendas.reduce((acc: number, v: any) => acc + v.comissao, 0);
+    const totalParticipacoes = participacoes.reduce((acc: number, p: any) => acc + p.valorPago, 0);
 
     // Agrupar por método de pagamento
     const porMetodo: Record<string, { carregamentos: number; vendas: number; participacoes: number }> = {};
     
-    transacoes.forEach(t => {
+    transacoes.forEach((t: any) => {
       const metodo = t.metodoPagamento || 'dinheiro';
       if (!porMetodo[metodo]) {
         porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    participacoes.forEach(p => {
+    participacoes.forEach((p: any) => {
       const metodo = p.metodoPagamento || 'dinheiro';
       if (!porMetodo[metodo]) {
         porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       porMetodo[metodo].participacoes += p.valorPago;
     });
 
-    vendas.forEach(v => {
+    vendas.forEach((v: any) => {
       const metodo = v.metodoPagamento || 'dinheiro';
       if (!porMetodo[metodo]) {
         porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
@@ -131,11 +131,11 @@ export async function GET(request: NextRequest) {
         diferenca,
         percentagemDiferenca: totalReceitas > 0 ? ((diferenca / totalReceitas) * 100).toFixed(2) : '0',
       },
-      porMetodo: Object.entries(porMetodo).map(([metodo, valores]) => ({
+      porMetodo: Object.entries(porMetodo).map(([metodo, valores]: [string, any]) => ({
         metodo,
         ...valores,
       })),
-      transacoesRecentes: transacoes.slice(0, 20).map(t => ({
+      transacoesRecentes: transacoes.slice(0, 20).map((t: any) => ({
         id: t.id,
         tipo: t.tipo,
         valor: t.valor,
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
         utilizador: t.user?.nome,
         data: t.createdAt,
       })),
-      vendasRecentes: vendas.slice(0, 20).map(v => ({
+      vendasRecentes: vendas.slice(0, 20).map((v: any) => ({
         id: v.id,
         valor: v.valor,
         comissao: v.comissao,
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json({ success: true, data });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro no financeiro:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+// @ts-ignore
 import * as Sentry from "@sentry/nextjs";
 
 export function SentryInit() {

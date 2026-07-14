@@ -168,7 +168,7 @@ where.evento = {
     ]);
 
     // Adicionar configuracao a cada jogo
-    const jogosComConfig = jogos.map(jogo => ({
+    const jogosComConfig = jogos.map((jogo: any) => ({
       ...jogo,
       configuracao: typeof jogo.configuracao === 'string' 
         ? JSON.parse(jogo.configuracao) 
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
     };
     try {
       rentabilidade = calcularRentabilidade(data.tipo, data);
-    } catch (calcError) {
+    } catch (calcError: any) {
       console.warn('Erro ao calcular rentabilidade, usando valores padrão:', calcError);
     }
     

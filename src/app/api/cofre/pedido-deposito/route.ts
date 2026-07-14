@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     if (admins.length > 0) {
       await prisma.notificacao.createMany({
-        data: admins.map(admin => ({
+        data: admins.map((admin: any) => ({
           userId: admin.id,
           tipo: 'deposito_criado',
           titulo: 'Novo pedido de depósito',

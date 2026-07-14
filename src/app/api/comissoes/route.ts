@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
     });
 
     const totalComissao = comissoes
-      .filter(t => t.tipo === 'comissao')
-      .reduce((acc, t) => acc + t.valor, 0);
+      .filter((t: any) => t.tipo === 'comissao')
+      .reduce((acc: number, t: any) => acc + t.valor, 0);
 
     return NextResponse.json({
       success: true,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         totalComissao,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao listar comissões:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: comissao,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao configurar comissão:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }

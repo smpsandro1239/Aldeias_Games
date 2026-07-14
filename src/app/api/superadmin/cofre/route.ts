@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    const data = aldeias.map(aldeia => ({
+    const data = aldeias.map((aldeia: any) => ({
       id: aldeia.id,
       nome: aldeia.nome,
       slug: aldeia.slug,
@@ -43,15 +43,15 @@ export async function GET(request: NextRequest) {
       numVendedores: aldeia._count.users,
       movimentosRecentes: aldeia.vault?.transacoes || [],
       totalAngariado: aldeia.vault?.transacoes
-        .filter(t => t.tipo === 'deposito')
-        .reduce((sum, t) => sum + t.valor, 0) || 0,
+        .filter((t: any) => t.tipo === 'deposito')
+        .reduce((sum: number, t: any) => sum + t.valor, 0) || 0,
     }));
 
     return NextResponse.json({
       success: true,
       data: {
         aldeias: data,
-        pendentes: pendentes.map(p => ({
+        pendentes: pendentes.map((p: any) => ({
           id: p.id,
           valor: p.valor,
           descricao: p.descricao,
@@ -60,8 +60,8 @@ export async function GET(request: NextRequest) {
           vendedor: p.vendedor,
           aldeia: p.aldeia,
         })),
-        totalGeral: data.reduce((sum, a) => sum + a.saldoCofre, 0),
-        totalPendentes: pendentes.reduce((sum, p) => sum + p.valor, 0),
+        totalGeral: data.reduce((sum: number, a: any) => sum + a.saldoCofre, 0),
+        totalPendentes: pendentes.reduce((sum: number, p: any) => sum + p.valor, 0),
       }
     });
   } catch (error) {

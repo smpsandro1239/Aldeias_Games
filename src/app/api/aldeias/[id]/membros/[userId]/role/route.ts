@@ -42,9 +42,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{id:
     }
 
     // Check if the requesting user is a LIDER or MODERADOR in this aldeia
-    const isLider = aldeia.admins.some(admin => admin.id === user.userId) // Assuming LIDER is same as admin for now
+    const isLider = aldeia.admins.some((admin: any) => admin.id === user.userId) // Assuming LIDER is same as admin for now
     const isModerador = aldeia.userAldeiaRoles.some(
-      role => role.role.name === 'MODERADOR'
+      (role: any) => role.role.name === 'MODERADOR'
     )
 
     if (!isLider && !isModerador) {

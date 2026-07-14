@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const monthLabel = d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' });
 
-      const vaultTx = (vault?.transacoes || []).filter(tx => {
+      const vaultTx = (vault?.transacoes || []).filter((tx: any) => {
         const txDate = new Date(tx.dataCriacao);
         return txDate.getMonth() === d.getMonth() &&
                txDate.getFullYear() === d.getFullYear() &&
@@ -79,12 +79,12 @@ export async function GET(request: NextRequest) {
       });
 
       const depositosMes = vaultTx
-        .filter(tx => tx.tipo === 'deposito')
-        .reduce((sum, tx) => sum + tx.valor, 0);
+        .filter((tx: any) => tx.tipo === 'deposito')
+        .reduce((sum: number, tx: any) => sum + tx.valor, 0);
 
       const levantamentosMes = vaultTx
-        .filter(tx => tx.tipo === 'levantamento')
-        .reduce((sum, tx) => sum + tx.valor, 0);
+        .filter((tx: any) => tx.tipo === 'levantamento')
+        .reduce((sum: number, tx: any) => sum + tx.valor, 0);
 
       months.push({
         month: monthLabel,
@@ -94,29 +94,29 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const totalCashboxSaldo = cashboxes.reduce((sum, cb) => sum + cb.saldo, 0);
+    const totalCashboxSaldo = cashboxes.reduce((sum: number, cb: any) => sum + cb.saldo, 0);
 
     const cashboxPorRole = {
-      vendedores: cashboxes.filter(cb => cb.user.role === 'vendedor').reduce((sum, cb) => sum + cb.saldo, 0),
-      adminsAldeia: cashboxes.filter(cb => cb.user.role === 'aldeia_admin').reduce((sum, cb) => sum + cb.saldo, 0),
-      superAdmins: cashboxes.filter(cb => cb.user.role === 'super_admin').reduce((sum, cb) => sum + cb.saldo, 0),
+      vendedores: cashboxes.filter((cb: any) => cb.user.role === 'vendedor').reduce((sum: number, cb: any) => sum + cb.saldo, 0),
+      adminsAldeia: cashboxes.filter((cb: any) => cb.user.role === 'aldeia_admin').reduce((sum: number, cb: any) => sum + cb.saldo, 0),
+      superAdmins: cashboxes.filter((cb: any) => cb.user.role === 'super_admin').reduce((sum: number, cb: any) => sum + cb.saldo, 0),
     };
 
     const totalDepositosConfirmados = depositos
-      .filter(d => d.estado === 'confirmado')
-      .reduce((sum, d) => sum + d.valor, 0);
+      .filter((d: any) => d.estado === 'confirmado')
+      .reduce((sum: number, d: any) => sum + d.valor, 0);
 
     const totalDepositosPendentes = depositos
-      .filter(d => d.estado === 'pendente')
-      .reduce((sum, d) => sum + d.valor, 0);
+      .filter((d: any) => d.estado === 'pendente')
+      .reduce((sum: number, d: any) => sum + d.valor, 0);
 
     const totalLevantamentosConfirmados = (vault?.transacoes || [])
-      .filter(tx => tx.tipo === 'levantamento' && tx.estado === 'confirmado')
-      .reduce((sum, tx) => sum + tx.valor, 0);
+      .filter((tx: any) => tx.tipo === 'levantamento' && tx.estado === 'confirmado')
+      .reduce((sum: number, tx: any) => sum + tx.valor, 0);
 
     const totalLevantamentosPendentes = (vault?.transacoes || [])
-      .filter(tx => tx.tipo === 'levantamento' && tx.estado === 'pendente')
-      .reduce((sum, tx) => sum + tx.valor, 0);
+      .filter((tx: any) => tx.tipo === 'levantamento' && tx.estado === 'pendente')
+      .reduce((sum: number, tx: any) => sum + tx.valor, 0);
 
     const distribuicaoDinheiro = {
       cofre: vault?.saldo || 0,
@@ -126,24 +126,24 @@ export async function GET(request: NextRequest) {
     };
 
     const topCashboxes = cashboxes
-      .map(cb => ({
+      .map((cb: any) => ({
         userId: cb.user.id,
         nome: cb.user.nome,
         role: cb.user.role,
         saldo: cb.saldo,
         totalRecebido: cb.transacoes
-          .filter(t => t.tipo === 'RECEBIDO_DO_JOGADOR')
-          .reduce((sum, t) => sum + t.valor, 0),
+          .filter((t: any) => t.tipo === 'RECEBIDO_DO_JOGADOR')
+          .reduce((sum: number, t: any) => sum + t.valor, 0),
         totalDepositado: cb.transacoes
-          .filter(t => t.tipo === 'DEPOSITADO_NO_COFRE')
-          .reduce((sum, t) => sum + t.valor, 0),
+          .filter((t: any) => t.tipo === 'DEPOSITADO_NO_COFRE')
+          .reduce((sum: number, t: any) => sum + t.valor, 0),
         totalLevantado: cb.transacoes
-          .filter(t => t.tipo === 'LEVANTAMENTO_COFRE')
-          .reduce((sum, t) => sum + t.valor, 0),
+          .filter((t: any) => t.tipo === 'LEVANTAMENTO_COFRE')
+          .reduce((sum: number, t: any) => sum + t.valor, 0),
       }))
-      .sort((a, b) => b.saldo - a.saldo);
+      .sort((a: any, b: any) => b.saldo - a.saldo);
 
-    const ultimasTransacoes = (vault?.transacoes || []).slice(0, 20).map(tx => ({
+    const ultimasTransacoes = (vault?.transacoes || []).slice(0, 20).map((tx: any) => ({
       tipo: tx.tipo,
       valor: tx.valor,
       descricao: tx.descricao,

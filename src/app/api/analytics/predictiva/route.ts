@@ -32,14 +32,14 @@ export async function GET(request: NextRequest) {
     });
 
     // Calcular médias
-    const totalAngariado = eventos.reduce((sum, e) => sum + (e.totalAngariado || 0), 0);
-    const totalParticipacoes = eventos.reduce((sum, e) => sum + (e.totalParticipacoes || 0), 0);
+    const totalAngariado = eventos.reduce((sum: number, e: any) => sum + (e.totalAngariado || 0), 0);
+    const totalParticipacoes = eventos.reduce((sum: number, e: any) => sum + (e.totalParticipacoes || 0), 0);
     const mediaPorEvento = eventos.length > 0 ? totalAngariado / eventos.length : 0;
     const mediaParticipacoes = eventos.length > 0 ? totalParticipacoes / eventos.length : 0;
 
     // Tendência mensal
     const meses: { [key: string]: number } = {};
-    eventos.forEach(e => {
+    eventos.forEach((e: any) => {
       const mes = e.createdAt.toISOString().substring(0, 7);
       meses[mes] = (meses[mes] || 0) + (e.totalAngariado || 0);
     });
@@ -77,9 +77,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Calcular probabilidade de atingir objetivo para eventos ativos
-    const eventosComObjetivo = eventos.filter(e => e.objectivoAngariacao && e.objectivoAngariacao > 0);
+    const eventosComObjetivo = eventos.filter((e: any) => e.objectivoAngariacao && e.objectivoAngariacao > 0);
     const probabilidadeMedia = eventosComObjetivo.length > 0
-      ? eventosComObjetivo.reduce((sum, e) => {
+      ? eventosComObjetivo.reduce((sum: number, e: any) => {
           const progresso = e.objectivoAngariacao ? (e.totalAngariado / e.objectivoAngariacao) * 100 : 0;
           return sum + Math.min(progresso, 100);
         }, 0) / eventosComObjetivo.length

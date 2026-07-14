@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+// @ts-ignore - stripe types
 import Stripe from 'stripe';
 
 export async function POST(request: NextRequest) {

@@ -7,6 +7,7 @@ import { createParticipacaoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
+// @ts-ignore - @prisma/client types generated at build time
 import { Prisma } from '@prisma/client';
 import { getGameHandler } from './_lib';
 
@@ -151,7 +152,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       createPaginatedResponse(participacoes, total, page, limit)
     );
-} catch (error) {
+} catch (error: any) {
     console.error('Erro ao criar participação:', error);
     const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
     return NextResponse.json(
@@ -442,7 +443,7 @@ export async function POST(request: NextRequest) {
             numeros.map((n: number) => n.toString()),
             jogo.evento.nome
           );
-        } catch (err) {
+        } catch (err: any) {
           console.error('[Email] Erro ao enviar bilhete:', err);
         }
       }

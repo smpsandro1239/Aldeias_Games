@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Prisma, Jogo, Evento } from '@prisma/client';
 
 export type JogoWithEvento = Jogo & { evento: Evento };

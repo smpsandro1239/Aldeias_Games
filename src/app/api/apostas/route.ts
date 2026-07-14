@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se números já estão ocupados (Race condition protection)
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const apostasExistentes = await tx.aposta.findMany({
         where: { jogoId },
       });

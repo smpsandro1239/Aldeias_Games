@@ -162,7 +162,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Credit saldo ao jogador + cashbox do vendedor (transação atómica)
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.user.update({
         where: { id: pedido.userId },
         data: { saldo: { increment: pedido.valor } }

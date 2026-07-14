@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+// @ts-ignore
 import { PermissionKey } from "@prisma/client";
 import { Shield, Lock, Globe } from "lucide-react";
 

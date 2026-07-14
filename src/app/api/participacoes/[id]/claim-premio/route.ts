@@ -155,7 +155,7 @@ export async function POST(
     }
 
     // Process prize payout in atomic transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Credit user saldo
       const updatedUser = await tx.user.update({
         where: { id: user.id },

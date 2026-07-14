@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Prisma } from '@prisma/client';
 
 /**

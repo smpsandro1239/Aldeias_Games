@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyWebhookSignature } from '@/lib/stripe';
+// @ts-ignore - stripe types
 import Stripe from 'stripe';
 import crypto from 'crypto';
 

@@ -51,11 +51,11 @@ export async function GET(request: NextRequest) {
         try { return JSON.parse(a.numeros || "[]").length * (a.jogo.preco || 0); } catch { return 0; }
     };
 
-    const valorHojeApostas = apostasHoje.reduce((acc, a) => acc + valorAposta(a), 0);
-    const valorTotalApostas = apostasTotais.reduce((acc, a) => acc + valorAposta(a), 0);
+    const valorHojeApostas = apostasHoje.reduce((acc: number, a: any) => acc + valorAposta(a), 0);
+    const valorTotalApostas = apostasTotais.reduce((acc: number, a: any) => acc + valorAposta(a), 0);
 
-    const valorHojePart = partHoje.reduce((acc, p) => acc + (p.valorPago || 0), 0);
-    const valorTotalPart = partTotais.reduce((acc, p) => acc + (p.valorPago || 0), 0);
+    const valorHojePart = partHoje.reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
+    const valorTotalPart = partTotais.reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
 
     const valorHoje = valorHojeApostas + valorHojePart;
     const valorTotal = valorTotalApostas + valorTotalPart;
@@ -67,14 +67,14 @@ export async function GET(request: NextRequest) {
 
     // The seller holds cash but some sales might be digital/Stripe/MBWay.
     // Let's filter cash sales only to calculate what they need to hand over explicitly.
-    const dinheiroEmMaoApostas = apostasTotais.reduce((acc, a) => acc + valorAposta(a), 0); // Apostas are always physical cash in POS
-    const dinheiroEmMaoPart = partTotais.filter(p => p.metodoPagamento === 'dinheiro').reduce((acc, p) => acc + (p.valorPago || 0), 0);
+    const dinheiroEmMaoApostas = apostasTotais.reduce((acc: number, a: any) => acc + valorAposta(a), 0); // Apostas are always physical cash in POS
+    const dinheiroEmMaoPart = partTotais.filter((p: any) => p.metodoPagamento === 'dinheiro').reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
     
     const totalDinheiroLivre = dinheiroEmMaoApostas + dinheiroEmMaoPart;
     const aEntregar = Math.max(0, totalDinheiroLivre - comissaoTotal);
 
     // Build History (Ultimas Vendas Hoje)
-    const historicoApostas = apostasHoje.map(a => ({
+    const historicoApostas = apostasHoje.map((a: any) => ({
         id: a.id,
         valor: valorAposta(a),
         metodoPagamento: 'dinheiro', // POS mostly uses cash initially
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         jogo: { nome: a.jogo.nome }
     }));
 
-    const historicoPart = partHoje.map(p => ({
+    const historicoPart = partHoje.map((p: any) => ({
         id: p.id,
         valor: p.valorPago,
         metodoPagamento: p.metodoPagamento,
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     }));
 
     const ultimasVendas = [...historicoApostas, ...historicoPart]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 10); // top 10 do dia
 
     const data = {
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json({ success: true, data });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro no dashboard vendedor:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }

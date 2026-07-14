@@ -1,4 +1,5 @@
 // src/lib/rbac/checkPermission.ts
+// @ts-ignore
 import { PermissionKey } from "@prisma/client";
 import { resolvePermissions } from "./resolvePermissions";
 

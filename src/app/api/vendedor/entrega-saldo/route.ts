@@ -142,15 +142,15 @@ export async function GET(request: NextRequest) {
     });
 
     // Calcular total de entregas pendentes
-    const pendentes = entregas.filter(e => e.estado === 'solicitado' || e.estado === 'confirmado');
-    const totalPendente = pendentes.reduce((acc, e) => acc + e.valor, 0);
+    const pendentes = entregas.filter((e: any) => e.estado === 'solicitado' || e.estado === 'confirmado');
+    const totalPendente = pendentes.reduce((acc: number, e: any) => acc + e.valor, 0);
 
     return NextResponse.json({
       data: entregas,
       resumo: {
-        totalSolicitado: entregas.reduce((acc, e) => acc + e.valor, 0),
+        totalSolicitado: entregas.reduce((acc: number, e: any) => acc + e.valor, 0),
         totalPendente,
-        totalConcluido: entregas.filter(e => e.estado === 'concluido').reduce((acc, e) => acc + e.valor, 0)
+        totalConcluido: entregas.filter((e: any) => e.estado === 'concluido').reduce((acc: number, e: any) => acc + e.valor, 0)
       }
     });
 

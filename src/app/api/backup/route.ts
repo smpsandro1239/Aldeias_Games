@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
       const filename = `backup-${timestamp}.json`;
       const filepath = path.join(backupsDir, filename);
 
-      const dados = await prisma.$transaction(async (tx) => {
+      const dados = await prisma.$transaction(async (tx: any) => {
         const aldeias = await tx.aldeia.findMany({ include: { users: true } });
         // Remover passwords dos utilizadores no backup
-        const users = (await tx.user.findMany()).map(({ password, ...rest }) => rest);
+        const users = (await tx.user.findMany()).map(({ password, ...rest }: { password: string; [key: string]: any }) => rest);
         const eventos = await tx.evento.findMany();
         const jogos = await tx.jogo.findMany();
         const participacoes = await tx.participacao.findMany();

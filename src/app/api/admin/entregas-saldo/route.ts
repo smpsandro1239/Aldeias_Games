@@ -48,20 +48,20 @@ export async function GET(request: NextRequest) {
     });
 
     // Totais
-    const pendentes = entregas.filter(e => e.estado === 'solicitado');
-    const confirmadas = entregas.filter(e => e.estado === 'confirmado');
-    const concluidas = entregas.filter(e => e.estado === 'concluido');
+    const pendentes = entregas.filter((e: any) => e.estado === 'solicitado');
+    const confirmadas = entregas.filter((e: any) => e.estado === 'confirmado');
+    const concluidas = entregas.filter((e: any) => e.estado === 'concluido');
 
     return NextResponse.json({
       data: entregas,
       resumo: {
         total: entregas.length,
         pendentes: pendentes.length,
-        valorPendente: pendentes.reduce((acc, e) => acc + e.valor, 0),
+        valorPendente: pendentes.reduce((acc: number, e: any) => acc + e.valor, 0),
         confirmadas: confirmadas.length,
-        valorConfirmado: confirmadas.reduce((acc, e) => acc + e.valor, 0),
+        valorConfirmado: confirmadas.reduce((acc: number, e: any) => acc + e.valor, 0),
         concluidas: concluidas.length,
-        valorConcluido: concluidas.reduce((acc, e) => acc + e.valor, 0)
+        valorConcluido: concluidas.reduce((acc: number, e: any) => acc + e.valor, 0)
       }
     });
 
@@ -118,7 +118,7 @@ export async function PATCH(request: NextRequest) {
 
       // Transferir saldo do vendedor para admin
       try {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
           // 1. Retirar saldo do vendedor
           await tx.user.update({
             where: { id: entrega.vendedorId },

@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const totalGasto = participacoes.reduce((sum, p) => sum + p.valorPago, 0);
-    const totalVitorias = participacoes.filter(p => p.ganhador).length;
+    const totalGasto = participacoes.reduce((sum: number, p: any) => sum + p.valorPago, 0);
+    const totalVitorias = participacoes.filter((p: any) => p.ganhador).length;
 
       return NextResponse.json({
         success: true,

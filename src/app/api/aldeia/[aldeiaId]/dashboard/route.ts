@@ -164,7 +164,7 @@ export async function GET(
         totalJogos: aldeia._count.jogos,
         totalPremios: aldeia._count.premios
       },
-      recentMembers: recentMembers.map(m => ({
+      recentMembers: recentMembers.map((m: any) => ({
         user: {
           id: m.user.id,
           nome: m.user.nome,
@@ -175,14 +175,14 @@ export async function GET(
           name: m.role.name
         }
       })),
-      onlineMembers: onlineMembers.map(m => ({
+      onlineMembers: onlineMembers.map((m: any) => ({
         id: m.id,
         nome: m.nome,
         fotoUrl: m.fotoUrl
       })),
       recentEvents,
       recentJogos,
-      recentContributions: recentContributions.map(c => ({
+      recentContributions: recentContributions.map((c: any) => ({
         id: c.id,
         amount: c.amount,
         createdAt: c.createdAt,

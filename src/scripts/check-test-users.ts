@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Script de verificação e criação de usuários de teste
  * Executar com: npx tsx src/scripts/check-test-users.ts

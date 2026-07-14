@@ -90,7 +90,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
           resultado: sorteio.resultado ? (() => { try { return JSON.parse(sorteio.resultado); } catch { return sorteio.resultado; } })() : null,
           reveladoEm: sorteio.revealedAt?.toISOString() ?? null
         } : null,
-        vencedores: sorteio.vencedores.map(v => ({
+        vencedores: sorteio.vencedores.map((v: any) => ({
           posicao: v.posicao,
           dados: v.dadosVencedor ? JSON.parse(v.dadosVencedor) : null
         }))
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
     }
 
     return NextResponse.json(verificationData)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching verification data:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

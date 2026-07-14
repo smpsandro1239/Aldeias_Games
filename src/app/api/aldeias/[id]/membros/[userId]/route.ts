@@ -36,9 +36,9 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{i
     }
 
     // Check if the requesting user is a LIDER or MODERADOR in this aldeia
-    const isLider = aldeia.admins.some(admin => admin.id === user.userId) // Assuming LIDER is same as admin for now
+    const isLider = aldeia.admins.some((admin: any) => admin.id === user.userId) // Assuming LIDER is same as admin for now
     const isModerador = aldeia.userAldeiaRoles.some(
-      role => role.role.name === 'MODERADOR'
+      (role: any) => role.role.name === 'MODERADOR'
     )
 
     if (!isLider && !isModerador) {
@@ -66,7 +66,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{i
 
     // Prevent removing the aldeia LIDER (if we consider LIDER as admin)
     // The leader is represented in the aldeia.admins relation.
-    const isTargetLider = aldeia.admins.some(admin => admin.id === targetUserId);
+    const isTargetLider = aldeia.admins.some((admin: any) => admin.id === targetUserId);
     if (isTargetLider) {
       return NextResponse.json(
         { error: 'Não é possível remover o líder da aldeia' },

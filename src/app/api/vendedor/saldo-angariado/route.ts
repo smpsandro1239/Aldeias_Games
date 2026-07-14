@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       include: { user: true }
     });
 
-    const totalAngariado = pedidosConfirmados.reduce((acc, p) => acc + p.valor, 0);
+    const totalAngariado = pedidosConfirmados.reduce((acc: number, p: any) => acc + p.valor, 0);
 
     // Obter entregas
     const entregas = await prisma.entregaSaldo.findMany({
@@ -33,12 +33,12 @@ export async function GET(request: NextRequest) {
     });
 
     const totalEntregue = entregas
-      .filter(e => e.estado === 'concluido')
-      .reduce((acc, e) => acc + e.valor, 0);
+      .filter((e: any) => e.estado === 'concluido')
+      .reduce((acc: number, e: any) => acc + e.valor, 0);
 
     const totalSolicitado = entregas
-      .filter(e => e.estado === 'solicitado')
-      .reduce((acc, e) => acc + e.valor, 0);
+      .filter((e: any) => e.estado === 'solicitado')
+      .reduce((acc: number, e: any) => acc + e.valor, 0);
 
     const saldoAEntregar = totalAngariado - totalEntregue;
 
@@ -48,14 +48,14 @@ export async function GET(request: NextRequest) {
         totalEntregue,
         totalSolicitado,
         saldoAEntregar,
-        historicoPedidos: pedidosConfirmados.map(p => ({
+        historicoPedidos: pedidosConfirmados.map((p: any) => ({
           id: p.id,
           valor: p.valor,
           usuario: p.user?.nome,
           data: p.createdAt,
           estado: p.estado
         })),
-        historicoEntregas: entregas.map(e => ({
+        historicoEntregas: entregas.map((e: any) => ({
           id: e.id,
           valor: e.valor,
           estado: e.estado,

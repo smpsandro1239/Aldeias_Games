@@ -111,7 +111,7 @@ export async function PATCH(request: NextRequest) {
      // Se confirmado, adicionar saldo ao utilizador (jogador) e ao vendedor
      if (acao === 'confirmar' && pedido.valor > 0) {
        try {
-         await prisma.$transaction(async (tx) => {
+         await prisma.$transaction(async (tx: any) => {
            // 1. Creditar jogador
            await tx.transacao.create({
              data: {

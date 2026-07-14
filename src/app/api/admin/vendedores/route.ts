@@ -122,8 +122,8 @@ export async function GET(request: NextRequest) {
     // Calcular estatísticas em tempo real
     const stats = {
       totalVendedores: vendedores.length,
-      comissaoTotalGeral: vendedores.reduce((sum, v) => sum + (v.comissaoTotal || 0), 0),
-      vendedoresAtivos: vendedores.filter(v => v.comissaoAtiva).length,
+      comissaoTotalGeral: vendedores.reduce((sum: number, v: any) => sum + (v.comissaoTotal || 0), 0),
+      vendedoresAtivos: vendedores.filter((v: any) => v.comissaoAtiva).length,
     };
 
     return NextResponse.json({ data: vendedores, stats });

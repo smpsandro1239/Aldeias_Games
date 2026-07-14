@@ -58,10 +58,10 @@ export async function POST(request: NextRequest) {
         });
         
         // Filter by aldeia in JavaScript
-        const filteredVendas = vendas.filter(v => v.user?.aldeiaId === user.aldeiaId);
+        const filteredVendas = vendas.filter((v: any) => v.user?.aldeiaId === user.aldeiaId);
 
         let total = 0;
-        const rows = filteredVendas.map(v => {
+        const rows = filteredVendas.map((v: any) => {
           total += v.valor;
           return `<tr>
             <td>${new Date(v.createdAt).toLocaleDateString('pt-PT')}</td>
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
           orderBy: { createdAt: 'desc' },
         });
 
-        const rows = jogos.map(j => `<tr>
+        const rows = jogos.map((j: any) => `<tr>
           <td>${j.nome}</td>
           <td>${j.tipo}</td>
           <td>${j.estado}</td>
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           select: { nome: true, email: true, comissaoTotal: true, saldo: true },
         });
 
-        const rows = vendedores.map(v => `<tr>
+        const rows = vendedores.map((v: any) => `<tr>
           <td>${v.nome}</td>
           <td>${v.email}</td>
           <td>${(v.comissaoTotal || 0).toFixed(2)}€</td>
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
         'Content-Disposition': `attachment; filename="relatorio-${tipo}-${Date.now()}.html"`,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao gerar relatório:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

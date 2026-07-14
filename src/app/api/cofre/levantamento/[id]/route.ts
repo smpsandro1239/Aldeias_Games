@@ -55,7 +55,7 @@ export async function PUT(
         }, { status: 400 });
       }
 
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         await tx.vaultTransaction.update({
           where: { id },
           data: {

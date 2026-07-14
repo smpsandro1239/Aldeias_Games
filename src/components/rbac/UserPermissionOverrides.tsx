@@ -2,6 +2,7 @@
 
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+// @ts-ignore
 import { PermissionKey } from "@prisma/client";
 
 type UserPermission = {

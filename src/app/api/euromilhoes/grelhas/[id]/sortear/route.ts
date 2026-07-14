@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+// @ts-ignore - @prisma/client types generated at build time
 import { TipoNotificacao } from "@prisma/client";
 import { getOfficialTime } from "@/lib/time";
 import { getLatestFirstNumber } from "@/lib/euromillions-api";
@@ -78,7 +79,7 @@ export async function PUT(
         orderBy: { createdAt: "asc" },
       });
 
-      const participacao = allParticipacoes.find((p) => {
+      const participacao = allParticipacoes.find((p: any) => {
         try {
           const numeros: number[] = JSON.parse(p.numerosSelecionados || "[]");
           return numeros.includes(numeroSorteado);
@@ -151,7 +152,7 @@ export async function PUT(
         fonte: fonteResultado,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error drawing grelha:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

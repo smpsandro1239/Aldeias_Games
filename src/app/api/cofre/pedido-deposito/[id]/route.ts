@@ -31,7 +31,7 @@ export async function PUT(
     }
 
     if (acao === 'confirmar') {
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         await tx.pedidoDepositoCofre.update({
           where: { id },
           data: {

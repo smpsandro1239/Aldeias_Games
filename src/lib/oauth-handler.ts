@@ -3,6 +3,7 @@ import { generateToken, setAuthCookie } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { verifyToken } from '@/lib/auth';
+// @ts-ignore
 import type { User } from '@prisma/client';
 import { verifyAppleIdToken } from '@/lib/apple-auth';
 

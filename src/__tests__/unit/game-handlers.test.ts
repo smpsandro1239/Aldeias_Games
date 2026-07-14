@@ -85,9 +85,9 @@ describe('Raspadinha Handler', () => {
     expect(result).toHaveProperty('resultadoRaspe');
     expect(result).toHaveProperty('dadosParticipacao');
     expect(typeof result.seedRaspe).toBe('string');
-    expect(result.seedRaspe.length).toBe(64);
+    expect((result.seedRaspe as string).length).toBe(64);
     expect(typeof result.hashRaspe).toBe('string');
-    expect(result.hashRaspe.length).toBe(64);
+    expect((result.hashRaspe as string).length).toBe(64);
   });
 
   it('deve gerar grid com 9 itens', () => {
@@ -182,7 +182,7 @@ describe('Rifa Handler', () => {
 
       expect(result).toHaveProperty('hashParticipacao');
       expect(result).toHaveProperty('dadosVerificacao');
-      expect(result.hashParticipacao.length).toBe(64);
+      expect((result.hashParticipacao as string).length).toBe(64);
     });
 
     it('dadosVerificacao deve conter numeros e seed', () => {
@@ -241,7 +241,7 @@ describe('Poio da Vaca Handler', () => {
 
     expect(result).toHaveProperty('hashParticipacao');
     expect(result).toHaveProperty('dadosVerificacao');
-    expect(result.hashParticipacao.length).toBe(64);
+      expect((result.hashParticipacao as string).length).toBe(64);
   });
 
   it('dadosVerificacao deve conter coordenadas', () => {

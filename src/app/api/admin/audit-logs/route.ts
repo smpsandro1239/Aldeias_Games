@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const allLogs = [
-      ...auditLogs.map(log => ({
+      ...auditLogs.map((log: any) => ({
         tipo: 'audit' as const,
         id: log.id,
         timestamp: log.createdAt,
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         metadata: log.metadata,
         user: log.user,
       })),
-      ...logsAcesso.map(log => ({
+      ...logsAcesso.map((log: any) => ({
         tipo: 'acesso' as const,
         id: log.id,
         timestamp: log.createdAt,
@@ -83,12 +83,12 @@ export async function GET(request: NextRequest) {
         motivo: log.motivo,
         user: log.user,
       })),
-    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    ].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     const filtered = tipo === 'audit'
-      ? allLogs.filter(l => l.tipo === 'audit')
+      ? allLogs.filter((l: any) => l.tipo === 'audit')
       : tipo === 'acesso'
-      ? allLogs.filter(l => l.tipo === 'acesso')
+      ? allLogs.filter((l: any) => l.tipo === 'acesso')
       : allLogs;
     const total = tipo === 'audit' ? totalAudit : tipo === 'acesso' ? totalAcesso : totalAudit + totalAcesso;
 

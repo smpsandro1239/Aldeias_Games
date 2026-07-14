@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data: grelhas });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error listing grelhas:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       orderBy: { numero: "asc" },
     });
 
-    const usedNumeros = new Set(existingGrelhas.map((g) => g.numero));
+    const usedNumeros = new Set(existingGrelhas.map((g: any) => g.numero));
     let nextNumero = 1;
     while (usedNumeros.has(nextNumero)) {
       nextNumero++;
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data: grelha }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating grelha:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

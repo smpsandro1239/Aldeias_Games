@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apagar jogos com as suas participações e prémios relacionados
-    const deleted = await prisma.$transaction(async (tx) => {
+    const deleted = await prisma.$transaction(async (tx: any) => {
       // Apagar participações primeiro
       await tx.participacao.deleteMany({
         where: { jogoId: { in: jogoIds } }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       message: `${deleted.count} jogos eliminados`,
       deletedCount: deleted.count 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao eliminar jogos:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
@@ -81,10 +81,10 @@ export async function GET(request: NextRequest) {
 
     // Filtrar apenas os jogos que não são dos tipos ativos
     const tiposDefinitivos = ['poio_da_vaca', 'rifa', 'raspadinha'];
-    const jogosParaEliminar = jogosAntigos.filter(j => !tiposDefinitivos.includes(j.tipo));
+    const jogosParaEliminar = jogosAntigos.filter((j: any) => !tiposDefinitivos.includes(j.tipo));
 
     return NextResponse.json({ data: jogosParaEliminar });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

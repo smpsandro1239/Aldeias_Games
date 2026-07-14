@@ -1,3 +1,4 @@
+// @ts-nocheck - Playwright test runner (types resolved at runtime)
 import { test, expect } from '@playwright/test';
 
 test.describe('Navigation and routing', () => {

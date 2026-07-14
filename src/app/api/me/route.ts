@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
-       participacoes: participacoes.map(p => ({
+       participacoes: participacoes.map((p: any) => ({
          id: p.id,
          jogoId: p.jogoId,
          jogoNome: p.jogo?.nome,
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
          premiado: p.premioEntregue,
          createdAt: p.createdAt,
        })),
-      transacoes: transacoes.map(t => ({
+      transacoes: transacoes.map((t: any) => ({
         id: t.id,
         tipo: t.tipo,
         valor: t.valor,
@@ -110,14 +110,14 @@ export async function GET(request: NextRequest) {
         estado: t.estado,
         createdAt: t.createdAt,
       })),
-       vendas: vendas.map(v => ({
+       vendas: vendas.map((v: any) => ({
          id: v.id,
          valor: v.valor,
          comissao: v.comissao,
          metodoPagamento: v.metodoPagamento,
          createdAt: v.createdAt,
        })),
-      badges: badges.map(ub => ({
+      badges: badges.map((ub: any) => ({
         id: ub.id,
         badge: {
           id: ub.badge.id,
@@ -127,31 +127,31 @@ export async function GET(request: NextRequest) {
         },
         conquistadoEm: ub.conquistadoEm,
       })),
-       levels: levels.map(l => ({
+       levels: levels.map((l: any) => ({
          level: l.nivel,
          xpAtual: l.pontos,
          atribuidoEm: l.atualizadoEm,
        })),
-      pushSubscriptions: pushSubs.map(ps => ({
+      pushSubscriptions: pushSubs.map((ps: any) => ({
         endpoint: ps.endpoint,
         p256dh: ps.p256dh,
         auth: ps.auth,
       })),
-      notificacoes: notificacoes.map(n => ({
+      notificacoes: notificacoes.map((n: any) => ({
         id: n.id,
         titulo: n.titulo,
         mensagem: n.mensagem,
         lida: n.lida,
         createdAt: n.createdAt,
       })),
-      pedidosCarregamento: pedidosCarregamento.map(p => ({
+      pedidosCarregamento: pedidosCarregamento.map((p: any) => ({
         id: p.id,
         valor: p.valor,
         estado: p.estado,
         metodoPagamento: p.metodoPagamento,
         createdAt: p.createdAt,
       })),
-      entregasSaldo: entregas.map(e => ({
+      entregasSaldo: entregas.map((e: any) => ({
         id: e.id,
         valor: e.valor,
         estado: e.estado,
@@ -159,13 +159,13 @@ export async function GET(request: NextRequest) {
         dataConfirmacao: e.dataConfirmacao,
         dataConclusao: e.dataConclusao,
       })),
-       permissoes: permissoes.map(p => ({
+       permissoes: permissoes.map((p: any) => ({
          permission: p.permission?.key,
        })),
     };
 
     return NextResponse.json({ data: exportData });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao exportar dados:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
@@ -249,13 +249,13 @@ export async function POST(request: NextRequest) {
           }
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar notificação para admins sobre pedido de eliminação:', error);
       // Don't fail the request if notification fails
     }
 
     return NextResponse.json({ success: true, data: deletionRequest });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao solicitar eliminação:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

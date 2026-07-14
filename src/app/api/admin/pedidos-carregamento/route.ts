@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Mapear dados
-    const data = pedidos.map(p => ({
+    const data = pedidos.map((p: any) => ({
       id: p.id,
       valor: p.valor,
       estado: p.estado,

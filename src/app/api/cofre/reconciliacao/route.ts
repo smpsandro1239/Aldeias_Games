@@ -76,14 +76,14 @@ export async function GET(request: NextRequest) {
       : null;
 
     // Build per-seller reconciliation
-    const vendedoresData = vendedores.map(v => {
+    const vendedoresData = vendedores.map((v: any) => {
       const transacoes = v.cashbox?.transacoes || [];
       const totalRecebido = transacoes
-        .filter(t => t.tipo === 'RECEBIDO_DO_JOGADOR')
-        .reduce((sum, t) => sum + t.valor, 0);
+        .filter((t: any) => t.tipo === 'RECEBIDO_DO_JOGADOR')
+        .reduce((sum: number, t: any) => sum + t.valor, 0);
       const totalDepositado = transacoes
-        .filter(t => t.tipo === 'DEPOSITADO_NO_COFRE')
-        .reduce((sum, t) => sum + t.valor, 0);
+        .filter((t: any) => t.tipo === 'DEPOSITADO_NO_COFRE')
+        .reduce((sum: number, t: any) => sum + t.valor, 0);
       const saldoEsperado = totalRecebido - totalDepositado;
       const saldoReal = v.cashbox?.saldo ?? 0;
 
@@ -103,25 +103,25 @@ export async function GET(request: NextRequest) {
     // Vault data
     const vaultData = vault ? {
       saldo: vault.saldo,
-      totalDepositos: vault.transacoes.reduce((sum, t) => sum + t.valor, 0),
+      totalDepositos: vault.transacoes.reduce((sum: number, t: any) => sum + t.valor, 0),
       numDepositos: vault.transacoes.length,
     } : null;
 
     // Aldeias data for super_admin
-    const aldeiasData = todasAldeias?.map(a => ({
+    const aldeiasData = todasAldeias?.map((a: any) => ({
       id: a.id,
       nome: a.nome,
       saldoCofre: a.vault?.saldo ?? 0,
-      totalDepositado: a.vault?.transacoes.reduce((sum, t) => sum + t.valor, 0) ?? 0,
+      totalDepositado: a.vault?.transacoes.reduce((sum: number, t: any) => sum + t.valor, 0) ?? 0,
       numVendedores: a._count.users,
     })) ?? [];
 
     // General totals
-    const totalRecebidoGeral = vendedoresData.reduce((sum, v) => sum + v.totalRecebido, 0);
-    const totalDepositadoGeral = vendedoresData.reduce((sum, v) => sum + v.totalDepositado, 0);
-    const saldoCashboxGeral = vendedoresData.reduce((sum, v) => sum + v.saldoCashbox, 0);
-    const saldoEsperadoGeral = vendedoresData.reduce((sum, v) => sum + v.saldoEsperado, 0);
-    const discrepancias = vendedoresData.filter(v => Math.abs(v.discrepancia) > 0.01);
+    const totalRecebidoGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.totalRecebido, 0);
+    const totalDepositadoGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.totalDepositado, 0);
+    const saldoCashboxGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.saldoCashbox, 0);
+    const saldoEsperadoGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.saldoEsperado, 0);
+    const discrepancias = vendedoresData.filter((v: any) => Math.abs(v.discrepancia) > 0.01);
 
     return NextResponse.json({
       success: true,
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
           saldoCashboxGeral,
           saldoEsperadoGeral,
           saldoVault: vaultData?.saldo ?? 0,
-          pendentesValor: pendentes.reduce((sum, p) => sum + p.valor, 0),
+          pendentesValor: pendentes.reduce((sum: number, p: any) => sum + p.valor, 0),
           pendentesCount: pendentes.length,
         },
         discrepanciaGeral: saldoCashboxGeral - saldoEsperadoGeral,

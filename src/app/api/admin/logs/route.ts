@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const combined = [
-      ...logsAcesso.map(log => ({
+      ...logsAcesso.map((log: any) => ({
         tipo: 'acesso' as const,
         id: log.id,
         email: log.email,
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         createdAt: log.createdAt,
         user: log.user,
       })),
-      ...auditLogs.map(log => ({
+      ...auditLogs.map((log: any) => ({
         tipo: 'audit' as const,
         id: log.id,
         email: log.user?.email ?? '-',
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         createdAt: log.createdAt,
         user: log.user ? { nome: log.user.nome, role: log.user.role } : null,
       })),
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json({
       success: true,
