@@ -1,0 +1,774 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Aldeias Games API",
+    "description": "API para plataforma SaaS multi-tenant de angariacao de fundos em comunidades locais portuguesas",
+    "version": "3.11.1",
+    "contact": {
+      "name": "Sandro Pereira",
+      "url": "https://github.com/smpsandro1239/Aldeias_Games"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Desenvolvimento"
+    },
+    {
+      "url": "https://aldeias-games.vercel.app",
+      "description": "Producao"
+    }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Autenticacao e gestao de sessao" },
+    { "name": "2FA", "description": "Autenticacao em 2 passos (TOTP)" },
+    { "name": "Users", "description": "Gestao de utilizadores" },
+    { "name": "Aldeias", "description": "Gestao de aldeias/comunidades" },
+    { "name": "Jogos", "description": "Gestao de jogos e participacoes" },
+    { "name": "Sorteios", "description": "Sistema de sorteios commit-reveal" },
+    { "name": "Eventos", "description": "Gestao de eventos" },
+    { "name": "Pagamentos", "description": "Processamento de pagamentos" },
+    { "name": "Cofre", "description": "Sistema de cofre e depositos" },
+    { "name": "Dashboard", "description": "Dados de dashboard e estatisticas" },
+    { "name": "RGPD", "description": "Conformidade RGPD e dados pessoais" },
+    { "name": "Admin", "description": "Endpoints de administracao" },
+    { "name": "Wallet", "description": "Carteira e saldo" },
+    { "name": "Notificacoes", "description": "Sistema de notificacoes" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "auth_token"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "nome": { "type": "string" },
+          "role": { "type": "string", "enum": ["super_admin", "aldeia_admin", "vendedor", "user"] },
+          "aldeiaId": { "type": "string", "nullable": true },
+          "notificacoesEmail": { "type": "boolean" }
+        }
+      },
+      "Jogo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "nome": { "type": "string" },
+          "tipo": { "type": "string", "enum": ["rifa", "poio_da_vaca", "euromilhoes", "raspadinha"] },
+          "preco": { "type": "number" },
+          "stockInicial": { "type": "integer" },
+          "stockAtual": { "type": "integer" },
+          "isSorteado": { "type": "boolean" },
+          "isFinalizado": { "type": "boolean" },
+          "aldeiaId": { "type": "string" }
+        }
+      },
+      "Evento": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "nome": { "type": "string" },
+          "descricao": { "type": "string" },
+          "dataInicio": { "type": "string", "format": "date-time" },
+          "dataFim": { "type": "string", "format": "date-time" },
+          "aldeiaId": { "type": "string" }
+        }
+      },
+      "Aldeia": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "nome": { "type": "string" },
+          "slug": { "type": "string" },
+          "tipoOrganizacao": { "type": "string" },
+          "localidade": { "type": "string" },
+          "verificado": { "type": "boolean" }
+        }
+      },
+      "Participacao": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "jogoId": { "type": "string" },
+          "userId": { "type": "string" },
+          "ganhador": { "type": "boolean" },
+          "dadosParticipacao": { "type": "string" }
+        }
+      },
+      "Sorteio": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "jogoId": { "type": "string" },
+          "fase": { "type": "string", "enum": ["commit", "revelado"] },
+          "seed": { "type": "string", "nullable": true },
+          "resultado": { "type": "string", "nullable": true },
+          "commitHash": { "type": "string", "nullable": true },
+          "preCommitHash": { "type": "string", "nullable": true },
+          "commitSalt": { "type": "string", "nullable": true },
+          "revealedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [
+    { "bearerAuth": [] },
+    { "cookieAuth": [] }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Iniciar sessao",
+        "description": "Autentica o utilizador. Retorna requiresTwoFactor=true se 2FA estiver ativo.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" },
+                  "totpCode": { "type": "string", "description": "Codigo 2FA de 6 digitos (obrigatorio se 2FA ativo)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login bem-sucedido ou 2FA necessario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "user": { "$ref": "#/components/schemas/User" },
+                        "token": { "type": "string" }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "requiresTwoFactor": { "type": "boolean", "example": true },
+                        "message": { "type": "string" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "description": "Credenciais invalidas", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Rate limit excedido" }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Registar novo utilizador",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nome", "email", "password"],
+                "properties": {
+                  "nome": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 6 },
+                  "telefone": { "type": "string" },
+                  "role": { "type": "string", "enum": ["user", "vendedor", "aldeia_admin"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registo bem-sucedido" },
+          "400": { "description": "Dados invalidos" },
+          "409": { "description": "Email ja registado" }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Terminar sessao",
+        "description": "Revoga refresh tokens e remove cookies de autenticacao.",
+        "responses": {
+          "200": { "description": "Sessao terminada" }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Renovar access token",
+        "description": "Usa refresh token (cookie) para obter novo access token com rotacao.",
+        "responses": {
+          "200": { "description": "Token renovado" },
+          "401": { "description": "Refresh token invalido ou expirado" }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Solicitar reset de password",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Email de reset enviado (resposta sempre 200 por seguranca)" }
+        }
+      }
+    },
+    "/api/auth/2fa": {
+      "get": {
+        "tags": ["2FA"],
+        "summary": "Verificar estado 2FA",
+        "description": "Retorna se 2FA esta ativo para o utilizador atual.",
+        "responses": {
+          "200": {
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "enabled": { "type": "boolean" } } } } }
+          },
+          "401": { "description": "Nao autorizado" }
+        }
+      },
+      "post": {
+        "tags": ["2FA"],
+        "summary": "Configurar/verificar/desativar 2FA",
+        "description": "Acoes: setup (gerar QR), verify (ativar), disable (desativar)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": { "type": "string", "enum": ["setup"] }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": ["code"],
+                    "properties": {
+                      "action": { "type": "string", "enum": ["verify"] },
+                      "code": { "type": "string", "description": "Codigo TOTP de 6 digitos" }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": { "type": "string", "enum": ["disable"] }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Operacao bem-sucedida" },
+          "400": { "description": "Codigo invalido ou 2FA nao configurado" },
+          "429": { "description": "Rate limit excedido (5 tentativas/5min)" }
+        }
+      }
+    },
+    "/api/users/perfil": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Obter perfil do utilizador",
+        "responses": {
+          "200": { "description": "Perfil do utilizador" },
+          "401": { "description": "Nao autorizado" }
+        }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Atualizar perfil",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": { "type": "string" },
+                  "telefone": { "type": "string" },
+                  "aldeiaId": { "type": "string" },
+                  "fotoPerfil": { "type": "string", "description": "Base64 da imagem ou null para remover" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Perfil atualizado" },
+          "401": { "description": "Nao autorizado" }
+        }
+      }
+    },
+    "/api/aldeias": {
+      "get": {
+        "tags": ["Aldeias"],
+        "summary": "Listar aldeias",
+        "security": [],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "aldeias": { "type": "array", "items": { "$ref": "#/components/schemas/Aldeia" } },
+                    "pagination": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jogos": {
+      "get": {
+        "tags": ["Jogos"],
+        "summary": "Listar jogos",
+        "security": [],
+        "responses": {
+          "200": {
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Jogo" } } } } } }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Jogos"],
+        "summary": "Criar jogo (admin)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nome", "tipo", "preco", "stockInicial"],
+                "properties": {
+                  "nome": { "type": "string" },
+                  "tipo": { "type": "string", "enum": ["rifa", "poio_da_vaca", "euromilhoes", "raspadinha"] },
+                  "preco": { "type": "number" },
+                  "stockInicial": { "type": "integer" },
+                  "descricao": { "type": "string" },
+                  "dataInicio": { "type": "string", "format": "date-time" },
+                  "dataFim": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Jogo criado" },
+          "400": { "description": "Dados invalidos" }
+        }
+      }
+    },
+    "/api/jogos/{id}": {
+      "get": {
+        "tags": ["Jogos"],
+        "summary": "Obter jogo por ID",
+        "security": [],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Jogo" } } } },
+          "404": { "description": "Jogo nao encontrado" }
+        }
+      }
+    },
+    "/api/jogos/{id}/verificar-sorteio": {
+      "get": {
+        "tags": ["Sorteios"],
+        "summary": "Verificar integridade do sorteio",
+        "description": "Permite verificar a integridade do commit-reveal de um sorteio.",
+        "security": [],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "ID do jogo" },
+          { "name": "clientSeed", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "commit": { "type": "object", "properties": { "hash": { "type": "string" }, "fase": { "type": "string" } } },
+                    "reveal": { "type": "object", "nullable": true, "properties": { "seed": { "type": "string" }, "resultado": {} } },
+                    "verificacao": { "type": "object", "properties": { "integro": { "type": "boolean" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sorteios": {
+      "post": {
+        "tags": ["Sorteios"],
+        "summary": "Commit ou reveal de sorteio",
+        "description": "Fase commit: envia hash. Fase reveal: envia seed + clientSeed para revelar vencedor.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": ["jogoId", "commitHash"],
+                    "properties": {
+                      "fase": { "type": "string", "enum": ["commit"], "default": "commit" },
+                      "jogoId": { "type": "string" },
+                      "commitHash": { "type": "string" }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": ["jogoId"],
+                    "properties": {
+                      "fase": { "type": "string", "enum": ["reveal"] },
+                      "jogoId": { "type": "string" },
+                      "clientSeed": { "type": "string" }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Sorteio processado" },
+          "400": { "description": "Dados invalidos ou fase incorreta" }
+        }
+      }
+    },
+    "/api/eventos": {
+      "get": {
+        "tags": ["Eventos"],
+        "summary": "Listar eventos",
+        "security": [],
+        "responses": {
+          "200": {
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Evento" } } } } } }
+          }
+        }
+      }
+    },
+    "/api/wallet": {
+      "get": {
+        "tags": ["Wallet"],
+        "summary": "Obter saldo e historico",
+        "responses": {
+          "200": { "description": "Dados da carteira" },
+          "401": { "description": "Nao autorizado" }
+        }
+      }
+    },
+    "/api/wallet/carregar": {
+      "post": {
+        "tags": ["Wallet"],
+        "summary": "Carregar saldo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["valor", "metodo"],
+                "properties": {
+                  "valor": { "type": "number" },
+                  "metodo": { "type": "string", "enum": ["mbway", "stripe", "saldo"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Saldo carregado" },
+          "400": { "description": "Dados invalidos" }
+        }
+      }
+    },
+    "/api/cofre/pedido-deposito": {
+      "get": {
+        "tags": ["Cofre"],
+        "summary": "Listar pedidos de deposito",
+        "responses": {
+          "200": { "description": "Lista de pedidos" },
+          "401": { "description": "Nao autorizado" }
+        }
+      },
+      "post": {
+        "tags": ["Cofre"],
+        "summary": "Criar pedido de deposito no cofre",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["valor"],
+                "properties": {
+                  "valor": { "type": "number" },
+                  "notas": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pedido criado" },
+          "400": { "description": "Dados invalidos" }
+        }
+      }
+    },
+    "/api/notificacoes": {
+      "get": {
+        "tags": ["Notificacoes"],
+        "summary": "Listar notificacoes do utilizador",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Lista de notificacoes" },
+          "401": { "description": "Nao autorizado" }
+        }
+      }
+    },
+    "/api/notificacoes/{id}": {
+      "patch": {
+        "tags": ["Notificacoes"],
+        "summary": "Marcar notificacao como lida",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Notificacao atualizada" },
+          "404": { "description": "Notificacao nao encontrada" }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Health check",
+        "security": [],
+        "responses": {
+          "200": { "description": "Servidor saudavel" }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Obter dados do utilizador autenticado",
+        "responses": {
+          "200": { "description": "Dados do utilizador" },
+          "401": { "description": "Nao autorizado" }
+        }
+      }
+    },
+    "/api/rgpd/consentimento": {
+      "post": {
+        "tags": ["RGPD"],
+        "summary": "Registar consentimento RGPD",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tipo"],
+                "properties": {
+                  "tipo": { "type": "string", "enum": ["analytics", "marketing", "functional"] },
+                  "consentido": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Consentimento registado" }
+        }
+      }
+    },
+    "/api/rgpd/direito-esquecimento": {
+      "post": {
+        "tags": ["RGPD"],
+        "summary": "Solicitar eliminacao de conta (direito ao esquecimento)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["motivo"],
+                "properties": {
+                  "motivo": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Pedido de eliminacao registado" }
+        }
+      }
+    },
+    "/api/admin/audit-logs": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Logs de auditoria unificados",
+        "responses": {
+          "200": { "description": "Lista de logs de auditoria e acessos" },
+          "401": { "description": "Nao autorizado" },
+          "403": { "description": "Acesso restrito a super_admin" }
+        }
+      }
+    },
+    "/api/carregamento": {
+      "post": {
+        "tags": ["Pagamentos"],
+        "summary": "Criar pedido de carregamento",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["valor", "metodoPagamento"],
+                "properties": {
+                  "valor": { "type": "number" },
+                  "metodoPagamento": { "type": "string", "enum": ["mbway", "stripe", "dinheiro", "transferencia"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pedido criado" },
+          "400": { "description": "Dados invalidos" }
+        }
+      }
+    },
+    "/api/participacoes": {
+      "get": {
+        "tags": ["Jogos"],
+        "summary": "Listar participacoes do utilizador",
+        "responses": {
+          "200": { "description": "Lista de participacoes" },
+          "401": { "description": "Nao autorizado" }
+        }
+      },
+      "post": {
+        "tags": ["Jogos"],
+        "summary": "Participar num jogo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["jogoId"],
+                "properties": {
+                  "jogoId": { "type": "string" },
+                  "dadosParticipacao": { "type": "object", "description": "Dados especificos do tipo de jogo (numeros, coordenadas, etc.)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Participacao registada" },
+          "400": { "description": "Dados invalidos ou jogo nao disponivel" }
+        }
+      }
+    },
+    "/api/ranking": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Ranking de aldeias",
+        "security": [],
+        "responses": {
+          "200": { "description": "Ranking atualizado" }
+        }
+      }
+    },
+    "/api/public/stats": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Estatisticas publicas",
+        "security": [],
+        "responses": {
+          "200": { "description": "Estatisticas da plataforma" }
+        }
+      }
+    }
+  }
+}

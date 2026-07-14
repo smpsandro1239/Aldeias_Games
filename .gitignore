@@ -68,4 +68,11 @@ loadtest*.js
 
 # temp / logs
 server.log
+server.err
+server_err.txt
+server_log.txt
 nul
+
+# playwright
+/test-results/
+/playwright-report/
