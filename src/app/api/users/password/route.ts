@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { hash, compare } from 'bcryptjs';
+import { passwordSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,9 +22,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (novaPassword.length < 8) {
+    // Validar nova password com as mesmas regras do registo
+    const passwordValidation = passwordSchema.safeParse(novaPassword);
+    if (!passwordValidation.success) {
       return NextResponse.json(
-        { error: 'Nova password deve ter pelo menos 8 caracteres' },
+        { error: passwordValidation.error.errors[0]?.message || 'Password inválida' },
         { status: 400 }
       );
     }

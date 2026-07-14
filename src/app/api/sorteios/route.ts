@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getFullUserFromRequest, hasRole } from '@/lib/auth'
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit'
+import { logSorteio } from '@/lib/audit'
 import crypto from 'crypto'
 
 export async function PATCH(request: NextRequest) {
@@ -170,6 +171,11 @@ export async function POST(request: NextRequest) {
         }
       })
     ]);
+
+    // Audit log for reveal
+    const ip = request.headers.get('x-forwarded-for') || undefined;
+    const userAgent = request.headers.get('user-agent') || undefined;
+    logSorteio(user.id, jogoId, jogo.nome, 'reveal', jogo.seedSorteio, jogo.hashSorteio, 1, ip, userAgent);
 
     return NextResponse.json({ success: true, vencedorId, seedRevelada: jogo.seedSorteio, resultado: winningCoord || winningNumber });
   } catch (error) {

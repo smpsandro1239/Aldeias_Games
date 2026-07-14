@@ -19,6 +19,9 @@ import { verifyMFAOTP } from '@/lib/mfa';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutos
 
+// Demo users: only loaded when ENABLE_DEMO_USERS=true AND NODE_ENV !== 'production'
+const ENABLE_DEMO_USERS = process.env.ENABLE_DEMO_USERS === 'true';
+
 type DemoUser = {
   id: string;
   email: string;
@@ -28,10 +31,11 @@ type DemoUser = {
   aldeia: null;
   emailVerificado: boolean;
   notificacoesEmail: boolean;
-  password: string;
+  // Hash bcrypt de 'AldeiasDemo2024!' (cost 10)
+  passwordHash: string;
 };
 
-const demoUsers: Record<string, DemoUser> = {
+const demoUsers: Record<string, DemoUser> | null = ENABLE_DEMO_USERS ? {
   'admin@aldeias.pt': {
     id: 'user-super-admin',
     email: 'admin@aldeias.pt',
@@ -41,7 +45,7 @@ const demoUsers: Record<string, DemoUser> = {
     aldeia: null,
     emailVerificado: true,
     notificacoesEmail: true,
-    password: '123456',
+    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
   },
   'aldeia@gmail.com': {
     id: 'user-aldeia-admin',
@@ -52,7 +56,7 @@ const demoUsers: Record<string, DemoUser> = {
     aldeia: null,
     emailVerificado: true,
     notificacoesEmail: true,
-    password: '123456',
+    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
   },
   'vendedor@gmail.com': {
     id: 'user-vendedor',
@@ -63,7 +67,7 @@ const demoUsers: Record<string, DemoUser> = {
     aldeia: null,
     emailVerificado: true,
     notificacoesEmail: true,
-    password: '123456',
+    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
   },
   'smpsandro1239@gmail.com': {
     id: 'user-jogador',
@@ -74,17 +78,19 @@ const demoUsers: Record<string, DemoUser> = {
     aldeia: null,
     emailVerificado: true,
     notificacoesEmail: true,
-    password: '123456',
+    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
   },
-};
+} : null;
 
-function getDemoUser(email: string, password: string): DemoUser | null {
+async function getDemoUser(email: string, password: string): Promise<DemoUser | null> {
+  if (!demoUsers) return null;
   const normalizedEmail = email.toLowerCase();
   const demoUser = demoUsers[normalizedEmail];
 
-  if (!demoUser || demoUser.password !== password) {
-    return null;
-  }
+  if (!demoUser) return null;
+
+  const passwordValid = await verifyPassword(password, demoUser.passwordHash);
+  if (!passwordValid) return null;
 
   return demoUser;
 }
@@ -121,7 +127,9 @@ export async function POST(request: NextRequest) {
 
     const { email, password, totpCode } = validation.data;
 
-    const demoUser = process.env.NODE_ENV !== 'production' ? getDemoUser(email, password) : null;
+    const demoUser = (ENABLE_DEMO_USERS && process.env.NODE_ENV !== 'production')
+      ? await getDemoUser(email, password)
+      : null;
 
     if (demoUser) {
       const token = await generateToken({

@@ -71,12 +71,20 @@ export async function PUT(
     let vencedorId: string | null = null;
 
     if (isVendido) {
-      const participacao = await prisma.participacao.findFirst({
-        where: {
-          grelhaId: grelha.id,
-          numerosSelecionados: { contains: String(numeroSorteado) },
-        },
+      // Fetch all participations for this grelha and filter in code to avoid
+      // false matches with Prisma's string `contains` (e.g. "1" matching "10")
+      const allParticipacoes = await prisma.participacao.findMany({
+        where: { grelhaId: grelha.id },
         orderBy: { createdAt: "asc" },
+      });
+
+      const participacao = allParticipacoes.find((p) => {
+        try {
+          const numeros: number[] = JSON.parse(p.numerosSelecionados || "[]");
+          return numeros.includes(numeroSorteado);
+        } catch {
+          return false;
+        }
       });
 
       if (participacao) {

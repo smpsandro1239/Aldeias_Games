@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { processarLevantamentoSchema } from '@/lib/validations';
 
 export async function PUT(
   request: NextRequest,
@@ -15,7 +16,16 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { acao, observacoes } = body;
+    const validation = processarLevantamentoSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Dados inválidos', details: validation.error.errors },
+        { status: 400 }
+      );
+    }
+
+    const { acao, observacoes } = validation.data;
 
     const levantamento = await prisma.vaultTransaction.findUnique({
       where: { id },

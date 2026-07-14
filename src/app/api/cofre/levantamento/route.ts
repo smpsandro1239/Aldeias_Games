@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { criarLevantamentoSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,19 +12,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { valor, descricao, destino, observacoes, aldeiaId: bodyAldeiaId } = body;
+    const validation = criarLevantamentoSchema.safeParse(body);
 
-    if (!valor || valor <= 0) {
-      return NextResponse.json({ error: 'Valor inválido' }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Dados inválidos', details: validation.error.errors },
+        { status: 400 }
+      );
     }
 
-    if (!descricao || descricao.trim().length < 5) {
-      return NextResponse.json({ error: 'Descrição do destino do levantamento é obrigatória (mínimo 5 caracteres)' }, { status: 400 });
-    }
-
-    if (!destino || destino.trim().length < 3) {
-      return NextResponse.json({ error: 'Destino/finalidade do dinheiro é obrigatório' }, { status: 400 });
-    }
+    const { valor, descricao, destino, observacoes, aldeiaId: bodyAldeiaId } = validation.data;
 
     const aldeiaId = bodyAldeiaId || user.aldeiaId;
     if (!aldeiaId) {

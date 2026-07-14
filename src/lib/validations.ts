@@ -299,6 +299,29 @@ export const stripePaymentSchema = z.object({
 });
 
 // ============================================
+// VALIDAÇÕES FINANCEIRAS (COFRE)
+// ============================================
+
+export const criarDepositoSchema = z.object({
+  valor: z.number().positive('Valor deve ser positivo').max(100000, 'Valor excede limite máximo'),
+  descricao: z.string().max(500).optional(),
+  referencias: z.record(z.string()).optional(),
+});
+
+export const criarLevantamentoSchema = z.object({
+  valor: z.number().positive('Valor deve ser positivo').max(100000, 'Valor excede limite máximo'),
+  descricao: z.string().min(5, 'Descrição deve ter pelo menos 5 caracteres').max(500),
+  destino: z.string().min(3, 'Destino deve ter pelo menos 3 caracteres').max(500),
+  observacoes: z.string().max(1000).optional(),
+  aldeiaId: z.string().optional(),
+});
+
+export const processarLevantamentoSchema = z.object({
+  acao: z.enum(['confirmar', 'rejeitar'], { message: 'Ação inválida' }),
+  observacoes: z.string().max(500).optional(),
+});
+
+// ============================================
 // VALIDAÇÕES DE BACKUP
 // ============================================
 

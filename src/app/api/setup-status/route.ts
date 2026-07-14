@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getUserFromRequest } from '@/lib/auth';
+import { getUserFromRequest, hasRole } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -78,6 +78,11 @@ export async function PATCH(request: NextRequest) {
     const userData = await getUserFromRequest(request);
     if (!userData) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    // Apenas admins podem alterar configurações da aldeia
+    if (!hasRole(userData.role, ['super_admin', 'aldeia_admin'])) {
+      return NextResponse.json({ error: 'Apenas administradores podem alterar configurações' }, { status: 403 });
     }
 
     // Buscar o usuário completo

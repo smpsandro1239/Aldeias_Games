@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { criarDepositoSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,11 +12,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { valor, descricao, referencias } = body;
+    const validation = criarDepositoSchema.safeParse(body);
 
-    if (!valor || valor <= 0) {
-      return NextResponse.json({ error: 'Valor inválido' }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Dados inválidos', details: validation.error.errors },
+        { status: 400 }
+      );
     }
+
+    const { valor, descricao, referencias } = validation.data;
 
     const cashbox = await prisma.vendedorCashbox.findUnique({
       where: { userId: user.id }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import crypto from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
@@ -116,6 +117,19 @@ export async function PATCH(request: NextRequest) {
         prisma.notificacao.deleteMany({ where: { userId: targetUserId } }),
         prisma.consentimento.deleteMany({ where: { userId: targetUserId } }),
         prisma.userPermission.deleteMany({ where: { userId: targetUserId } }),
+        // RGPD: limpar dados financeiros e de participação
+        prisma.participacao.updateMany({
+          where: { userId: targetUserId },
+          data: { dadosParticipacao: '{}', dadosCliente: '{}' },
+        }),
+        prisma.transacao.updateMany({
+          where: { userId: targetUserId },
+          data: { descricao: 'Transação anonimizada (RGPD)' },
+        }),
+        prisma.logAcesso.deleteMany({ where: { userId: targetUserId } }),
+        prisma.auditLog.deleteMany({ where: { userId: targetUserId } }),
+        prisma.refreshToken.deleteMany({ where: { userId: targetUserId } }),
+        prisma.passwordReset.deleteMany({ where: { userId: targetUserId } }),
       ]);
 
       // Anonimize user record
@@ -124,7 +138,7 @@ export async function PATCH(request: NextRequest) {
         data: {
           nome: 'Utilizador Anónimo',
           telefone: null,
-          password: 'DELETED_' + Date.now(),
+          password: crypto.randomBytes(64).toString('hex'),
           email: `deleted_${Date.now()}_${targetUserId.substring(0, 8)}@deleted.local`,
           emailVerificado: false,
           notificacoesEmail: false,

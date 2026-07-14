@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { registerSchema } from '@/lib/validations';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { getClientIdentifier } from '@/lib/rate-limit';
@@ -117,15 +117,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Gerar JWT para login automático pós-registo
-    const jwtToken = await generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      aldeiaId: user.aldeiaId as string,
-    });
-
-    const response = NextResponse.json({
+    // NÃO emitir JWT no registo — email ainda não foi verificado
+    // O utilizador deve fazer login após verificar o email
+    return NextResponse.json({
       success: true,
       message: 'Registo efetuado com sucesso. Por favor verifique o seu email para ativar a conta.',
       user: {
@@ -138,15 +132,9 @@ export async function POST(request: NextRequest) {
         aldeia: user.aldeia,
         emailVerificado: false,
       },
-      token: jwtToken,
+      requiresEmailVerification: true,
       isNewOrganization,
     }, { status: 201 });
-
-    const { setAuthCookie, generateRefreshToken, setRefreshTokenCookie } = await import('@/lib/auth');
-    setAuthCookie(response, jwtToken);
-    const refreshToken = await generateRefreshToken(user.id);
-    setRefreshTokenCookie(response, refreshToken);
-    return response;
   } catch (error) {
     console.error('Erro no registo:', error);
     return NextResponse.json(
