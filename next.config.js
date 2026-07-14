@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
   // TODO: Remove once all TS errors are fixed — currently needed only on Windows (SWC crash with Node.js v24)
   // On Vercel (Linux) this can be removed after fixing type errors
   typescript: {

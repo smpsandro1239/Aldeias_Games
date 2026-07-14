@@ -615,7 +615,11 @@ export async function POST(request: NextRequest) {
       const pagamentoConfirmado = data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo';
       
       if (isVendaInterna && pagamentoConfirmado && effectiveUser) {
-        const cashbackPercent = 0.05;
+        // Cashback percentual configurável (default 5%)
+        const jogoConfig = JSON.parse(jogo.configuracao || '{}');
+        const cashbackPercent = typeof jogoConfig.cashbackPercent === 'number'
+          ? Math.min(jogoConfig.cashbackPercent / 100, 0.5) // max 50%
+          : 0.05;
         const cashbackValor = valorTotal * cashbackPercent;
 
         // Se pagou com saldo, descontar
@@ -752,36 +756,6 @@ function generateHash(seed: string, resultado: string, salt: string, timestamp?:
     .createHash('sha256')
     .update(data)
     .digest('hex');
-}
-
-function determineRaspadinhaResult(configJson: string, stockInicial: number, cardNumber: number): string {
-  const config = JSON.parse(configJson);
-  const premios = config.premios || [];
-  
-  // Calcular ranges baseado nas percentagens
-  let currentRange = 0;
-  const ranges: { nome: string; start: number; end: number }[] = [];
-  
-  for (const premio of premios) {
-    const count = Math.floor(stockInicial * premio.percentagem);
-    if (count > 0) {
-      ranges.push({
-        nome: premio.nome,
-        start: currentRange,
-        end: currentRange + count,
-      });
-      currentRange += count;
-    }
-  }
-  
-  // Determinar prémio baseado no número do cartão
-  for (const range of ranges) {
-    if (cardNumber >= range.start && cardNumber < range.end) {
-      return range.nome;
-    }
-  }
-  
-  return 'sem_premio';
 }
 
 // ============================================================

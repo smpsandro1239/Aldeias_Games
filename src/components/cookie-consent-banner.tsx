@@ -8,31 +8,54 @@ const CONSENT_KEY = "aldeias-cookies-consent";
 
 type ConsentLevel = "essential" | "analytics" | "all";
 
+interface ConsentPreferences {
+  essential: true;
+  analytics: boolean;
+}
+
 function getStoredConsent(): ConsentLevel | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(CONSENT_KEY) as ConsentLevel | null;
 }
 
-function setStoredConsent(level: ConsentLevel): void {
+function getStoredPreferences(): ConsentPreferences {
+  if (typeof window === "undefined") return { essential: true, analytics: false };
+  const stored = localStorage.getItem(`${CONSENT_KEY}-prefs`);
+  if (stored) {
+    try {
+      return { ...JSON.parse(stored), essential: true };
+    } catch {
+      return { essential: true, analytics: false };
+    }
+  }
+  return { essential: true, analytics: false };
+}
+
+function setStoredConsent(level: ConsentLevel, prefs?: ConsentPreferences): void {
   localStorage.setItem(CONSENT_KEY, level);
+  if (prefs) {
+    localStorage.setItem(`${CONSENT_KEY}-prefs`, JSON.stringify(prefs));
+  }
 }
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [preferences, setPreferences] = useState<ConsentPreferences>({ essential: true, analytics: false });
 
   useEffect(() => {
     const consent = getStoredConsent();
     if (!consent) {
       setVisible(true);
+      setPreferences(getStoredPreferences());
     }
   }, []);
 
-  const handleConsent = async (level: ConsentLevel) => {
-    setStoredConsent(level);
+  const handleConsent = async (level: ConsentLevel, prefs?: ConsentPreferences) => {
+    const finalPrefs = prefs || { essential: true, analytics: level === "all" };
+    setStoredConsent(level, finalPrefs);
     setVisible(false);
 
-    // Record consent in DB (best-effort, anonymous if not logged in)
     try {
       await fetch("/api/rgpd/consentimento", {
         method: "POST",
@@ -40,7 +63,7 @@ export function CookieConsentBanner() {
         body: JSON.stringify({
           tipo: "cookies",
           concedeu: level !== "essential",
-          dados: { nivel: level },
+          dados: { nivel: level, preferencias: finalPrefs },
         }),
       });
     } catch {
@@ -72,17 +95,18 @@ export function CookieConsentBanner() {
         </div>
 
         {showDetails && (
-          <div className="text-sm text-muted-foreground space-y-2 pl-8">
+          <div className="text-sm text-muted-foreground space-y-3 pl-8">
             <div className="flex items-center gap-2">
               <input type="checkbox" checked disabled className="accent-primary" />
               <span><strong>Essenciais</strong> — Necessários para o funcionamento (sessão, autenticação, segurança)</span>
             </div>
             <div className="flex items-center gap-2">
-              <input type="checkbox" checked disabled className="accent-primary" />
-              <span><strong>Funcionais</strong> — Preferências de idioma, tema e configurações</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked disabled className="accent-primary" />
+              <input
+                type="checkbox"
+                checked={preferences.analytics}
+                onChange={(e) => setPreferences({ ...preferences, analytics: e.target.checked })}
+                className="accent-primary"
+              />
               <span><strong>Analíticos</strong> — Estatísticas anónimas de uso para melhorar a plataforma</span>
             </div>
             <p className="text-xs text-muted-foreground/70">
@@ -106,18 +130,28 @@ export function CookieConsentBanner() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleConsent("essential")}
+            onClick={() => handleConsent("essential", { essential: true, analytics: false })}
             className="text-xs"
           >
             Apenas Essenciais
           </Button>
-          <Button
-            size="sm"
-            onClick={() => handleConsent("all")}
-            className="text-xs bg-primary text-primary-foreground"
-          >
-            Aceitar Todos
-          </Button>
+          {showDetails ? (
+            <Button
+              size="sm"
+              onClick={() => handleConsent(preferences.analytics ? "all" : "essential", preferences)}
+              className="text-xs bg-primary text-primary-foreground"
+            >
+              Guardar Preferências
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => handleConsent("all", { essential: true, analytics: true })}
+              className="text-xs bg-primary text-primary-foreground"
+            >
+              Aceitar Todos
+            </Button>
+          )}
         </div>
       </div>
     </div>
