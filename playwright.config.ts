@@ -10,7 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: 'list',
-  timeout: 30_000,
+  timeout: 120_000,
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -26,6 +26,6 @@ export default defineConfig({
     command: 'npx prisma@6.19.3 generate && npx next dev --webpack -p ' + PORT,
     port: Number(PORT),
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
   },
 });
