@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { AldeiaModal } from "@/components/modals/aldeia-modal";
+import { LayoutHeader } from "@/components/layout-header";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -65,6 +66,7 @@ export default function AldeiasPage() {
   };
 
   return (
+    <LayoutHeader>
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="mb-6 flex justify-between items-center">
@@ -164,5 +166,6 @@ export default function AldeiasPage() {
         loading={isLoading}
       />
     </div>
+    </LayoutHeader>
   );
 }

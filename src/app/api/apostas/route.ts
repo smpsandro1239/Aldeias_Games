@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getFullUserFromRequest, verifyToken } from "@/lib/auth";
+import { escapeHtml } from "@/lib/utils";
 
 async function getAuthFromHeader(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
         data: {
           jogoId,
           numeros: JSON.stringify(numeros),
-          jogadorNome: jogador.nome,
+          jogadorNome: escapeHtml(String(jogador.nome)),
           jogadorTelefone: jogador.telefone || null,
           jogadorEmail: jogador.email || null,
           vendedorId: vendedorId || user?.id || null,

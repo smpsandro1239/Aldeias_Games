@@ -4,7 +4,7 @@ import { hashPassword, generateToken } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { getClientIdentifier } from '@/lib/rate-limit';
-import { generateSlug } from '@/lib/utils';
+import { generateSlug, escapeHtml } from '@/lib/utils';
 import { sendEmail } from '@/lib/email';
 import crypto from 'crypto';
 
@@ -53,12 +53,13 @@ export async function POST(request: NextRequest) {
 
     // Gerar token de verificação de email
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    const emailVerificationHash = crypto.createHash('sha256').update(emailVerificationToken).digest('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
     // Criar utilizador (email não verificado)
     const user = await prisma.user.create({
       data: {
-        nome,
+        nome: escapeHtml(nome),
         email: email.toLowerCase(),
         password: hashedPassword,
         telefone,
@@ -107,17 +108,24 @@ export async function POST(request: NextRequest) {
       console.error('Erro ao enviar email de verificação:', emailError);
     }
 
-    // Armazenar token de verificação na DB (usando passwordResets temporariamente)
-    // TODO: Criar modelo EmailVerification dedicado no schema
+    // Armazenar hash do token de verificação na DB
     await prisma.passwordReset.create({
       data: {
         userId: user.id,
-        token: emailVerificationToken,
+        token: emailVerificationHash,
         expires: emailVerificationExpires,
       },
     });
 
-    return NextResponse.json({
+    // Gerar JWT para login automático pós-registo
+    const jwtToken = await generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      aldeiaId: user.aldeiaId as string,
+    });
+
+    const response = NextResponse.json({
       success: true,
       message: 'Registo efetuado com sucesso. Por favor verifique o seu email para ativar a conta.',
       user: {
@@ -126,12 +134,19 @@ export async function POST(request: NextRequest) {
         nome: user.nome,
         telefone: user.telefone,
         role: user.role,
-        aldeiaId: user.aldeiaId as string,
+        aldeiaId: user.aldeiaId,
         aldeia: user.aldeia,
         emailVerificado: false,
       },
+      token: jwtToken,
       isNewOrganization,
     }, { status: 201 });
+
+    const { setAuthCookie, generateRefreshToken, setRefreshTokenCookie } = await import('@/lib/auth');
+    setAuthCookie(response, jwtToken);
+    const refreshToken = await generateRefreshToken(user.id);
+    setRefreshTokenCookie(response, refreshToken);
+    return response;
   } catch (error) {
     console.error('Erro no registo:', error);
     return NextResponse.json(

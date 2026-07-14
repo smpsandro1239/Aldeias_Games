@@ -40,7 +40,9 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const transporter = createTransporter();
 
   if (!transporter) {
-    console.log('[Email] SMTP não configurado, email não enviado:', options);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Email] SMTP não configurado');
+    }
     return false;
   }
 
@@ -52,7 +54,9 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       html: options.html,
       text: options.text,
     });
-    console.log('[Email] Enviado para:', options.to);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Email] Enviado');
+    }
     return true;
   } catch (error) {
     console.error('[Email] Erro ao enviar:', error);

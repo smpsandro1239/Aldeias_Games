@@ -55,6 +55,7 @@ export const updateProfileSchema = z.object({
     id: z.string(),
     nome: z.string(),
   })).optional(),
+  fotoPerfil: z.string().nullable().optional(),
 });
 
 export const createUserSchema = z.object({

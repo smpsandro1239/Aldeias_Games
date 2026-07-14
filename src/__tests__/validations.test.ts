@@ -1,4 +1,3 @@
-import { describe, it, expect } from "@jest/globals";
 import {
   loginSchema,
   registerSchema,
@@ -138,7 +137,13 @@ describe("Validations", () => {
         preco: 2,
         stockInicial: 1000,
         eventoId: "evento123",
-        configuracao: { numeroInicial: 1, numeroFinal: 1000 },
+        configuracao: {
+          numeroInicial: 1,
+          numeroFinal: 1000,
+          dataSorteio: "2024-12-01",
+          horaSorteio: "20:00",
+          localSorteio: "Pavilhão da Aldeia",
+        },
       });
       expect(result.success).toBe(true);
     });

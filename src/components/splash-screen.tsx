@@ -3,10 +3,13 @@
 import { House } from "lucide-react";
 
 interface SplashScreenProps {
-  onLoginClick: () => void;
+  onLoginClick?: () => void;
+  message?: string;
 }
 
-export function SplashScreen({ onLoginClick }: SplashScreenProps) {
+export function SplashScreen({ onLoginClick, message }: SplashScreenProps) {
+  const isLoader = !onLoginClick;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground font-body selection:bg-primary/30 overflow-hidden">
       {/* Grain Overlay */}
@@ -28,14 +31,14 @@ export function SplashScreen({ onLoginClick }: SplashScreenProps) {
         <div className="w-full h-px bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent my-6 max-w-lg"></div>
 
         <p className="font-body text-muted-foreground text-sm md:text-base tracking-[0.15em] uppercase font-bold">
-          Onde a Tradição, Forja o Futuro.
+          Onde a Tradição, Forja o Futuro
         </p>
 
         {/* Digital Loader Animation - Cyan */}
-        <div className="mt-8 flex flex-col items-center gap-2">
+        <div className={`mt-8 flex flex-col items-center gap-2 ${isLoader ? 'loader-entry' : ''}`}>
           <div className="relative w-32 h-1 bg-surface-container-highest/20 rounded-full overflow-hidden">
             <div
-              className="digital-loader-cy cyan absolute inset-0 rounded-full"
+              className="digital-loader absolute inset-0 rounded-full"
               style={{
                 height: '2px',
                 width: '140px',
@@ -43,21 +46,27 @@ export function SplashScreen({ onLoginClick }: SplashScreenProps) {
               }}
             />
           </div>
-        </div>
 
-        {/* Botão Entrar */}
-        <button
-          onClick={onLoginClick}
-          className="mt-6 relative px-12 py-3 border-2 border-primary text-primary font-bold rounded-full hover:bg-primary/10 active:scale-95 transition-all"
-        >
-          ENTRAR
-        </button>
+          {isLoader ? (
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">
+              {message || "A Iniciar"}&nbsp;
+            </span>
+          ) : (
+            <button
+              onClick={onLoginClick}
+              className="mt-6 relative px-12 py-3 border-2 border-primary text-primary font-bold rounded-full hover:bg-primary/10 active:scale-95 transition-all"
+            >
+              ENTRAR
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Editorial Accents */}
       <div className="absolute bottom-12 left-12 hidden md:block border-l border-primary/20 pl-4 py-2">
         <p className="text-[10px] text-foreground/30 uppercase tracking-[0.2em] leading-relaxed">
-          O teu Legado<br />Começa aqui.
+          {isLoader ? "Legado Ancestral" : "O teu Legado"}<br />
+          {isLoader ? "Tecnologia Digital" : "Começa aqui."}
         </p>
       </div>
 
@@ -66,8 +75,15 @@ export function SplashScreen({ onLoginClick }: SplashScreenProps) {
           0%, 100% { transform: scaleX(0); opacity: 0.3; }
           50% { transform: scaleX(1); opacity: 1; }
         }
-        .digital-loader-cy {
+        .digital-loader {
           animation: pulse-cyan 3s infinite ease-in-out;
+        }
+        .loader-entry {
+          animation: fade-in-up 0.6s ease-out forwards;
+        }
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

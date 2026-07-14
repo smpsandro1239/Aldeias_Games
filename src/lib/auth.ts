@@ -6,16 +6,23 @@ import prisma from './db';
 
 // Constants
 const AUTH_COOKIE_NAME = 'auth-token';
+const REFRESH_COOKIE_NAME = 'refresh-token';
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 dias em segundos
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 dias em segundos
 const JWT_EXPIRATION = '30d';
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-local-only-32chars!';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!process.env.JWT_SECRET && !process.env.NEXT_PHASE?.includes('build')) {
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET é obrigatório em produção. Define a variável de ambiente JWT_SECRET.');
+  }
   console.warn('JWT_SECRET não definido, a usar fallback local inseguro para desenvolvimento');
 }
 
-const secret = new TextEncoder().encode(JWT_SECRET!);
+const SECRET_KEY = JWT_SECRET || 'dev-secret-key-local-only-32chars!';
+const secret = new TextEncoder().encode(SECRET_KEY);
 
 export interface JWTPayload {
   userId: string;
@@ -250,4 +257,108 @@ export async function logAccess(
       motivo,
     },
   });
+}
+
+// ============================================
+// REFRESH TOKEN FUNCTIONS
+// ============================================
+
+/**
+ * Gerar refresh token na BD e retornar o token string
+ */
+export async function generateRefreshToken(userId: string): Promise<string> {
+  const crypto = await import('crypto');
+  const token = crypto.randomBytes(40).toString('hex');
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+  await prisma.refreshToken.create({
+    data: {
+      token,
+      userId,
+      expiresAt,
+    },
+  });
+
+  return token;
+}
+
+/**
+ * Definir cookie httpOnly para refresh token
+ */
+export function setRefreshTokenCookie(response: NextResponse, token: string): void {
+  response.cookies.set({
+    name: REFRESH_COOKIE_NAME,
+    value: token,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: REFRESH_TOKEN_MAX_AGE,
+    path: '/api/auth',
+  });
+}
+
+/**
+ * Remover cookie de refresh token (logout)
+ */
+export function clearRefreshTokenCookie(response: NextResponse): void {
+  response.cookies.set({
+    name: REFRESH_COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 0,
+    path: '/api/auth',
+  });
+}
+
+/**
+ * Validar refresh token na BD
+ */
+export async function validateRefreshToken(token: string): Promise<{ userId: string } | null> {
+  const record = await prisma.refreshToken.findUnique({
+    where: { token },
+    select: { userId: true, expiresAt: true, revoked: true },
+  });
+
+  if (!record) return null;
+  if (record.revoked) return null;
+  if (new Date() > record.expiresAt) return null;
+
+  return { userId: record.userId };
+}
+
+/**
+ * Rotacionar refresh token: revogar o antigo e criar um novo
+ */
+export async function rotateRefreshToken(oldToken: string): Promise<string | null> {
+  const validation = await validateRefreshToken(oldToken);
+  if (!validation) return null;
+
+  // Revoke the old token
+  await prisma.refreshToken.update({
+    where: { token: oldToken },
+    data: { revoked: true },
+  });
+
+  // Issue a new one
+  return generateRefreshToken(validation.userId);
+}
+
+/**
+ * Revogar todos os refresh tokens de um utilizador (logout de todas as sessões)
+ */
+export async function revokeAllRefreshTokens(userId: string): Promise<void> {
+  await prisma.refreshToken.updateMany({
+    where: { userId, revoked: false },
+    data: { revoked: true },
+  });
+}
+
+/**
+ * Obter refresh token do cookie
+ */
+export function getRefreshTokenFromCookie(request: NextRequest): string | null {
+  return request.cookies.get(REFRESH_COOKIE_NAME)?.value || null;
 }

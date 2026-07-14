@@ -48,7 +48,7 @@ export default function PrivacidadePage() {
             <h2 className="text-xl font-bold text-gray-900 mb-3">4. Base Legal</h2>
             <p className="text-gray-600">
               O tratamento dos seus dados baseia-se no seu consentimento e na execução do contrato 
-              de participação nos jogos. Pode withdrawing o consentimento a qualquer momento.
+              de participação nos jogos. Pode retirar o consentimento a qualquer momento.
             </p>
           </section>
 

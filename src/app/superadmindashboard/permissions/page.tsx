@@ -1,11 +1,12 @@
 'use client';
 
+import { DashboardShell } from '@/components/dashboard-shell';
 import { PermissionsMatrix } from '@/components/PermissionsMatrix';
 import { Shield } from 'lucide-react';
 
 export default function PermissionsPage() {
   return (
-    <div className="min-h-screen bg-[var(--background)] p-6">
+    <DashboardShell allowedRoles={["super_admin"]} panelName="Permissões">
       <div className="max-w-7xl mx-auto">
         <div className="card-m3 mb-8 px-8 py-6">
           <div className="flex items-center gap-4">
@@ -25,6 +26,6 @@ export default function PermissionsPage() {
           <PermissionsMatrix />
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

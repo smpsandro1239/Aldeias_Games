@@ -66,7 +66,7 @@ export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-PT', {
     style: 'currency',
     currency: 'EUR',
-  }).format(value).replace(/\\u00A0/g, ' ');
+  }).format(value).replace(/\u00A0/g, ' ');
 }
 
 /**

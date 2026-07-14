@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/api-client";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { RoleGuard } from "@/components/auth/RoleGuard";
+import { LayoutHeader } from "@/components/layout-header";
 import { LoaderScreen } from "@/components/loader-screen";
 import {
   Card,
@@ -186,7 +187,9 @@ const AdminEuromilhoesPage = () => {
       redirectPath="/"
       panelName="Euromilhões"
     >
-      <AdminEuromilhoes token={token} />
+      <LayoutHeader>
+        <AdminEuromilhoes token={token} />
+      </LayoutHeader>
     </RoleGuard>
   );
 };

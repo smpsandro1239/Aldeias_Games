@@ -475,7 +475,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                  jogos={paginatedJogos as any}
                  onJogoClick={(jogo) => handleJogar(jogo as any)}
                  loading={loading}
-                 title={userProfile?.role === 'super_admin' ? "Todos os Jogos" : `Jogos de ${userProfile?.aldeia?.nome || "Carregando..."}`}
+                 title={userProfile?.role === 'super_admin' ? "Todos os Jogos" : `Jogos de ${userProfile?.aldeia?.nome || "A carregar..."}`}
                  emptyMessage={userProfile?.role === 'super_admin' ? "Nenhum jogo disponível" : "Nenhum jogo disponível na tua aldeia"}
                  emptySubtext={userProfile?.role === 'super_admin' ? "Volte mais tarde!" : "Não há jogos ativos na tua aldeia de momento."}
                  showAldeia={userProfile?.role === 'super_admin'}

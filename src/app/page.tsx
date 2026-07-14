@@ -140,31 +140,26 @@ export default function Home() {
   }, [mounted, isAuthenticated, user, router]);
 
   const doLogin = useCallback(async (email: string, password: string) => {
+    setIsLoggingIn(true);
     try {
-      console.log('[Quick Login] Tentando login para:', email);
       const result = await login({ email, password });
-      console.log('[Quick Login] Resultado:', result);
 
       if (result.success) {
         setLoginModalOpen(false);
         dispatchForm({ type: 'RESET_LOGIN' });
-        // Redirecionar para o dashboard correto após login
         const targetPath = ROLE_PATHS[result.data?.user?.role as keyof typeof ROLE_PATHS] || ROLE_PATHS.user;
-        console.log('[Quick Login] Redirecionando para:', targetPath);
 
-        // Usar window.location para garantir redirecionamento na Vercel (contorna caching/SSR issues)
         if (typeof window !== 'undefined') {
           window.location.href = targetPath;
         } else {
           router.push(targetPath);
         }
-      } else {
-        console.error('[Quick Login] Falha no login:', result.error);
       }
       return result;
     } catch (error: any) {
-      console.error('[Quick Login] ERRO:', error);
       return { success: false, error: error.message || 'Erro ao fazer login' };
+    } finally {
+      setIsLoggingIn(false);
     }
   }, [login, router]);
 
@@ -241,7 +236,7 @@ export default function Home() {
                 />
                 {/* Esqueci-me da password link */}
                 <div className="text-right mt-1">
-                  <a href="/esqueci-minha-senha" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                  <a href="/forgot-password" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
                     Esqueci-me da password
                   </a>
                 </div>
@@ -293,7 +288,7 @@ export default function Home() {
                   </span>
                 </Button>
                 <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                  ou use seu e-mail e senha
+                  ou usa o teu e-mail e palavra-passe
                 </p>
               </div>
 
@@ -316,77 +311,63 @@ export default function Home() {
                   </span>
                 </Button>
                 <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                  ou use seu e-mail e senha
+                  ou usa o teu e-mail e palavra-passe
                 </p>
               </div>
             </div>
 
-            <DialogFooter className="mt-6 flex-col gap-4">
-              <div className="flex gap-2 w-full">
-                <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
-                  Cancelar
-                </Button>
-                <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold">
-                  <Zap className="h-4 w-4 mr-2" />
-                  Entrar
-                </Button>
-              </div>
-
-              {/* Botões de Atalho para Testes (Quick Login) */}
-              <div className="pt-4 border-t border-outline-variant/10 w-full">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Super Admin clicked');
-                      await doLogin("admin@aldeias.pt", "123456");
-                    }}
-                  >
-                    Super Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Admin Aldeia clicked');
-                      await doLogin("admin.valeazinha@aldeias.pt", "123456");
-                    }}
-                  >
-                    Admin Aldeia
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Vendedor clicked');
-                      await doLogin("vendedor1@valeazinha.pt", "123456");
-                    }}
-                  >
-                    Vendedor
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="text-[10px] h-8 bg-surface-container-low text-foreground"
-                    onClick={async () => {
-                      console.log('[Quick Login Button] Jogador clicked');
-                      await doLogin("jogador1@valeazinha.pt", "123456");
-                    }}
-                  >
-                    Jogador
-                  </Button>
+            {/* Botões de Atalho para Testes (apenas dev) */}
+              {process.env.NODE_ENV !== 'production' && (
+                <div className="pt-4 border-t border-outline-variant/10 w-full">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 text-center">Acesso Rápido (Dev Mode)</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        await doLogin("admin@aldeias.pt", "123456");
+                      }}
+                    >
+                      Super Admin
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        await doLogin("admin.valeazinha@aldeias.pt", "123456");
+                      }}
+                    >
+                      Admin Aldeia
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        await doLogin("vendedor1@valeazinha.pt", "123456");
+                      }}
+                    >
+                      Vendedor
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-[10px] h-8 bg-surface-container-low text-foreground"
+                      onClick={async () => {
+                        await doLogin("jogador1@valeazinha.pt", "123456");
+                      }}
+                    >
+                      Jogador
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </DialogFooter>
+              )}
           </form>
         </DialogContent>
       </Dialog>

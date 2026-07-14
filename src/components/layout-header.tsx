@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import { LoaderScreen } from "@/components/loader-screen";
 import { UserMenuModal } from "@/components/user-menu-modal";
-import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users } from "lucide-react";
+import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon } from "lucide-react";
 
 // Constants
 const ROLE_PATHS = {
@@ -51,6 +52,7 @@ interface LayoutHeaderProps {
 export function LayoutHeader({ children }: LayoutHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -126,6 +128,15 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
               )}
             </nav>
 
+            {/* Theme toggle */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="w-9 h-9 rounded-full bg-surface-container-low flex items-center justify-center hover:bg-surface-container transition-colors"
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4 text-muted-foreground" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
+            </button>
+
             {/* User menu */}
             <div className="w-9 h-9 rounded-full bg-surface-container-low overflow-hidden border border-primary/20 relative">
               {isAuthenticated && user ? (
@@ -169,6 +180,16 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
                   </button>
                 );
               })}
+              {/* Theme toggle mobile */}
+              <div className="pt-4 mt-4 border-t border-outline-variant/20">
+                <button
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-surface-container-low transition-colors"
+                >
+                  {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  <span className="font-medium">{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
+                </button>
+              </div>
               {/* Logout option */}
                <div className="pt-4 mt-4 border-t border-outline-variant/20">
                 <button

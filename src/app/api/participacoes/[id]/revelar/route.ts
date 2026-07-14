@@ -19,7 +19,6 @@ export async function POST(request: NextRequest, { params }: Context) {
 
     if (!participacao) return NextResponse.json({ error: 'Não encontrada' }, { status: 404 });
 
-    console.log('REVELAR DEBUG:', { participacaoUserId: participacao.userId, userId: user.id, participacaoId: participacao.id });
     if (participacao.userId !== user.id) {
        return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }

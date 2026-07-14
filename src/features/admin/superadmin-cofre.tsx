@@ -42,7 +42,7 @@ interface PendenteItem {
   aldeia: { id: string; nome: string };
 }
 
-export function SuperAdminCofre({ token }: { token: string }) {
+export function SuperAdminCofre() {
   const [aldeias, setAldeias] = useState<AldeiaResumo[]>([]);
   const [pendentes, setPendentes] = useState<PendenteItem[]>([]);
   const [totalGeral, setTotalGeral] = useState(0);
@@ -50,10 +50,12 @@ export function SuperAdminCofre({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
+  const getToken = useCallback(() => localStorage.getItem("token") || "", []);
+
   const fetchData = useCallback(async () => {
     try {
       const res = await apiRequest("/api/superadmin/cofre", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -67,7 +69,7 @@ export function SuperAdminCofre({ token }: { token: string }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -77,7 +79,7 @@ export function SuperAdminCofre({ token }: { token: string }) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${getToken()}`
         },
         body: JSON.stringify({ acao: "confirmar" })
       });

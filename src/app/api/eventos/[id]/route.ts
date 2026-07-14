@@ -125,17 +125,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const body = await request.json();
-    console.log('📥 Dados recebidos na API:', body);
 
     const validation = updateEventoSchema.safeParse(body);
-    console.log('🔍 Validação:', validation.success, validation.error?.errors);
 
     if (!validation.success) {
       return NextResponse.json({ error: 'Dados inválidos', details: validation.error.errors }, { status: 400 });
     }
 
     const data = validation.data;
-    console.log('📋 Dados validados:', data);
 
     let imagemUrl = undefined;
     if (data.imagemBase64) {
@@ -153,7 +150,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     delete updateData.recurrenceTime;
     delete updateData.maxOccurrences;
 
-    console.log('🔧 Dados para update:', updateData);
 
     if (imagemUrl) updateData.imagemUrl = imagemUrl;
     if (data.dataInicio) {
@@ -172,13 +168,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     // Processamento de recorrência robusto
-    console.log('🔄 Processando recorrência:', data.isRecurring);
     if (data.isRecurring !== undefined) {
       updateData.isTemplate = data.isRecurring;
 
       if (data.isRecurring && data.recurrenceFrequency && data.recurrenceDayOfWeek !== undefined && data.recurrenceTime) {
         try {
-          console.log('📅 Calculando próxima data:', data.recurrenceFrequency, data.recurrenceDayOfWeek, data.recurrenceTime);
           const proximaData = calculateNextRecurrenceDate(
             data.recurrenceFrequency,
             data.recurrenceDayOfWeek,
@@ -187,7 +181,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           updateData.proximaData = proximaData;
           updateData.frequenciaRecorrencia = data.recurrenceFrequency;
           updateData.diaSemanaRecorrencia = data.recurrenceDayOfWeek;
-          console.log('✅ Próxima data calculada:', proximaData);
         } catch (error) {
           console.error('❌ Erro ao calcular recorrência:', error);
           return NextResponse.json({ error: 'Erro ao calcular próxima recorrência' }, { status: 400 });
@@ -199,15 +192,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
     }
 
-    console.log('💾 Fazendo update no banco:', updateData);
     const updated = await prisma.evento.update({
       where: { id },
       data: updateData,
     });
-    console.log('✅ Update realizado:', updated.id);
 
     // Audit log for event update
-    console.log('📝 Fazendo audit log...');
     try {
       await logAudit(
         user.id,
@@ -221,7 +211,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         request.headers.get('x-forwarded-for') || 'unknown',
         request.headers.get('user-agent') || 'unknown'
       );
-      console.log('✅ Audit log realizado');
     } catch (auditError) {
       console.error('❌ Erro no audit log:', auditError);
       // Não falhar por causa do audit log

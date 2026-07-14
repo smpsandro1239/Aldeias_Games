@@ -137,8 +137,43 @@ export default function PerfilPage() {
     setAldeiaDropdownOpen(false);
   };
 
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/users/perfil", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const p = result.data;
+          setFormData(prev => ({
+            ...prev,
+            nome: p.nome || prev.nome,
+            email: p.email || prev.email,
+            telefone: p.telefone || prev.telefone,
+            role: p.role || prev.role,
+            aldeiaId: p.aldeiaId || prev.aldeiaId,
+            aldeiaNome: p.aldeia?.nome || prev.aldeiaNome,
+          }));
+          setAldeiaSearch(p.aldeia?.nome || "");
+          if (p.fotoUrl) {
+            setProfileImage(p.fotoUrl);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching profile:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
   const handleSave = async () => {
     if (!user) return;
+    setSaving(true);
     
     const selectedAldeia = aldeias.find(a => a.id === formData.aldeiaId) || undefined;
     
@@ -154,23 +189,29 @@ export default function PerfilPage() {
           nome: formData.nome,
           telefone: formData.telefone,
           aldeiaId: formData.aldeiaId,
-          fotoPerfil: profileImage || undefined,
+          fotoPerfil: profileImage === null ? null : profileImage?.startsWith('data:') ? profileImage : undefined,
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
+        const apiData = result.data || {};
         const updatedUser: UserProfile = {
           ...user,
           nome: formData.nome,
           telefone: formData.telefone,
           aldeiaId: formData.aldeiaId,
           aldeia: selectedAldeia,
-          fotoPerfil: profileImage || undefined,
+          fotoPerfil: apiData.fotoUrl || profileImage || undefined,
         };
         
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
+
+        if (apiData.fotoUrl) {
+          setProfileImage(apiData.fotoUrl);
+        }
+
         toast.success("Perfil atualizado com sucesso!");
       } else {
         toast.error("Erro ao atualizar perfil na API");

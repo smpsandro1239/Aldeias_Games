@@ -49,6 +49,7 @@ model User {
   consentimentos        Consentimento[]
   direitosEsquecimento  DireitoEsquecimento[]
   gameAnalytics         GameAnalytics[]
+  refreshTokens         RefreshToken[]
 
   // Relações corrigidas
   badges     Badge[]     @relation("userBadges")
@@ -1170,6 +1171,20 @@ model GrelhaEuromilhoes {
   @@unique([jogoId, numero])
   @@index([jogoId, estado])
   @@map("grelhas_euromilhoes")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+
+  @@index([token])
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 

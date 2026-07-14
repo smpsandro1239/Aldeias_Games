@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach } from "@jest/globals";
 import {
   checkRateLimit,
   getClientIdentifier,
@@ -8,23 +7,23 @@ import {
 
 describe("Rate Limiting", () => {
   describe("checkRateLimit", () => {
-    it("deve permitir requests dentro do limite", () => {
-      const result = checkRateLimit("test-ip-1", rateLimitConfigs.login);
+    it("deve permitir requests dentro do limite", async () => {
+      const result = await checkRateLimit("test-ip-1-v2", rateLimitConfigs.login);
       expect(result.allowed).toBe(true);
       expect(result.remaining).toBe(4); // 5 max - 1 used
     });
 
-    it("deve bloqueir após exceder limite", () => {
-      const identifier = "test-ip-block";
+    it("deve bloqueir após exceder limite", async () => {
+      const identifier = "test-ip-block-v2";
       const config = { maxRequests: 2, windowMs: 60000 };
 
-      const result1 = checkRateLimit(identifier, config);
+      const result1 = await checkRateLimit(identifier, config);
       expect(result1.allowed).toBe(true);
 
-      const result2 = checkRateLimit(identifier, config);
+      const result2 = await checkRateLimit(identifier, config);
       expect(result2.allowed).toBe(true);
 
-      const result3 = checkRateLimit(identifier, config);
+      const result3 = await checkRateLimit(identifier, config);
       expect(result3.allowed).toBe(false);
       expect(result3.remaining).toBe(0);
     });

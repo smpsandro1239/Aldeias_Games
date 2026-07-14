@@ -6,6 +6,8 @@ import {
   updateLastLogin,
   logAccess,
   setAuthCookie,
+  generateRefreshToken,
+  setRefreshTokenCookie,
 } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
@@ -33,7 +35,7 @@ type DemoUser = {
 
 const demoUsers: Record<string, DemoUser> = {
   'admin@aldeias.pt': {
-    id: 'demo-super-admin',
+    id: 'user-super-admin',
     email: 'admin@aldeias.pt',
     nome: 'Super Admin',
     role: 'super_admin',
@@ -44,18 +46,18 @@ const demoUsers: Record<string, DemoUser> = {
     password: '123456',
   },
   'aldeia@gmail.com': {
-    id: 'demo-aldeia-admin',
+    id: 'user-aldeia-admin',
     email: 'aldeia@gmail.com',
     nome: 'Aldeia Admin',
     role: 'aldeia_admin',
-    aldeiaId: null,
+    aldeiaId: 'aldeia-vale-azenha',
     aldeia: null,
     emailVerificado: true,
     notificacoesEmail: true,
     password: '123456',
   },
   'vendedor@gmail.com': {
-    id: 'demo-vendedor',
+    id: 'user-vendedor',
     email: 'vendedor@gmail.com',
     nome: 'Vendedor',
     role: 'vendedor',
@@ -66,7 +68,7 @@ const demoUsers: Record<string, DemoUser> = {
     password: '123456',
   },
   'smpsandro1239@gmail.com': {
-    id: 'demo-user',
+    id: 'user-jogador',
     email: 'smpsandro1239@gmail.com',
     nome: 'Jogador',
     role: 'user',
@@ -121,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     const { email, password, totpCode } = validation.data;
 
-    const demoUser = getDemoUser(email, password);
+    const demoUser = process.env.NODE_ENV !== 'production' ? getDemoUser(email, password) : null;
 
     if (demoUser) {
       const token = await generateToken({
@@ -149,6 +151,8 @@ export async function POST(request: NextRequest) {
       });
 
       setAuthCookie(response, token);
+      const refreshToken = await generateRefreshToken(demoUser.id);
+      setRefreshTokenCookie(response, refreshToken);
       return response;
     }
 
@@ -355,6 +359,8 @@ export async function POST(request: NextRequest) {
 
     // Definir cookie httpOnly seguro
     setAuthCookie(response, token);
+    const refreshToken = await generateRefreshToken(user.id);
+    setRefreshTokenCookie(response, refreshToken);
 
     return response;
   } catch (error) {

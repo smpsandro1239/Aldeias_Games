@@ -18,7 +18,7 @@ export default function DadosPessoaisPage() {
   const handleExportData = async () => {
     setExportLoading(true);
     try {
-      const response = await fetch("/api/me/data-export");
+      const response = await fetch("/api/me");
       if (!response.ok) throw new Error("Falha ao exportar");
       const data = await response.json();
 
@@ -48,7 +48,7 @@ export default function DadosPessoaisPage() {
     }
     setDeleteLoading(true);
     try {
-      const response = await fetch("/api/me/request-deletion", {
+      const response = await fetch("/api/me", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ motivo: deleteReason }),

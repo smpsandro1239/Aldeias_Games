@@ -1,4 +1,5 @@
-import { describe, expect, it } from '@jest/globals';
+// @vitest-environment node
+import { vi } from 'vitest';
 
 /**
  * Testes unitários para funções de lógica de negócio de jogos
@@ -249,15 +250,13 @@ describe('Gerar Hash de Verificação', () => {
     };
 
     const hash1 = gerarHashVerificacao(dados);
-    // Pequena pausa para garantir timestamp diferente
-    await new Promise(resolve => setTimeout(resolve, 1));
-    const hash2 = gerarHashVerificacao(dados);
+    const hash2 = gerarHashVerificacao({ ...dados, nome: 'Rifa da Festa Editada' });
 
     expect(hash1).not.toEqual(hash2);
   });
 
   it('deve incluir dados completos no hash', () => {
-    const spy = jest.spyOn(require('crypto'), 'createHash');
+    const spy = vi.spyOn(require('crypto'), 'createHash');
     const dados = {
       tipo: 'rifa',
       nome: 'Rifa',

@@ -312,7 +312,9 @@ export function processWebhookCallback(payload: {
   status: 'completed' | 'failed' | 'cancelled';
   success: boolean;
 } {
-  console.log('Webhook MBWay recebido:', payload);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[MBWay] Webhook recebido');
+  }
   
   return {
     transactionId: payload.transactionId,

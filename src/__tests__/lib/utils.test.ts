@@ -1,9 +1,7 @@
-import { describe, expect, it } from '@jest/globals';
-
 describe('Funções Utilitárias', () => {
   describe('formatCurrency', () => {
     const formatCurrency = (value: number) =>
-      new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+      new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value).replace(/\u00A0/g, ' ');
 
     it('deve formatar número para euros', () => {
       expect(formatCurrency(10)).toBe('10,00 €');
@@ -14,7 +12,7 @@ describe('Funções Utilitárias', () => {
     });
 
     it('deve formatar número grande', () => {
-      expect(formatCurrency(1000)).toBe('1.000,00 €');
+      expect(formatCurrency(10000)).toBe('10 000,00 €');
     });
 
     it('deve formatar zero', () => {

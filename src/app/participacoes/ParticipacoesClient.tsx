@@ -76,15 +76,15 @@ export default function ParticipacoesClient() {
     return null;
   };
 
-  if (isLoading) return <div>Carregando participações...</div>;
-  if (error) return <div className="text-red-500">Erro ao carregar participações</div>;
+  if (isLoading) return <div>A carregar participações...</div>;
+  if (error) return <div className="text-destructive">Erro ao carregar participações</div>;
 
   return (
     <div className="space-y-6">
       {participacoes?.data?.length === 0 ? (
         <Card>
           <CardContent className="py-8">
-            <p className="text-center text-gray-500">Você ainda não tem participações.</p>
+            <p className="text-center text-muted-foreground">Você ainda não tem participações.</p>
           </CardContent>
         </Card>
       ) : (
@@ -148,7 +148,7 @@ export default function ParticipacoesClient() {
                       </div>
                     </div>
                     {showHashes[participacao.id] && (
-                      <div className="bg-gray-50 p-3 rounded font-mono text-xs break-all">
+                      <div className="bg-surface-container p-3 rounded font-mono text-xs break-all">
                         {hash}
                       </div>
                     )}
@@ -158,7 +158,7 @@ export default function ParticipacoesClient() {
                 {verificacaoData && (
                   <div className="border-t pt-4">
                     <span className="font-medium">Dados de Verificação:</span>
-                    <pre className="bg-gray-50 p-3 rounded text-xs mt-2 overflow-auto">
+                    <pre className="bg-surface-container p-3 rounded text-xs mt-2 overflow-auto">
                       {JSON.stringify(verificacaoData, null, 2)}
                     </pre>
                   </div>

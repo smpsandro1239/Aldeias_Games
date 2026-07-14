@@ -294,20 +294,16 @@ export default function AdminDashboard({
   }, [token, fetchData]);
 
   const handleSaveEvento = useCallback(async (data: any) => {
-    console.log('🎯 handleSaveEvento chamado com dados:', data);
     const isEditing = !!data.id;
     const jogosSelecionados = data.jogosSelecionados || [];
     const eventoData = { ...data };
     delete eventoData.jogosSelecionados;
 
-    console.log('📝 Modo:', isEditing ? 'EDIÇÃO' : 'CRIAÇÃO');
-    console.log('🎮 Jogos selecionados:', jogosSelecionados);
 
     const url = isEditing ? `/api/eventos/${data.id}` : `/api/eventos`;
     const method = isEditing ? "PUT" : "POST";
 
     try {
-      console.log('🌐 Fazendo request para:', url, method);
       const res = await apiRequest(url, {
         method,
         headers: {
@@ -316,7 +312,6 @@ export default function AdminDashboard({
         },
         body: JSON.stringify(eventoData),
       });
-      console.log('📡 Response status:', res.status);
 
       if (res.ok) {
         const evento = await res.json();
@@ -894,35 +889,45 @@ export default function AdminDashboard({
               <span className="hidden sm:inline">Vencedores</span>
             </TabsTrigger>
 
-            {/* Pedidos e Entregas (navegação externa) */}
-            <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="flex-shrink-0 relative text-sm md:text-base px-3 md:px-4 py-2">
-              <Wallet className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Pedidos</span>
-              {pedidosPendentesCount > 0 && (
-                <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
-                  {pedidosPendentesCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="flex-shrink-0 relative text-sm md:text-base px-3 md:px-4 py-2">
-              <TrendingUp className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Entregas</span>
-              {entregasPendentesCount > 0 && (
-                <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
-                  {entregasPendentesCount}
-                </Badge>
-              )}
-            </TabsTrigger>
+            {/* Pedidos (navegação externa) - apenas aldeia_admin */}
+            {userRole === "aldeia_admin" && (
+              <TabsTrigger value="pedidos" onClick={() => router.push('/admindashboard/pedidos')} className="flex-shrink-0 relative text-sm md:text-base px-3 md:px-4 py-2">
+                <Wallet className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Pedidos</span>
+                {pedidosPendentesCount > 0 && (
+                  <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
+                    {pedidosPendentesCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )}
 
-            <TabsTrigger value="cofre" onClick={() => router.push('/admindashboard/cofre')} className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+            {/* Entregas (navegação externa) - apenas aldeia_admin */}
+            {userRole === "aldeia_admin" && (
+              <TabsTrigger value="entregas" onClick={() => router.push('/admindashboard/entregas')} className="flex-shrink-0 relative text-sm md:text-base px-3 md:px-4 py-2">
+                <TrendingUp className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Entregas</span>
+                {entregasPendentesCount > 0 && (
+                  <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-foreground text-xs">
+                    {entregasPendentesCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )}
+
+            {/* Cofre (navegação externa) - rota diferente por role */}
+            <TabsTrigger value="cofre" onClick={() => router.push(userRole === "super_admin" ? '/superadmindashboard/cofre' : '/admindashboard/cofre')} className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
               <ShieldCheck className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Cofre</span>
             </TabsTrigger>
 
-            <TabsTrigger value="euromilhoes" onClick={() => router.push('/admindashboard/euromilhoes')} className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
-              <Trophy className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Euromilhões</span>
-            </TabsTrigger>
+            {/* Euromilhões (navegação externa) - apenas aldeia_admin */}
+            {userRole === "aldeia_admin" && (
+              <TabsTrigger value="euromilhoes" onClick={() => router.push('/admindashboard/euromilhoes')} className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+                <Trophy className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Euromilhões</span>
+              </TabsTrigger>
+            )}
 
             <TabsTrigger value="verificar" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
               <Hash className="h-4 w-4 mr-1 md:mr-2" />
@@ -1067,7 +1072,7 @@ export default function AdminDashboard({
          {/* Aldeias Tab (apenas super_admin) */}
          {userRole === "super_admin" && (
            <TabsContent value="aldeias">
-             <Suspense fallback={<div>Carregando...</div>}>
+             <Suspense fallback={<div>A carregar...</div>}>
                <AldeiasTab
                  aldeias={aldeias}
                  setSelectedAldeia={handleSetSelectedAldeia}
@@ -1081,7 +1086,7 @@ export default function AdminDashboard({
         {/* Transações Tab (apenas super_admin) */}
         {userRole === "super_admin" && (
           <TabsContent value="transacoes">
-            <Suspense fallback={<div>Carregando...</div>}>
+            <Suspense fallback={<div>A carregar...</div>}>
               <TransacoesTab transacoes={transacoes} />
             </Suspense>
           </TabsContent>
@@ -1090,7 +1095,7 @@ export default function AdminDashboard({
         {/* Auditoria Tab (apenas super_admin) */}
         {userRole === "super_admin" && (
           <TabsContent value="auditoria">
-            <Suspense fallback={<div>Carregando...</div>}>
+            <Suspense fallback={<div>A carregar...</div>}>
               <AuditoriaTab logs={logs} />
             </Suspense>
           </TabsContent>
@@ -1107,8 +1112,8 @@ export default function AdminDashboard({
           id: selectedEvento.id,
           nome: selectedEvento.nome,
           descricao: selectedEvento.descricao,
-          dataInicio: selectedEvento.dataInicio.toISOString().slice(0, 16),
-          dataFim: selectedEvento.dataFim.toISOString().slice(0, 16),
+          dataInicio: new Date(selectedEvento.dataInicio).toISOString().slice(0, 16),
+          dataFim: new Date(selectedEvento.dataFim).toISOString().slice(0, 16),
           objectivoAngariacao: selectedEvento.objectivoAngariacao ?? 0,
           publico: selectedEvento.publico ?? false,
           aldeiaId: selectedEvento.aldeiaId,

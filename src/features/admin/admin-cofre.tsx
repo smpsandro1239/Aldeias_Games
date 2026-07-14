@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Banknote, Send, Check, X, Clock, RefreshCw, History, ShieldCheck, Scale, Download } from "lucide-react";
+import { Banknote, Send, Check, X, Clock, RefreshCw, History, ShieldCheck, Scale, Download, ArrowLeft } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { generateCSV, downloadCSV, formatDateISO } from "@/lib/export-utils";
@@ -36,19 +36,31 @@ interface VaultData {
   }>;
 }
 
-export function AdminCofre({ token }: { token: string }) {
+export function AdminCofre() {
   const [depositos, setDepositos] = useState<DepositoData[]>([]);
   const [vault, setVault] = useState<VaultData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pendentes");
 
+  const getToken = useCallback(() => localStorage.getItem("token") || "", []);
+  const getAldeiaId = useCallback(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      return user.aldeiaId || undefined;
+    } catch {
+      return undefined;
+    }
+  }, []);
+
   const fetchData = useCallback(async () => {
+    const token = getToken();
+    const aldeiaId = getAldeiaId();
     try {
       const [depRes, vaultRes] = await Promise.all([
         apiRequest("/api/cofre/pedido-deposito", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        apiRequest("/api/cofre/historico", {
+        apiRequest(`/api/cofre/historico${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -66,7 +78,7 @@ export function AdminCofre({ token }: { token: string }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -76,7 +88,7 @@ export function AdminCofre({ token }: { token: string }) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${getToken()}`
         },
         body: JSON.stringify({ acao: "confirmar" })
       });
@@ -102,7 +114,7 @@ export function AdminCofre({ token }: { token: string }) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${getToken()}`
         },
         body: JSON.stringify({ acao: "rejeitar", observacoes: motivo })
       });
@@ -136,9 +148,9 @@ export function AdminCofre({ token }: { token: string }) {
       {/* Header */}
       <div className="relative bg-gradient-to-r from-green-500/10 via-green-500/5 to-emerald-500/10 rounded-3xl p-6 border border-green-500/10">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6 text-green-600" />
-          </div>
+          <button onClick={() => window.location.href = "/admindashboard"} className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center hover:bg-green-500/30 transition-colors">
+            <ArrowLeft className="w-6 h-6 text-green-600" />
+          </button>
           <div>
             <h1 className="text-3xl font-serif font-bold">Gestão do Cofre</h1>
             <p className="text-muted-foreground font-medium">

@@ -39,6 +39,9 @@ module.exports = {
         'secondary-container': 'hsl(187 80% 20%)',
         'tertiary-container': 'hsl(48 80% 45%)',
       },
+      fontFamily: {
+        serif: ['Noto Serif', 'Georgia', 'serif'],
+      },
     },
   },
   plugins: [],

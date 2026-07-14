@@ -11,6 +11,7 @@ const RATE_LIMIT_CONFIG: Record<string, { maxRequests: number; windowMs: number 
   "/api/pagamentos/stripe": { maxRequests: 10, windowMs: 60 * 1000 },
   "/api/pagamentos/mbway": { maxRequests: 10, windowMs: 60 * 1000 },
   "/api/participacoes": { maxRequests: 20, windowMs: 60 * 1000 },
+  "/api/apostas": { maxRequests: 20, windowMs: 60 * 1000 },
 };
 
 // === AUTHENTICATION & AUTHORIZATION CONFIG ===
@@ -54,9 +55,52 @@ const roleProtectedRoutes: Record<string, string[]> = {
 // Métodos seguros
 const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
 
-// JWT secret
+// CSRF protection: validate Origin/Referer on state-changing cookie-authenticated requests
+function validateCsrfOrigin(request: NextRequest): boolean {
+  const method = request.method;
+  if (safeMethods.includes(method)) return true;
+
+  // Only enforce CSRF for cookie-based auth (not Bearer token)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) return true;
+
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const host = request.headers.get('host');
+
+  if (!host) return true; // Can't validate without host
+
+  // Allow requests with no Origin or Referer (same-site cookies + direct browser navigation)
+  if (!origin && !referer) return true;
+
+  if (origin) {
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost === host) return true;
+    } catch { return false; }
+  }
+
+  if (referer) {
+    try {
+      const refererHost = new URL(referer).host;
+      if (refererHost === host) return true;
+    } catch { return false; }
+  }
+
+  return false;
+}
+
+// JWT secret — throw in production if not set (never use fallback in prod)
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'dev-secret-key-local-only-32chars!'
+  process.env.JWT_SECRET ||
+    (() => {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          'JWT_SECRET is not set in production. Set it in Vercel environment variables.'
+        );
+      }
+      return 'dev-secret-key-local-only-32chars!';
+    })()
 );
 
 export async function middleware(request: NextRequest) {
@@ -74,7 +118,7 @@ export async function middleware(request: NextRequest) {
       // Create a unique identifier per path and IP to avoid cross-path rate limiting
       const identifier = `${pathname}:${ip}`;
 
-      const { allowed, remaining, resetTime } = checkRateLimit(
+      const { allowed, remaining, resetTime } = await checkRateLimit(
         identifier,
         config
       );
@@ -144,6 +188,16 @@ export async function middleware(request: NextRequest) {
             { error: 'Token inválido' },
             { status: 401 }
           );
+        }
+
+        // CSRF validation for cookie-authenticated state-changing requests
+        if (!safeMethods.includes(request.method) && !authHeader?.startsWith('Bearer ')) {
+          if (!validateCsrfOrigin(request)) {
+            return NextResponse.json(
+              { error: 'Pedido CSRF inválido — origem não correspondente' },
+              { status: 403 }
+            );
+          }
         }
 
         // Add user info to request headers for downstream consumption

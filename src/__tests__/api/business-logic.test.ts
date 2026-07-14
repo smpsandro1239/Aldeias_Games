@@ -1,5 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
-
 describe('Testes de Integração - API Routes', () => {
   describe('Stock - Race Condition Prevention', () => {
     it('deve validar que updateMany requer stock suficiente', () => {

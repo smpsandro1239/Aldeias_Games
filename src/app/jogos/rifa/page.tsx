@@ -130,11 +130,9 @@ export default function RifaPage() {
   }, [jogo?.id]);
 
   const fetchNumerosOcupados = async () => {
-    console.log("🔍 fetchNumerosOcupados CHAMADO para jogo:", jogo?.id);
     try {
       const userStr = localStorage.getItem("user");
       const userId = userStr ? JSON.parse(userStr).id : null;
-      console.log("userId:", userId);
 
       const headers: Record<string, string> = {};
       if (userId) headers["x-user-id"] = userId;
@@ -150,7 +148,6 @@ export default function RifaPage() {
       }
       
       const data = await response.json();
-      console.log("Dados recebidos:", data);
 
       if (data.numerosOcupados) {
         const ocupadosUnicos = [...new Set(data.numerosOcupados.map((n: number) => Number(n)))];
@@ -158,8 +155,6 @@ export default function RifaPage() {
           ? [...new Set(data.numerosDoUtilizador.map((n: number) => Number(n)))]
           : [];
 
-        console.log("Números ocupados:", ocupadosUnicos.length);
-        console.log("Meus números:", jogadosUnicos.length);
 
         setNumerosOcupados(ocupadosUnicos as number[]);
         setNumerosJogados(jogadosUnicos as number[]);
@@ -194,7 +189,6 @@ export default function RifaPage() {
       const response = await fetch(url);
       const data = await response.json();
 
-      console.log("🎮 fetchJogo - jogoId da URL:", jogoId, "status:", response.status);
 
       let jogoData;
       if (jogoId) {
@@ -213,8 +207,6 @@ export default function RifaPage() {
 
       if (jogoData) {
         setJogo(jogoData);
-        
-        fetchNumerosOcupados();
         
         let configData: Record<string, any> = { numeroInicial: 1, numeroFinal: 1000, numeroBlocos: 1, permitirStripe: false, valorPremios: null, dataSorteio: null, horaSorteio: null, localSorteio: null };
         if (jogoData.configuracao) {

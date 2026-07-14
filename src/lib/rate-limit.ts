@@ -1,16 +1,8 @@
 /**
- * Sistema de Rate Limiting
+ * Sistema de Rate Limiting com suporte a Redis (Upstash) em produção
  * 
- * NOTA: Em produção com múltiplas instâncias, migrar para Redis/Upstash:
- * 
- * import { Redis } from '@upstash/redis';
- * import { Ratelimit } from '@upstash/ratelimit';
- * 
- * const redis = Redis.fromEnv();
- * const ratelimit = new Ratelimit({
- *   redis,
- *   limiter: Ratelimit.slidingWindow(10, '1 m'),
- * });
+ * Em desenvolvimento: in-memory Map
+ * Em produção: Upstash Redis (se configurado) ou fallback in-memory
  */
 
 interface RateLimitEntry {
@@ -20,15 +12,15 @@ interface RateLimitEntry {
 
 // Configurações pré-definidas para diferentes endpoints
 export const rateLimitConfigs = {
-  // Login: 100 tentativas por 15 minutos (aumentado para testes)
+  // Login: 5 tentativas por 15 minutos
   login: {
-    maxRequests: 100,
+    maxRequests: 5,
     windowMs: 15 * 60 * 1000, // 15 minutos
   },
-  // Register: 3 tentativas por minuto
+  // Register: 3 tentativas por hora
   register: {
     maxRequests: 3,
-    windowMs: 60 * 1000,
+    windowMs: 60 * 60 * 1000,
   },
   // Forgot password: 3 tentativas por hora
   forgotPassword: {
@@ -50,7 +42,6 @@ export const rateLimitConfigs = {
     maxRequests: 20,
     windowMs: 60 * 1000,
   },
-  // Pagamentos: 10 por minuto
   // Claim prémio: 10 por minuto
   claimPremio: {
     maxRequests: 10,
@@ -61,24 +52,47 @@ export const rateLimitConfigs = {
     maxRequests: 5,
     windowMs: 60 * 1000,
   },
+  // Pagamentos: 10 por minuto
   pagamentos: {
     maxRequests: 10,
     windowMs: 60 * 1000,
   },
 };
 
-// Store em memória (substituir por Redis em produção)
+// === IN-MEMORY STORE (development fallback) ===
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Limpar entradas expiradas a cada 5 minutos
-setInterval(() => {
-  const now = Date.now();
-  rateLimitStore.forEach((entry, key) => {
-    if (entry.resetTime < now) {
-      rateLimitStore.delete(key);
-    }
-  });
-}, 5 * 60 * 1000);
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    rateLimitStore.forEach((entry, key) => {
+      if (entry.resetTime < now) {
+        rateLimitStore.delete(key);
+      }
+    });
+  }, 5 * 60 * 1000);
+}
+
+// === REDIS SUPPORT (production) ===
+let redisClient: any = null;
+
+async function getRedisClient() {
+  if (redisClient) return redisClient;
+  
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  
+  if (!url || !token) return null;
+  
+  try {
+    const { Redis } = await import('@upstash/redis');
+    redisClient = new Redis({ url, token });
+    return redisClient;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Obter identificador do cliente (IP ou fallback)
@@ -100,9 +114,71 @@ export function getClientIdentifier(request: Request): string {
 }
 
 /**
- * Verificar rate limit
+ * Verificar rate limit (Redis se disponível, senão in-memory)
  */
-export function checkRateLimit(
+export async function checkRateLimit(
+  identifier: string,
+  config: typeof rateLimitConfigs.api
+): Promise<{
+  allowed: boolean;
+  remaining: number;
+  resetTime: number;
+}> {
+  const redis = await getRedisClient();
+  
+  if (redis) {
+    return checkRateLimitRedis(redis, identifier, config);
+  }
+  
+  return checkRateLimitMemory(identifier, config);
+}
+
+/**
+ * Rate limiting com Redis (produção)
+ */
+async function checkRateLimitRedis(
+  redis: any,
+  identifier: string,
+  config: typeof rateLimitConfigs.api
+): Promise<{
+  allowed: boolean;
+  remaining: number;
+  resetTime: number;
+}> {
+  const key = `ratelimit:${identifier}:${config.maxRequests}:${config.windowMs}`;
+  const now = Date.now();
+  const windowStart = now - config.windowMs;
+  
+  try {
+    // Usar pipeline para atomicidade
+    const pipeline = redis.pipeline();
+    pipeline.zremrangebyscore(key, 0, windowStart);
+    pipeline.zadd(key, { score: now, member: `${now}-${Math.random()}` });
+    pipeline.zcard(key);
+    pipeline.expire(key, Math.ceil(config.windowMs / 1000));
+    
+    const results = await pipeline.exec();
+    const count = results[2] as number;
+    
+    const resetTime = now + config.windowMs;
+    const remaining = Math.max(0, config.maxRequests - count);
+    
+    return {
+      allowed: count <= config.maxRequests,
+      remaining,
+      resetTime,
+    };
+  } catch (error) {
+    // Fallback para in-memory se Redis falhar
+    console.error('Redis rate limit error, falling back to memory:', error);
+    return checkRateLimitMemory(identifier, config);
+  }
+}
+
+/**
+ * Rate limiting em memória (desenvolvimento)
+ */
+function checkRateLimitMemory(
   identifier: string,
   config: typeof rateLimitConfigs.api
 ): {

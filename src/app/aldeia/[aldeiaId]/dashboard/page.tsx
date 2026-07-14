@@ -44,7 +44,7 @@ export default function AldeiaDashboardPage() {
 
   if (loading) {
     return (
-      <LoaderScreen message="Carregando dashboard da aldeia..." />
+      <LoaderScreen message="A carregar dashboard da aldeia..." />
     );
   }
 

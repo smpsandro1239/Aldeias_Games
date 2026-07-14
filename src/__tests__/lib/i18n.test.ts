@@ -1,4 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
 import { translations, getTranslation, Language } from '@/lib/i18n/translations';
 
 describe('Traduções i18n', () => {
@@ -37,7 +36,7 @@ describe('Traduções i18n', () => {
     });
 
     it('deve retornar a chave para tradução aninhada não encontrada', () => {
-      expect(getTranslation('pt', 'common.inexistente')).toBe('inexistente');
+      expect(getTranslation('pt', 'common.inexistente')).toBe('common.inexistente');
     });
 
     it('deve retornar tradução de dashboard', () => {

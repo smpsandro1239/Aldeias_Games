@@ -108,13 +108,28 @@ export async function PATCH(request: NextRequest) {
       });
 
       // Anonimizar dados do utilizador
+      const targetUserId = pedido.userId;
+
+      // Delete personal data from related tables
+      await prisma.$transaction([
+        prisma.pushSubscription.deleteMany({ where: { userId: targetUserId } }),
+        prisma.notificacao.deleteMany({ where: { userId: targetUserId } }),
+        prisma.consentimento.deleteMany({ where: { userId: targetUserId } }),
+        prisma.userPermission.deleteMany({ where: { userId: targetUserId } }),
+      ]);
+
+      // Anonimize user record
       await prisma.user.update({
-        where: { id: pedido.id },
+        where: { id: targetUserId },
         data: {
           nome: 'Utilizador Anónimo',
           telefone: null,
           password: 'DELETED_' + Date.now(),
-          email: `deleted_${pedido.id}@deleted.local`,
+          email: `deleted_${Date.now()}_${targetUserId.substring(0, 8)}@deleted.local`,
+          emailVerificado: false,
+          notificacoesEmail: false,
+          saldo: 0,
+          comissaoTotal: 0,
         },
       });
 

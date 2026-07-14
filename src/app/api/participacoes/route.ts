@@ -231,6 +231,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validar que o userId existe na DB (evitar FK violation)
+    let resolvedUserId: string | null = effectiveUser?.id ?? null;
+    if (resolvedUserId) {
+      const userExists = await prisma.user.findUnique({
+        where: { id: resolvedUserId },
+        select: { id: true },
+      });
+      if (!userExists) {
+        resolvedUserId = null;
+      }
+    }
+
     // Verificar stock (apenas para resposta inicial, a transação atomicará)
     if (jogo.stockAtual < data.quantidade) {
       return NextResponse.json(
@@ -372,14 +384,6 @@ export async function POST(request: NextRequest) {
        }
      }
 
-     // DEBUG: Log payment method
-    console.log('Creating participation with:', {
-      metodoPagamento: data.metodoPagamento,
-      valorTotal,
-      userSaldo: (user as any).saldo,
-      isVendaInterna: !data.dadosCliente && effectiveUser?.id,
-      effectiveUserId: effectiveUser?.id
-    });
 
      // Usar transação atómica para evitar race conditions
      const result = await executeWithRetry(async () => {
@@ -432,11 +436,11 @@ export async function POST(request: NextRequest) {
           metodoPagamento: data.metodoPagamento,
           estadoPagamento: data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo' ? 'concluido' : 'pendente',
           jogoId: data.jogoId,
-          userId: effectiveUser?.id ?? null,
+          userId: resolvedUserId,
           vendedorId: effectiveUser && hasRole(effectiveUser.role, ['aldeia_admin', 'vendedor']) ? effectiveUser.id : undefined,
-          nomeCliente: data.dadosCliente?.nome,
-          telefoneCliente: data.dadosCliente?.telefone,
-          emailCliente: data.dadosCliente?.email,
+          nomeCliente: data.dadosCliente?.nome ? escapeHtml(String(data.dadosCliente.nome)) : undefined,
+          telefoneCliente: data.dadosCliente?.telefone || undefined,
+          emailCliente: data.dadosCliente?.email || undefined,
         };
 
         // Gerar hash para todos os tipos de jogo (segurança)

@@ -1,5 +1,3 @@
-import { describe, expect, it, beforeEach } from '@jest/globals';
-
 // Import business logic functions from API routes (need to extract them to testable location)
 // For now, we'll replicate the core logic in tests
 

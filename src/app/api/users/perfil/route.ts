@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hashPassword } from '@/lib/auth';
 import { updateProfileSchema } from '@/lib/validations';
+import { saveImage, deleteImage } from '@/lib/storage';
 
 // GET - Obter perfil do utilizador
 export async function GET(request: NextRequest) {
@@ -53,28 +54,29 @@ export async function GET(request: NextRequest) {
     const totalGasto = participacoes.reduce((sum, p) => sum + p.valorPago, 0);
     const totalVitorias = participacoes.filter(p => p.ganhador).length;
 
-     return NextResponse.json({
-       success: true,
-       data: {
-         id: perfil.id,
-         email: perfil.email,
-         nome: perfil.nome,
-         telefone: perfil.telefone,
-         role: perfil.role,
-         emailVerificado: perfil.emailVerificado,
-         notificacoesEmail: perfil.notificacoesEmail,
-         ultimoLogin: perfil.ultimoLogin,
-         aldeiaId: perfil.aldeiaId,
-         aldeia: perfil.aldeia,
-         aldeiasPermitidas: perfil.aldeiasPermitidas ? JSON.parse(perfil.aldeiasPermitidas) : null,
-         estatisticas: {
-           totalParticipacoes: perfil._count.participacoes,
-           totalGasto,
-           totalVitorias,
-         },
-         createdAt: perfil.createdAt,
-       },
-     });
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: perfil.id,
+          email: perfil.email,
+          nome: perfil.nome,
+          telefone: perfil.telefone,
+          role: perfil.role,
+          fotoUrl: perfil.fotoUrl,
+          emailVerificado: perfil.emailVerificado,
+          notificacoesEmail: perfil.notificacoesEmail,
+          ultimoLogin: perfil.ultimoLogin,
+          aldeiaId: perfil.aldeiaId,
+          aldeia: perfil.aldeia,
+          aldeiasPermitidas: perfil.aldeiasPermitidas ? JSON.parse(perfil.aldeiasPermitidas) : null,
+          estatisticas: {
+            totalParticipacoes: perfil._count.participacoes,
+            totalGasto,
+            totalVitorias,
+          },
+          createdAt: perfil.createdAt,
+        },
+      });
   } catch (error) {
     console.error('Erro ao obter perfil:', error);
     return NextResponse.json(
@@ -108,12 +110,32 @@ export async function PATCH(request: NextRequest) {
 
     const data = validation.data;
 
-    // Atualizar utilizador
+    // Foto de perfil
+    let fotoUrl: string | undefined | null;
+    const current = await prisma.user.findUnique({ where: { id: user.id }, select: { fotoUrl: true } });
+
+    if (data.fotoPerfil) {
+      const saved = await saveImage(data.fotoPerfil, 'perfis');
+      fotoUrl = saved.url;
+      if (current?.fotoUrl && current.fotoUrl.startsWith('/uploads/')) {
+        await deleteImage(current.fotoUrl).catch(() => {});
+      }
+    } else if (data.fotoPerfil === null) {
+      fotoUrl = null;
+      if (current?.fotoUrl && current.fotoUrl.startsWith('/uploads/')) {
+        await deleteImage(current.fotoUrl).catch(() => {});
+      }
+    }
+
     const updateData: Record<string, unknown> = {
       nome: data.nome,
       telefone: data.telefone,
       notificacoesEmail: data.notificacoesEmail,
     };
+
+    if (fotoUrl !== undefined) {
+      updateData.fotoUrl = fotoUrl;
+    }
 
     if (data.aldeiaId) {
       updateData.aldeiaId = data.aldeiaId;
@@ -137,6 +159,7 @@ export async function PATCH(request: NextRequest) {
         nome: true,
         telefone: true,
         role: true,
+        fotoUrl: true,
         notificacoesEmail: true,
         ultimoLogin: true,
         aldeiaId: true,

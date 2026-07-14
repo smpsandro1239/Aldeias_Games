@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       ipHash: user ? undefined : hashIp(request.headers.get("x-forwarded-for") || ""),
       userAgent: request.headers.get("user-agent")?.slice(0, 200) || null,
       sessionId: body.sessionId || null,
-      timestamp: new Date(body.timestamp) || new Date(),
+      createdAt: body.timestamp ? new Date(body.timestamp) : new Date(),
     };
 
      // Armazenar no banco (tabela GameAnalytics)

@@ -18,9 +18,16 @@ export async function PATCH(request: NextRequest) {
     const { jogoId, action } = body;
 
     if (action === 'commit') {
-      const jogo = await prisma.jogo.findUnique({ where: { id: jogoId } });
+      const jogo = await prisma.jogo.findUnique({
+        where: { id: jogoId },
+        include: { evento: { select: { aldeiaId: true } } }
+      });
       if (!jogo) return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
       if (jogo.hashSorteio) return NextResponse.json({ error: 'Hash já comprometido' }, { status: 400 });
+
+      if (user.role === 'aldeia_admin' && jogo.evento.aldeiaId !== user.aldeiaId) {
+        return NextResponse.json({ error: 'Não autorizado para este jogo' }, { status: 403 });
+      }
 
       const serverSeed = crypto.randomBytes(64).toString('hex');
       const hashSorteio = crypto.createHash('sha256').update(serverSeed).digest('hex');
@@ -51,10 +58,16 @@ export async function POST(request: NextRequest) {
     const { jogoId, clientSeed } = await request.json()
     const jogo = await prisma.jogo.findUnique({
       where: { id: jogoId },
-      include: { participacoes: { where: { estadoPagamento: 'concluido' }, orderBy: { createdAt: 'asc' } } }
+      include: {
+        evento: { select: { aldeiaId: true } },
+        participacoes: { where: { estadoPagamento: 'concluido' }, orderBy: { createdAt: 'asc' } }
+      }
     })
 
     if (!jogo || jogo.sorteado) return NextResponse.json({ error: 'Inválido' }, { status: 400 })
+    if (user.role === 'aldeia_admin' && jogo.evento.aldeiaId !== user.aldeiaId) {
+      return NextResponse.json({ error: 'Não autorizado para este jogo' }, { status: 403 });
+    }
     if (!jogo.seedSorteio) return NextResponse.json({ error: 'Commit necessário' }, { status: 400 })
     if (jogo.participacoes.length === 0) return NextResponse.json({ error: 'Sem participações' }, { status: 400 })
 
@@ -97,6 +110,22 @@ export async function POST(request: NextRequest) {
           dataSorteio: new Date(),
           isFinalizado: true,
           dadosVerificacao: JSON.stringify({ clientSeed, combinedSeed, finalHash, winningNumber, winningCoord })
+        }
+      }),
+      prisma.sorteio.create({
+        data: {
+          seed: finalHash,
+          hash: jogo.hashSorteio || '',
+          resultado: winningCoord || String(numeroSorteado || winningNumber || ''),
+          fase: 'revelado',
+          revealedAt: new Date(),
+          jogoId,
+          vencedores: {
+            create: {
+              posicao: 1,
+              dadosVencedor: JSON.stringify({ participacaoId: vencedorId }),
+            }
+          }
         }
       })
     ]);

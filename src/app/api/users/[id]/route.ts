@@ -118,6 +118,38 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Não pode eliminar o próprio utilizador' }, { status: 400 });
     }
 
+     // Clean up all user-related records to avoid FK errors
+     // First, find and delete vendedor cashbox transactions (requires nested lookup)
+     const cashbox = await prisma.vendedorCashbox.findUnique({ where: { userId: id }, select: { id: true } });
+     if (cashbox) {
+       await prisma.vendedorCashboxTransaction.deleteMany({ where: { cashboxId: cashbox.id } });
+       await prisma.vendedorCashbox.deleteMany({ where: { userId: id } });
+     }
+
+     // Also delete cashbox transactions where this user was the creator
+     await prisma.vendedorCashboxTransaction.deleteMany({ where: { criadoPorId: id } });
+
+     // Delete all other user-related records in a transaction
+     await prisma.$transaction([
+       prisma.pushSubscription.deleteMany({ where: { userId: id } }),
+       prisma.notificacao.deleteMany({ where: { userId: id } }),
+       prisma.consentimento.deleteMany({ where: { userId: id } }),
+       prisma.direitoEsquecimento.deleteMany({ where: { userId: id } }),
+       prisma.passwordReset.deleteMany({ where: { userId: id } }),
+       prisma.twoFactorAuth.deleteMany({ where: { userId: id } }),
+       prisma.userBadge.deleteMany({ where: { userId: id } }),
+       prisma.userLevel.deleteMany({ where: { userId: id } }),
+       prisma.userPermission.deleteMany({ where: { userId: id } }),
+       prisma.logAcesso.deleteMany({ where: { userId: id } }),
+       prisma.transacao.deleteMany({ where: { userId: id } }),
+       prisma.participacao.deleteMany({ where: { userId: id } }),
+       prisma.pedidoCarregamento.deleteMany({ where: { OR: [{ userId: id }, { vendedorId: id }] } }),
+       prisma.venda.deleteMany({ where: { vendedorId: id } }),
+       prisma.comissao.deleteMany({ where: { vendedorId: id } }),
+       prisma.entregaSaldo.deleteMany({ where: { vendedorId: id } }),
+       prisma.pedidoDepositoCofre.deleteMany({ where: { vendedorId: id } }),
+     ]);
+
      await prisma.user.delete({ where: { id } });
 
       // Audit log

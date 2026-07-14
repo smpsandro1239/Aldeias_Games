@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+// @vitest-environment node
 import {
   hashPassword,
   verifyPassword,

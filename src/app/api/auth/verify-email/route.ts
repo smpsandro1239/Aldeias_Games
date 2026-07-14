@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Marcar email como verificado
     const user = await prisma.user.update({
-      where: { id: verification.id },
+      where: { id: verification.userId },
       data: { emailVerificado: true },
       include: { aldeia: true },
     });

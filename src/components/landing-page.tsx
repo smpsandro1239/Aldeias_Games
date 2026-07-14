@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -42,6 +43,15 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginClick }: LandingPageProps) {
+  const [stats, setStats] = useState({ aldeias: 0, utilizadores: 0, angariado: 0 });
+
+  useEffect(() => {
+    fetch('/api/public/stats')
+      .then(r => r.json())
+      .then(d => { if (d.success) setStats(d.data); })
+      .catch(() => {});
+  }, []);
+
   const getJogoIcon = (tipo: string) => {
     switch (tipo) {
       case "raspadinha": return <Sparkles className="text-3xl" />;
@@ -77,20 +87,34 @@ export function LandingPage({ jogos, eventos, aldeias, onRegisterClick, onLoginC
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-        {[
-          { icon: Home, label: "Aldeias", value: "50+", color: "text-primary" },
-          { icon: Heart, label: " Corações", value: "10K+", color: "text-primary" },
-          { icon: Flame, label: "Angariado", value: "€500K+", color: "text-accent" },
-          { icon: Shield, label: "Transparente", value: "100%", color: "text-secondary" },
-        ].map((stat, i) => (
-          <div key={i} className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
-            <div className="flex items-center gap-3 mb-3">
-              <stat.icon className={`${stat.color} text-xl`} />
-              <span className="text-xs font-bold uppercase tracking-widest opacity-60">{stat.label}</span>
-            </div>
-            <p className="text-3xl font-bold">{stat.value}</p>
+        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+          <div className="flex items-center gap-3 mb-3">
+            <Home className="text-primary text-xl" />
+            <span className="text-xs font-bold uppercase tracking-widest opacity-60">Aldeias</span>
           </div>
-        ))}
+          <p className="text-3xl font-bold">{stats.aldeias}+</p>
+        </div>
+        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+          <div className="flex items-center gap-3 mb-3">
+            <Heart className="text-primary text-xl" />
+            <span className="text-xs font-bold uppercase tracking-widest opacity-60">Utilizadores</span>
+          </div>
+          <p className="text-3xl font-bold">{stats.utilizadores.toLocaleString('pt-PT')}+</p>
+        </div>
+        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+          <div className="flex items-center gap-3 mb-3">
+            <Flame className="text-accent text-xl" />
+            <span className="text-xs font-bold uppercase tracking-widest opacity-60">Angariado</span>
+          </div>
+          <p className="text-3xl font-bold">€{stats.angariado.toLocaleString('pt-PT')}+</p>
+        </div>
+        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+          <div className="flex items-center gap-3 mb-3">
+            <Shield className="text-secondary text-xl" />
+            <span className="text-xs font-bold uppercase tracking-widest opacity-60">Transparente</span>
+          </div>
+          <p className="text-3xl font-bold">100%</p>
+        </div>
       </div>
 
       {/* Features Section */}

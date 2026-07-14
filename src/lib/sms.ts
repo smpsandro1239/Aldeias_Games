@@ -22,8 +22,9 @@ export async function sendSMS(options: SMSOptions): Promise<boolean> {
   const provider = process.env.SMS_PROVIDER;
 
   if (!provider) {
-    console.warn('SMS provider não configurado - SMS não serão enviados');
-    console.log('[SMS] Não enviado:', options);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('SMS provider não configurado - SMS não serão enviados');
+    }
     return false;
   }
 
@@ -60,7 +61,9 @@ async function sendTwilioSMS(options: SMSOptions): Promise<boolean> {
     to: options.to,
   });
 
-  console.log('[SMS] Enviado via Twilio para:', options.to);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[SMS] Enviado via Twilio');
+  }
   return true;
 }
 
@@ -74,7 +77,9 @@ async function sendAWSSNS(options: SNSOptions): Promise<boolean> {
     PhoneNumber: options.to,
   }));
 
-  console.log('[SMS] Enviado via AWS SNS para:', options.to);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[SMS] Enviado via AWS SNS');
+  }
   return true;
 }
 

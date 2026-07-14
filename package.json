@@ -11,9 +11,12 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
@@ -97,12 +100,14 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.0.0",
     "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
     "eslint-config-next": "^16.0.0",
@@ -111,10 +116,12 @@
     "jest-environment-jsdom": "^30.3.0",
     "playwright": "^1.58.2",
     "postcss": "^8.4.49",
+    "prettier": "^3.9.5",
     "prisma": "6.19.3",
     "tailwindcss": "^4.0.0",
     "ts-jest": "^29.4.9",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "vitest": "^4.1.10"
   },
   "prisma": {
     "seed": "tsx prisma/seed-full.ts"

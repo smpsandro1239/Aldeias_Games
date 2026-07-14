@@ -194,10 +194,8 @@ export function CreateEventoModal({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚀 handleSubmit chamado');
 
     const newErrors = validateForm();
-    console.log('🔍 Erros de validação:', newErrors);
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -206,7 +204,6 @@ export function CreateEventoModal({
     }
 
     setLoading(true);
-    console.log('⚙️ Iniciando salvamento...');
 
     try {
       const submitData = {
@@ -229,15 +226,12 @@ export function CreateEventoModal({
         maxOccurrences: isRecurring ? maxOccurrences : undefined,
       };
 
-      console.log('📤 Dados para submit:', submitData);
-      console.log('🔗 onSubmit function:', typeof onSubmit);
 
       if (!onSubmit) {
         throw new Error('onSubmit não está definido');
       }
 
       await onSubmit(submitData);
-      console.log('✅ onSubmit concluído com sucesso');
 
       if (!initialData) {
         setFormData({
@@ -562,10 +556,6 @@ export function CreateEventoModal({
               type="button"
               disabled={loading}
               onClick={(e) => {
-                console.log('🖱️ Botão Guardar clicado, loading:', loading);
-                console.log('📋 Form data:', formData);
-                console.log('🎮 Jogos selecionados:', jogosSelecionados);
-                console.log('🎯 initialData:', initialData);
                 e.preventDefault();
                 try {
                   handleSubmit(e as any);

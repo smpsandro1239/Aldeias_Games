@@ -1,5 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
-
 describe('Validações', () => {
   describe('Telefone Português', () => {
     const telefoneRegex = /^(?:(?:\+|00)351)?[2-9][0-9]{8}$/;

@@ -50,7 +50,7 @@ interface AldeiaResumo {
   numVendedores: number;
 }
 
-export function ReconciliacaoCofre({ token }: { token: string }) {
+export function ReconciliacaoCofre() {
   const [vendedores, setVendedores] = useState<VendedorRec[]>([]);
   const [pendentes, setPendentes] = useState<PendenteItem[]>([]);
   const [aldeias, setAldeias] = useState<AldeiaResumo[]>([]);
@@ -59,10 +59,12 @@ export function ReconciliacaoCofre({ token }: { token: string }) {
   const [search, setSearch] = useState("");
   const [selectedVendedor, setSelectedVendedor] = useState<string | null>(null);
 
+  const getToken = useCallback(() => localStorage.getItem("token") || "", []);
+
   const fetchData = useCallback(async () => {
     try {
       const res = await apiRequest("/api/cofre/reconciliacao", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -78,7 +80,7 @@ export function ReconciliacaoCofre({ token }: { token: string }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
