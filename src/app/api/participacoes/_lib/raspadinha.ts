@@ -28,6 +28,10 @@ function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: Record<string,
   const premios = (config.premios as any[]) || [];
   const grid: any[] = [];
 
+  if (premios.length === 0) {
+    return Array.from({ length: 9 }, () => ({ nome: 'Sem prémio', valorDinheiroAlternative: 0 }));
+  }
+
   if (outcome.hasWin && outcome.winningPrize) {
     const winningPrize = outcome.winningPrize;
     for (let i = 0; i < 3; i++) grid.push({ ...winningPrize });

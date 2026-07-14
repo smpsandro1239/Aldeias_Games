@@ -216,23 +216,45 @@ teste-tudo.bat
 
 ## 🏗️ Stack Tecnológica
 
-- **Frontend**: React 19, Next.js 16, TypeScript, Tailwind CSS 4, Framer Motion.
+- **Frontend**: React 19, Next.js 16, TypeScript, Tailwind CSS 4, shadcn/ui, Radix UI.
 - **Backend**: Next.js API Routes, Prisma ORM.
 - **Base de Dados**: SQLite (Dev) / PostgreSQL (Prod - Neon).
 - **Pagamentos**: Stripe API + MBWay (integração real).
-- **Infra**: Docker, Caddy Server, Vercel.
+- **Rate Limiting**: Upstash Redis (produção) / In-Memory (desenvolvimento).
+- **Testes**: Vitest (232 unit/integration) + Playwright (32 E2E).
+- **Docs**: OpenAPI 3.0 + Swagger UI em `/docs`.
+- **Infra**: Vercel (deploy), Docker (local).
 
 ## 📂 Estrutura de Pastas
 
 ```text
 src/
-├── app/          # Rotas e Endpoints de API (App Router)
-├── components/   # Componentes UI (Shadcn + Custom) e Modais
-├── features/     # Módulos de negócio complexos (Admin, Vendedor, Cliente)
-├── hooks/        # Lógica de negócio e estado (Zustand, React Query)
-├── lib/          # Utilitários, Motores (Auth, DB, Stripe, Storage, MBWay)
-├── types/        # Tipagem centralizada e rigorosa
-└── middleware.ts # Camada de segurança global (Rate Limit/Auth)
+├── app/                          # Rotas e Endpoints de API (App Router)
+│   ├── api/participacoes/_lib/   # Handlers modulares por tipo de jogo
+│   │   ├── types.ts              # Interface GameHandler compartilhada
+│   │   ├── raspadinha.ts         # Lógica de raspadinha (grid, hash, probabilidades)
+│   │   ├── rifa.ts               # Lógica de rifa (validação, ocupação, hashes)
+│   │   ├── poio.ts               # Lógica de poio da vaca (coordenadas, hash)
+│   │   ├── euromilhoes.ts        # Lógica de euromilhões (grelha, validação, grelha updates)
+│   │   └── index.ts              # Registry de handlers
+│   └── docs/                     # Swagger UI (CDN)
+├── components/                   # Componentes UI (shadcn + Custom) e Modais
+│   ├── cookie-consent-banner.tsx # Cookie consent RGPD com preferências granulares
+│   └── notification-bell.tsx     # Sino de notificações com polling
+├── features/                     # Módulos de negócio complexos
+├── hooks/                        # Lógica de negócio e estado
+├── lib/                          # Utilitários e motores
+│   ├── auth.ts                   # Autenticação JWT + 2FA TOTP
+│   ├── audit.ts                  # Audit logging consolidado (único módulo)
+│   ├── rate-limit.ts             # Rate limiting Redis/in-memory
+│   ├── validations.ts            # Zod schemas para todas as rotas
+│   └── email.ts                  # Envio de emails (bilhetes, etc.)
+├── __tests__/                    # Testes Vitest (232 testes)
+│   ├── unit/                     # Testes unitários (game-logic, game-handlers)
+│   ├── integration/              # Testes de integração (game-lifecycle)
+│   └── lib/                      # Testes de bibliotecas (validations, rate-limit, etc.)
+├── types/                        # Tipagem centralizada
+└── middleware.ts                  # CSRF, autenticação, rate limiting global
 ```
 
 ## ⚙️ Instalação e Execução
@@ -270,14 +292,47 @@ src/
    bun run dev
    ```
 
+### Upstash Redis (Rate Limiting em Produção)
+
+O rate limiting usa **Upstash Redis** em produção com fallback automático para in-memory em desenvolvimento.
+
+#### Configurar no Upstash:
+1. Criar conta em [upstash.com](https://upstash.com)
+2. Criar um banco de dados Redis
+3. Copiar o **REST URL** e **REST Token**
+
+#### Adicionar ao Vercel:
+No dashboard do Vercel → Settings → Environment Variables, adicionar:
+
+| Variável | Descrição |
+|----------|-----------|
+| `UPSTASH_REDIS_REST_URL` | URL do banco Redis (ex: `https://xxx.upstash.io`) |
+| `UPSTASH_REDIS_REST_TOKEN` | Token de autenticação |
+
+> **Nota**: Sem estas variáveis, o rate limiting funciona em modo in-memory (adequado para dev/teste, mas ineficaz em serverless com múltiplas instâncias).
+
+#### Configurações de Rate Limiting:
+
+| Endpoint | Limite | Janela |
+|----------|--------|--------|
+| Login | 5 tentativas | 15 min |
+| Registo | 3 tentativas | 1 hora |
+| Forgot Password | 3 tentativas | 1 hora |
+| 2FA Verify | 5 tentativas | 5 min |
+| API Geral | 100 requests | 1 min |
+| Participações | 20 requests | 1 min |
+| Pagamentos | 10 requests | 1 min |
+
 ## 🔑 Credenciais de Teste (Seed)
+
+> **Segurança**: Os utilizadores demo só estão disponíveis com `ENABLE_DEMO_USERS=true` e `NODE_ENV !== 'production'`. As passwords são hashes bcrypt (não texto plano).
 
 | Role | Email | Password | aldeiaId |
 |------|-------|----------|----------|
-| Super Admin | admin@aldeias.pt | 123456 | — |
-| Admin Aldeia | aldeia@gmail.com | 123456 | aldeia-vale-azenha |
-| Vendedor | vendedor@gmail.com | 123456 | aldeia-vale-azenha |
-| Jogador | jogador@gmail.com | 123456 | — (multi-aldeia) |
+| Super Admin | admin@aldeias.pt | (ver ENABLE_DEMO_USERS) | — |
+| Admin Aldeia | aldeia@gmail.com | (ver ENABLE_DEMO_USERS) | aldeia-vale-azenha |
+| Vendedor | vendedor@gmail.com | (ver ENABLE_DEMO_USERS) | aldeia-vale-azenha |
+| Jogador | jogador@gmail.com | (ver ENABLE_DEMO_USERS) | — (multi-aldeia) |
 
 ## 🛡️ Controlo de Acesso por Role (RBAC)
 
@@ -366,7 +421,18 @@ MIT License - ver [LICENSE](LICENSE) para detalhes.
 
 ## 📝 Próximos Passos para Produção
 
-[Section remains largely unchanged - omitted for brevity in this example]
+- [x] Autenticação 2FA (TOTP) completa
+- [x] Cookie consent RGPD com preferências granulares
+- [x] Refresh token rotation
+- [x] CSRF protection (Origin/Referer validation)
+- [x] Rate limiting com Upstash Redis
+- [x] Audit logging consolidado
+- [x] Testes unitários (232) + E2E (32)
+- [x] OpenAPI docs com Swagger UI
+- [x] Handlers modulares por tipo de jogo
+- [ ] Configurar Upstash Redis no Vercel (env vars)
+- [ ] Remover `ignoreBuildErrors: true` (resolver erros TS primeiro)
+- [ ] Separação do `middleware.ts` (deprecated em Next.js 16)
 
 ## 🔄 Account Linking (Vinculação de Contas)
 
@@ -518,6 +584,38 @@ Qualquer pessoa pode usar este endpoint para:
 3. Confirmar que o resultado corresponde ao seed revelado
 4. Verificar que o sorteio não foi manipulado após o início das vendas
 
+## 🧪 Testes (232 testes)
+
+| Tipo | Framework | Testes | Ficheiros |
+|------|-----------|--------|-----------|
+| Unitários | Vitest | 152 | game-logic, game-handlers, validations, utils |
+| Integração | Vitest | 35 | game-lifecycle |
+| Bibliotecas | Vitest | 45 | rate-limit, i18n, financial-validations |
+| E2E | Playwright | 32 | auth, navigation, mobile, accessibility |
+
+```bash
+# Todos os testes
+npx vitest run
+
+# Teste específico
+npx vitest run src/__tests__/unit/game-handlers.test.ts
+
+# E2E (requer servidor a correr)
+npx playwright test --reporter=list
+
+# Todos (Vitest + Playwright + API scripts)
+teste-tudo.bat
+```
+
+### Testes dos Handlers de Jogo
+
+Os testes em `src/__tests__/unit/game-handlers.test.ts` validam:
+- **Registry**: Handlers para os 4 tipos (raspadinha, rifa, poio, euromilhoes)
+- **Raspadinha**: Grid 3x3, hash SHA-256, probabilidades, prémios
+- **Rifa**: Validação, duplicados, ocupação, race conditions
+- **Poio da Vaca**: Hash de coordenadas
+- **Euromilhões**: Grelha, range 1-50, bloqueio temporal
+
 ## 📞 Suporte e Contato
 
 Para questões técnicas, sugestões ou relatos de bugs, por favor:
@@ -525,7 +623,35 @@ Para questões técnicas, sugestões ou relatos de bugs, por favor:
 1. Verifique se o problema já está documentado neste README
 2. Consulte a seção de troubleshooting acima
 3. Se persistir, abra uma issue no repositório com:
-   - Descrição clara do problema
-   - Passos para reproduzir
-   - Logs relevantes (removendo informações sensíveis)
-   - Versão do Node.js/Bun e Next.js sendo usada
+    - Descrição clara do problema
+    - Passos para reproduzir
+    - Logs relevantes (removendo informações sensíveis)
+    - Versão do Node.js/Bun e Next.js sendo usada
+
+---
+
+## 📋 Changelog v3.12.0
+
+### Segurança (P1)
+- Demo users protegidos por `ENABLE_DEMO_USERS=true` + `NODE_ENV !== 'production'`
+- Registo de utilizador já não emite JWT (requer verificação de email)
+- `setup-status` PATCH protegido com RBAC (super_admin/aldeia_admin)
+- Password validation unificada (12+ chars, maiúscula, minúscula, número, especial)
+- Zod schemas em 3 endpoints financeiros (depósitos, levantamentos)
+- RGPD: Anonimização completa (participações, transactions, logs, tokens)
+- Audit logging em sorteios (commit-reveal)
+- Fix: Euromilhoes string `contains` bug (usa `Array.includes`)
+
+### Arquitetura (P2)
+- OpenAPI 3.0 + Swagger UI em `/docs` (25+ endpoints)
+- 3 bibliotecas de audit consolidadas em 1 (`audit.ts`)
+- Error boundaries em 5 dashboards
+- Rate limiting: Suporte a Upstash Redis com fallback in-memory
+- 16 testes de middleware (auth, CSRF, RBAC, páginas públicas)
+
+### Melhorias (P3)
+- `poweredByHeader: false` em `next.config.js`
+- Cashback percentual configurável (default 5%, max 50%)
+- Cookie consent granular com toggle de analytics
+- Handlers modulares por tipo de jogo (raspadinha, rifa, poio, euromilhoes)
+- 41 novos testes unitários para handlers

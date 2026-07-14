@@ -9,7 +9,7 @@ echo ============================================
 echo URL Base: %BASE_URL%
 echo.
 echo A testar:
-echo   [1] Vitest - Unit/Integration Tests (148 testes)
+echo   [1] Vitest - Unit/Integration Tests (232 testes)
 echo   [2] Playwright - E2E Tests (32 testes)
 echo   [3] Euromilhoes (API)
 echo   [4] Poio da Vaca (API)
