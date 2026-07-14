@@ -5,13 +5,10 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { createParticipacaoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
-import crypto from 'crypto';
 import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
-
 import { Prisma } from '@prisma/client';
-import { getOfficialTime } from '@/lib/time';
-
+import { getGameHandler } from './_lib';
 
 // GET - Listar participações
 export async function GET(request: NextRequest) {
@@ -168,7 +165,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-
     const body = await request.json();
 
     const normalizedBody = {
@@ -190,40 +186,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Se não há utilizador autenticado, usamos os dados do cliente
     const effectiveUser = user;
-    const isAnonymous = !user && hasDadosCliente;
-
-    // VALIDAÇÃO DE VENDEDOR: Se o utilizador é vendedor, o vendedorId é sempre o seu próprio ID
-    // Se é admin, também pode ser vendedor da transação
-    const isVendedorOrAdmin = user && hasRole(user.role, ['aldeia_admin', 'vendedor']);
 
     const validation = createParticipacaoSchema.safeParse(normalizedBody);
-
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Dados inválidos', details: validation.error.errors },
         { status: 400 }
       );
     }
-
     const data = validation.data;
 
-    // Buscar jogo
     const jogo = await prisma.jogo.findUnique({
       where: { id: data.jogoId },
-      include: {
-        evento: true,
-      },
+      include: { evento: true },
     });
-
     if (!jogo) {
-      return NextResponse.json(
-        { error: 'Jogo não encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
     }
-
     if (jogo.estado !== 'aberto') {
       return NextResponse.json(
         { error: 'Este jogo não está aberto para participações' },
@@ -231,32 +211,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar que o userId existe na DB (evitar FK violation)
     let resolvedUserId: string | null = effectiveUser?.id ?? null;
     if (resolvedUserId) {
       const userExists = await prisma.user.findUnique({
         where: { id: resolvedUserId },
         select: { id: true },
       });
-      if (!userExists) {
-        resolvedUserId = null;
-      }
+      if (!userExists) resolvedUserId = null;
     }
 
-    // Verificar stock (apenas para resposta inicial, a transação atomicará)
     if (jogo.stockAtual < data.quantidade) {
-      return NextResponse.json(
-        { error: 'Stock insuficiente' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 });
     }
 
-    // Calcular valor total
     const valorTotal = jogo.tipo === 'euromilhoes'
       ? (data.numerosSelecionados?.length || 1) * jogo.preco
       : jogo.preco * data.quantidade;
 
-    // Verificar pagamento por saldo
     if (data.metodoPagamento === 'saldo') {
       if (((user as any).saldo || 0) < valorTotal) {
         return NextResponse.json(
@@ -265,16 +236,15 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    // Verificar limite por utilizador (apenas para role 'user')
+
+    // Verificar limite por utilizador
     if (!user || user.role === 'user') {
       const limite = jogo.limitePorUsuario;
       if (limite > 0) {
         const orConditions: any[] = [];
-
         if (hasDadosCliente) {
           if (data.dadosCliente?.email) orConditions.push({ emailCliente: data.dadosCliente.email });
           if (data.dadosCliente?.telefone) orConditions.push({ telefoneCliente: data.dadosCliente.telefone });
-
           const customerUser = await prisma.user.findFirst({
             where: {
               OR: [
@@ -290,7 +260,6 @@ export async function POST(request: NextRequest) {
           if ((user as any).email) orConditions.push({ emailCliente: (user as any).email });
           if ((user as any).telefone) orConditions.push({ telefoneCliente: (user as any).telefone });
         }
-
         if (orConditions.length > 0) {
           const count = await prisma.participacao.count({
             where: {
@@ -299,7 +268,6 @@ export async function POST(request: NextRequest) {
               OR: orConditions,
             },
           });
-
           if (count + data.quantidade > limite) {
             return NextResponse.json(
               { error: `Limite de participações excedido. O limite para este jogo é de ${limite} por utilizador.` },
@@ -310,546 +278,199 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Verificar isolamento de aldeia para vendedores
+    // Isolamento de aldeia
     if (user && user.role === 'vendedor' && jogo.evento.aldeiaId !== user.aldeiaId) {
-      return NextResponse.json(
-        { error: 'Não pode vender jogos de outra aldeia' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Não pode vender jogos de outra aldeia' }, { status: 403 });
+    }
+    if (user && user.role === 'aldeia_admin' && jogo.evento.aldeiaId !== user.aldeiaId) {
+      return NextResponse.json({ error: 'Não pode criar participações para outra aldeia' }, { status: 403 });
     }
 
-     // Verificar isolamento de aldeia para admins
-     if (user && user.role === 'aldeia_admin' && jogo.evento.aldeiaId !== user.aldeiaId) {
-       return NextResponse.json(
-         { error: 'Não pode criar participações para outra aldeia' },
-         { status: 403 }
-       );
-     }
+    // Validação específica do jogo (delegada ao handler)
+    const handler = getGameHandler(jogo.tipo);
+    if (handler?.validate) {
+      try {
+        await handler.validate(data, jogo);
+      } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 400 });
+      }
+    }
 
-     // Validação adicional para euromilhoes
-     if (jogo.tipo === 'euromilhoes') {
-        if (!data.grelhaId) {
-          return NextResponse.json(
-            { error: 'Grelha ID é obrigatório para Euromilhões' },
-            { status: 400 }
-          );
-        }
-        const grelhaAtual = await prisma.grelhaEuromilhoes.findUnique({ where: { id: data.grelhaId } });
-        if (!grelhaAtual) {
-          return NextResponse.json({ error: 'Grelha não encontrada' }, { status: 404 });
-        }
-        if (grelhaAtual.estado !== 'aberta') {
-          return NextResponse.json({ error: 'Grelha não está disponível para participação' }, { status: 400 });
-        }
-        if (grelhaAtual.bloqueioData && (await getOfficialTime()) >= grelhaAtual.bloqueioData) {
-          return NextResponse.json({ error: 'Grelha bloqueada — o prazo de participação terminou' }, { status: 400 });
-        }
-       const numeros = data.numerosSelecionados;
-       if (!Array.isArray(numeros) || numeros.length < 1 || numeros.length > 50) {
-          return NextResponse.json(
-            { error: 'Selecione entre 1 a 50 números para o Euromilhões' },
-            { status: 400 }
-          );
-        }
-       for (const num of numeros) {
-         if (num < 1 || num > 50) {
-           return NextResponse.json(
-             { error: 'Números devem estar entre 1 e 50' },
-             { status: 400 }
-           );
-         }
-       }
-       if (new Set(numeros).size !== numeros.length) {
-         return NextResponse.json(
-           { error: 'Números duplicados na seleção' },
-           { status: 400 }
-         );
-       }
-     }
-
-     // Validação adicional para rifa: consistência de números
-     if (jogo.tipo === 'rifa') {
-       const numeros = data.dadosParticipacao?.numeros;
-       if (!Array.isArray(numeros) || numeros.length !== data.quantidade) {
-         return NextResponse.json(
-           { error: 'Quantidade deve corresponder ao número de números selecionados' },
-           { status: 400 }
-         );
-       }
-       if (new Set(numeros).size !== numeros.length) {
-         return NextResponse.json(
-           { error: 'Números duplicados na seleção' },
-           { status: 400 }
-         );
-       }
-     }
-
-
-     // Usar transação atómica para evitar race conditions
-     const result = await executeWithRetry(async () => {
-       return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        // Verificar stock dentro da transação com locking
+    // Transação atómica
+    const result = await executeWithRetry(async () => {
+      return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const jogoLocked = await tx.jogo.findUnique({
           where: { id: data.jogoId },
           select: { stockAtual: true, preco: true, tipo: true, nome: true, eventoId: true },
         });
-
         if (!jogoLocked || jogoLocked.stockAtual < data.quantidade) {
           throw new Error('Stock insuficiente');
         }
 
-      // Atualizar stock atomicamente (só executa se stock for suficiente)
-      const updated = await tx.jogo.updateMany({
-        where: {
-          id: data.jogoId,
-          stockAtual: { gte: data.quantidade }, // Condição atómica
-        },
-        data: {
-          stockAtual: { decrement: data.quantidade },
-          totalParticipacoes: { increment: data.quantidade },
-          totalAngariado: { increment: valorTotal },
-        },
-      });
-
-      if (updated.count === 0) {
-        throw new Error('Stock insuficiente - operação concorrente');
-      // Verificar se o stock esgotou para fechar o jogo automaticamente
-      }
-      const jogoFinal = await tx.jogo.findUnique({
-        where: { id: data.jogoId },
-        select: { stockAtual: true }
-      });
-
-      if (jogoFinal && jogoFinal.stockAtual <= 0) {
-        await tx.jogo.update({
-          where: { id: data.jogoId },
-          data: { estado: "fechado" }
+        const updated = await tx.jogo.updateMany({
+          where: { id: data.jogoId, stockAtual: { gte: data.quantidade } },
+          data: {
+            stockAtual: { decrement: data.quantidade },
+            totalParticipacoes: { increment: data.quantidade },
+            totalAngariado: { increment: valorTotal },
+          },
         });
-      }
-       // Criar participações (pode ser múltipla)
-       const participacoes: any[] = [];
-      
-      for (let i = 0; i < data.quantidade; i++) {
-        const dados: Record<string, unknown> = {
-          dadosParticipacao: JSON.stringify(sanitizeObject(data.dadosParticipacao)),
-          valorPago: jogo.preco,
-          metodoPagamento: data.metodoPagamento,
-          estadoPagamento: data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo' ? 'concluido' : 'pendente',
-          jogoId: data.jogoId,
-          userId: resolvedUserId,
-          vendedorId: effectiveUser && hasRole(effectiveUser.role, ['aldeia_admin', 'vendedor']) ? effectiveUser.id : undefined,
-          nomeCliente: data.dadosCliente?.nome ? escapeHtml(String(data.dadosCliente.nome)) : undefined,
-          telefoneCliente: data.dadosCliente?.telefone || undefined,
-          emailCliente: data.dadosCliente?.email || undefined,
-        };
+        if (updated.count === 0) throw new Error('Stock insuficiente - operação concorrente');
 
-        // Gerar hash para todos os tipos de jogo (segurança)
-        const seed = generateSeed();
-        const timestamp = new Date().toISOString();
-        
-        if (jogo.tipo === 'raspadinha') {
-          const config = typeof jogo.configuracao === 'string'
-            ? JSON.parse(jogo.configuracao)
-            : jogo.configuracao;
-          const outcome = determineRaspadinhaOutcome(config);
-          const grid = buildGridFromOutcome(outcome, config);
-          const rngSeed = crypto.randomBytes(32).toString('hex');
-          const uniqueSalt = crypto.randomBytes(32).toString('hex');
-
-          const hash = generateHash(rngSeed, outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win', uniqueSalt, timestamp);
-
-          dados.seedRaspe = rngSeed;
-          dados.hashRaspe = hash;
-          dados.resultadoRaspe = outcome.hasWin ? outcome.winningPrize?.nome : 'sem_premio';
-          dados.dadosParticipacao = JSON.stringify({
-            grid,
-            winningPrize: outcome.hasWin ? outcome.winningPrize : null,
-            hasWin: outcome.hasWin,
-            generatedAt: new Date().toISOString(),
-            rngSeed,
-            uniqueSalt,
-            roll: outcome.roll,
-          });
-        } else if (jogo.tipo === 'rifa') {
-          // Para rifas, verificar se números já estão ocupados
-          const numerosSelecionados = data.dadosParticipacao?.numeros || [];
-          const numerosOcupados = new Set<number>();
-          for (const p of participacoes) {
-            try {
-              const dados = typeof p.dadosParticipacao === 'string'
-                ? JSON.parse(p.dadosParticipacao)
-                : p.dadosParticipacao;
-              if (dados?.numeros) {
-                dados.numeros.forEach((n: number) => {
-                  numerosOcupados.add(n);
-                });
-              }
-            } catch {}
-          }
-
-          // Verificar se algum número já está ocupado
-          for (const num of numerosSelecionados) {
-            if (numerosOcupados.has(num)) {
-              throw new Error(`O número ${num} já foi vendido`);
-            }
-          }
-
-          const resultado = JSON.stringify(numerosSelecionados);
-          const uniqueSalt = crypto.randomBytes(32).toString('hex');
-          const hash = generateHash(seed, resultado, uniqueSalt, timestamp);
-
-          dados.hashParticipacao = hash;
-          dados.dadosVerificacao = JSON.stringify({
-            seed,
-            timestamp,
-            numeros: numerosSelecionados,
-            uniqueSalt,
-            hash
-          });
-        } else if (jogo.tipo === 'poio_da_vaca') {
-          // Para poio da vaca, usar as coordenadas como "resultado"
-          const coordenadas = data.dadosParticipacao?.coordenadas || [];
-          const resultado = JSON.stringify(coordenadas);
-          const uniqueSalt = crypto.randomBytes(32).toString('hex');
-          const hash = generateHash(seed, resultado, uniqueSalt, timestamp);
-
-          dados.hashParticipacao = hash;
-          dados.dadosVerificacao = JSON.stringify({
-            seed,
-            timestamp,
-            coordenadas,
-            uniqueSalt,
-            hash
-          });
-        } else if (jogo.tipo === 'euromilhoes') {
-          const numerosSelecionados = data.numerosSelecionados || [];
-          const resultado = JSON.stringify(numerosSelecionados);
-          const uniqueSalt = crypto.randomBytes(32).toString('hex');
-          const hash = generateHash(seed, resultado, uniqueSalt, timestamp);
-
-          dados.hashParticipacao = hash;
-          dados.dadosVerificacao = JSON.stringify({
-            seed,
-            timestamp,
-            numeros: numerosSelecionados,
-            uniqueSalt,
-            hash
-          });
-          dados.numerosSelecionados = resultado;
-          dados.grelhaId = data.grelhaId;
+        const jogoFinal = await tx.jogo.findUnique({
+          where: { id: data.jogoId },
+          select: { stockAtual: true },
+        });
+        if (jogoFinal && jogoFinal.stockAtual <= 0) {
+          await tx.jogo.update({ where: { id: data.jogoId }, data: { estado: 'fechado' } });
         }
 
-        const participacao = await tx.participacao.create({
-          data: dados as never,
-          include: {
-            jogo: {
-              select: {
-                id: true,
-                nome: true,
-                tipo: true,
-                preco: true,
-                configuracao: true,
-              },
+        const participacoes: any[] = [];
+        for (let i = 0; i < data.quantidade; i++) {
+          const dados: Record<string, unknown> = {
+            dadosParticipacao: JSON.stringify(sanitizeObject(data.dadosParticipacao)),
+            valorPago: jogo.preco,
+            metodoPagamento: data.metodoPagamento,
+            estadoPagamento: data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo' ? 'concluido' : 'pendente',
+            jogoId: data.jogoId,
+            userId: resolvedUserId,
+            vendedorId: effectiveUser && hasRole(effectiveUser.role, ['aldeia_admin', 'vendedor']) ? effectiveUser.id : undefined,
+            nomeCliente: data.dadosCliente?.nome ? escapeHtml(String(data.dadosCliente.nome)) : undefined,
+            telefoneCliente: data.dadosCliente?.telefone || undefined,
+            emailCliente: data.dadosCliente?.email || undefined,
+          };
+
+          // Delegar dados específicos ao handler do jogo
+          if (handler) {
+            const gameData = handler.prepareData(data, jogo, participacoes);
+            Object.assign(dados, gameData);
+          }
+
+          const participacao = await tx.participacao.create({
+            data: dados as never,
+            include: {
+              jogo: { select: { id: true, nome: true, tipo: true, preco: true, configuracao: true } },
             },
+          });
+          participacoes.push(participacao);
+        }
+
+        // Pós-criação específica do jogo (delegada ao handler)
+        if (handler?.postCreate) {
+          await handler.postCreate(tx, data, jogo, participacoes);
+        }
+
+        // Atualizar total do evento
+        await tx.evento.update({
+          where: { id: jogoLocked.eventoId },
+          data: {
+            totalParticipacoes: { increment: data.quantidade },
+            totalAngariado: { increment: valorTotal },
           },
         });
 
-         participacoes.push(participacao);
-       }
+        // --- LÓGICA DE CARTEIRA E CASHBACK ---
+        const isVendaInterna = !data.dadosCliente && effectiveUser?.id;
+        const pagamentoConfirmado = data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo';
 
-       // Criar registros de números vendidos para rifa (prevenção de race condition)
-       if (jogo.tipo === 'rifa') {
-         const numerosSelecionados = data.dadosParticipacao?.numeros || [];
-         if (numerosSelecionados.length > 0 && participacoes.length > 0) {
-            await tx.numeroVendido.createMany({
-              data: numerosSelecionados.map((num: number) => ({
-                jogoId: data.jogoId,
-                numero: num,
-              })),
+        if (isVendaInterna && pagamentoConfirmado && effectiveUser) {
+          const jogoConfig = JSON.parse(jogo.configuracao || '{}');
+          const cashbackPercent = typeof jogoConfig.cashbackPercent === 'number'
+            ? Math.min(jogoConfig.cashbackPercent / 100, 0.5)
+            : 0.05;
+          const cashbackValor = valorTotal * cashbackPercent;
+
+          if (data.metodoPagamento === 'saldo') {
+            await tx.user.update({
+              where: { id: effectiveUser.id },
+              data: { saldo: { decrement: valorTotal } },
             });
-         }
-       }
+            await tx.transacao.create({
+              data: {
+                userId: effectiveUser.id,
+                valor: -valorTotal,
+                tipo: 'pagamento_jogo',
+                descricao: `Pagamento de ${data.quantidade}x ${jogo.nome}`,
+                referencia: jogo.id,
+              },
+            });
+          }
 
-       // Atualizar grelha de euromilhões
-       if (jogo.tipo === 'euromilhoes' && data.grelhaId && data.numerosSelecionados) {
-         const grelha = await tx.grelhaEuromilhoes.findUnique({
-           where: { id: data.grelhaId }
-         });
-         if (grelha) {
-           const ocupados: number[] = JSON.parse(grelha.numerosOcupados);
-           for (const num of data.numerosSelecionados) {
-             if (!ocupados.includes(num)) {
-               ocupados.push(num);
-             }
-           }
-           ocupados.sort((a, b) => a - b);
-           const novosOcupados = JSON.stringify(ocupados);
-           const updateData: any = { numerosOcupados: novosOcupados };
-           if (ocupados.length >= 50) {
-             updateData.estado = 'preenchida';
-             updateData.dataFecho = new Date();
-           }
-           await tx.grelhaEuromilhoes.update({
-             where: { id: data.grelhaId },
-             data: updateData,
-           });
-         }
-       }
-
-       // Atualizar total do evento
-      await tx.evento.update({
-        where: { id: jogoLocked.eventoId },
-        data: {
-          totalParticipacoes: { increment: data.quantidade },
-          totalAngariado: { increment: valorTotal },
-        },
-      });
-
-      // --- LÓGICA DE CARTEIRA E CASHBACK ---
-      // Apenas aplicar cashback se a participação for para o utilizador autenticado
-      // (não para vendas externas anónimas)
-      const isVendaInterna = !data.dadosCliente && effectiveUser?.id;
-      
-      // Cashback só é dado quando pagamento é confirmado (dinheiro ou saldo)
-      // Para MBWay/Stripe, o cashback será dado quando o webhook confirmar o pagamento
-      const pagamentoConfirmado = data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo';
-      
-      if (isVendaInterna && pagamentoConfirmado && effectiveUser) {
-        // Cashback percentual configurável (default 5%)
-        const jogoConfig = JSON.parse(jogo.configuracao || '{}');
-        const cashbackPercent = typeof jogoConfig.cashbackPercent === 'number'
-          ? Math.min(jogoConfig.cashbackPercent / 100, 0.5) // max 50%
-          : 0.05;
-        const cashbackValor = valorTotal * cashbackPercent;
-
-        // Se pagou com saldo, descontar
-        if (data.metodoPagamento === 'saldo') {
           await tx.user.update({
             where: { id: effectiveUser.id },
+            data: { saldo: { increment: cashbackValor } },
+          });
+          await tx.transacao.create({
             data: {
-              saldo: { decrement: valorTotal },
+              userId: effectiveUser.id,
+              valor: cashbackValor,
+              tipo: 'cashback',
+              descricao: `Cashback de compra: ${jogo.nome}`,
+              referencia: jogo.id,
             },
           });
-
+        } else if (data.metodoPagamento === 'saldo' && data.dadosCliente && effectiveUser) {
+          await tx.user.update({
+            where: { id: effectiveUser.id },
+            data: { saldo: { decrement: valorTotal } },
+          });
           await tx.transacao.create({
             data: {
               userId: effectiveUser.id,
               valor: -valorTotal,
               tipo: 'pagamento_jogo',
-              descricao: `Pagamento de ${data.quantidade}x ${jogo.nome}`,
+              descricao: `Pagamento de ${data.quantidade}x ${jogo.nome} (venda externa)`,
               referencia: jogo.id,
             },
           });
         }
 
-        // Adicionar Cashback APENAS para pagamentos confirmados
-        await tx.user.update({
-          where: { id: effectiveUser.id },
-          data: {
-            saldo: { increment: cashbackValor },
-          },
-        });
-
-        await tx.transacao.create({
-          data: {
-            userId: effectiveUser.id,
-            valor: cashbackValor,
-            tipo: 'cashback',
-            descricao: `Cashback de compra: ${jogo.nome}`,
-            referencia: jogo.id,
-          },
-        });
-      } else if (data.metodoPagamento === 'saldo' && data.dadosCliente && effectiveUser) {
-        // Venda externa com saldo - não há cashback mas desconta do vendedor/admin
-        await tx.user.update({
-          where: { id: effectiveUser.id },
-          data: {
-            saldo: { decrement: valorTotal },
-          },
-        });
-
-        await tx.transacao.create({
-          data: {
-            userId: effectiveUser.id,
-            valor: -valorTotal,
-            tipo: 'pagamento_jogo',
-            descricao: `Pagamento de ${data.quantidade}x ${jogo.nome} (venda externa)`,
-            referencia: jogo.id,
-          },
-        });
-      }
-
         return { participacoes, valorTotal };
       });
-     });
+    });
 
-      // Enviar email de bilhete para pagamentos confirmados (rifa)
-      if (jogo.tipo === 'rifa' && result.participacoes.length > 0) {
-        const primeira = result.participacoes[0];
-        if (primeira.estadoPagamento === 'concluido' && primeira.emailCliente) {
-          const numeros = data.dadosParticipacao?.numeros || [];
-          try {
-            await sendTicketEmail(
-              primeira.emailCliente,
-              primeira.nomeCliente || 'Cliente',
-              jogo.nome,
-              numeros.map((n: number) => n.toString()),
-              jogo.evento.nome
-            );
-          } catch (err) {
-            console.error('[Email] Erro ao enviar bilhete:', err);
-          }
+    // Email de bilhete (pós-transação)
+    if (jogo.tipo === 'rifa' && result.participacoes.length > 0) {
+      const primeira = result.participacoes[0];
+      if (primeira.estadoPagamento === 'concluido' && primeira.emailCliente) {
+        const numeros = data.dadosParticipacao?.numeros || [];
+        try {
+          await sendTicketEmail(
+            primeira.emailCliente,
+            primeira.nomeCliente || 'Cliente',
+            jogo.nome,
+            numeros.map((n: number) => n.toString()),
+            jogo.evento.nome
+          );
+        } catch (err) {
+          console.error('[Email] Erro ao enviar bilhete:', err);
         }
       }
+    }
 
-      return NextResponse.json({
+    return NextResponse.json({
       success: true,
       participacao: data.quantidade === 1 ? (() => {
         const p = result.participacoes[0];
-        // Parse dadosParticipacao to extract grid for client
         try {
-          const dados = typeof p.dadosParticipacao === 'string' 
-            ? JSON.parse(p.dadosParticipacao) 
+          const dados = typeof p.dadosParticipacao === 'string'
+            ? JSON.parse(p.dadosParticipacao)
             : p.dadosParticipacao;
-          return {
-            ...p,
-            grid: dados?.grid || null,
-            hasWin: dados?.hasWin || false,
-          };
+          return { ...p, grid: dados?.grid || null, hasWin: dados?.hasWin || false };
         } catch {
           return p;
         }
       })() : result.participacoes,
       valorTotal: result.valorTotal,
     }, { status: 201 });
-    } catch (error: any) {
+  } catch (error: any) {
     console.error('Erro ao criar participação:', error);
     if (error.message === 'Stock insuficiente' || error.message.includes('Stock insuficiente')) {
-      return NextResponse.json(
-        { error: 'Stock insuficiente' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 });
     }
     if (error.message && error.message.includes('já foi vendido')) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
-}
-
-// Funções auxiliares para raspadinha
-function generateSeed(): string {
-  return crypto.randomBytes(32).toString('hex');
-}
-
-function generateHash(seed: string, resultado: string, salt: string, timestamp?: string): string {
-  const data = timestamp
-    ? `${seed}:${resultado}:${salt}:${timestamp}`
-    : `${seed}:${resultado}:${salt}`;
-  return crypto
-    .createHash('sha256')
-    .update(data)
-    .digest('hex');
-}
-
-// ============================================================
-// NEW: Probabilistic outcome + grid generation for raspadinha
-// ============================================================
-
-interface RaspadinhaOutcome {
-  hasWin: boolean;
-  winningPrize: any | null;
-  roll: number;
-}
-
-function determineRaspadinhaOutcome(config: Record<string, any>): RaspadinhaOutcome {
-  const premios = (config.premios as any[]) || [];
-  
-  // Use crypto-secure integer random (0-9999) for precision
-  const rollInt = crypto.randomInt(0, 10000);
-  const roll = rollInt / 10000;
-  
-  // Build cumulative probability ranges from config percentagens
-  // Each percentagem is in basis points (e.g., 2% = 200 basis points)
-  let cumulativeBp = 0;
-  for (const premio of premios) {
-    const probBp = Math.round((premio.percentagem || 0) * 100);
-    cumulativeBp += probBp;
-    if (rollInt < cumulativeBp) {
-      return { hasWin: true, winningPrize: premio, roll };
-    }
-  }
-  
-  return { hasWin: false, winningPrize: null, roll };
-}
-
-function buildGridFromOutcome(
-  outcome: RaspadinhaOutcome,
-  config: Record<string, any>
-): any[] {
-  const premios = (config.premios as any[]) || [];
-  const grid: any[] = [];
-  
-  if (outcome.hasWin && outcome.winningPrize) {
-    const winningPrize = outcome.winningPrize;
-    
-    for (let i = 0; i < 3; i++) grid.push({ ...winningPrize });
-    
-    const otherPrizes = premios.filter((p: any) => p.nome !== winningPrize.nome);
-    const fillerPool = otherPrizes.length > 0 ? otherPrizes : premios;
-    
-    for (let i = 0; i < 6; i++) {
-      const pick = fillerPool[crypto.randomInt(0, fillerPool.length)];
-      grid.push({ ...pick });
-    }
-    
-    const counts = new Map<string, number>();
-    grid.forEach((p) => counts.set(p.nome, (counts.get(p.nome) || 0) + 1));
-    
-    for (const [nome, count] of counts) {
-      if (nome !== winningPrize.nome && count >= 3) {
-        const idx = grid.findIndex((p) => p.nome === nome);
-        if (idx !== -1) {
-          grid[idx] = { ...fillerPool[crypto.randomInt(0, fillerPool.length)] };
-        }
-      }
-    }
-  } else {
-    const maxPerPrize = 2;
-    const counts = new Map<string, number>();
-    
-    for (let i = 0; i < 9; i++) {
-      let attempts = 0;
-      while (attempts < 50) {
-        const pick = premios[crypto.randomInt(0, premios.length)];
-        const currentCount = counts.get(pick.nome) || 0;
-        if (currentCount < maxPerPrize) {
-          grid.push({ ...pick });
-          counts.set(pick.nome, currentCount + 1);
-          break;
-        }
-        attempts++;
-      }
-      if (i >= grid.length) {
-        const sorted = [...premios].sort((a, b) => 
-          (a.valorDinheiroAlternative || 0) - (b.valorDinheiroAlternative || 0)
-        );
-        grid.push({ ...sorted[0] });
-      }
-    }
-  }
-  
-  // Fisher-Yates shuffle
-  for (let i = grid.length - 1; i > 0; i--) {
-    const j = crypto.randomInt(0, i + 1);
-    [grid[i], grid[j]] = [grid[j], grid[i]];
-  }
-  
-  return grid;
 }
