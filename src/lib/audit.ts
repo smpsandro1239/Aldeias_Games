@@ -184,3 +184,68 @@ export function logJogoWrite(
     userAgent,
   });
 }
+
+/**
+ * Helper para log CRUD genérico (substitui auditLog.ts)
+ */
+export function logCRUD(
+  userId: string,
+  action: string,
+  resource: string,
+  resourceId?: string,
+  metadata?: Record<string, unknown> | null,
+  ip?: string,
+  userAgent?: string
+): void {
+  logAudit({
+    userId,
+    action,
+    resource,
+    resourceId,
+    metadata: metadata ?? undefined,
+    ip,
+    userAgent,
+  });
+}
+
+/**
+ * Extrair IP do cliente a partir do request
+ */
+export function getClientIP(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return request.headers.get('x-real-ip') || 'unknown';
+}
+
+/**
+ * Query audit logs de um utilizador
+ */
+export async function getUserAuditLogs(
+  userId: string,
+  limit: number = 50
+): Promise<Array<{
+  id: string;
+  action: string;
+  resource: string | null;
+  resourceId: string | null;
+  createdAt: Date;
+  ip: string | null;
+  metadata: unknown;
+}>> {
+  return await prisma.auditLog.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      id: true,
+      action: true,
+      resource: true,
+      resourceId: true,
+      createdAt: true,
+      ip: true,
+      metadata: true,
+    },
+  });
+}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { logAudit } from '@/lib/auditLog';
+import { logCRUD as logAudit } from '@/lib/audit';
 
 /**
  * GET /api/me

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { updateEventoSchema } from '@/lib/validations';
 import { saveImage } from '@/lib/storage';
-import { logAudit } from '@/lib/auditLog';
+import { logCRUD as logAudit } from '@/lib/audit';
 
 interface RouteContext {
   params: Promise<{ id: string }>

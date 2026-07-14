@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
-import { logAudit } from '@/lib/auditLog';
+import { logCRUD as logAudit } from '@/lib/audit';
 
 interface RouteContext {
   params: Promise<{ id: string }>

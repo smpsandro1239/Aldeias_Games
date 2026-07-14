@@ -381,11 +381,8 @@ export async function POST(request: NextRequest) {
      );
   } catch (error: any) {
     console.error('Erro ao criar jogo:', error);
-    console.error('Stack trace:', error.stack);
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
     return NextResponse.json(
-      { error: error.message || 'Erro interno do servidor', details: error.code || '' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }

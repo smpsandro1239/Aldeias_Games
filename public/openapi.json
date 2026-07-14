@@ -3,7 +3,7 @@
   "info": {
     "title": "Aldeias Games API",
     "description": "API para plataforma SaaS multi-tenant de angariacao de fundos em comunidades locais portuguesas",
-    "version": "3.11.1",
+    "version": "3.12.0",
     "contact": {
       "name": "Sandro Pereira",
       "url": "https://github.com/smpsandro1239/Aldeias_Games"
@@ -574,16 +574,101 @@
                 "type": "object",
                 "required": ["valor"],
                 "properties": {
-                  "valor": { "type": "number" },
-                  "notas": { "type": "string" }
+                  "valor": { "type": "number", "description": "Valor a depositar (max 100000)" },
+                  "descricao": { "type": "string", "description": "Descricao do deposito (max 500)" },
+                  "referencias": { "type": "object", "description": "Referencias adicionais" }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Pedido criado" },
-          "400": { "description": "Dados invalidos" }
+          "200": { "description": "Pedido criado" },
+          "400": { "description": "Dados invalidos" },
+          "401": { "description": "Nao autorizado" }
+        }
+      }
+    },
+    "/api/cofre/levantamento": {
+      "get": {
+        "tags": ["Cofre"],
+        "summary": "Listar levantamentos do cofre",
+        "parameters": [
+          { "name": "aldeiaId", "in": "query", "schema": { "type": "string" } },
+          { "name": "estado", "in": "query", "schema": { "type": "string", "enum": ["pendente", "confirmado", "rejeitado"] } }
+        ],
+        "responses": {
+          "200": { "description": "Lista de levantamentos" },
+          "403": { "description": "Nao autorizado" }
+        }
+      },
+      "post": {
+        "tags": ["Cofre"],
+        "summary": "Solicitar levantamento do cofre",
+        "description": "Apenas admins podem solicitar. Requer descricao e destino obrigatorios. Aprovacao por outro admin necessaria.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["valor", "descricao", "destino"],
+                "properties": {
+                  "valor": { "type": "number", "description": "Valor a levantar (max 100000)" },
+                  "descricao": { "type": "string", "minLength": 5, "description": "Descricao do levantamento (min 5, max 500)" },
+                  "destino": { "type": "string", "minLength": 3, "description": "Destino/finalidade do dinheiro (min 3, max 500)" },
+                  "observacoes": { "type": "string", "description": "Observacoes adicionais (max 1000)" },
+                  "aldeiaId": { "type": "string", "description": "ID da aldeia (opcional, usa a do user)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Levantamento solicitado" },
+          "400": { "description": "Dados invalidos" },
+          "403": { "description": "Nao autorizado" }
+        }
+      }
+    },
+    "/api/cofre/levantamento/{id}": {
+      "put": {
+        "tags": ["Cofre"],
+        "summary": "Aprovar ou rejeitar levantamento",
+        "description": "Aprovacao por admin diferente do solicitante (self-approval bloqueado)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["acao"],
+                "properties": {
+                  "acao": { "type": "string", "enum": ["confirmar", "rejeitar"] },
+                  "observacoes": { "type": "string", "description": "Observacoes (max 500)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Levantamento processado" },
+          "400": { "description": "Dados invalidos" },
+          "403": { "description": "Nao autorizado ou self-approval" }
+        }
+      }
+    },
+    "/api/cofre/resumo": {
+      "get": {
+        "tags": ["Cofre"],
+        "summary": "Resumo financeiro consolidado",
+        "description": "Dados agregados: distribuicao de dinheiro, historico mensal, cashboxes, transacoes recentes",
+        "responses": {
+          "200": { "description": "Resumo financeiro" },
+          "403": { "description": "Nao autorizado" }
         }
       }
     },

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { generateMFASecret, generateMFAQRCode, verifyMFAOTP } from '@/lib/mfa';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
-import { logAudit, getClientIP } from '@/lib/auditLog';
+import { logCRUD as logAudit, getClientIP } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
