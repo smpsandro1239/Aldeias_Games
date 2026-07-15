@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logCRUD as logAudit } from '@/lib/audit';
@@ -50,7 +51,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const body = await request.json();
-    const updateData: any = {};
+    const updateData: Prisma.UserUpdateInput = {};
     if (body.nome) updateData.nome = body.nome;
     if (body.telefone !== undefined) updateData.telefone = body.telefone;
     if (body.role) {

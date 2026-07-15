@@ -21,7 +21,7 @@ export async function handleOAuthCallback(
     redirectUri?: string;
     scope?: string;
     // Provider-specific function to get user data from token response
-    getUserData: (tokenData: any) => Promise<any>;
+    getUserData: (tokenData: Record<string, unknown>) => Promise<{ email?: string | null; name?: string | null; providerId: string; email_verified?: boolean | null }>;
     // Field in User model to store the provider ID
     providerIdField: keyof User;
     // Provider name for logging
@@ -127,7 +127,7 @@ export async function handleOAuthCallback(
     });
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       nome: name || email.split('@')[0],
       [options.providerIdField]: providerId,
       // Set authProvider if not already set

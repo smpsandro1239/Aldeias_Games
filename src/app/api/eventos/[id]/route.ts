@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { updateEventoSchema } from '@/lib/validations';
@@ -140,7 +141,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       imagemUrl = saved.url;
     }
 
-    const updateData: any = { ...data };
+    const updateData: Prisma.EventoUpdateInput = { ...data };
     delete updateData.imagemBase64;
     // Remover campos que não devem ir para o banco
     delete updateData.jogosSelecionados;

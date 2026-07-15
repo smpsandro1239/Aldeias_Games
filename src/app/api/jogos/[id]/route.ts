@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { updateJogoSchema } from '@/lib/validations';
@@ -45,10 +46,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const { premios: premiosData, ...otherData } = validation.data;
-    const updateData: any = { ...otherData };
+    const updateData: Prisma.JogoUpdateInput = { ...otherData };
     if (updateData.configuracao) updateData.configuracao = JSON.stringify(updateData.configuracao);
 
-     const updated = await prisma.$transaction(async (tx: any) => {
+     const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
        // Se vierem novos prémios, remover os antigos primeiro
        if (premiosData) {
          await tx.premio.deleteMany({
@@ -85,7 +86,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       );
 
      return NextResponse.json({ success: true, data: updated });
-  } catch (error: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
@@ -120,7 +121,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       );
 
      return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: 'Erro ao eliminar' }, { status: 500 });
   }
 }

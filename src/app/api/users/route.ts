@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { createUserSchema } from '@/lib/validations';
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const aldeiaId = searchParams.get('aldeiaId');
 
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
     if (user.role === 'aldeia_admin') {
       where.aldeiaId = user.aldeiaId;
     } else if (aldeiaId) {

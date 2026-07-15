@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       redirectUri: process.env.APPLE_REDIRECT_URI,
       scope: 'name email',
       // Para Apple, recebemos o id_token diretamente no form data (não no token response)
-      getUserData: async (tokenData: any) => {
+      getUserData: async (tokenData: Record<string, unknown>) => {
         // Para Apple, o id_token vem no form data original, não no token response
         // Vamos precisar acessar o form data original - vamos mudar nossa abordagem
         throw new Error('Apple implementation needs to access original form data');

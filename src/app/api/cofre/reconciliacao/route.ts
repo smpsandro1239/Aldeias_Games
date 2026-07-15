@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -76,14 +77,14 @@ export async function GET(request: NextRequest) {
       : null;
 
     // Build per-seller reconciliation
-    const vendedoresData = vendedores.map((v: any) => {
+    const vendedoresData = vendedores.map((v: Prisma.UserGetPayload<{ include: { cashbox: { include: { transacoes: { orderBy: { createdAt: 'desc' } } } } } }>) => {
       const transacoes = v.cashbox?.transacoes || [];
       const totalRecebido = transacoes
-        .filter((t: any) => t.tipo === 'RECEBIDO_DO_JOGADOR')
-        .reduce((sum: number, t: any) => sum + t.valor, 0);
+        .filter((t: Prisma.VendedorCashboxTransaction) => t.tipo === 'RECEBIDO_DO_JOGADOR')
+        .reduce((sum: number, t: Prisma.VendedorCashboxTransaction) => sum + t.valor, 0);
       const totalDepositado = transacoes
-        .filter((t: any) => t.tipo === 'DEPOSITADO_NO_COFRE')
-        .reduce((sum: number, t: any) => sum + t.valor, 0);
+        .filter((t: Prisma.VendedorCashboxTransaction) => t.tipo === 'DEPOSITADO_NO_COFRE')
+        .reduce((sum: number, t: Prisma.VendedorCashboxTransaction) => sum + t.valor, 0);
       const saldoEsperado = totalRecebido - totalDepositado;
       const saldoReal = v.cashbox?.saldo ?? 0;
 
@@ -103,25 +104,25 @@ export async function GET(request: NextRequest) {
     // Vault data
     const vaultData = vault ? {
       saldo: vault.saldo,
-      totalDepositos: vault.transacoes.reduce((sum: number, t: any) => sum + t.valor, 0),
+      totalDepositos: vault.transacoes.reduce((sum: number, t: Prisma.VaultTransaction) => sum + t.valor, 0),
       numDepositos: vault.transacoes.length,
     } : null;
 
     // Aldeias data for super_admin
-    const aldeiasData = todasAldeias?.map((a: any) => ({
+    const aldeiasData = todasAldeias?.map((a: Prisma.AldeiaGetPayload<{ include: { vault: { include: { transacoes: { where: { estado: 'confirmado' } } } }; _count: { select: { users: { where: { role: 'vendedor'; deletedAt: null } } } } } }>) => ({
       id: a.id,
       nome: a.nome,
       saldoCofre: a.vault?.saldo ?? 0,
-      totalDepositado: a.vault?.transacoes.reduce((sum: number, t: any) => sum + t.valor, 0) ?? 0,
+      totalDepositado: a.vault?.transacoes.reduce((sum: number, t: Prisma.VaultTransaction) => sum + t.valor, 0) ?? 0,
       numVendedores: a._count.users,
     })) ?? [];
 
     // General totals
-    const totalRecebidoGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.totalRecebido, 0);
-    const totalDepositadoGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.totalDepositado, 0);
-    const saldoCashboxGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.saldoCashbox, 0);
-    const saldoEsperadoGeral = vendedoresData.reduce((sum: number, v: any) => sum + v.saldoEsperado, 0);
-    const discrepancias = vendedoresData.filter((v: any) => Math.abs(v.discrepancia) > 0.01);
+    const totalRecebidoGeral = vendedoresData.reduce((sum: number, v: { totalRecebido: number }) => sum + v.totalRecebido, 0);
+    const totalDepositadoGeral = vendedoresData.reduce((sum: number, v: { totalDepositado: number }) => sum + v.totalDepositado, 0);
+    const saldoCashboxGeral = vendedoresData.reduce((sum: number, v: { saldoCashbox: number }) => sum + v.saldoCashbox, 0);
+    const saldoEsperadoGeral = vendedoresData.reduce((sum: number, v: { saldoEsperado: number }) => sum + v.saldoEsperado, 0);
+    const discrepancias = vendedoresData.filter((v: { discrepancia: number }) => Math.abs(v.discrepancia) > 0.01);
 
     return NextResponse.json({
       success: true,
@@ -137,7 +138,7 @@ export async function GET(request: NextRequest) {
           saldoCashboxGeral,
           saldoEsperadoGeral,
           saldoVault: vaultData?.saldo ?? 0,
-          pendentesValor: pendentes.reduce((sum: number, p: any) => sum + p.valor, 0),
+          pendentesValor: pendentes.reduce((sum: number, p: Prisma.PedidoDepositoCofreGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => sum + p.valor, 0),
           pendentesCount: pendentes.length,
         },
         discrepanciaGeral: saldoCashboxGeral - saldoEsperadoGeral,

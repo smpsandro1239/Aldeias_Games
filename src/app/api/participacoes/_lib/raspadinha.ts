@@ -1,14 +1,26 @@
 import crypto from 'crypto';
-import { GameHandler, JogoWithEvento } from './types';
+import { GameHandler, JogoWithEvento, ParticipacaoRequestData } from './types';
+
+interface RaspadinhaPremio {
+  nome: string;
+  valor?: number;
+  percentagem?: number;
+  valorDinheiroAlternative?: number;
+}
+
+interface RaspadinhaConfig {
+  premios: RaspadinhaPremio[];
+  [key: string]: unknown;
+}
 
 interface RaspadinhaOutcome {
   hasWin: boolean;
-  winningPrize: any | null;
+  winningPrize: RaspadinhaPremio | null;
   roll: number;
 }
 
-function determineRaspadinhaOutcome(config: Record<string, any>): RaspadinhaOutcome {
-  const premios = (config.premios as any[]) || [];
+function determineRaspadinhaOutcome(config: RaspadinhaConfig): RaspadinhaOutcome {
+  const premios = config.premios || [];
   const rollInt = crypto.randomInt(0, 10000);
   const roll = rollInt / 10000;
 
@@ -24,9 +36,9 @@ function determineRaspadinhaOutcome(config: Record<string, any>): RaspadinhaOutc
   return { hasWin: false, winningPrize: null, roll };
 }
 
-function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: Record<string, any>): any[] {
-  const premios = (config.premios as any[]) || [];
-  const grid: any[] = [];
+function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: RaspadinhaConfig): RaspadinhaPremio[] {
+  const premios = config.premios || [];
+  const grid: RaspadinhaPremio[] = [];
 
   if (premios.length === 0) {
     return Array.from({ length: 9 }, () => ({ nome: 'Sem prémio', valorDinheiroAlternative: 0 }));
@@ -36,7 +48,7 @@ function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: Record<string,
     const winningPrize = outcome.winningPrize;
     for (let i = 0; i < 3; i++) grid.push({ ...winningPrize });
 
-    const otherPrizes = premios.filter((p: any) => p.nome !== winningPrize.nome);
+    const otherPrizes = premios.filter((p) => p.nome !== winningPrize.nome);
     const fillerPool = otherPrizes.length > 0 ? otherPrizes : premios;
 
     for (let i = 0; i < 6; i++) {
@@ -100,10 +112,10 @@ function generateHash(seed: string, resultado: string, salt: string, timestamp?:
 }
 
 export const raspadinhaHandler: GameHandler = {
-  prepareData(data: any, jogo: JogoWithEvento) {
-    const config = typeof jogo.configuracao === 'string'
+  prepareData(data: ParticipacaoRequestData, jogo: JogoWithEvento) {
+    const config: RaspadinhaConfig = typeof jogo.configuracao === 'string'
       ? JSON.parse(jogo.configuracao)
-      : jogo.configuracao;
+      : jogo.configuracao as RaspadinhaConfig;
     const outcome = determineRaspadinhaOutcome(config);
     const grid = buildGridFromOutcome(outcome, config);
     const rngSeed = crypto.randomBytes(32).toString('hex');

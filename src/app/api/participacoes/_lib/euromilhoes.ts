@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { Prisma } from '@prisma/client';
 import { GameHandler, JogoWithEvento } from './types';
 import { getOfficialTime } from '@/lib/time';
 import { prisma } from '@/lib/db';
@@ -74,7 +75,7 @@ export const euromilhoesHandler: GameHandler = {
           }
         }
         ocupados.sort((a, b) => a - b);
-        const updateData: any = { numerosOcupados: JSON.stringify(ocupados) };
+        const updateData: Prisma.GrelhaEuromilhoesUpdateInput = { numerosOcupados: JSON.stringify(ocupados) };
         if (ocupados.length >= 50) {
           updateData.estado = 'preenchida';
           updateData.dataFecho = new Date();

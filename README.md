@@ -430,9 +430,10 @@ MIT License - ver [LICENSE](LICENSE) para detalhes.
 - [x] Testes unitários (232) + E2E (32)
 - [x] OpenAPI docs com Swagger UI
 - [x] Handlers modulares por tipo de jogo
+- [x] Migração `middleware.ts` → `proxy.ts` (Next.js 16)
+- [x] Eliminação de 287 erros TypeScript (`: any` → tipos concretos)
 - [ ] Configurar Upstash Redis no Vercel (env vars)
-- [ ] Remover `ignoreBuildErrors: true` (resolver erros TS primeiro)
-- [ ] Separação do `middleware.ts` (deprecated em Next.js 16)
+- [ ] Remover `ignoreBuildErrors: true` (SWC bug Node.js v24)
 
 ## 🔄 Account Linking (Vinculação de Contas)
 
@@ -648,10 +649,12 @@ Para questões técnicas, sugestões ou relatos de bugs, por favor:
 - Error boundaries em 5 dashboards
 - Rate limiting: Suporte a Upstash Redis com fallback in-memory
 - 16 testes de middleware (auth, CSRF, RBAC, páginas públicas)
+- Handlers modulares por tipo de jogo (raspadinha, rifa, poio, euromilhoes)
+- 41 novos testes unitários para handlers
 
 ### Melhorias (P3)
 - `poweredByHeader: false` em `next.config.js`
 - Cashback percentual configurável (default 5%, max 50%)
 - Cookie consent granular com toggle de analytics
-- Handlers modulares por tipo de jogo (raspadinha, rifa, poio, euromilhoes)
-- 41 novos testes unitários para handlers
+- Migração `middleware.ts` → `proxy.ts` (Next.js 16)
+- Eliminação de 287 erros TypeScript (`: any` → tipos concretos)

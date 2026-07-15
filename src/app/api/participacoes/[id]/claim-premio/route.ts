@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 
@@ -155,7 +156,7 @@ export async function POST(
     }
 
     // Process prize payout in atomic transaction
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Credit user saldo
       const updatedUser = await tx.user.update({
         where: { id: user.id },
@@ -210,10 +211,11 @@ export async function POST(
       newSaldo: result.newSaldo,
       prizeName: winningPrize.nome,
     });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao reclamar prémio:', error);
     
-    if (error.code === 'P2025') {
+    if ((err instanceof Error && 'code' in err) && (err as { code: string }).code === 'P2025') {
       return NextResponse.json(
         { error: 'Participação não encontrada' },
         { status: 404 }

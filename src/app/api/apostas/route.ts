@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from '@prisma/client';
 import { prisma } from "@/lib/db";
 import { getFullUserFromRequest, verifyToken } from "@/lib/auth";
 import { escapeHtml } from "@/lib/utils";
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     const userRole = payload?.role || null;
     const userAldeiaId = payload?.aldeiaId || null;
 
-    const where: any = {};
+    const where: Prisma.ApostaWhereInput = {};
     
     if (tipo) {
       where.jogo = { tipo: tipo as any };
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const mappedApostas = apostas.map((a: any) => {
+    const mappedApostas = apostas.map((a) => {
       const nums = typeof a.numeros === 'string' ? JSON.parse(a.numeros || "[]") : a.numeros;
 
       // Filtragem de dados sensíveis para utilizadores normais
@@ -139,13 +140,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se números já estão ocupados (Race condition protection)
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const apostasExistentes = await tx.aposta.findMany({
         where: { jogoId },
       });
 
       const numerosOcupados = new Set(
-        apostasExistentes.flatMap((a: any) => {
+        apostasExistentes.flatMap((a) => {
           try {
             return typeof a.numeros === 'string' ? JSON.parse(a.numeros || "[]") : a.numeros;
           } catch (e) {
@@ -199,7 +200,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ data: result }, { status: 201 });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error("Erro ao criar aposta:", error);
     return NextResponse.json(
       { error: error.message || "Erro ao criar aposta" },

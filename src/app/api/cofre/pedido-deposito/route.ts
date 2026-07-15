@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
     const estado = url.searchParams.get('estado');
     const aldeiaId = url.searchParams.get('aldeiaId');
 
-    const where: any = {};
+    const where: Prisma.PedidoDepositoCofreWhereInput = {};
 
     if (user.role === 'vendedor') {
       where.vendedorId = user.id;

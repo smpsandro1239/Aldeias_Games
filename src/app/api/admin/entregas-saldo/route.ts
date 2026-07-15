@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     const estado = searchParams.get('estado');
     const aldeiaId = searchParams.get('aldeiaId');
 
-    let where: any = {};
+    let where: Prisma.EntregaSaldoWhereInput = {};
 
     // Admin só vê entregas da sua aldeia, super_admin vê todas
     if (user.role === 'aldeia_admin' && user.aldeiaId) {
@@ -48,20 +49,20 @@ export async function GET(request: NextRequest) {
     });
 
     // Totais
-    const pendentes = entregas.filter((e: any) => e.estado === 'solicitado');
-    const confirmadas = entregas.filter((e: any) => e.estado === 'confirmado');
-    const concluidas = entregas.filter((e: any) => e.estado === 'concluido');
+    const pendentes = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'solicitado');
+    const confirmadas = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'confirmado');
+    const concluidas = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'concluido');
 
     return NextResponse.json({
       data: entregas,
       resumo: {
         total: entregas.length,
         pendentes: pendentes.length,
-        valorPendente: pendentes.reduce((acc: number, e: any) => acc + e.valor, 0),
+        valorPendente: pendentes.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0),
         confirmadas: confirmadas.length,
-        valorConfirmado: confirmadas.reduce((acc: number, e: any) => acc + e.valor, 0),
+        valorConfirmado: confirmadas.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0),
         concluidas: concluidas.length,
-        valorConcluido: concluidas.reduce((acc: number, e: any) => acc + e.valor, 0)
+        valorConcluido: concluidas.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0)
       }
     });
 
@@ -118,7 +119,7 @@ export async function PATCH(request: NextRequest) {
 
       // Transferir saldo do vendedor para admin
       try {
-        await prisma.$transaction(async (tx: any) => {
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
           // 1. Retirar saldo do vendedor
           await tx.user.update({
             where: { id: entrega.vendedorId },

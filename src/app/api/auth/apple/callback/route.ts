@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       redirectUri: process.env.APPLE_REDIRECT_URI,
       scope: 'name email',
       // For Apple, we verify the ID token that came in the form data
-      getUserData: async (tokenData: any) => {
+      getUserData: async (tokenData: Record<string, unknown>) => {
         // Ignore tokenData (it's from the code exchange), use the id_token from form data
         if (!idToken) {
           throw new Error('No ID token in Apple request');

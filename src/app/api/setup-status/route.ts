@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Função auxiliar para determinar em qual passo do setup estamos
-function calculateSetupStep(aldeia: any): number {
+function calculateSetupStep(aldeia: { nome: string | null; slug: string | null; iban: string | null; nomeTitularConta: string | null; permitirStripe: boolean | null; permitirMBWay: boolean | null; avisoPagamentosEnviado: boolean | null }): number {
   if (!aldeia.nome || !aldeia.slug) return 1; // Informações básicas
   if (!aldeia.iban || !aldeia.nomeTitularConta) return 2; // Dados bancários
   if (aldeia.permitirStripe === null || aldeia.permitirMBWay === null) return 3; // Métodos de pagamento
@@ -99,7 +100,7 @@ export async function PATCH(request: NextRequest) {
     const { step, data } = body;
 
     // Atualizar baseado no passo
-    let updateData: any = {};
+    let updateData: Prisma.AldeiaUpdateInput = {};
 
     switch (step) {
       case 1: // Informações básicas da aldeia (já deveria existir)

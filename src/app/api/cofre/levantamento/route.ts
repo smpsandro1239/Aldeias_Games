@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
-    const where: any = {
+    const where: Prisma.VaultTransactionWhereInput = {
       vaultId: vault.id,
       tipo: 'levantamento',
     };

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
 
-    let where: any = {
+    let where: Prisma.EntregaSaldoWhereInput = {
       vendedorId: user.id
     };
 
@@ -142,15 +143,15 @@ export async function GET(request: NextRequest) {
     });
 
     // Calcular total de entregas pendentes
-    const pendentes = entregas.filter((e: any) => e.estado === 'solicitado' || e.estado === 'confirmado');
-    const totalPendente = pendentes.reduce((acc: number, e: any) => acc + e.valor, 0);
+    const pendentes = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'solicitado' || e.estado === 'confirmado');
+    const totalPendente = pendentes.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0);
 
     return NextResponse.json({
       data: entregas,
       resumo: {
-        totalSolicitado: entregas.reduce((acc: number, e: any) => acc + e.valor, 0),
+        totalSolicitado: entregas.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0),
         totalPendente,
-        totalConcluido: entregas.filter((e: any) => e.estado === 'concluido').reduce((acc: number, e: any) => acc + e.valor, 0)
+        totalConcluido: entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'concluido').reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0)
       }
     });
 

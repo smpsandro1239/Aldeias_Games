@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -55,7 +56,7 @@ export async function PUT(
         }, { status: 400 });
       }
 
-      await prisma.$transaction(async (tx: any) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.vaultTransaction.update({
           where: { id },
           data: {

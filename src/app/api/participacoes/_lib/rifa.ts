@@ -56,7 +56,7 @@ export const rifaHandler: GameHandler = {
   },
 
   async postCreate(tx, data, _jogo, participacoes) {
-    const numerosSelecionados = data.dadosParticipacao?.numeros || [];
+    const numerosSelecionados: number[] = Array.isArray(data.dadosParticipacao?.numeros) ? data.dadosParticipacao!.numeros as number[] : [];
     if (numerosSelecionados.length > 0 && participacoes.length > 0) {
       await tx.numeroVendido.createMany({
         data: numerosSelecionados.map((num: number) => ({

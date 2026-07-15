@@ -5,6 +5,23 @@ import { verifyWebhookSignature } from '@/lib/stripe';
 import Stripe from 'stripe';
 import crypto from 'crypto';
 
+interface RaspadinhaPremio {
+  nome: string;
+  valor?: number;
+  percentagem?: number;
+  valorDinheiroAlternative?: number;
+}
+
+interface RaspadinhaConfig {
+  premios: RaspadinhaPremio[];
+  [key: string]: unknown;
+}
+
+interface RaspadinhaOutcome {
+  hasWin: boolean;
+  winningPrize: RaspadinhaPremio | null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
@@ -48,10 +65,11 @@ export async function POST(request: NextRequest) {
             const timestamp = new Date().toISOString();
             const seed = crypto.randomBytes(16).toString('hex');
             const uniqueSalt = crypto.randomBytes(16).toString('hex');
-            let resultadoRaspe = null, hashParticipacao = null, grid = null;
+            let resultadoRaspe = null, hashParticipacao = null;
+            let grid: RaspadinhaPremio[] | null = null;
 
             if (jogo.tipo === 'raspadinha') {
-              const config = typeof jogo.configuracao === 'string' ? JSON.parse(jogo.configuracao) : jogo.configuracao;
+              const config: RaspadinhaConfig = typeof jogo.configuracao === 'string' ? JSON.parse(jogo.configuracao) : jogo.configuracao as RaspadinhaConfig;
               const outcome = determineRaspadinhaOutcome(config);
               grid = buildGridFromOutcome(outcome, config);
               resultadoRaspe = outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win';
@@ -123,8 +141,8 @@ function generateHash(seed: string, resultado: string, salt: string, timestamp?:
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
-function determineRaspadinhaOutcome(config: Record<string, any>) {
-  const premios = (config.premios as any[]) || [];
+function determineRaspadinhaOutcome(config: RaspadinhaConfig): RaspadinhaOutcome {
+  const premios = config.premios || [];
   const rollInt = crypto.randomInt(0, 10000);
   let cumulativeBp = 0;
   for (const premio of premios) {
@@ -134,13 +152,13 @@ function determineRaspadinhaOutcome(config: Record<string, any>) {
   return { hasWin: false, winningPrize: null };
 }
 
-function buildGridFromOutcome(outcome: any, config: Record<string, any>): any[] {
-  const premios = (config.premios as any[]) || [];
-  const grid: any[] = [];
+function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: RaspadinhaConfig): RaspadinhaPremio[] {
+  const premios = config.premios || [];
+  const grid: RaspadinhaPremio[] = [];
   if (outcome.hasWin && outcome.winningPrize) {
     for (let i = 0; i < 3; i++) grid.push({ ...outcome.winningPrize });
-    const fillerPool = premios.filter((p: any) => p.nome !== outcome.winningPrize.nome).length > 0
-      ? premios.filter((p: any) => p.nome !== outcome.winningPrize.nome) : premios;
+    const fillerPool = premios.filter((p) => p.nome !== outcome.winningPrize!.nome).length > 0
+      ? premios.filter((p) => p.nome !== outcome.winningPrize!.nome) : premios;
     for (let i = 0; i < 6; i++) grid.push({ ...fillerPool[crypto.randomInt(0, fillerPool.length)] });
   } else {
     for (let i = 0; i < 9; i++) grid.push({ ...premios[crypto.randomInt(0, premios.length)] });

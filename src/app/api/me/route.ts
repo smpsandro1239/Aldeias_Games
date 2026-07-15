@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { logCRUD as logAudit } from '@/lib/audit';
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
-       participacoes: participacoes.map((p: any) => ({
+       participacoes: participacoes.map((p: Prisma.ParticipacaoGetPayload<{ include: { jogo: { include: { evento: true } } } }>) => ({
          id: p.id,
          jogoId: p.jogoId,
          jogoNome: p.jogo?.nome,
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
          premiado: p.premioEntregue,
          createdAt: p.createdAt,
        })),
-      transacoes: transacoes.map((t: any) => ({
+      transacoes: transacoes.map((t: Prisma.Transacao) => ({
         id: t.id,
         tipo: t.tipo,
         valor: t.valor,
@@ -110,14 +111,14 @@ export async function GET(request: NextRequest) {
         estado: t.estado,
         createdAt: t.createdAt,
       })),
-       vendas: vendas.map((v: any) => ({
+       vendas: vendas.map((v: Prisma.Venda) => ({
          id: v.id,
          valor: v.valor,
          comissao: v.comissao,
          metodoPagamento: v.metodoPagamento,
          createdAt: v.createdAt,
        })),
-      badges: badges.map((ub: any) => ({
+      badges: badges.map((ub: Prisma.UserBadgeGetPayload<{ include: { badge: true } }>) => ({
         id: ub.id,
         badge: {
           id: ub.badge.id,
@@ -127,31 +128,31 @@ export async function GET(request: NextRequest) {
         },
         conquistadoEm: ub.conquistadoEm,
       })),
-       levels: levels.map((l: any) => ({
+       levels: levels.map((l: Prisma.UserLevel) => ({
          level: l.nivel,
          xpAtual: l.pontos,
          atribuidoEm: l.atualizadoEm,
        })),
-      pushSubscriptions: pushSubs.map((ps: any) => ({
+      pushSubscriptions: pushSubs.map((ps: Prisma.PushSubscription) => ({
         endpoint: ps.endpoint,
         p256dh: ps.p256dh,
         auth: ps.auth,
       })),
-      notificacoes: notificacoes.map((n: any) => ({
+      notificacoes: notificacoes.map((n: Prisma.Notificacao) => ({
         id: n.id,
         titulo: n.titulo,
         mensagem: n.mensagem,
         lida: n.lida,
         createdAt: n.createdAt,
       })),
-      pedidosCarregamento: pedidosCarregamento.map((p: any) => ({
+      pedidosCarregamento: pedidosCarregamento.map((p: Prisma.PedidoCarregamento) => ({
         id: p.id,
         valor: p.valor,
         estado: p.estado,
         metodoPagamento: p.metodoPagamento,
         createdAt: p.createdAt,
       })),
-      entregasSaldo: entregas.map((e: any) => ({
+      entregasSaldo: entregas.map((e: Prisma.EntregaSaldo) => ({
         id: e.id,
         valor: e.valor,
         estado: e.estado,
@@ -159,13 +160,14 @@ export async function GET(request: NextRequest) {
         dataConfirmacao: e.dataConfirmacao,
         dataConclusao: e.dataConclusao,
       })),
-       permissoes: permissoes.map((p: any) => ({
+       permissoes: permissoes.map((p: Prisma.UserPermissionGetPayload<{ include: { permission: true } }>) => ({
          permission: p.permission?.key,
        })),
     };
 
     return NextResponse.json({ data: exportData });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao exportar dados:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
@@ -249,13 +251,15 @@ export async function POST(request: NextRequest) {
           }
         });
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
       console.error('Erro ao criar notificação para admins sobre pedido de eliminação:', error);
       // Don't fail the request if notification fails
     }
 
     return NextResponse.json({ success: true, data: deletionRequest });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao solicitar eliminação:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -47,15 +48,15 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate Valor
-    const valorAposta = (a: any) => {
+    const valorAposta = (a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { nome: true; preco: true } } } }>) => {
         try { return JSON.parse(a.numeros || "[]").length * (a.jogo.preco || 0); } catch { return 0; }
     };
 
-    const valorHojeApostas = apostasHoje.reduce((acc: number, a: any) => acc + valorAposta(a), 0);
-    const valorTotalApostas = apostasTotais.reduce((acc: number, a: any) => acc + valorAposta(a), 0);
+    const valorHojeApostas = apostasHoje.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { nome: true; preco: true } } } }>) => acc + valorAposta(a), 0);
+    const valorTotalApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { preco: true } } } }>) => acc + valorAposta(a), 0);
 
-    const valorHojePart = partHoje.reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
-    const valorTotalPart = partTotais.reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
+    const valorHojePart = partHoje.reduce((acc: number, p: Prisma.ParticipacaoGetPayload<{ include: { jogo: { select: { nome: true } } } }>) => acc + (p.valorPago || 0), 0);
+    const valorTotalPart = partTotais.reduce((acc: number, p: Prisma.Participacao) => acc + (p.valorPago || 0), 0);
 
     const valorHoje = valorHojeApostas + valorHojePart;
     const valorTotal = valorTotalApostas + valorTotalPart;
@@ -67,14 +68,14 @@ export async function GET(request: NextRequest) {
 
     // The seller holds cash but some sales might be digital/Stripe/MBWay.
     // Let's filter cash sales only to calculate what they need to hand over explicitly.
-    const dinheiroEmMaoApostas = apostasTotais.reduce((acc: number, a: any) => acc + valorAposta(a), 0); // Apostas are always physical cash in POS
-    const dinheiroEmMaoPart = partTotais.filter((p: any) => p.metodoPagamento === 'dinheiro').reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
+    const dinheiroEmMaoApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { preco: true } } } }>) => acc + valorAposta(a), 0); // Apostas are always physical cash in POS
+    const dinheiroEmMaoPart = partTotais.filter((p: Prisma.Participacao) => p.metodoPagamento === 'dinheiro').reduce((acc: number, p: Prisma.Participacao) => acc + (p.valorPago || 0), 0);
     
     const totalDinheiroLivre = dinheiroEmMaoApostas + dinheiroEmMaoPart;
     const aEntregar = Math.max(0, totalDinheiroLivre - comissaoTotal);
 
     // Build History (Ultimas Vendas Hoje)
-    const historicoApostas = apostasHoje.map((a: any) => ({
+    const historicoApostas = apostasHoje.map((a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { nome: true; preco: true } } } }>) => ({
         id: a.id,
         valor: valorAposta(a),
         metodoPagamento: 'dinheiro', // POS mostly uses cash initially
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
         jogo: { nome: a.jogo.nome }
     }));
 
-    const historicoPart = partHoje.map((p: any) => ({
+    const historicoPart = partHoje.map((p: Prisma.ParticipacaoGetPayload<{ include: { jogo: { select: { nome: true } } } }>) => ({
         id: p.id,
         valor: p.valorPago,
         metodoPagamento: p.metodoPagamento,
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
     }));
 
     const ultimasVendas = [...historicoApostas, ...historicoPart]
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a: { createdAt: string }, b: { createdAt: string }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 10); // top 10 do dia
 
     const data = {
@@ -105,7 +106,8 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro no dashboard vendedor:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }

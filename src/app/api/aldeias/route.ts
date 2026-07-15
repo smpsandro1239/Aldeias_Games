@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getUserFromRequest } from '@/lib/auth'
 import { z } from 'zod'
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     const tipoOrganizacao = searchParams.get('tipoOrganizacao') || undefined
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.AldeiaWhereInput = {
       ativo: true,
       verificado: true,
     }

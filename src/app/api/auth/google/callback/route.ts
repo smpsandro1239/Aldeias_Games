@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
       tokenUrl: 'https://oauth2.googleapis.com/token',
       redirectUri: process.env.GOOGLE_REDIRECT_URI,
       scope: 'openid email profile',
-      getUserData: async (tokenData: any) => {
-        const { id_token } = tokenData;
+      getUserData: async (tokenData: Record<string, unknown>) => {
+        const id_token = tokenData.id_token as string | undefined;
         if (!id_token) {
           throw new Error('No ID token in Google response');
         }

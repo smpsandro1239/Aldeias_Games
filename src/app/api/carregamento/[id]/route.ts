@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import crypto from 'crypto';
@@ -162,7 +163,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Credit saldo ao jogador + cashbox do vendedor (transação atómica)
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.user.update({
         where: { id: pedido.userId },
         data: { saldo: { increment: pedido.valor } }

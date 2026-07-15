@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import crypto from 'crypto';
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
     const tipo = searchParams.get('tipo'); 
     const estado = searchParams.get('estado');
 
-    let where: any = {};
+    let where: Prisma.PedidoCarregamentoWhereInput = {};
 
     // Jogador: ver os seus pedidos
     if (user.role === 'user') {

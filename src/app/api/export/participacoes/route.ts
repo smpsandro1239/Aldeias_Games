@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     const dataFim = searchParams.get('dataFim');
     const formato = searchParams.get('formato') || 'csv';
 
-    const where: any = {};
+    const where: Prisma.ParticipacaoWhereInput = {};
     if (jogoId) where.jogoId = jogoId;
     if (eventoId) where.eventoId = eventoId;
     if (dataInicio) where.createdAt = { gte: new Date(dataInicio) };
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    const participacoesData = participacoes.map((p: any) => ({
+    const participacoesData = participacoes.map((p: Prisma.ParticipacaoGetPayload<{ include: { jogo: true, user: true } }>) => ({
       id: p.id,
       dadosParticipacao: p.dadosParticipacao,
       nomeCliente: p.nomeCliente || p.user?.nome,
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     
     const csvRows = [
       ['#', 'Jogo', 'Número', 'Cliente', 'Telefone', 'Email', 'Valor', 'Data', 'Estado'].join(','),
-      ...participacoesData.map((p: any, index: number) => {
+      ...participacoesData.map((p, index: number) => {
         const dados = JSON.parse(p.dadosParticipacao);
         return [
           index + 1,
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
       })
     ];
 
-    const total = participacoesData.reduce((acc: number, p: any) => acc + p.valorPago, 0);
+    const total = participacoesData.reduce((acc: number, p) => acc + p.valorPago, 0);
     csvRows.push('');
     csvRows.push(`Total de participantes,${participacoesData.length}`);
     csvRows.push(`Valor total angariado,${total.toFixed(2)}€`);

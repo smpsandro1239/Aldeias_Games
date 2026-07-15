@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const allLogs = [
-      ...auditLogs.map((log: any) => ({
+      ...auditLogs.map((log: Prisma.AuditLogGetPayload<{ include: { user: true } }>) => ({
         tipo: 'audit' as const,
         id: log.id,
         timestamp: log.createdAt,
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
         metadata: log.metadata,
         user: log.user,
       })),
-      ...logsAcesso.map((log: any) => ({
+      ...logsAcesso.map((log: Prisma.LogAcessoGetPayload<{ include: { user: true } }>) => ({
         tipo: 'acesso' as const,
         id: log.id,
         timestamp: log.createdAt,
@@ -83,12 +84,12 @@ export async function GET(request: NextRequest) {
         motivo: log.motivo,
         user: log.user,
       })),
-    ].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     const filtered = tipo === 'audit'
-      ? allLogs.filter((l: any) => l.tipo === 'audit')
+      ? allLogs.filter((l) => l.tipo === 'audit')
       : tipo === 'acesso'
-      ? allLogs.filter((l: any) => l.tipo === 'acesso')
+      ? allLogs.filter((l) => l.tipo === 'acesso')
       : allLogs;
     const total = tipo === 'audit' ? totalAudit : tipo === 'acesso' ? totalAcesso : totalAudit + totalAcesso;
 

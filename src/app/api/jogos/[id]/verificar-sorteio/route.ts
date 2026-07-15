@@ -115,7 +115,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
     }
 
     return NextResponse.json(verificationData)
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Error fetching verification data:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

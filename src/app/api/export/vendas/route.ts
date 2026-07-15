@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { exportVendasExcel } from '@/lib/export';
 import { getUserFromRequest } from '@/lib/auth';
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     const formato = searchParams.get('formato') || 'csv'; // csv ou xlsx (por enquanto só suportamos CSV)
 
     // Construir filtro de busca
-    const where: any = {};
+    const where: Prisma.VendaWhereInput = {};
     if (dataInicio) where.createdAt = { gte: new Date(dataInicio) };
     if (dataFim) {
       if (!where.createdAt) where.createdAt = {};
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Formatar dados para exportação
-    const vendasData = vendas.map((v: any) => ({
+    const vendasData = vendas.map((v: Prisma.VendaGetPayload<{ include: { vendedor: true } }>) => ({
       id: v.id,
       valor: v.valor,
       comissao: v.comissao,
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
       // CSV (padrão)
       const csvContent = [
         ['#', 'Vendedor', 'Cliente', 'Valor', 'Comissão', 'Método', 'Data'].join(','),
-        ...vendasData.map((v: any, index: number) => {
+        ...vendasData.map((v, index: number) => {
           const dados = v.dadosCliente ? JSON.parse(v.dadosCliente) : {};
           return [
             index + 1,

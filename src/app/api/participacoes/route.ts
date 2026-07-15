@@ -152,7 +152,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       createPaginatedResponse(participacoes, total, page, limit)
     );
-} catch (error: any) {
+} catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao criar participação:', error);
     const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
     return NextResponse.json(
@@ -464,7 +465,8 @@ export async function POST(request: NextRequest) {
       })() : result.participacoes,
       valorTotal: result.valorTotal,
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao criar participação:', error);
     if (error.message === 'Stock insuficiente' || error.message.includes('Stock insuficiente')) {
       return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 });

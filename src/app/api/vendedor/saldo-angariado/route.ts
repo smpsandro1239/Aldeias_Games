@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
       include: { user: true }
     });
 
-    const totalAngariado = pedidosConfirmados.reduce((acc: number, p: any) => acc + p.valor, 0);
+    const totalAngariado = pedidosConfirmados.reduce((acc: number, p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => acc + p.valor, 0);
 
     // Obter entregas
     const entregas = await prisma.entregaSaldo.findMany({
@@ -33,12 +34,12 @@ export async function GET(request: NextRequest) {
     });
 
     const totalEntregue = entregas
-      .filter((e: any) => e.estado === 'concluido')
-      .reduce((acc: number, e: any) => acc + e.valor, 0);
+      .filter((e: Prisma.EntregaSaldo) => e.estado === 'concluido')
+      .reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0);
 
     const totalSolicitado = entregas
-      .filter((e: any) => e.estado === 'solicitado')
-      .reduce((acc: number, e: any) => acc + e.valor, 0);
+      .filter((e: Prisma.EntregaSaldo) => e.estado === 'solicitado')
+      .reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0);
 
     const saldoAEntregar = totalAngariado - totalEntregue;
 
@@ -48,14 +49,14 @@ export async function GET(request: NextRequest) {
         totalEntregue,
         totalSolicitado,
         saldoAEntregar,
-        historicoPedidos: pedidosConfirmados.map((p: any) => ({
+        historicoPedidos: pedidosConfirmados.map((p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => ({
           id: p.id,
           valor: p.valor,
           usuario: p.user?.nome,
           data: p.createdAt,
           estado: p.estado
         })),
-        historicoEntregas: entregas.map((e: any) => ({
+        historicoEntregas: entregas.map((e: Prisma.EntregaSaldoGetPayload<{ include: { admin: true } }>) => ({
           id: e.id,
           valor: e.valor,
           estado: e.estado,

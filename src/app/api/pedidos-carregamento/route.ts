@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -111,7 +112,7 @@ export async function PATCH(request: NextRequest) {
      // Se confirmado, adicionar saldo ao utilizador (jogador) e ao vendedor
      if (acao === 'confirmar' && pedido.valor > 0) {
        try {
-         await prisma.$transaction(async (tx: any) => {
+         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
            // 1. Creditar jogador
            await tx.transacao.create({
              data: {

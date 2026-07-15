@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import { logger } from '@/lib/logger';
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     const estado = searchParams.get('estado');
 
     // Construir filtro
-    const where: any = {};
+    const where: Prisma.PedidoCarregamentoWhereInput = {};
     
     if (estado && estado !== 'todos') {
       where.estado = estado;
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Mapear dados
-    const data = pedidos.map((p: any) => ({
+    const data = pedidos.map((p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => ({
       id: p.id,
       valor: p.valor,
       estado: p.estado,

@@ -27,7 +27,17 @@ function gerarHashVerificacao(dados: {
   return `AG-${hash.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
 }
 
-function calcularRentabilidade(tipo: string, dados: any) {
+interface CalcularRentabilidadeData {
+  preco?: number;
+  stockInicial?: number;
+  premios?: Array<{ percentagem?: number; valorDinheiroAlternative?: number }>;
+  dimensoesCampo?: string;
+  custoQuadrado?: number;
+  valorCompraVaca?: number;
+  [key: string]: unknown;
+}
+
+function calcularRentabilidade(tipo: string, dados: CalcularRentabilidadeData) {
   const resultado = {
     lucroMinimoPercent: 0,
     custoMedioPrevisto: 0,
@@ -42,14 +52,14 @@ function calcularRentabilidade(tipo: string, dados: any) {
   
   if (tipo === 'raspadinha') {
     const premios = dados.premios || [];
-    resultado.percentagemTotalPremios = premios.reduce((acc: number, p: any) => acc + (p.percentagem || 0), 0);
+    resultado.percentagemTotalPremios = premios.reduce((acc: number, p: { percentagem?: number; valorDinheiroAlternative?: number }) => acc + (p.percentagem || 0), 0);
     resultado.lucroMinimoPercent = 100 - resultado.percentagemTotalPremios;
-    resultado.custoMedioPrevisto = premios.reduce((acc: number, p: any) => 
+    resultado.custoMedioPrevisto = premios.reduce((acc: number, p: { percentagem?: number; valorDinheiroAlternative?: number }) => 
       acc + ((p.valorDinheiroAlternative || 0) * (p.percentagem || 0) / 100), 0);
     resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - (resultado.custoMedioPrevisto * stock);
   } else if (tipo === 'rifa') {
     const premios = dados.premios || [];
-    const custoTotalPremios = premios.reduce((acc: number, p: any) => acc + (p.valorDinheiroAlternative || 0), 0);
+    const custoTotalPremios = premios.reduce((acc: number, p: { percentagem?: number; valorDinheiroAlternative?: number }) => acc + (p.valorDinheiroAlternative || 0), 0);
     resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - custoTotalPremios;
     resultado.lucroMinimoPercent = resultado.receitaEsperada > 0 
       ? (resultado.lucroLiquidoPrevisto / resultado.receitaEsperada) * 100 
@@ -168,7 +178,7 @@ where.evento = {
     ]);
 
     // Adicionar configuracao a cada jogo
-    const jogosComConfig = jogos.map((jogo: any) => ({
+    const jogosComConfig = jogos.map((jogo) => ({
       ...jogo,
       configuracao: typeof jogo.configuracao === 'string' 
         ? JSON.parse(jogo.configuracao) 
@@ -213,7 +223,7 @@ export async function POST(request: NextRequest) {
 
       // Validação defensiva no backend para rifa
       if (data.tipo === 'rifa') {
-        const config = data.configuracao as any;
+        const config = data.configuracao as Record<string, unknown>;
         const numeroInicial = config?.numeroInicial;
         const numeroFinal = config?.numeroFinal;
 
@@ -277,7 +287,7 @@ export async function POST(request: NextRequest) {
     };
     try {
       rentabilidade = calcularRentabilidade(data.tipo, data);
-    } catch (calcError: any) {
+    } catch (calcError: unknown) {
       console.warn('Erro ao calcular rentabilidade, usando valores padrão:', calcError);
     }
     
@@ -300,7 +310,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Preparar dados para Prisma (sem os campos novos que ainda não existem na BD)
-    const jogoData: any = {
+    const jogoData: Record<string, unknown> = {
       nome: data.nome,
       tipo: data.tipo,
       descricao: data.descricao,
@@ -330,7 +340,7 @@ export async function POST(request: NextRequest) {
       ...jogoData,
       ...(data.premios && data.premios.length > 0 ? {
         premios: {
-          create: data.premios.map((p: any, idx: number) => ({
+          create: data.premios.map((p, idx: number) => ({
             nome: p.nome,
             descricao: p.descricao,
             valorDinheiroAlternative: p.valorDinheiroAlternative,
@@ -379,7 +389,8 @@ export async function POST(request: NextRequest) {
        { success: true, data: jogo },
        { status: 201 }
      );
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao criar jogo:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

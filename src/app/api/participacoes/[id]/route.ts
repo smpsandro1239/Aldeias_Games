@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -46,7 +47,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
     const body = await request.json();
     
     // Lista de campos permitidos para atualização via admin/vendedor
-    const updateData: any = {};
+    const updateData: Prisma.ParticipacaoUpdateInput = {};
     if (body.estadoPagamento) updateData.estadoPagamento = body.estadoPagamento;
     if (body.premioEntregue !== undefined) updateData.premioEntregue = body.premioEntregue;
     if (body.revelado !== undefined) updateData.revelado = body.revelado;

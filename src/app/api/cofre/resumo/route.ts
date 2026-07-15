@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
       const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const monthLabel = d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' });
 
-      const vaultTx = (vault?.transacoes || []).filter((tx: any) => {
+      const vaultTx = (vault?.transacoes || []).filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => {
         const txDate = new Date(tx.dataCriacao);
         return txDate.getMonth() === d.getMonth() &&
                txDate.getFullYear() === d.getFullYear() &&
@@ -79,12 +80,12 @@ export async function GET(request: NextRequest) {
       });
 
       const depositosMes = vaultTx
-        .filter((tx: any) => tx.tipo === 'deposito')
-        .reduce((sum: number, tx: any) => sum + tx.valor, 0);
+        .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'deposito')
+        .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
       const levantamentosMes = vaultTx
-        .filter((tx: any) => tx.tipo === 'levantamento')
-        .reduce((sum: number, tx: any) => sum + tx.valor, 0);
+        .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento')
+        .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
       months.push({
         month: monthLabel,
@@ -94,29 +95,29 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const totalCashboxSaldo = cashboxes.reduce((sum: number, cb: any) => sum + cb.saldo, 0);
+    const totalCashboxSaldo = cashboxes.reduce((sum: number, cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => sum + cb.saldo, 0);
 
     const cashboxPorRole = {
-      vendedores: cashboxes.filter((cb: any) => cb.user.role === 'vendedor').reduce((sum: number, cb: any) => sum + cb.saldo, 0),
-      adminsAldeia: cashboxes.filter((cb: any) => cb.user.role === 'aldeia_admin').reduce((sum: number, cb: any) => sum + cb.saldo, 0),
-      superAdmins: cashboxes.filter((cb: any) => cb.user.role === 'super_admin').reduce((sum: number, cb: any) => sum + cb.saldo, 0),
+      vendedores: cashboxes.filter((cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => cb.user.role === 'vendedor').reduce((sum: number, cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => sum + cb.saldo, 0),
+      adminsAldeia: cashboxes.filter((cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => cb.user.role === 'aldeia_admin').reduce((sum: number, cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => sum + cb.saldo, 0),
+      superAdmins: cashboxes.filter((cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => cb.user.role === 'super_admin').reduce((sum: number, cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => sum + cb.saldo, 0),
     };
 
     const totalDepositosConfirmados = depositos
-      .filter((d: any) => d.estado === 'confirmado')
-      .reduce((sum: number, d: any) => sum + d.valor, 0);
+      .filter((d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => d.estado === 'confirmado')
+      .reduce((sum: number, d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => sum + d.valor, 0);
 
     const totalDepositosPendentes = depositos
-      .filter((d: any) => d.estado === 'pendente')
-      .reduce((sum: number, d: any) => sum + d.valor, 0);
+      .filter((d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => d.estado === 'pendente')
+      .reduce((sum: number, d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => sum + d.valor, 0);
 
     const totalLevantamentosConfirmados = (vault?.transacoes || [])
-      .filter((tx: any) => tx.tipo === 'levantamento' && tx.estado === 'confirmado')
-      .reduce((sum: number, tx: any) => sum + tx.valor, 0);
+      .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento' && tx.estado === 'confirmado')
+      .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
     const totalLevantamentosPendentes = (vault?.transacoes || [])
-      .filter((tx: any) => tx.tipo === 'levantamento' && tx.estado === 'pendente')
-      .reduce((sum: number, tx: any) => sum + tx.valor, 0);
+      .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento' && tx.estado === 'pendente')
+      .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
     const distribuicaoDinheiro = {
       cofre: vault?.saldo || 0,
@@ -126,24 +127,24 @@ export async function GET(request: NextRequest) {
     };
 
     const topCashboxes = cashboxes
-      .map((cb: any) => ({
+      .map((cb: Prisma.VendedorCashboxGetPayload<{ include: { user: { select: { id: true; nome: true; role: true } }; transacoes: { orderBy: { createdAt: 'desc' }; take: 200; select: { tipo: true; valor: true; createdAt: true } } } }>) => ({
         userId: cb.user.id,
         nome: cb.user.nome,
         role: cb.user.role,
         saldo: cb.saldo,
         totalRecebido: cb.transacoes
-          .filter((t: any) => t.tipo === 'RECEBIDO_DO_JOGADOR')
-          .reduce((sum: number, t: any) => sum + t.valor, 0),
+          .filter((t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => t.tipo === 'RECEBIDO_DO_JOGADOR')
+          .reduce((sum: number, t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => sum + t.valor, 0),
         totalDepositado: cb.transacoes
-          .filter((t: any) => t.tipo === 'DEPOSITADO_NO_COFRE')
-          .reduce((sum: number, t: any) => sum + t.valor, 0),
+          .filter((t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => t.tipo === 'DEPOSITADO_NO_COFRE')
+          .reduce((sum: number, t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => sum + t.valor, 0),
         totalLevantado: cb.transacoes
-          .filter((t: any) => t.tipo === 'LEVANTAMENTO_COFRE')
-          .reduce((sum: number, t: any) => sum + t.valor, 0),
+          .filter((t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => t.tipo === 'LEVANTAMENTO_COFRE')
+          .reduce((sum: number, t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => sum + t.valor, 0),
       }))
-      .sort((a: any, b: any) => b.saldo - a.saldo);
+      .sort((a: { saldo: number }, b: { saldo: number }) => b.saldo - a.saldo);
 
-    const ultimasTransacoes = (vault?.transacoes || []).slice(0, 20).map((tx: any) => ({
+    const ultimasTransacoes = (vault?.transacoes || []).slice(0, 20).map((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => ({
       tipo: tx.tipo,
       valor: tx.valor,
       descricao: tx.descricao,

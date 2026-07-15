@@ -152,7 +152,8 @@ export async function PUT(
         fonte: fonteResultado,
       },
     });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error("Error drawing grelha:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -81,17 +82,17 @@ export async function GET(request: NextRequest) {
 
     // Calcular totais
     const totalCarregamentos = transacoes
-      .filter((t: any) => (t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0)
-      .reduce((acc: number, t: any) => acc + t.valor, 0);
+      .filter((t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => (t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0)
+      .reduce((acc: number, t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => acc + t.valor, 0);
 
-    const totalVendas = vendas.reduce((acc: number, v: any) => acc + v.valor, 0);
-    const totalComissoes = vendas.reduce((acc: number, v: any) => acc + v.comissao, 0);
-    const totalParticipacoes = participacoes.reduce((acc: number, p: any) => acc + p.valorPago, 0);
+    const totalVendas = vendas.reduce((acc: number, v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => acc + v.valor, 0);
+    const totalComissoes = vendas.reduce((acc: number, v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => acc + v.comissao, 0);
+    const totalParticipacoes = participacoes.reduce((acc: number, p: { id: string; valorPago: number; metodoPagamento: Prisma.MetodoPagamento; createdAt: Date; jogo: { nome: string; tipo: Prisma.TipoJogo } }) => acc + p.valorPago, 0);
 
     // Agrupar por método de pagamento
     const porMetodo: Record<string, { carregamentos: number; vendas: number; participacoes: number }> = {};
     
-    transacoes.forEach((t: any) => {
+    transacoes.forEach((t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => {
       const metodo = t.metodoPagamento || 'dinheiro';
       if (!porMetodo[metodo]) {
         porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    participacoes.forEach((p: any) => {
+    participacoes.forEach((p: { id: string; valorPago: number; metodoPagamento: Prisma.MetodoPagamento; createdAt: Date; jogo: { nome: string; tipo: Prisma.TipoJogo } }) => {
       const metodo = p.metodoPagamento || 'dinheiro';
       if (!porMetodo[metodo]) {
         porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
@@ -109,7 +110,7 @@ export async function GET(request: NextRequest) {
       porMetodo[metodo].participacoes += p.valorPago;
     });
 
-    vendas.forEach((v: any) => {
+    vendas.forEach((v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => {
       const metodo = v.metodoPagamento || 'dinheiro';
       if (!porMetodo[metodo]) {
         porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
@@ -131,11 +132,11 @@ export async function GET(request: NextRequest) {
         diferenca,
         percentagemDiferenca: totalReceitas > 0 ? ((diferenca / totalReceitas) * 100).toFixed(2) : '0',
       },
-      porMetodo: Object.entries(porMetodo).map(([metodo, valores]: [string, any]) => ({
+      porMetodo: Object.entries(porMetodo).map(([metodo, valores]: [string, { carregamentos: number; vendas: number; participacoes: number }]) => ({
         metodo,
         ...valores,
       })),
-      transacoesRecentes: transacoes.slice(0, 20).map((t: any) => ({
+      transacoesRecentes: transacoes.slice(0, 20).map((t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => ({
         id: t.id,
         tipo: t.tipo,
         valor: t.valor,
@@ -145,7 +146,7 @@ export async function GET(request: NextRequest) {
         utilizador: t.user?.nome,
         data: t.createdAt,
       })),
-      vendasRecentes: vendas.slice(0, 20).map((v: any) => ({
+      vendasRecentes: vendas.slice(0, 20).map((v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => ({
         id: v.id,
         valor: v.valor,
         comissao: v.comissao,
@@ -156,7 +157,8 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro no financeiro:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }

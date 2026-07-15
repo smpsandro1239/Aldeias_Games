@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getUserFromRequest } from '@/lib/auth'
 import { z } from 'zod'
@@ -136,7 +137,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
     const updateData = result.data
 
     // Prepare data for Prisma update
-    const prismaUpdateData: any = { ...updateData }
+    const prismaUpdateData: Prisma.AldeiaUpdateInput = { ...updateData }
 
     // If nome is being updated, regenerate slug and check uniqueness
     if (updateData.nome !== undefined) {

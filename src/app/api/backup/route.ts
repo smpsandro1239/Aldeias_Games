@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import fs from 'fs';
@@ -37,10 +38,10 @@ export async function POST(request: NextRequest) {
       const filename = `backup-${timestamp}.json`;
       const filepath = path.join(backupsDir, filename);
 
-      const dados = await prisma.$transaction(async (tx: any) => {
+      const dados = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const aldeias = await tx.aldeia.findMany({ include: { users: true } });
         // Remover passwords dos utilizadores no backup
-        const users = (await tx.user.findMany()).map(({ password, ...rest }: { password: string; [key: string]: any }) => rest);
+        const users = (await tx.user.findMany()).map(({ password, ...rest }) => rest);
         const eventos = await tx.evento.findMany();
         const jogos = await tx.jogo.findMany();
         const participacoes = await tx.participacao.findMany();
@@ -115,7 +116,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao processar backup:', error);
     return NextResponse.json({ error: error.message || 'Erro interno do servidor' }, { status: 500 });
   }

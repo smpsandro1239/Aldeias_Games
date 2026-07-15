@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock jose before importing middleware
+// Mock jose before importing proxy
 vi.mock('jose', () => ({
   jwtVerify: vi.fn(),
 }));
@@ -11,7 +11,7 @@ vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 10, resetTime: null }),
 }));
 
-import { middleware } from '@/middleware';
+import { proxy } from '@/proxy';
 import { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
@@ -50,7 +50,7 @@ function createRequest(pathname: string, options: {
   });
 }
 
-describe('Middleware', () => {
+describe('Proxy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -58,19 +58,19 @@ describe('Middleware', () => {
   describe('Public pages', () => {
     it('deve permitir acesso a páginas públicas', async () => {
       const req = createRequest('/');
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(401);
     });
 
     it('deve permitir acesso a /login', async () => {
       const req = createRequest('/login');
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(401);
     });
 
     it('deve permitir acesso a /register', async () => {
       const req = createRequest('/register');
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(401);
     });
   });
@@ -78,13 +78,13 @@ describe('Middleware', () => {
   describe('API authentication', () => {
     it('deve bloquear API protegida sem token', async () => {
       const req = createRequest('/api/users/perfil');
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(401);
     });
 
     it('deve permitir API pública sem token', async () => {
       const req = createRequest('/api/auth/login');
-      const res = await middleware(req);
+      const res = await proxy(req);
       // Public routes pass through — should not be 401
       expect(res.status).not.toBe(401);
     });
@@ -95,7 +95,7 @@ describe('Middleware', () => {
       } as any);
 
       const req = createRequest('/api/users/perfil', { bearerToken: 'valid-token' });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(401);
     });
 
@@ -103,7 +103,7 @@ describe('Middleware', () => {
       vi.mocked(jwtVerify).mockRejectedValue(new Error('Invalid token'));
 
       const req = createRequest('/api/users/perfil', { bearerToken: 'invalid-token' });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(401);
     });
 
@@ -113,7 +113,7 @@ describe('Middleware', () => {
       } as any);
 
       const req = createRequest('/api/users/perfil', { cookieToken: 'valid-token' });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(401);
     });
   });
@@ -128,7 +128,7 @@ describe('Middleware', () => {
         method: 'GET',
         cookieToken: 'valid-token',
       });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(403);
     });
 
@@ -143,7 +143,7 @@ describe('Middleware', () => {
         origin: 'https://evil.com',
         host: 'localhost:3000',
       });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(403);
     });
 
@@ -158,7 +158,7 @@ describe('Middleware', () => {
         origin: 'http://localhost:3000',
         host: 'localhost:3000',
       });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(403);
     });
 
@@ -173,7 +173,7 @@ describe('Middleware', () => {
         origin: 'https://evil.com',
         host: 'localhost:3000',
       });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(403);
     });
   });
@@ -181,7 +181,7 @@ describe('Middleware', () => {
   describe('Page role protection', () => {
     it('deve redirecionar user sem token para /', async () => {
       const req = createRequest('/clientedashboard');
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(307);
       expect(res.headers.get('location')).toContain('/');
     });
@@ -192,7 +192,7 @@ describe('Middleware', () => {
       } as any);
 
       const req = createRequest('/superadmindashboard', { cookieToken: 'token' });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(307);
       expect(res.headers.get('location')).toContain('/clientedashboard');
     });
@@ -203,7 +203,7 @@ describe('Middleware', () => {
       } as any);
 
       const req = createRequest('/superadmindashboard', { cookieToken: 'token' });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).not.toBe(307);
     });
 
@@ -213,7 +213,7 @@ describe('Middleware', () => {
       } as any);
 
       const req = createRequest('/superadmindashboard', { cookieToken: 'token' });
-      const res = await middleware(req);
+      const res = await proxy(req);
       expect(res.status).toBe(307);
       expect(res.headers.get('location')).toContain('/admindashboard');
     });

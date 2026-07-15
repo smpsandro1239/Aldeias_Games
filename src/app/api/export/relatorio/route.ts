@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
-function generatePDFReport(data: any, type: string): string {
+function generatePDFReport(data: string, type: string): string {
   // Simplified HTML report that can be printed
   let html = `<!DOCTYPE html>
 <html>
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       case 'vendas': {
         const vendas = await prisma.transacao.findMany({
           where: {
-            tipo: { in: ['venda', 'pagamento'] as any },
+            tipo: { in: ['venda', 'pagamento'] as const },
             ...(dataInicio && dataFim ? {
               createdAt: {
                 gte: new Date(dataInicio),
@@ -58,10 +59,10 @@ export async function POST(request: NextRequest) {
         });
         
         // Filter by aldeia in JavaScript
-        const filteredVendas = vendas.filter((v: any) => v.user?.aldeiaId === user.aldeiaId);
+        const filteredVendas = vendas.filter((v: Prisma.TransacaoGetPayload<{ include: { user: true } }>) => v.user?.aldeiaId === user.aldeiaId);
 
         let total = 0;
-        const rows = filteredVendas.map((v: any) => {
+        const rows = filteredVendas.map((v: Prisma.TransacaoGetPayload<{ include: { user: true } }>) => {
           total += v.valor;
           return `<tr>
             <td>${new Date(v.createdAt).toLocaleDateString('pt-PT')}</td>
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
           orderBy: { createdAt: 'desc' },
         });
 
-        const rows = jogos.map((j: any) => `<tr>
+        const rows = jogos.map((j: Prisma.JogoGetPayload<{ include: { evento: true } }>) => `<tr>
           <td>${j.nome}</td>
           <td>${j.tipo}</td>
           <td>${j.estado}</td>
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
           select: { nome: true, email: true, comissaoTotal: true, saldo: true },
         });
 
-        const rows = vendedores.map((v: any) => `<tr>
+        const rows = vendedores.map((v: Prisma.User) => `<tr>
           <td>${v.nome}</td>
           <td>${v.email}</td>
           <td>${(v.comissaoTotal || 0).toFixed(2)}€</td>
@@ -129,7 +130,8 @@ export async function POST(request: NextRequest) {
         'Content-Disposition': `attachment; filename="relatorio-${tipo}-${Date.now()}.html"`,
       },
     });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao gerar relatório:', error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

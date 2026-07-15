@@ -80,12 +80,12 @@ export async function POST(request: NextRequest) {
       resultado = { letraVencedora: letra, numeroVencedor: numero };
 
       // Encontrar vencedores entre as participações reais
-      const vencedoresPoio = jogo.participacoes.filter((p: any) => {
+      const vencedoresPoio = jogo.participacoes.filter((p) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
         return dados.letra === letra && dados.numero === numero;
       });
 
-      vencedores = vencedoresPoio.map((v: any, index: number) => ({
+      vencedores = vencedoresPoio.map((v, index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
@@ -115,12 +115,12 @@ export async function POST(request: NextRequest) {
       resultado = { numeroVencedor };
 
       // Encontrar vencedores entre as participações reais
-      const vencedoresRifa = jogo.participacoes.filter((p: any) => {
+      const vencedoresRifa = jogo.participacoes.filter((p) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
         return dados.numero === numeroVencedor;
       });
 
-      vencedores = vencedoresRifa.map((v: any, index: number) => ({
+      vencedores = vencedoresRifa.map((v, index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {

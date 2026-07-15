@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -31,7 +32,7 @@ export async function PUT(
     }
 
     if (acao === 'confirmar') {
-      await prisma.$transaction(async (tx: any) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.pedidoDepositoCofre.update({
           where: { id },
           data: {
@@ -154,7 +155,8 @@ export async function PUT(
     }
 
     return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Error processing deposit request:', error);
     return NextResponse.json({
       error: error.message || 'Erro interno'

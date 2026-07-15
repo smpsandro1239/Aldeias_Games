@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 
@@ -30,7 +31,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Não pode gerir utilizadores de outra aldeia' }, { status: 403 });
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.UserUpdateInput = {};
 
     if (role) {
       // Converter role

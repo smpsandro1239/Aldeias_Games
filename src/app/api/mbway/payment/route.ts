@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
       transactionId: result.transactionId,
       reference: result.reference,
     });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
     console.error('Erro ao iniciar pagamento MBWay:', error);
     return NextResponse.json(
       { error: error.message || 'Erro ao processar pagamento' },
