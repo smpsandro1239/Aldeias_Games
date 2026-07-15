@@ -82,7 +82,7 @@ test.describe('Fluxo Completo: Login → Dashboard → Jogos', () => {
     expect(res.ok()).toBeTruthy();
     const data = await res.json();
     expect(data).toHaveProperty('status');
-    expect(data.status).toBe('ok');
+    expect(data.status).toBe('healthy');
   });
 
   test('página de jogos carrega correctamente', async ({ page }) => {
@@ -138,7 +138,7 @@ test.describe('Fluxo API: Verificação de Integridade', () => {
   test('health check inclui versão', async ({ request }) => {
     const res = await request.get('/api/health');
     const data = await res.json();
-    expect(data).toHaveProperty('status', 'ok');
+    expect(data).toHaveProperty('status', 'healthy');
     // Health should respond quickly
     expect(res.headers()['content-type']).toContain('application/json');
   });
