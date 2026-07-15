@@ -79,7 +79,7 @@ prisma.transacao.create({
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
     }
 
-    if (valor <= 0 && tipo !== 'cashback') {
+    if (valor <= 0) {
       return NextResponse.json({ error: 'O valor deve ser positivo' }, { status: 400 });
     }
 

@@ -8,6 +8,12 @@ export async function GET(
   context: { params: Promise<{aldeiaId: string;}> }
 ) {
   try {
+    // LOW #19: Verificar autenticação (defense-in-depth)
+    const user = await getUserFromRequest(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const { aldeiaId } = await context.params
 
     // Get aldeia data with member count

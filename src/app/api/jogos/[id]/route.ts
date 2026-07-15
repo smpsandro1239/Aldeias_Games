@@ -14,10 +14,17 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const jogo = await prisma.jogo.findUnique({
       where: { id },
-      include: { evento: true, premios: true }
+      include: {
+        evento: { select: { id: true, nome: true, slug: true, aldeiaId: true } },
+        premios: { select: { id: true, nome: true, descricao: true, valorEstimado: true, posicao: true } }
+      }
     });
     if (!jogo) return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
-    return NextResponse.json({ data: jogo });
+
+    // LOW #20: Não expor configuracao interna (odds, regras, etc.)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { configuracao, probabilidadeVitoria, odds, ...publicJogo } = jogo as any;
+    return NextResponse.json({ data: publicJogo });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

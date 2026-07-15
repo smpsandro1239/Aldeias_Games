@@ -8,6 +8,7 @@ const RATE_LIMIT_CONFIG: Record<string, { maxRequests: number; windowMs: number 
   "/api/auth/login": { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 attempts / 15min
   "/api/auth/register": { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 per hour
   "/api/auth/forgot-password": { maxRequests: 3, windowMs: 60 * 60 * 1000 },
+  "/api/auth/reset-password/confirm": { maxRequests: 5, windowMs: 60 * 60 * 1000 },
   "/api/pagamentos/stripe": { maxRequests: 10, windowMs: 60 * 1000 },
   "/api/pagamentos/mbway": { maxRequests: 10, windowMs: 60 * 1000 },
   "/api/participacoes": { maxRequests: 20, windowMs: 60 * 1000 },
@@ -21,7 +22,6 @@ const publicRoutes = [
   '/api/auth/register',
   '/api/auth/reset-password',
   '/api/auth/verify-email',
-  '/api/auth/2fa',
   '/api/aldeias',
   '/api/eventos',
   '/api/jogos',
@@ -70,8 +70,12 @@ function validateCsrfOrigin(request: NextRequest): boolean {
 
   if (!host) return true; // Can't validate without host
 
-  // Allow requests with no Origin or Referer (same-site cookies + direct browser navigation)
-  if (!origin && !referer) return true;
+  // Allow requests with no Origin or Referer ONLY for safe methods
+  // State-changing requests must have Origin or Referer for CSRF protection
+  if (!origin && !referer) {
+    if (safeMethods.includes(method)) return true;
+    return false;
+  }
 
   if (origin) {
     try {

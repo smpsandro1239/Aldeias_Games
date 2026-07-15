@@ -143,22 +143,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Apenas incrementar saldo se for dinheiro (confirmado presencialmente pelo admin)
-    // Para MBWay/Transferência, o saldo é incrementado quando o webhook confirma o pagamento
-    if (metodoCarregamento === 'dinheiro') {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          saldo: { increment: valor }
-        }
-      });
-
-      // Atualizar estado para concluido
-      await (prisma.transacao as any).update({
-        where: { id: carregamento.id },
-        data: { dadosAdicionais: { ...carregamento.dadosAdicionais, estado: 'concluido' } }
-      });
-    }
+    // NÃO incrementar saldo aqui — pagamento em dinheiro requer confirmação manual do admin
+    // O saldo é incrementado quando o admin confirma via /api/admin/pedidos-carregamento/[id]/confirmar
 
     const adminsDaAldeia = await prisma.user.findMany({
       where: {
@@ -210,8 +196,8 @@ export async function POST(request: NextRequest) {
         carregamentoId: carregamento.id,
         valor,
         metodoPagamento: metodoCarregamento,
-        estado: metodoCarregamento === 'dinheiro' ? 'concluido' : 'pendente_confirmacao',
-        saldoAtual: user.saldo + (metodoCarregamento === 'dinheiro' ? valor : 0),
+        estado: 'pendente_confirmacao',
+        saldoAtual: user.saldo,
         vendedor: {
           nome: user.nome,
           email: user.email,

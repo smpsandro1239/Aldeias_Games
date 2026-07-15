@@ -1,0 +1,24 @@
+fix: resolve 21 security audit findings (4 CRITICAL, 7 HIGH, 6 MEDIUM, 2 LOW)
+
+CRITICAL:
+- Remove auto-credit on cash top-up (wallet/carregar) - requires admin confirmation
+- Fix double credit in pedidos-carregamento PATCH - only credit player, not vendedor
+- Fix pedido.id -> pedido.userId in admin confirmar route - credit correct user
+- Remove /api/auth/2fa from publicRoutes in proxy - now requires auth
+
+HIGH:
+- Require TOTP re-verification to disable 2FA
+- Validate prize conversion amount (max EUR10,000) and fix userId bug
+- Add aldeia ownership check for admin pedido confirmation
+- Remove cashback negative-balance exception in wallet adjust
+- Replace Math.random() with crypto.randomInt() for OTP generation
+
+MEDIUM:
+- Strip service config details from health endpoint (no version/env leak)
+- Add rate limit on reset-password/confirm endpoint (5/hour)
+- Require Origin or Referer for state-changing CSRF requests
+- Reduce JWT expiry from 30 days to 24 hours
+
+LOW:
+- Add auth check on aldeia dashboard API route (defense-in-depth)
+- Strip game odds/config from public jogos/[id] GET response

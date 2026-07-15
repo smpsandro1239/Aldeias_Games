@@ -16,6 +16,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
     }
 
+    // HIGH #11: Validar limite máximo de conversão de prémio (prevenir abuso)
+    const MAX_PRIZE_CONVERSION = 10000; // €10,000
+    if (valor > MAX_PRIZE_CONVERSION) {
+      return NextResponse.json({ error: `Valor máximo de conversão: €${MAX_PRIZE_CONVERSION}` }, { status: 400 });
+    }
+
     // Buscar participação
     const participacao = await prisma.participacao.findUnique({
       where: { id: participacaoId },
@@ -38,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determinar qual utilizador vai receber o crédito
-    let userIdToCredit = participacao.id;
+    let userIdToCredit = participacao.userId;
     
     if (!userIdToCredit) {
       // Se não há userId, tentar encontrar pelo email/telefone do cliente

@@ -75,6 +75,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'disable') {
+      const { code } = body;
+
+      // HIGH #10: Requer verificação TOTP para desativar 2FA
+      if (!code) {
+        return NextResponse.json({ error: 'Código TOTP obrigatório para desativar 2FA' }, { status: 400 });
+      }
+
+      const tfa = await prisma.twoFactorAuth.findUnique({
+        where: { userId: user.id },
+      });
+
+      if (!tfa || !tfa.enabled) {
+        return NextResponse.json({ error: '2FA não está ativo' }, { status: 400 });
+      }
+
+      const isValid = verifyMFAOTP(code, tfa.secret);
+      if (!isValid) {
+        await logAudit(user.id, '2fa_disable_fail', 'security', undefined, { email: user.email }, ip, ua);
+        return NextResponse.json({ error: 'Código TOTP inválido' }, { status: 400 });
+      }
+
       await prisma.twoFactorAuth.update({
         where: { userId: user.id },
         data: { enabled: false },

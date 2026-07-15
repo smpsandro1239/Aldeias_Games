@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const estado = url.searchParams.get('estado');
 
     // Construir where clause
-    let where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {};
 
     // Super admin pode ver tudo - sem filtro
     if (user.role === 'super_admin') {
@@ -109,14 +109,14 @@ export async function PATCH(request: NextRequest) {
       }
     });
 
-     // Se confirmado, adicionar saldo ao utilizador (jogador) e ao vendedor
+     // Se confirmado, adicionar saldo ao utilizador (jogador) — APENAS o jogador recebe o crédito
      if (acao === 'confirmar' && pedido.valor > 0) {
        try {
          await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-           // 1. Creditar jogador
+           // Creditar apenas o jogador
            await tx.transacao.create({
              data: {
-               userId: pedido.id,
+               userId: pedido.userId,
                tipo: 'carregamento_saldo',
                valor: pedido.valor,
                descricao: 'Carregamento via vendedor confirmado',
@@ -126,28 +126,9 @@ export async function PATCH(request: NextRequest) {
            });
 
            await tx.user.update({
-             where: { id: pedido.id },
+             where: { id: pedido.userId },
              data: { saldo: { increment: pedido.valor } }
            });
-
-           // 2. Creditar vendedor (se existir)
-           if (pedido.vendedorId) {
-             await tx.transacao.create({
-               data: {
-                 userId: pedido.vendedorId,
-                 tipo: 'deposito',
-                 valor: pedido.valor,
-                 descricao: `Recebimento de carregamento do jogador ${pedido.user?.nome || 'unknown'}`,
-                 estado: 'concluido',
-                 dadosAdicionais: { pedidoId: pedido.id, userId: pedido.id }
-               }
-             });
-
-             await tx.user.update({
-               where: { id: pedido.vendedorId },
-               data: { saldo: { increment: pedido.valor } }
-             });
-           }
          });
 
        } catch (transError) {

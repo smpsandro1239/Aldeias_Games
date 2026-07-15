@@ -7,9 +7,9 @@ import prisma from './db';
 // Constants
 const AUTH_COOKIE_NAME = 'auth-token';
 const REFRESH_COOKIE_NAME = 'refresh-token';
-const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 dias em segundos
+const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 horas em segundos
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 dias em segundos
-const JWT_EXPIRATION = '30d';
+const JWT_EXPIRATION = '24h';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 const JWT_SECRET = process.env.JWT_SECRET;

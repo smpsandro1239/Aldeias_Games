@@ -25,15 +25,11 @@ export async function GET() {
     checks.environment = { status: 'configured' };
   }
 
-  // Verificar serviços externos (configurados ou não)
-  checks.stripe = {
-    status: process.env.STRIPE_SECRET_KEY ? 'configured' : 'not_configured',
-  };
-  checks.mbway = {
-    status: process.env.MBWAY_API_KEY ? 'configured' : 'not_configured',
-  };
-  checks.smtp = {
-    status: process.env.SMTP_HOST ? 'configured' : 'not_configured',
+  // MEDIUM #12: Não expor detalhes de configuração de serviços externos
+  checks.services = {
+    stripe: { status: process.env.STRIPE_SECRET_KEY ? 'available' : 'unavailable' },
+    mbway: { status: process.env.MBWAY_API_KEY ? 'available' : 'unavailable' },
+    smtp: { status: process.env.SMTP_HOST ? 'available' : 'unavailable' },
   };
 
   const statusCode = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
@@ -41,12 +37,6 @@ export async function GET() {
   return NextResponse.json({
     status: overallStatus,
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '3.11.1',
-    environment: process.env.NODE_ENV || 'development',
-    services: checks,
-    backup: {
-      policy: 'Backups diários com retenção de 30 dias (configurar no provedor de base de dados)',
-      lastBackup: 'Configurar monitorização de backups no provedor',
-    },
+    services: checks.services,
   }, { status: statusCode });
 }

@@ -35,6 +35,11 @@ export async function POST(
       return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
 
+    // HIGH #8: aldeia_admin só pode confirmar pedidos da sua própria aldeia
+    if (payload.role === 'aldeia_admin' && pedido.aldeiaId !== payload.aldeiaId) {
+      return NextResponse.json({ error: 'Sem permissão para confirmar pedidos de outra aldeia' }, { status: 403 });
+    }
+
     if (pedido.estado !== 'pendente') {
       return NextResponse.json({ error: 'Pedido já processado' }, { status: 400 });
     }
@@ -50,9 +55,9 @@ export async function POST(
       },
     });
 
-    // Adicionar saldo ao utilizador
+    // Adicionar saldo ao utilizador (CORREÇÃO: usar pedido.userId, não pedido.id)
     await prisma.user.update({
-      where: { id: pedido.id },
+      where: { id: pedido.userId },
       data: {
         saldo: {
           increment: pedido.valor,
@@ -60,10 +65,10 @@ export async function POST(
       },
     });
 
-    // Criar transação
+    // Criar transação (CORREÇÃO: usar pedido.userId, não pedido.id)
     await prisma.transacao.create({
       data: {
-        userId: pedido.id,
+        userId: pedido.userId,
         valor: pedido.valor,
         tipo: 'carregamento_saldo',
         descricao: `Carregamento confirmado - ${pedido.metodoPagamento || 'dinheiro'}`,
@@ -74,7 +79,7 @@ export async function POST(
 
     logger.info('Carregamento confirmado', {
       pedidoId: id,
-      userId: pedido.id,
+      userId: pedido.userId,
       valor: pedido.valor,
       confirmadoPor: payload.userId,
     });
