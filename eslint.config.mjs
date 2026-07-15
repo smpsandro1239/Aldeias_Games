@@ -1,16 +1,43 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextPlugin from "@next/eslint-plugin-next";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
+import tseslint from "typescript-eslint";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+const eslintConfig = tseslint.config(
+  // Global ignores
+  {
+    ignores: ["node_modules/", ".next/", "src/components/ui/"],
+  },
 
-const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  // Next.js rules
+  {
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+  },
+
+  // React hooks
+  {
+    plugins: {
+      "react-hooks": reactHooksPlugin,
+    },
+    rules: {
+      ...reactHooksPlugin.configs.recommended.rules,
+    },
+  },
+
+  // TypeScript
+  ...tseslint.configs.recommended,
+
+  // Project rules
   {
     rules: {
       // Prevent console.log in production code
@@ -24,11 +51,17 @@ const eslintConfig = [
       // TypeScript
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "warn",
+      // Prevent bare `location` — must use `window.location` to avoid SSR crashes
+      "no-restricted-globals": [
+        "error",
+        {
+          name: "location",
+          message:
+            "Use `window.location` instead of bare `location` to prevent 'ReferenceError: location is not defined' during SSR/SSG.",
+        },
+      ],
     },
-  },
-  {
-    ignores: ["node_modules/", ".next/", "src/components/ui/"],
-  },
-];
+  }
+);
 
 export default eslintConfig;
