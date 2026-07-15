@@ -44,6 +44,13 @@ export const euromilhoesHandler: GameHandler = {
     if (new Set(numeros).size !== numeros.length) {
       throw new Error('Números duplicados na seleção');
     }
+
+    const ocupados: number[] = JSON.parse(grelhaAtual.numerosOcupados || '[]');
+    for (const num of numeros) {
+      if (ocupados.includes(num)) {
+        throw new Error(`O número ${num} já foi selecionado nesta grelha`);
+      }
+    }
   },
 
   prepareData(data: any) {

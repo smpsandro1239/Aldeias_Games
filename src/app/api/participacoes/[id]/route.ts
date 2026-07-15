@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: Context) {
     if (!participacao) return NextResponse.json({ error: 'Não encontrada' }, { status: 404 });
 
     // Verificar se o usuário pode ver esta participação
-    if (user.role === 'user' && participacao.id !== user.id) {
+    if (user.role === 'user' && participacao.userId !== user.id) {
        return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 

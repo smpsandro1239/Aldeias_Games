@@ -129,6 +129,11 @@ export async function checkRateLimit(
   remaining: number;
   resetTime: number;
 }> {
+  // Skip rate limiting in development for testing
+  if (process.env.NODE_ENV === 'development') {
+    return { allowed: true, remaining: 100, resetTime: Date.now() + config.windowMs };
+  }
+  
   const redis = await getRedisClient();
   
   if (redis) {

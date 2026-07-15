@@ -149,29 +149,29 @@ describe('Rifa Handler', () => {
   const jogo = makeJogo({ tipo: 'rifa' });
 
   describe('validate', () => {
-    it('deve aceitar dados válidos', () => {
+    it('deve aceitar dados válidos', async () => {
       const data = { quantidade: 3, dadosParticipacao: { numeros: [1, 5, 10] } };
-      expect(() => rifaHandler.validate!(data, jogo)).not.toThrow();
+      await expect(rifaHandler.validate!(data, jogo)).resolves.toBeUndefined();
     });
 
-    it('deve rejeitar quando numeros não é array', () => {
+    it('deve rejeitar quando numeros não é array', async () => {
       const data = { quantidade: 1, dadosParticipacao: {} };
-      expect(() => rifaHandler.validate!(data, jogo)).toThrow('Quantidade deve corresponder');
+      await expect(rifaHandler.validate!(data, jogo)).rejects.toThrow('Quantidade deve corresponder');
     });
 
-    it('deve rejeitar quando quantidade não corresponde', () => {
+    it('deve rejeitar quando quantidade não corresponde', async () => {
       const data = { quantidade: 3, dadosParticipacao: { numeros: [1, 2] } };
-      expect(() => rifaHandler.validate!(data, jogo)).toThrow('Quantidade deve corresponder');
+      await expect(rifaHandler.validate!(data, jogo)).rejects.toThrow('Quantidade deve corresponder');
     });
 
-    it('deve rejeitar números duplicados', () => {
+    it('deve rejeitar números duplicados', async () => {
       const data = { quantidade: 3, dadosParticipacao: { numeros: [1, 2, 1] } };
-      expect(() => rifaHandler.validate!(data, jogo)).toThrow('Números duplicados');
+      await expect(rifaHandler.validate!(data, jogo)).rejects.toThrow('Números duplicados');
     });
 
-    it('deve aceitar quantidade 1 com array de 1', () => {
+    it('deve aceitar quantidade 1 com array de 1', async () => {
       const data = { quantidade: 1, dadosParticipacao: { numeros: [42] } };
-      expect(() => rifaHandler.validate!(data, jogo)).not.toThrow();
+      await expect(rifaHandler.validate!(data, jogo)).resolves.toBeUndefined();
     });
   });
 
