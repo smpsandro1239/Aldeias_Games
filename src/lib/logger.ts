@@ -19,10 +19,6 @@ interface LogEntry {
   error?: { name: string; message: string; stack?: string };
 }
 
-function generateRequestId(): string {
-  return `req_${crypto.randomBytes(8).toString('hex')}`;
-}
-
 function formatLog(level: LogLevel, message: string, context?: LogContext, error?: unknown): LogEntry {
   const entry: LogEntry = {
     timestamp: new Date().toISOString(),
@@ -89,6 +85,8 @@ export function createLogger(defaultContext?: LogContext) {
     },
   };
 }
+
+export const logger = createLogger();
 
 export function extractRequestContext(request: Request): LogContext {
   return {

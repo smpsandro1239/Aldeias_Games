@@ -250,6 +250,7 @@ export function PremioModal({
   }, [premio?.id, token, onDelete, onOpenChange]);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-surface-container border-primary/20 p-0 max-w-md overflow-hidden">
         <DialogHeader className="p-6 pb-0">
@@ -413,6 +414,7 @@ export function PremioModal({
       variant="destructive"
       onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
     />
+    </>
   );
 }
 

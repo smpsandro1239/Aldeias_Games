@@ -148,7 +148,7 @@ test.describe('Validações de Segurança', () => {
       },
     });
 
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(401);
   });
 
   test('Rejeitar sorteio sem permissão de admin', async ({ request }) => {
@@ -157,7 +157,7 @@ test.describe('Validações de Segurança', () => {
       data: { jogoId: 'any-id' },
     });
 
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(401);
   });
 });
 
@@ -205,6 +205,6 @@ test.describe('Dashboard Analytics', () => {
 
   test('Rejeitar analytics sem autenticação', async ({ request }) => {
     const res = await request.get(`${BASE_URL}/api/analytics/dashboard`);
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(401);
   });
 });

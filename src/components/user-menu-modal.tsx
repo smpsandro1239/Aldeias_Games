@@ -30,8 +30,13 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
     const loadUserData = async () => {
       const savedUser = localStorage.getItem("user");
       if (savedUser) {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+        } catch (e) {
+          console.error("Error parsing user data:", e);
+          localStorage.removeItem("user");
+        }
         
         // Fetch real balance from API
         try {
@@ -157,7 +162,11 @@ export function UserButton({ onClick }: UserButtonProps) {
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem("user");
+      }
     }
   }, []);
 
