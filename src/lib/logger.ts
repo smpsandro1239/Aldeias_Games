@@ -1,60 +1,102 @@
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+import crypto from 'crypto';
 
-const LOG_LEVELS: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3 };
-const DEFAULT_LOG_LEVEL: LogLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+export interface LogContext {
+  requestId?: string;
+  userId?: string;
+  aldeiaId?: string;
+  ip?: string;
+  userAgent?: string;
+  [key: string]: unknown;
+}
 
 interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
-  module?: string;
-  userId?: string;
-  requestId?: string;
-  data?: Record<string, unknown>;
-  error?: { message: string; stack?: string; code?: string; };
+  context?: LogContext;
+  error?: { name: string; message: string; stack?: string };
 }
 
-function formatLog(level: LogLevel, message: string, meta?: Record<string, unknown>): string {
+function generateRequestId(): string {
+  return `req_${crypto.randomBytes(8).toString('hex')}`;
+}
+
+function formatLog(level: LogLevel, message: string, context?: LogContext, error?: unknown): LogEntry {
   const entry: LogEntry = {
     timestamp: new Date().toISOString(),
     level,
     message,
   };
 
-  if (meta) {
-    const { userId, requestId, module, error, ...data } = meta;
-    if (module) entry.module = String(module);
-    if (userId) entry.userId = String(userId);
-    if (requestId) entry.requestId = String(requestId);
-    if (error && typeof error === 'object') {
-      entry.error = {
-        message: (error as Error).message || String(error),
-        stack: (error as Error).stack,
-        code: (error as any)?.code,
-      };
-    }
-    if (Object.keys(data).length > 0) entry.data = data;
+  if (context && Object.keys(context).length > 0) {
+    entry.context = context;
   }
 
-  return JSON.stringify(entry);
+  if (error instanceof Error) {
+    entry.error = {
+      name: error.name,
+      message: error.message,
+      ...(process.env.NODE_ENV !== 'production' && error.stack ? { stack: error.stack } : {}),
+    };
+  } else if (error) {
+    entry.error = { name: 'Unknown', message: String(error) };
+  }
+
+  return entry;
 }
 
-function shouldLog(level: LogLevel): boolean {
-  const currentLevel = (process.env.LOG_LEVEL as LogLevel) || DEFAULT_LOG_LEVEL;
-  return LOG_LEVELS[level] >= LOG_LEVELS[currentLevel];
+function writeLog(entry: LogEntry): void {
+  const line = JSON.stringify(entry);
+  if (entry.level === 'error') {
+    console.error(line);
+  } else if (entry.level === 'warn') {
+    console.warn(line);
+  } else {
+    console.log(line);
+  }
 }
 
-function log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {
-  if (!shouldLog(level)) return;
-  const formatted = formatLog(level, message, meta);
-  if (level === 'error') console.error(formatted);
-  else if (level === 'warn') console.warn(formatted);
-  else console.log(formatted);
+export function createLogger(defaultContext?: LogContext) {
+  const requestId = defaultContext?.requestId || generateRequestId();
+
+  const ctx: LogContext = { ...defaultContext, requestId };
+
+  return {
+    requestId,
+
+    info(message: string, extra?: LogContext) {
+      writeLog(formatLog('info', message, { ...ctx, ...extra }));
+    },
+
+    warn(message: string, extra?: LogContext) {
+      writeLog(formatLog('warn', message, { ...ctx, ...extra }));
+    },
+
+    error(message: string, error?: unknown, extra?: LogContext) {
+      writeLog(formatLog('error', message, { ...ctx, ...extra }, error));
+    },
+
+    debug(message: string, extra?: LogContext) {
+      if (process.env.NODE_ENV !== 'production') {
+        writeLog(formatLog('debug', message, { ...ctx, ...extra }));
+      }
+    },
+
+    child(extra: LogContext) {
+      return createLogger({ ...ctx, ...extra });
+    },
+  };
 }
 
-export const logger = {
-  debug: (message: string, meta?: Record<string, unknown>) => log('debug', message, meta),
-  info: (message: string, meta?: Record<string, unknown>) => log('info', message, meta),
-  warn: (message: string, meta?: Record<string, unknown>) => log('warn', message, meta),
-  error: (message: string, meta?: Record<string, unknown>) => log('error', message, meta),
-};
+export function extractRequestContext(request: Request): LogContext {
+  return {
+    ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+    userAgent: request.headers.get('user-agent') || 'unknown',
+  };
+}
+
+export function generateRequestId(): string {
+  return `req_${crypto.randomBytes(8).toString('hex')}`;
+}

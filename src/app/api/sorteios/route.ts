@@ -3,11 +3,14 @@ import { prisma } from '@/lib/db'
 import { getFullUserFromRequest, hasRole } from '@/lib/auth'
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit'
 import { logSorteio } from '@/lib/audit'
+import { createLogger, extractRequestContext } from '@/lib/logger'
 import crypto from 'crypto'
 
 export async function PATCH(request: NextRequest) {
+  const log = createLogger(extractRequestContext(request));
   try {
     const user = await getFullUserFromRequest(request)
+    log.info('Sorteio commit/reveal solicitado', { userId: user?.id })
     if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
@@ -61,11 +64,13 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const log = createLogger(extractRequestContext(request));
   try {
     const user = await getFullUserFromRequest(request)
     if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
+    log.info('Sorteio executado', { userId: user.id })
 
     const rateLimit = await checkRateLimit(user.id, rateLimitConfigs.sorteios);
     if (!rateLimit.allowed) return createRateLimitResponse(rateLimit.resetTime)

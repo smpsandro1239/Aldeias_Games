@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyWebhookSignature } from '@/lib/stripe';
+import { sanitizeObject } from '@/lib/sanitization';
 // @ts-ignore - stripe types
 import Stripe from 'stripe';
 import crypto from 'crypto';
@@ -85,10 +86,10 @@ export async function POST(request: NextRequest) {
                 jogoId, userId: userId || null, valorPago: precoUnitario, metodoPagamento: 'stripe',
                 estadoPagamento: 'concluido', dataPagamento: new Date(), seedRaspe: seed, hashRaspe: hashParticipacao,
                 resultadoRaspe, hashParticipacao,
-                dadosParticipacao: JSON.stringify({
+                dadosParticipacao: JSON.stringify(sanitizeObject({
                   stripeSessionId: session.id, stripePaymentIntent: session.payment_intent, stripeEventId: event.id,
                   index: i, grid, numeros: jogo.tipo !== 'raspadinha' ? [numerosArray[i]] : undefined
-                }),
+                })),
               },
             });
 

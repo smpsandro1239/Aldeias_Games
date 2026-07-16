@@ -56,6 +56,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const updateData: Prisma.JogoUpdateInput = { ...otherData };
     if (updateData.configuracao) updateData.configuracao = JSON.stringify(updateData.configuracao);
 
+    if (updateData.estado === 'fechado' && jogo.estado !== 'fechado') {
+      const participacoesAtivas = await prisma.participacao.count({
+        where: { jogoId: id, estadoPagamento: 'concluido' },
+      });
+      if (participacoesAtivas > 0) {
+        return NextResponse.json(
+          { error: `Não é possível fechar o jogo: existem ${participacoesAtivas} participação(ões) confirmada(s). Remova ou cancele as participações primeiro.` },
+          { status: 400 }
+        );
+      }
+    }
+
      const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
        // Se vierem novos prémios, remover os antigos primeiro
        if (premiosData) {

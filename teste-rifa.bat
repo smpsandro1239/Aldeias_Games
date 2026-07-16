@@ -133,7 +133,49 @@ findstr /c:"\"success\"" _resp_sortear.json >nul && (
 del _resp_sortear.json >nul 2>&1
 echo.
 
-echo === 7. Verificar estado do jogo ===
+echo === 7. Obter participacao para claim ===
+curl -s "%BASE_URL%/api/participacoes?jogoId=%JOGO_ID%" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_list.json
+set "PART_ID="
+set "FULL="
+for /f "usebackq delims=" %%a in ("_resp_list.json") do (
+    if defined FULL (set "FULL=!FULL! %%a") else (set "FULL=%%a")
+)
+echo !FULL! | findstr /c:"\"id\":" >nul || (
+    echo AVISO: Nenhuma participacao encontrada para claim
+    del _resp_list.json >nul 2>&1
+    goto :skip_claim
+)
+set "FULL=!FULL:*"participacao":{=!"
+set "FULL=!FULL:*"id":"=!"
+for /f "delims=," %%a in ("!FULL!") do set "PART_ID=%%a"
+set "PART_ID=!PART_ID:"=!"
+echo Participacao ID: !PART_ID!
+del _resp_list.json >nul 2>&1
+echo.
+
+echo === 8. Claim premio ===
+curl -s -X POST "%BASE_URL%/api/participacoes/!PART_ID!/claim-premio" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_claim.json
+findstr /c:"\"success\"" _resp_claim.json >nul && (
+    call :extract_json _resp_claim.json "creditedAmount" VALOR
+    call :extract_json _resp_claim.json "prizeName" NOME
+    call :extract_json _resp_claim.json "newSaldo" NOVO_SALDO
+    echo Premio: !NOME! (!VALOR!EUR)
+    echo Novo saldo: !NOVO_SALDO!EUR
+) || (
+    echo Sem premio ou ja reclamado:
+    type _resp_claim.json
+)
+del _resp_claim.json >nul 2>&1
+echo.
+
+echo === 9. Verificar notificacao de claim ===
+curl -s "%BASE_URL%/api/notificacoes?limit=3" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_notif.json
+findstr /c:"Premio reclamado" _resp_notif.json >nul && (echo Notificacao de claim: ENCONTRADA) || (echo Notificacao de claim: nao encontrada)
+del _resp_notif.json >nul 2>&1
+echo.
+
+:skip_claim
+echo === 10. Verificar estado do jogo ===
 curl -s "%BASE_URL%/api/jogos/%JOGO_ID%" -H "Authorization: Bearer %TOKEN%" > _resp_jogo_final.json
 findstr /c:"\"isFinalizado\":true" _resp_jogo_final.json >nul && (echo Finalizado: SIM) || (echo Finalizado: nao)
 call :extract_json _resp_jogo_final.json "sorteado" SORTEADO

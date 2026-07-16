@@ -240,20 +240,70 @@ del _resp_sortear.json >nul 2>&1
 echo.
 
 :: ----------------------------------------------
-:: 8. Verificar premio
+:: 8. Obter participacao para claim
 :: ----------------------------------------------
-echo === 8. Verificar premio do vencedor ===
+echo === 8. Obter participacao para claim ===
+curl -s "%BASE_URL%/api/participacoes?jogoId=%JOGO_ID%" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_list.json
+set "PART_ID="
+set "FULL="
+for /f "usebackq delims=" %%a in ("_resp_list.json") do (
+    if defined FULL (set "FULL=!FULL! %%a") else (set "FULL=%%a")
+)
+echo !FULL! | findstr /c:"\"id\":" >nul || (
+    echo AVISO: Nenhuma participacao encontrada para claim
+    del _resp_list.json >nul 2>&1
+    goto :skip_claim
+)
+set "FULL=!FULL:*"participacao":{=!"
+set "FULL=!FULL:*"id":"=!"
+for /f "delims=," %%a in ("!FULL!") do set "PART_ID=%%a"
+set "PART_ID=!PART_ID:"=!"
+echo Participacao ID: !PART_ID!
+del _resp_list.json >nul 2>&1
+echo.
+
+:: ----------------------------------------------
+:: 8b. Claim premio
+:: ----------------------------------------------
+echo === 8b. Claim premio ===
+curl -s -X POST "%BASE_URL%/api/participacoes/!PART_ID!/claim-premio" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_claim.json
+findstr /c:"\"success\"" _resp_claim.json >nul && (
+    call :extract_json _resp_claim.json "creditedAmount" VALOR
+    call :extract_json _resp_claim.json "prizeName" NOME
+    call :extract_json _resp_claim.json "newSaldo" NOVO_SALDO
+    echo Premio: !NOME! (!VALOR!EUR)
+    echo Novo saldo: !NOVO_SALDO!EUR
+) || (
+    echo Sem premio ou ja reclamado:
+    type _resp_claim.json
+)
+del _resp_claim.json >nul 2>&1
+echo.
+
+:: ----------------------------------------------
+:: 8c. Verificar notificacao de claim
+:: ----------------------------------------------
+echo === 8c. Verificar notificacao de claim ===
+curl -s "%BASE_URL%/api/notificacoes?limit=3" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_notif.json
+findstr /c:"Premio reclamado" _resp_notif.json >nul && (echo Notificacao de claim: ENCONTRADA) || (echo Notificacao de claim: nao encontrada)
+del _resp_notif.json >nul 2>&1
+echo.
+
+:skip_claim
+:: ----------------------------------------------
+:: 9. Saldo final
+:: ----------------------------------------------
+echo === 9. Saldo final ===
 curl -s "%BASE_URL%/api/wallet" -H "Authorization: Bearer %TOKEN_JOG%" > _resp_wallet3.json
 call :extract_json _resp_wallet3.json "saldo" SALDO_FINAL
-echo Saldo final jogador: %SALDO_FINAL%�
-findstr /c:"premio_dinheiro" _resp_wallet3.json >nul && (echo Transacao premio_dinheiro encontrada) || (echo AVISO: sem transacao premio_dinheiro)
+echo Saldo final jogador: %SALDO_FINAL%EUR
 del _resp_wallet3.json >nul 2>&1
 echo.
 
 :: ----------------------------------------------
-:: 9. Cashbox Vendedor
+:: 10. Cashbox Vendedor
 :: ----------------------------------------------
-echo === 9. Cashbox Vendedor ===
+echo === 10. Cashbox Vendedor ===
 curl -s "%BASE_URL%/api/vendedor/cashbox" -H "Authorization: Bearer %TOKEN_VEN%" > _resp_cashbox.json
 type _resp_cashbox.json
 echo.
@@ -261,9 +311,9 @@ del _resp_cashbox.json >nul 2>&1
 echo.
 
 :: ----------------------------------------------
-:: 10. Estado final da grelha
+:: 11. Estado final da grelha
 :: ----------------------------------------------
-echo === 10. Estado final da grelha ===
+echo === 11. Estado final da grelha ===
 curl -s "%BASE_URL%/api/euromilhoes/grelhas?jogoId=%JOGO_ID%" -H "Authorization: Bearer %TOKEN%" > _resp_final.json
 findstr /c:"\"sorteada\"" _resp_final.json >nul && (echo Grelha sorteada) || (echo AVISO: estado inesperado)
 call :extract_json _resp_final.json "numeroSorteado" NS
@@ -274,9 +324,9 @@ del _resp_final.json >nul 2>&1
 echo.
 
 :: ----------------------------------------------
-:: 11. Logs de auditoria
+:: 12. Logs de auditoria
 :: ----------------------------------------------
-echo === 11. Logs de auditoria (ultimos 5) ===
+echo === 12. Logs de auditoria (ultimos 5) ===
 curl -s "%BASE_URL%/api/admin/audit-logs?limit=5" -H "Authorization: Bearer %TOKEN%" > _resp_audit.json
 findstr /c:"euromilhoes" _resp_audit.json >nul && (
     echo Logs:

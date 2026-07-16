@@ -205,6 +205,16 @@ export async function POST(
       };
     });
 
+    await prisma.notificacao.create({
+      data: {
+        userId: user.id,
+        tipo: 'premio',
+        titulo: 'Prémio reclamado',
+        mensagem: `O teu prémio "${winningPrize.nome}" no valor de ${(winningPrize.valorDinheiroAlternative || 0).toFixed(2)}€ foi creditado na tua conta.`,
+        lida: false,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       creditedAmount: result.creditedAmount,

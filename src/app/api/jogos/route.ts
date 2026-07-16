@@ -5,6 +5,7 @@ import { createJogoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import { createHash } from 'crypto';
 import { logJogoWrite } from '@/lib/audit';
+import { createLogger, extractRequestContext } from '@/lib/logger';
 
 function gerarHashVerificacao(dados: {
   tipo: string;
@@ -199,6 +200,7 @@ where.evento = {
 
 // POST - Criar jogo
 export async function POST(request: NextRequest) {
+  const log = createLogger(extractRequestContext(request));
   try {
     const user = await getFullUserFromRequest(request);
 
@@ -267,6 +269,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Evento não encontrado' },
         { status: 404 }
+      );
+    }
+
+    if (evento.estado !== 'ativo') {
+      return NextResponse.json(
+        { error: 'Evento não está ativo. Só é possível criar jogos para eventos ativos.' },
+        { status: 400 }
+      );
+    }
+
+    if (new Date(evento.dataFim) < new Date()) {
+      return NextResponse.json(
+        { error: 'Evento já terminou. Só é possível criar jogos para eventos dentro do prazo.' },
+        { status: 400 }
       );
     }
 

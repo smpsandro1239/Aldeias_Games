@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { sanitizeObject } from '@/lib/sanitization';
 // @ts-ignore - stripe types
 import Stripe from 'stripe';
 
@@ -62,13 +63,13 @@ export async function POST(request: NextRequest) {
         where: { id: participacaoId },
         data: {
           estadoPagamento: 'reembolsado',
-          dadosParticipacao: JSON.stringify({
+          dadosParticipacao: JSON.stringify(sanitizeObject({
             ...JSON.parse(participacao.dadosParticipacao || '{}'),
             refundId,
             valorReembolso,
             motivo,
             dataReembolso: new Date().toISOString(),
-          }),
+          })),
         },
       }),
       prisma.jogo.update({

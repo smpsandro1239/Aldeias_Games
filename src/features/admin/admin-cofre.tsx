@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
 import {
   Banknote, Send, Check, X, Clock, RefreshCw, History, Scale,
   Download, ArrowLeft, ArrowUpFromLine, FileText, AlertTriangle
@@ -69,6 +70,13 @@ export function AdminCofre() {
   const [levDestino, setLevDestino] = useState("");
   const [levObservacoes, setLevObservacoes] = useState("");
   const [levSubmitting, setLevSubmitting] = useState(false);
+
+  const [confirmDepId, setConfirmDepId] = useState<string | null>(null);
+  const [rejectDepId, setRejectDepId] = useState<string | null>(null);
+  const [rejectDepMotivo, setRejectDepMotivo] = useState("");
+  const [confirmLevId, setConfirmLevId] = useState<string | null>(null);
+  const [rejectLevId, setRejectLevId] = useState<string | null>(null);
+  const [rejectLevMotivo, setRejectLevMotivo] = useState("");
 
   const getToken = useCallback(() => localStorage.getItem("token") || "", []);
   const getAldeiaId = useCallback(() => {
@@ -140,10 +148,7 @@ export function AdminCofre() {
     }
   };
 
-  const handleRejeitarDeposito = async (id: string) => {
-    const motivo = window.prompt("Motivo da rejeição:");
-    if (!motivo) return;
-
+  const handleRejeitarDeposito = async (id: string, motivo: string) => {
     try {
       const res = await apiRequest(`/api/cofre/pedido-deposito/${id}`, {
         method: "PUT",
@@ -217,7 +222,6 @@ export function AdminCofre() {
   };
 
   const handleConfirmarLevantamento = async (id: string) => {
-    if (!window.confirm("Confirmar este levantamento? O valor será deduzido do cofre.")) return;
     try {
       const res = await apiRequest(`/api/cofre/levantamento/${id}`, {
         method: "PUT",
@@ -239,9 +243,7 @@ export function AdminCofre() {
     }
   };
 
-  const handleRejeitarLevantamento = async (id: string) => {
-    const motivo = window.prompt("Motivo da rejeição:");
-    if (!motivo) return;
+  const handleRejeitarLevantamento = async (id: string, motivo: string) => {
     try {
       const res = await apiRequest(`/api/cofre/levantamento/${id}`, {
         method: "PUT",
@@ -412,7 +414,7 @@ export function AdminCofre() {
                         <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleConfirmarLevantamento(lev.id)}
+                          onClick={() => setConfirmLevId(lev.id)}
                         >
                           <Check className="w-4 h-4 mr-1" />
                           Aprovar
@@ -421,7 +423,7 @@ export function AdminCofre() {
                           size="sm"
                           variant="outline"
                           className="border-destructive text-destructive hover:bg-destructive/10"
-                          onClick={() => handleRejeitarLevantamento(lev.id)}
+                          onClick={() => { setRejectLevId(lev.id); setRejectLevMotivo(""); }}
                         >
                           <X className="w-4 h-4 mr-1" />
                           Rejeitar
@@ -464,7 +466,7 @@ export function AdminCofre() {
                         <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleConfirmarDeposito(dep.id)}
+                          onClick={() => setConfirmDepId(dep.id)}
                         >
                           <Check className="w-4 h-4 mr-1" />
                           Confirmar
@@ -473,7 +475,7 @@ export function AdminCofre() {
                           size="sm"
                           variant="outline"
                           className="border-destructive text-destructive hover:bg-destructive/10"
-                          onClick={() => handleRejeitarDeposito(dep.id)}
+                          onClick={() => { setRejectDepId(dep.id); setRejectDepMotivo(""); }}
                         >
                           <X className="w-4 h-4 mr-1" />
                           Rejeitar
@@ -799,5 +801,65 @@ export function AdminCofre() {
         </DialogContent>
       </Dialog>
     </div>
+
+    <ConfirmModal
+      open={!!confirmDepId}
+      onOpenChange={(open) => { if (!open) setConfirmDepId(null); }}
+      title="Confirmar Depósito"
+      description="Tem certeza que deseja confirmar este depósito? O valor será creditado no cofre da aldeia."
+      confirmText="Confirmar"
+      variant="default"
+      onConfirm={() => { if (confirmDepId) { handleConfirmarDeposito(confirmDepId); setConfirmDepId(null); } }}
+    />
+
+    <ConfirmModal
+      open={!!rejectDepId}
+      onOpenChange={(open) => { if (!open) { setRejectDepId(null); setRejectDepMotivo(""); } }}
+      title="Rejeitar Depósito"
+      description={
+        <div className="space-y-2">
+          <p>Tem certeza que deseja rejeitar este depósito?</p>
+          <Textarea
+            placeholder="Motivo da rejeição (obrigatório)"
+            value={rejectDepMotivo}
+            onChange={(e) => setRejectDepMotivo(e.target.value)}
+            rows={3}
+          />
+        </div>
+      }
+      confirmText="Rejeitar"
+      variant="destructive"
+      onConfirm={() => { if (rejectDepId && rejectDepMotivo.trim()) { handleRejeitarDeposito(rejectDepId, rejectDepMotivo); setRejectDepId(null); setRejectDepMotivo(""); } }}
+    />
+
+    <ConfirmModal
+      open={!!confirmLevId}
+      onOpenChange={(open) => { if (!open) setConfirmLevId(null); }}
+      title="Confirmar Levantamento"
+      description="Tem certeza que deseja confirmar este levantamento? O valor será deduzido do cofre."
+      confirmText="Confirmar"
+      variant="default"
+      onConfirm={() => { if (confirmLevId) { handleConfirmarLevantamento(confirmLevId); setConfirmLevId(null); } }}
+    />
+
+    <ConfirmModal
+      open={!!rejectLevId}
+      onOpenChange={(open) => { if (!open) { setRejectLevId(null); setRejectLevMotivo(""); } }}
+      title="Rejeitar Levantamento"
+      description={
+        <div className="space-y-2">
+          <p>Tem certeza que deseja rejeitar este levantamento?</p>
+          <Textarea
+            placeholder="Motivo da rejeição (obrigatório)"
+            value={rejectLevMotivo}
+            onChange={(e) => setRejectLevMotivo(e.target.value)}
+            rows={3}
+          />
+        </div>
+      }
+      confirmText="Rejeitar"
+      variant="destructive"
+      onConfirm={() => { if (rejectLevId && rejectLevMotivo.trim()) { handleRejeitarLevantamento(rejectLevId, rejectLevMotivo); setRejectLevId(null); setRejectLevMotivo(""); } }}
+    />
   );
 }

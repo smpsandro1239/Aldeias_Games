@@ -7,6 +7,7 @@ import { createParticipacaoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
+import { createLogger, extractRequestContext } from '@/lib/logger';
 // @ts-ignore - @prisma/client types generated at build time
 import { Prisma } from '@prisma/client';
 import { getGameHandler } from './_lib';
@@ -165,8 +166,10 @@ export async function GET(request: NextRequest) {
 
 // POST - Criar participação
 export async function POST(request: NextRequest) {
+  const log = createLogger({ ...extractRequestContext(request), userId: undefined });
   try {
     const user = await getFullUserFromRequest(request);
+    log.info('Participação solicitada', { userId: user?.id });
     const body = await request.json();
 
     const normalizedBody = {
@@ -325,6 +328,21 @@ export async function POST(request: NextRequest) {
         });
         if (jogoFinal && jogoFinal.stockAtual <= 0) {
           await tx.jogo.update({ where: { id: data.jogoId }, data: { estado: 'fechado' } });
+          const admins = await prisma.user.findMany({
+            where: { aldeiaId: jogo.evento.aldeiaId, role: 'aldeia_admin' },
+            select: { id: true },
+          });
+          if (admins.length > 0) {
+            await prisma.notificacao.createMany({
+              data: admins.map((admin) => ({
+                userId: admin.id,
+                tipo: 'sistema' as const,
+                titulo: 'Stock esgotado',
+                mensagem: `O jogo "${jogo.nome}" atingiu stock zero e foi fechado automaticamente.`,
+                lida: false,
+              })),
+            });
+          }
         }
 
         const participacoes: any[] = [];
@@ -467,7 +485,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    console.error('Erro ao criar participação:', error);
+    log.error('Erro ao criar participação', error);
     if (error.message === 'Stock insuficiente' || error.message.includes('Stock insuficiente')) {
       return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 });
     }

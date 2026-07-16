@@ -231,9 +231,42 @@ export const updatePremioSchema = createPremioSchema.partial().omit({ aldeiaId: 
 // VALIDAÇÕES DE PARTICIPAÇÃO
 // ============================================
 
+const dadosParticipacaoRifa = z.object({
+  numeros: z.array(z.number().int().min(1).max(99)).min(1),
+  coordenadas: z.undefined().optional(),
+}).strict();
+
+const dadosParticipacaoPoio = z.object({
+  coordenadas: z.array(z.object({
+    letra: z.string().max(2),
+    numero: z.number().int().min(1),
+  })).min(1),
+  numeros: z.undefined().optional(),
+}).strict();
+
+const dadosParticipacaoRaspadinha = z.object({}).strict();
+
+const dadosParticipacaoSchema = z.union([
+  dadosParticipacaoRifa,
+  dadosParticipacaoPoio,
+  dadosParticipacaoRaspadinha,
+  z.record(z.unknown()),
+]).refine(
+  (val) => {
+    if ('numeros' in val && val.numeros !== undefined) {
+      return Array.isArray(val.numeros) && val.numeros.length <= 50;
+    }
+    if ('coordenadas' in val && val.coordenadas !== undefined) {
+      return Array.isArray(val.coordenadas) && val.coordenadas.length <= 100;
+    }
+    return true;
+  },
+  { message: 'dadosParticipacao excede limites permitidos' }
+);
+
 export const createParticipacaoSchema = z.object({
   jogoId: z.string(),
-  dadosParticipacao: z.record(z.any()),
+  dadosParticipacao: dadosParticipacaoSchema,
   quantidade: z.number().int().min(1).default(1),
   metodoPagamento: z.enum(['mbway', 'dinheiro', 'stripe', 'transferencia', 'saldo']),
   dadosCliente: z.object({

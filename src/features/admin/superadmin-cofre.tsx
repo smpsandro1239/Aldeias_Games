@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
 import {
   Banknote, ShieldCheck, Building2, Users, Clock,
   RefreshCw, History, Search, AlertTriangle,
@@ -49,6 +50,7 @@ export function SuperAdminCofre() {
   const [totalPendentes, setTotalPendentes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [confirmDepId, setConfirmDepId] = useState<string | null>(null);
 
   const getToken = useCallback(() => localStorage.getItem("token") || "", []);
 
@@ -326,7 +328,7 @@ export function SuperAdminCofre() {
                     <Button
                       size="sm"
                       className="bg-green-600 hover:bg-green-700"
-                      onClick={() => handleConfirmar(p.id)}
+                      onClick={() => setConfirmDepId(p.id)}
                     >
                       <ShieldCheck className="w-4 h-4 mr-1" />
                       Confirmar
@@ -392,5 +394,15 @@ export function SuperAdminCofre() {
         </TabsContent>
       </Tabs>
     </div>
+
+    <ConfirmModal
+      open={!!confirmDepId}
+      onOpenChange={(open) => { if (!open) setConfirmDepId(null); }}
+      title="Confirmar Depósito"
+      description="Tem certeza que deseja confirmar este depósito? O valor será creditado no cofre da aldeia."
+      confirmText="Confirmar"
+      variant="default"
+      onConfirm={() => { if (confirmDepId) { handleConfirmar(confirmDepId); setConfirmDepId(null); } }}
+    />
   );
 }

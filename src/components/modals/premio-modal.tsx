@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
 import {
   Gift,
   Plus,
@@ -118,6 +119,7 @@ export function PremioModal({
   const [formData, dispatch] = useReducer(premioFormReducer, getInitialFormState());
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Form validation
   const validateForm = useCallback((): string[] => {
@@ -370,7 +372,7 @@ export function PremioModal({
           {premio?.id && (
             <Button
               variant="outline"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={deleting}
               className="border-red-500/30 text-destructive hover:bg-destructive/10"
               aria-label={`Eliminar prémio "${premio.nome}"`}
@@ -401,6 +403,16 @@ export function PremioModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    <ConfirmModal
+      open={showDeleteConfirm}
+      onOpenChange={setShowDeleteConfirm}
+      title="Eliminar Prémio"
+      description={`Tem certeza que deseja eliminar o prémio "${premio?.nome}"? Esta ação não pode ser desfeita.`}
+      confirmText="Eliminar"
+      variant="destructive"
+      onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
+    />
   );
 }
 

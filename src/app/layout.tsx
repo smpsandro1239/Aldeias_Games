@@ -3,6 +3,7 @@ import { Inter, Noto_Serif, Plus_Jakarta_Sans, Chakra_Petch, Russo_One } from "n
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
+import { OfflineProvider } from "@/components/providers/offline-provider";
 import { SentryInit } from "@/components/sentry-init";
 import { Toaster } from "@/components/ui/sonner";
 import { AnalyticsInit } from "@/components/analytics-init";
@@ -86,11 +87,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ReactQueryProvider>
-            <SentryInit />
-            <AnalyticsInit />
-            {children}
-            <CookieConsentBanner />
-            <Toaster position="top-right" richColors />
+            <OfflineProvider>
+              <SentryInit />
+              <AnalyticsInit />
+              {children}
+              <CookieConsentBanner />
+              <Toaster position="top-right" richColors />
+            </OfflineProvider>
           </ReactQueryProvider>
         </ThemeProvider>
       </body>

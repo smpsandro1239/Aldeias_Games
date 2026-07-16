@@ -25,6 +25,22 @@ export async function POST(request: NextRequest) {
       return createRateLimitResponse(rateLimit.resetTime);
     }
 
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const testesHoje = await prisma.auditLog.count({
+      where: {
+        userId: user.id,
+        action: 'sorteio.teste',
+        createdAt: { gte: hoje },
+      },
+    });
+    if (testesHoje >= 50) {
+      return NextResponse.json(
+        { error: 'Limite diário de 50 testes de sorteio atingido.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { jogoId } = body;
 
