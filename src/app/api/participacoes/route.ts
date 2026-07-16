@@ -453,7 +453,9 @@ export async function POST(request: NextRequest) {
     if (jogo.tipo === 'rifa' && result.participacoes.length > 0) {
       const primeira = result.participacoes[0];
       if (primeira.estadoPagamento === 'concluido' && primeira.emailCliente) {
-        const numeros = data.dadosParticipacao?.numeros || [];
+        const numeros = Array.isArray((data.dadosParticipacao as Record<string, unknown>)?.numeros)
+          ? ((data.dadosParticipacao as Record<string, unknown>)?.numeros as number[])
+          : [];
         try {
           await sendTicketEmail(
             primeira.emailCliente,

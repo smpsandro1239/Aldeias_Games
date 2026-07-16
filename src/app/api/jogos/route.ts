@@ -317,8 +317,8 @@ export async function POST(request: NextRequest) {
       ...rentabilidade
     });
     
-    // Verificar lucro mínimo (50% mínimo)
-    if (rentabilidade.lucroMinimoPercent < 50 && data.tipo === 'raspadinha') {
+    // Verificar lucro mínimo (50% mínimo para raspadinha e poio da vaca)
+    if (rentabilidade.lucroMinimoPercent < 50 && (data.tipo === 'raspadinha' || data.tipo === 'poio_da_vaca')) {
       return NextResponse.json(
         { error: 'Jogo não cumpre requisito mínimo de 50% de lucro. Ajuste os valores.' },
         { status: 400 }

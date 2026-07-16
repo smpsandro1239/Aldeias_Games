@@ -129,9 +129,10 @@ export async function checkRateLimit(
   remaining: number;
   resetTime: number;
 }> {
-  // Skip rate limiting in development for testing
+  // Em desenvolvimento, usar limites mais permissivos (10x maiores)
   if (process.env.NODE_ENV === 'development') {
-    return { allowed: true, remaining: 100, resetTime: Date.now() + config.windowMs };
+    const devConfig = { ...config, maxRequests: config.maxRequests * 10 };
+    return checkRateLimitMemory(identifier, devConfig);
   }
   
   const redis = await getRedisClient();

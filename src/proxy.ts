@@ -94,18 +94,14 @@ function validateCsrfOrigin(request: NextRequest): boolean {
   return false;
 }
 
-// JWT secret — throw in production if not set (never use fallback in prod)
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ||
-    (() => {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(
-          'JWT_SECRET is not set in production. Set it in Vercel environment variables.'
-        );
-      }
-      return 'dev-secret-key-local-only-32chars!';
-    })()
-);
+// JWT secret — throw if not set (never use fallback)
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
+
+if (!JWT_SECRET_RAW) {
+  throw new Error('JWT_SECRET is required. Set it in Vercel environment variables.');
+}
+
+const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW);
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

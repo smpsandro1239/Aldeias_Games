@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT, jwtVerify } from 'jose';
 
-const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET || 'fallback-csrf-secret';
+const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET;
+
+if (!CSRF_SECRET) {
+  throw new Error('CSRF_SECRET ou JWT_SECRET é obrigatório. Define a variável de ambiente CSRF_SECRET.');
+}
+
 const CSRF_HEADER_NAME = 'x-csrf-token';
 const CSRF_COOKIE_NAME = 'csrf-token';
 const secret = new TextEncoder().encode(CSRF_SECRET);

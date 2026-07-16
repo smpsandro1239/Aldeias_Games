@@ -281,6 +281,7 @@ export function AdminCofre() {
   const vaultTransacoes = vault?.transacoes || [];
 
   return (
+    <>
     <div className="space-y-6 p-4 md:p-6">
       <div className="relative bg-gradient-to-r from-green-500/10 via-green-500/5 to-emerald-500/10 rounded-3xl p-6 border border-green-500/10">
         <div className="flex items-center gap-4 mb-2">
@@ -567,7 +568,7 @@ export function AdminCofre() {
                         <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleConfirmarLevantamento(lev.id)}>
                           <Check className="w-4 h-4 mr-1" /> Aprovar
                         </Button>
-                        <Button size="sm" variant="outline" className="border-destructive text-destructive" onClick={() => handleRejeitarLevantamento(lev.id)}>
+                        <Button size="sm" variant="outline" className="border-destructive text-destructive" onClick={() => setRejectLevId(lev.id)}>
                           <X className="w-4 h-4 mr-1" /> Rejeitar
                         </Button>
                       </div>
@@ -861,5 +862,6 @@ export function AdminCofre() {
       variant="destructive"
       onConfirm={() => { if (rejectLevId && rejectLevMotivo.trim()) { handleRejeitarLevantamento(rejectLevId, rejectLevMotivo); setRejectLevId(null); setRejectLevMotivo(""); } }}
     />
+    </>
   );
 }

@@ -110,6 +110,7 @@ export function SuperAdminCofre() {
   }
 
   return (
+    <>
     <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
       <div className="relative bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-indigo-500/10 rounded-3xl p-6 border border-blue-500/10">
@@ -404,5 +405,6 @@ export function SuperAdminCofre() {
       variant="default"
       onConfirm={() => { if (confirmDepId) { handleConfirmar(confirmDepId); setConfirmDepId(null); } }}
     />
+    </>
   );
 }

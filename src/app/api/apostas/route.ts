@@ -108,7 +108,11 @@ export async function POST(request: NextRequest) {
 
     // Get authenticated user
     const user = await getFullUserFromRequest(request) as any;
-    const custoTotal = numeros.length * (jogo.preco || jogo.custoQuadrado || 5);
+    // Para poio_da_vaca, usar custoQuadrado (preço por quadrado); para outros, usar preco
+    const precoJogo = jogo.tipo === 'poio_da_vaca'
+      ? (jogo.custoQuadrado || jogo.preco || 5)
+      : (jogo.preco || 5);
+    const custoTotal = numeros.length * precoJogo;
 
     // Handle saldo payment
     if (usarSaldo) {

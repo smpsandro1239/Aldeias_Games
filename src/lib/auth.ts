@@ -15,14 +15,10 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET é obrigatório em produção. Define a variável de ambiente JWT_SECRET.');
-  }
-  console.warn('JWT_SECRET não definido, a usar fallback local inseguro para desenvolvimento');
+  throw new Error('JWT_SECRET é obrigatório. Define a variável de ambiente JWT_SECRET.');
 }
 
-const SECRET_KEY = JWT_SECRET || 'dev-secret-key-local-only-32chars!';
-const secret = new TextEncoder().encode(SECRET_KEY);
+const secret = new TextEncoder().encode(JWT_SECRET);
 
 export interface JWTPayload {
   userId: string;

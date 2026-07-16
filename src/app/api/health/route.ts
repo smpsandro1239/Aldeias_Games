@@ -26,11 +26,11 @@ export async function GET() {
   }
 
   // MEDIUM #12: Não expor detalhes de configuração de serviços externos
-  checks.services = {
-    stripe: { status: process.env.STRIPE_SECRET_KEY ? 'available' : 'unavailable' },
-    mbway: { status: process.env.MBWAY_API_KEY ? 'available' : 'unavailable' },
-    smtp: { status: process.env.SMTP_HOST ? 'available' : 'unavailable' },
-  };
+  const services: Record<string, { status: string; latency?: number; error?: string }> = {};
+  if (process.env.STRIPE_SECRET_KEY) services.stripe = { status: 'available' };
+  if (process.env.MBWAY_API_KEY) services.mbway = { status: 'available' };
+  if (process.env.SMTP_HOST) services.smtp = { status: 'available' };
+  (checks as Record<string, unknown>).services = services;
 
   const statusCode = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
 
