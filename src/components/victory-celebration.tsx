@@ -195,7 +195,7 @@ export function VictoryCelebration({
                <X className="w-5 h-5 text-foreground/70" />
              </button>
 
-            <div className="relative p-8 text-center">
+            <div className="relative p-6 sm:p-8 text-center">
               {/* Trophy Icon */}
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}

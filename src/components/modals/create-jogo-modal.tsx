@@ -794,7 +794,7 @@ export function CreateJogoModal({
               </div>
 
               {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.RASPADINHA) && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="preco">Preço (€) *</Label>
                     <Input
@@ -862,11 +862,11 @@ export function CreateJogoModal({
 
                       <div className="space-y-3">
                         {raspadinhaPremios.map((premio) => (
-                          <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
-                            <div className="col-span-1 flex items-center justify-center">
+                          <div key={premio.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
+                            <div className="hidden sm:flex col-span-1 items-center justify-center">
                               <Trophy className="h-4 w-4 text-[#ff734b]" />
                             </div>
-                            <div className="col-span-4">
+                            <div className="col-span-1 sm:col-span-4">
                               <Input
                                 placeholder="Nome"
                                 value={premio.nome}
@@ -874,7 +874,7 @@ export function CreateJogoModal({
                                 className="h-8 text-sm"
                               />
                             </div>
-                            <div className="col-span-3">
+                            <div className="col-span-1 sm:col-span-3">
                               <div className="relative">
                                 <Euro className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                                 <Input
@@ -886,7 +886,7 @@ export function CreateJogoModal({
                                 />
                               </div>
                             </div>
-                            <div className="col-span-3">
+                            <div className="col-span-1 sm:col-span-3">
                               <div className="relative">
                                 <Percent className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                                 <Input
@@ -931,7 +931,7 @@ export function CreateJogoModal({
                 <>
                   <div className="border-t pt-4 mt-2 space-y-4">
                     <h3 className="text-sm font-semibold">Detalhes do Sorteio</h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="grid gap-1.5">
                         <Label htmlFor="dataSorteio" className="text-xs">Data *</Label>
                         <Input
@@ -974,11 +974,11 @@ export function CreateJogoModal({
 
                     <div className="space-y-3">
                       {rifaPremios.map((premio) => (
-                        <div key={premio.id} className="grid grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
-                          <div className="col-span-1 flex items-center justify-center">
+                        <div key={premio.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end p-3 bg-[#2e2928] rounded-lg">
+                          <div className="hidden sm:flex col-span-1 items-center justify-center">
                             <Trophy className="h-4 w-4 text-[#ff734b]" />
                           </div>
-                          <div className="col-span-6">
+                          <div className="col-span-1 sm:col-span-6">
                             <Input
                               placeholder="Nome do Prémio"
                               value={premio.nome}
@@ -986,7 +986,7 @@ export function CreateJogoModal({
                               className="h-8 text-sm"
                             />
                           </div>
-                          <div className="col-span-4">
+                          <div className="col-span-1 sm:col-span-4">
                             <div className="relative">
                               <Euro className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                               <Input
@@ -1024,7 +1024,7 @@ export function CreateJogoModal({
                 <div className="border-t pt-4 mt-2 space-y-4">
                   <h3 className="text-sm font-semibold">Configuração do Campo</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="dimensoesX">Largura (X)</Label>
                       <Input
@@ -1049,7 +1049,7 @@ export function CreateJogoModal({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="custoQuadrado">Custo por Quadrado (€)</Label>
                       <Input

@@ -324,7 +324,7 @@ export function CreateEventoModal({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="dataInicio">Data de Início *</Label>
                 <Input
@@ -452,7 +452,7 @@ export function CreateEventoModal({
                     ⚙️ Configuração da Recorrência
                   </h4>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="frequency">Frequência</Label>
                       <Select
@@ -492,7 +492,7 @@ export function CreateEventoModal({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="time">Horário</Label>
                       <Input

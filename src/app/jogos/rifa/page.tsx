@@ -916,7 +916,7 @@ export default function RifaPage() {
 
         {/* Modal de Pagamento */}
         <Dialog open={paymentModalOpen} onOpenChange={setCreditCardModalOpen}>
-          <DialogContent className="max-w-[95vw] sm:max-w-lg md:max-w-2xl bg-surface-container border border-outline-variant/10 p-4 overflow-hidden">
+          <DialogContent className="max-w-[95vw] sm:max-w-lg bg-surface-container border border-outline-variant/10 p-4 overflow-hidden">
             <DialogHeader className="p-4 pb-2">
               <DialogTitle className="font-headline text-xl flex items-center gap-2">
                 <Euro className="w-5 h-5 text-primary" />

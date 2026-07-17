@@ -274,7 +274,7 @@ export function VencedorDetailModal({
           {/* Card de Resumo */}
           <Card className="mb-4">
             <CardContent className="p-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
                   <User className="w-8 h-8 text-primary" aria-hidden="true" />
                 </div>
@@ -310,7 +310,7 @@ export function VencedorDetailModal({
           </Card>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
               <TabsTrigger value="perfil" aria-label="Ver perfil do vencedor">
                 <User className="w-4 h-4 mr-2" aria-hidden="true" />
                 Perfil
@@ -381,26 +381,26 @@ export function VencedorDetailModal({
                 </Card>
               ) : (
                 <div className="space-y-2">
-                  <div className="grid grid-cols-12 gap-2 p-2 text-xs font-semibold text-muted-foreground border-b">
-                    <div className="col-span-4">Jogo</div>
-                    <div className="col-span-3">Data</div>
-                    <div className="col-span-2">Valor</div>
-                    <div className="col-span-3">Resultado</div>
+                  <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 p-2 text-xs font-semibold text-muted-foreground border-b">
+                    <div className="col-span-3 sm:col-span-4">Jogo</div>
+                    <div className="col-span-3 sm:col-span-3">Data</div>
+                    <div className="hidden sm:block col-span-2">Valor</div>
+                    <div className="col-span-3 sm:col-span-3">Resultado</div>
                   </div>
                   {participacoes.map((p) => (
                     <Card key={p.id} className="hover:bg-accent/5 transition-colors">
-                      <CardContent className="p-3 grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-4 truncate">
+                      <CardContent className="p-3 grid grid-cols-6 sm:grid-cols-12 gap-2 items-center">
+                        <div className="col-span-3 sm:col-span-4 truncate">
                           <p className="font-medium">{p.jogo?.nome}</p>
                           <p className="text-xs text-muted-foreground">{p.jogo?.tipo}</p>
                         </div>
-                        <div className="col-span-3 text-sm">
+                        <div className="col-span-3 sm:col-span-3 text-sm">
                           {formatDate(p.createdAt)}
                         </div>
-                        <div className="col-span-2 font-semibold text-primary">
+                        <div className="hidden sm:block col-span-2 font-semibold text-primary">
                           {formatCurrency(p.valorPago)}
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-3 sm:col-span-3">
                           {p.ganhador ? (
                             <Badge className="bg-accent text-accent-foreground" aria-label="Ganhou o prémio">
                               <Trophy className="w-3 h-3 mr-1" aria-hidden="true" />

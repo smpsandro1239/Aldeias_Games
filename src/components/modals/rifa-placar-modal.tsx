@@ -294,7 +294,7 @@ export function RifaPlacarModal({
               )}
 
               <div className="flex-1 overflow-y-auto">
-                <div className="grid grid-cols-10 gap-1" role="grid" aria-label="Seleção de números de rifa">
+                <div className="grid grid-cols-5 sm:grid-cols-10 gap-1" role="grid" aria-label="Seleção de números de rifa">
                   {numerosFiltrados.map((numero) => {
                     const occupied = numerosOcupados.includes(numero);
                     const selected = numerosSelecionados.includes(numero);

@@ -517,7 +517,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
             {user.estatisticas && (
               <div className="rounded-lg border p-4 space-y-3">
                 <h4 className="font-medium">Estatísticas</h4>
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-2xl font-bold">{user.estatisticas.totalParticipacoes}</p>
                     <p className="text-xs text-muted-foreground">Participações</p>

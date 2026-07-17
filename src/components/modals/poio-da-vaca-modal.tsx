@@ -302,7 +302,7 @@ export function PoioDaVacaModal({
                         </span>
                       )}
                     </div>
-                    <div className="grid grid-cols-10 gap-1.5">
+                    <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
                       {Array.from({ length: numerosPorLetra }, (_, i) => i + 1).map((numero) => {
                         const ocupado = isOcupado(letra, numero);
                         const jogadoPorMim = isJogadoPorMim(letra, numero);

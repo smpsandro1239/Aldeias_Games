@@ -382,7 +382,7 @@ export function AdminCofre() {
               {levPendentes.map((lev) => (
                 <Card key={lev.id} className="border-purple-500/30 mb-3">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-lg text-purple-700">{formatCurrency(lev.valor)}</p>
@@ -439,7 +439,7 @@ export function AdminCofre() {
               {pendentes.map((dep) => (
                 <Card key={dep.id} className="border-accent/50 mb-3">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-lg">{formatCurrency(dep.valor)}</p>
@@ -542,7 +542,7 @@ export function AdminCofre() {
               {levPendentes.map((lev) => (
                 <Card key={lev.id} className="border-purple-500/30 mb-3">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-lg text-purple-700">{formatCurrency(lev.valor)}</p>

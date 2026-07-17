@@ -745,40 +745,42 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
               <CardTitle>Histórico de Vendas</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Jogo</TableHead>
-                    <TableHead>Método</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stats?.ultimasVendas?.length ? (
-                    stats.ultimasVendas.map((venda) => (
-                      <TableRow key={venda.id}>
-                        <TableCell>{formatDateTime(venda.createdAt)}</TableCell>
-                        <TableCell>{venda.jogo?.nome || "-"}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {venda.metodoPagamento}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(venda.valor)}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Jogo</TableHead>
+                      <TableHead>Método</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats?.ultimasVendas?.length ? (
+                      stats.ultimasVendas.map((venda) => (
+                        <TableRow key={venda.id}>
+                          <TableCell>{formatDateTime(venda.createdAt)}</TableCell>
+                          <TableCell>{venda.jogo?.nome || "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {venda.metodoPagamento}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatCurrency(venda.valor)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">
+                          Sem vendas registadas
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground">
-                        Sem vendas registadas
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

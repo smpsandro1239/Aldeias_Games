@@ -176,7 +176,7 @@ export function SorteioModal({
                     </AlertDescription>
                   </Alert>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-medium text-muted-foreground">Vencedores:</h4>
                       <p className="font-bold" aria-label={`${resultado.vencedores} vencedor(es)`}>
