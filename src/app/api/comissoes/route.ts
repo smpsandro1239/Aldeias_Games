@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,8 +36,8 @@ export async function GET(request: NextRequest) {
     });
 
     const totalComissao = comissoes
-      .filter((t) => t.tipo === 'comissao')
-      .reduce((acc: number, t) => acc + t.valor, 0);
+      .filter((t: (typeof comissoes)[number]) => t.tipo === 'comissao')
+      .reduce((acc: number, t: (typeof comissoes)[number]) => acc + t.valor, 0);
 
     return NextResponse.json({
       success: true,
@@ -56,9 +57,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const body = await request.json();
     const { vendedorId, percentual, metaVendas, bonusMeta } = body;

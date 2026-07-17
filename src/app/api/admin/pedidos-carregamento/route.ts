@@ -1,26 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verificar autenticação
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-    }
+    const user = await getFullUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
-
-    // Verificar se é admin
-    if (payload.role !== 'super_admin' && payload.role !== 'aldeia_admin') {
-      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const searchParams = request.nextUrl.searchParams;
     const estado = searchParams.get('estado');
@@ -33,8 +24,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar pedidos do admin (aldeia) ou todos (super_admin)
-    if (payload.role === 'aldeia_admin' && payload.aldeiaId) {
-      where.aldeiaId = payload.aldeiaId;
+    if (user.role === 'aldeia_admin' && user.aldeiaId) {
+      where.aldeiaId = user.aldeiaId;
     }
 
     // Buscar pedidos

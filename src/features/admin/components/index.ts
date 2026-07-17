@@ -1,3 +1,11 @@
+// Dashboard Components
+export { DashboardLoadingSkeleton } from "./dashboard-loading-skeleton";
+export { DashboardHeader } from "./dashboard-header";
+export { DashboardStatCards } from "./dashboard-stat-cards";
+export { DashboardTabsNavigation } from "./dashboard-tabs-navigation";
+export { DashboardTabContent } from "./dashboard-tab-content";
+export { DashboardModalsLayer } from "./dashboard-modals-layer";
+
 // Tabs
 export { OverviewTab } from "./tabs/OverviewTab";
 export { EventosTab } from "./tabs/EventosTab";

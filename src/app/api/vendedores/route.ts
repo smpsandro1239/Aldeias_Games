@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
+  const user = await getFullUserFromRequest(request);
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+  const denied = await requirePermission(user.id, 'VIEW_VENDEDORES');
+  if (denied) return denied;
+
   try {
     const { searchParams } = new URL(request.url);
     const aldeiaId = searchParams.get('aldeiaId');
@@ -10,7 +18,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'AldeiaID requerido' }, { status: 400 });
     }
 
-    // Buscar vendedores da aldeia
     const vendedores = await prisma.user.findMany({
       where: {
         aldeiaId,

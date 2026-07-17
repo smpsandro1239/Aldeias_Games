@@ -3,27 +3,21 @@ import { NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { exportVendasExcel } from '@/lib/export';
-import { getUserFromRequest } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
-    const userData = await getUserFromRequest(request);
-    if (!userData) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
+    const user = await getFullUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    // Verificar se o usuário tem permissão (admin ou organizador)
-    const user = await prisma.user.findUnique({
-      where: { id: userData.userId },
+    const denied = await requirePermission(user.id, 'VIEW_VENDAS');
+    if (denied) return denied;
+
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user.id },
       include: { aldeia: true }
     });
-
-    const isAdmin = user?.role === 'super_admin' || user?.role === 'aldeia_admin';
-    const isOrganizador = user?.aldeiaId !== null;
-
-    if (!isAdmin && !isOrganizador) {
-      return NextResponse.json({ error: 'Sem permissão para exportar relatórios' }, { status: 403 });
-    }
 
     const { searchParams } = new URL(request.url);
     const dataInicio = searchParams.get('dataInicio');
@@ -68,7 +62,7 @@ export async function GET(request: NextRequest) {
     const exportOptions: any = {
       titulo: `Relatório de Vendas${vendedorId ? ` - Vendedor #${vendedorId}` : ''}`,
       subtitulo: `Período: ${dataInicio || 'Início'} a ${dataFim || 'Presente'}`,
-      aldeia: user?.aldeia?.nome || undefined
+      aldeia: fullUser?.aldeia?.nome || undefined
     };
 
     // Exportar conforme o formato solicitado
@@ -76,7 +70,7 @@ export async function GET(request: NextRequest) {
       // CSV (padrão)
       const csvContent = [
         ['#', 'Vendedor', 'Cliente', 'Valor', 'Comissão', 'Método', 'Data'].join(','),
-        ...vendasData.map((v, index: number) => {
+        ...vendasData.map((v: (typeof vendasData)[number], index: number) => {
           const dados = v.dadosCliente ? JSON.parse(v.dadosCliente) : {};
           return [
             index + 1,

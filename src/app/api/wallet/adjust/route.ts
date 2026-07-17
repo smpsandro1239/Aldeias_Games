@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,9 +12,12 @@ export async function POST(request: NextRequest) {
 
     // Allow vendor to deliver money to admin
     const isVendorDelivery = tipo === 'entrega_admin' && user?.role === 'vendedor';
-    
-    if (!user || (!hasRole(user.role, ['super_admin', 'aldeia_admin']) && !isVendorDelivery)) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+    if (!isVendorDelivery) {
+      const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+      if (denied) return denied;
     }
 
     // Vendor delivery to admin

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    if (!user || user.role !== 'vendedor') {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'EXECUTE_VENDA');
+    if (denied) return denied;
 
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest } from '@/lib/auth';
+import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import fs from 'fs';
 import path from 'path';
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       const dados = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const aldeias = await tx.aldeia.findMany({ include: { users: true } });
         // Remover passwords dos utilizadores no backup
-        const users = (await tx.user.findMany()).map(({ password, ...rest }) => rest);
+        const users = (await tx.user.findMany()).map(({ password: _pw, ...rest }: { password?: string | null; [key: string]: unknown }) => rest);
         const eventos = await tx.evento.findMany();
         const jogos = await tx.jogo.findMany();
         const participacoes = await tx.participacao.findMany();

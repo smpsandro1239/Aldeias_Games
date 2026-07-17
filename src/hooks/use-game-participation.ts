@@ -44,7 +44,7 @@ export function useGameParticipation({
   const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
 
-  const isAdmin = user?.role === "super_admin" || user?.role === "admin" || user?.role === "aldeia_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "aldeia_admin";
   const canUseDinheiro = ["vendedor", "aldeia_admin", "super_admin"].includes(user?.role || "");
 
   useEffect(() => {

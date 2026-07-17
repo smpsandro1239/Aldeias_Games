@@ -3,6 +3,12 @@ import { prisma } from '@/lib/db';
 
 // POST - Processar eventos recorrentes (chamado por cron job)
 export async function POST(request: NextRequest) {
+  // Authenticate cron via CRON_SECRET header
+  const cronSecret = request.headers.get('x-cron-secret');
+  if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
   try {
     const now = new Date();
 

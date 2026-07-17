@@ -180,7 +180,7 @@ where.evento = {
     ]);
 
     // Adicionar configuracao a cada jogo
-    const jogosComConfig = jogos.map((jogo) => ({
+    const jogosComConfig = jogos.map((jogo: (typeof jogos)[number]) => ({
       ...jogo,
       configuracao: typeof jogo.configuracao === 'string' 
         ? JSON.parse(jogo.configuracao) 

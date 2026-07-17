@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['super_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_USERS');
+    if (denied) return denied;
 
     const aldeias = await prisma.aldeia.findMany({
       where: { ativo: true },
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
           vendedor: p.vendedor,
           aldeia: p.aldeia,
         })),
-        totalGeral: data.reduce((sum: number, a) => sum + a.saldoCofre, 0),
+        totalGeral: data.reduce((sum: number, a: (typeof data)[number]) => sum + a.saldoCofre, 0),
         totalPendentes: pendentes.reduce((sum: number, p: Prisma.PedidoDepositoCofre) => sum + p.valor, 0),
       }
     });

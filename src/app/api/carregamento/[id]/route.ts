@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
 import crypto from 'crypto';
 
 function verifyQRData(qrData: string, pedidoId: string, expectedPassword: string) {
@@ -26,9 +27,9 @@ function getClientInfo(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['vendedor', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
+    if (denied) return denied;
 
     const body = await request.json();
     const { pedidoId, password, qrCode, acao, motivo } = body;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { processWebhookCallback, validateWebhookSignature } from '@/lib/mbway';
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
 
       if (tipoTransacao === 'carregamento_saldo') {
         // IDEMPOTENCY: Use atomic findFirst + update inside a transaction to prevent double-credit
-        const carregamento = await prisma.$transaction(async (tx) => {
+        const carregamento = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
           const c = await tx.transacao.findFirst({
             where: {
               tipo: 'carregamento_saldo',

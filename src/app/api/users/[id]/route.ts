@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import { logCRUD as logAudit } from '@/lib/audit';
 
 interface RouteContext {
@@ -13,9 +14,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const adminUser = await getFullUserFromRequest(request);
     
-    if (!adminUser || !hasRole(adminUser.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!adminUser) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(adminUser.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const targetUser = await prisma.user.findUnique({
       where: { id },
@@ -39,9 +40,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const adminUser = await getFullUserFromRequest(request);
     
-    if (!adminUser || !hasRole(adminUser.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!adminUser) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(adminUser.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const targetUser = await prisma.user.findUnique({ where: { id } });
     if (!targetUser) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
@@ -104,9 +105,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const adminUser = await getFullUserFromRequest(request);
     
-    if (!adminUser || !hasRole(adminUser.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!adminUser) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(adminUser.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const targetUser = await prisma.user.findUnique({ where: { id } });
     if (!targetUser) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });

@@ -334,7 +334,7 @@ export async function POST(request: NextRequest) {
           });
           if (admins.length > 0) {
             await prisma.notificacao.createMany({
-              data: admins.map((admin) => ({
+              data: admins.map((admin: (typeof admins)[number]) => ({
                 userId: admin.id,
                 tipo: 'sistema' as const,
                 titulo: 'Stock esgotado',

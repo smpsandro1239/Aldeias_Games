@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db";
+import { prisma } from "@/lib/db";
+import { getFullUserFromRequest } from "@/lib/auth";
+import { requirePermission } from "@/lib/rbac/checkPermission";
 
-export async function POST(req: NextRequest, context: { params: Promise<{id: string}> }) {
+export async function POST(request: NextRequest, context: { params: Promise<{id: string}> }) {
+  const user = await getFullUserFromRequest(request);
+  if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+  const denied = await requirePermission(user.id, "MANAGE_USERS");
+  if (denied) return denied;
+
   const { id: userId } = await context.params;
-  const body = await req.json();
+  const body = await request.json();
 
   const { permissionId, aldeiaId, allow } = body;
 

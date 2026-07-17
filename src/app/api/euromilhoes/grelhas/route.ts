@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getOfficialTime, getNextFriday, getBloqueioData } from "@/lib/time";
-import { getFullUserFromRequest, hasRole } from "@/lib/auth";
+import { getFullUserFromRequest } from "@/lib/auth";
+import { requirePermission } from "@/lib/rbac/checkPermission";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,9 +30,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ["aldeia_admin", "super_admin"])) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const body = await request.json();
     const { jogoId, premioDescricao, premioValor } = body;
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       orderBy: { numero: "asc" },
     });
 
-    const usedNumeros = new Set(existingGrelhas.map((g) => g.numero));
+    const usedNumeros = new Set(existingGrelhas.map((g: { numero: number }) => g.numero));
     let nextNumero = 1;
     while (usedNumeros.has(nextNumero)) {
       nextNumero++;

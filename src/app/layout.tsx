@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Serif, Plus_Jakarta_Sans, Chakra_Petch, Russo_One } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
@@ -73,13 +74,15 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
+
   return (
-    <html lang="pt-PT" suppressHydrationWarning>
+    <html lang="pt-PT" suppressHydrationWarning nonce={nonce}>
       <body className={`${inter.className} ${notoSerif.variable} ${plusJakartaSans.variable} ${chakraPetch.variable} ${russoOne.variable} font-body bg-background text-foreground`}>
         <ThemeProvider
           attribute="class"

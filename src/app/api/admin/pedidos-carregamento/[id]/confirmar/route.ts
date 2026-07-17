@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import { logger } from '@/lib/logger';
 
 export async function POST(
@@ -8,21 +9,11 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Verificar autenticação
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-    }
+    const user = await getFullUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
-
-    // Verificar se é admin
-    if (payload.role !== 'super_admin' && payload.role !== 'aldeia_admin') {
-      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const { id } = await context.params;
 
@@ -36,7 +27,7 @@ export async function POST(
     }
 
     // HIGH #8: aldeia_admin só pode confirmar pedidos da sua própria aldeia
-    if (payload.role === 'aldeia_admin' && pedido.aldeiaId !== payload.aldeiaId) {
+    if (user.role === 'aldeia_admin' && pedido.aldeiaId !== user.aldeiaId) {
       return NextResponse.json({ error: 'Sem permissão para confirmar pedidos de outra aldeia' }, { status: 403 });
     }
 
@@ -50,7 +41,7 @@ export async function POST(
       data: {
         estado: 'confirmado',
         pagamentoConfirmado: true,
-        confirmadoPorId: payload.userId,
+        confirmadoPorId: user.id,
         confirmadoAt: new Date(),
       },
     });
@@ -81,7 +72,7 @@ export async function POST(
       pedidoId: id,
       userId: pedido.userId,
       valor: pedido.valor,
-      confirmadoPor: payload.userId,
+      confirmadoPor: user.id,
     });
 
     return NextResponse.json({ 

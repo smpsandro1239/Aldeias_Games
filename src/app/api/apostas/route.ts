@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const mappedApostas = apostas.map((a) => {
+    const mappedApostas = apostas.map((a: (typeof apostas)[number]) => {
       const nums = typeof a.numeros === 'string' ? JSON.parse(a.numeros || "[]") : a.numeros;
 
       // Filtragem de dados sensíveis para utilizadores normais
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       });
 
       const numerosOcupados = new Set(
-        apostasExistentes.flatMap((a) => {
+        apostasExistentes.flatMap((a: (typeof apostasExistentes)[number]) => {
           try {
             return typeof a.numeros === 'string' ? JSON.parse(a.numeros || "[]") : a.numeros;
           } catch (e) {

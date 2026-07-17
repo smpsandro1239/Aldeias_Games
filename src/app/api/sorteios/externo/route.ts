@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const body = await request.json();
     const { tipoLoteria, resultados, dataSorteio } = body;
@@ -122,9 +123,9 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const jogosExternos = await prisma.jogo.findMany({
       where: {

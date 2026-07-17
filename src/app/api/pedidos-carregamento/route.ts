@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +10,8 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
+    const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
+    if (denied) return denied;
 
     const url = new URL(request.url);
     const aldeiaId = url.searchParams.get('aldeiaId');
@@ -62,14 +65,9 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request) as any;
-    if (!user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
-    // Apenas vendedores e admins podem confirmar
-    if (!hasRole(user.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
+    if (denied) return denied;
 
     const body = await request.json();
     const { pedidoId, acao } = body; // acao: 'confirmar' | 'rejeitar'

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import { updateEventoSchema } from '@/lib/validations';
 import { saveImage } from '@/lib/storage';
 import { logCRUD as logAudit } from '@/lib/audit';
@@ -112,9 +113,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const user = await getFullUserFromRequest(request);
 
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const evento = await prisma.evento.findUnique({ where: { id } });
     if (!evento) {
@@ -229,9 +230,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const user = await getFullUserFromRequest(request);
     
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const evento = await prisma.evento.findUnique({ where: { id } });
     if (!evento) return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });

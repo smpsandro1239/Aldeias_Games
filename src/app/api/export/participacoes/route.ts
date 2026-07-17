@@ -2,26 +2,16 @@ import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getUserFromRequest } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
-    const userData = await getUserFromRequest(request);
-    if (!userData) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
+    const user = await getFullUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    const user = await prisma.user.findUnique({
-      where: { id: userData.userId },
-      include: { aldeia: true }
-    });
-
-    const isAdmin = user?.role === 'super_admin' || user?.role === 'aldeia_admin';
-    const isOrganizador = user?.aldeiaId !== null;
-
-    if (!isAdmin && !isOrganizador) {
-      return NextResponse.json({ error: 'Sem permissão para exportar relatórios' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'VIEW_VENDAS');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const jogoId = searchParams.get('jogoId');
@@ -80,7 +70,7 @@ export async function GET(request: NextRequest) {
     
     const csvRows = [
       ['#', 'Jogo', 'Número', 'Cliente', 'Telefone', 'Email', 'Valor', 'Data', 'Estado'].join(','),
-      ...participacoesData.map((p, index: number) => {
+      ...participacoesData.map((p: (typeof participacoesData)[number], index: number) => {
         const dados = JSON.parse(p.dadosParticipacao);
         return [
           index + 1,
@@ -96,7 +86,7 @@ export async function GET(request: NextRequest) {
       })
     ];
 
-    const total = participacoesData.reduce((acc: number, p) => acc + p.valorPago, 0);
+    const total = participacoesData.reduce((acc: number, p: (typeof participacoesData)[number]) => acc + p.valorPago, 0);
     csvRows.push('');
     csvRows.push(`Total de participantes,${participacoesData.length}`);
     csvRows.push(`Valor total angariado,${total.toFixed(2)}€`);

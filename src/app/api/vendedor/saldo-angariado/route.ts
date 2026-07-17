@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,9 +11,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    if (!hasRole(user.role, ['vendedor'])) {
-      return NextResponse.json({ error: 'Apenas vendedores' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'EXECUTE_VENDA');
+    if (denied) return denied;
 
     // Calcular total angariado (soma de pedidos de carregamento confirmados)
     const pedidosConfirmados = await prisma.pedidoCarregamento.findMany({

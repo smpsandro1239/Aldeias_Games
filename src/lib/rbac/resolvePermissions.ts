@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/db";
 // @ts-ignore
 import { PermissionKey, RoleName } from "@prisma/client";
+import type { User, UserGlobalRole, Role, RolePermission, Permission, UserAldeiaRole, UserPermission } from '@prisma/client';
 
 // Tipo completo do utilizador com includes
 type UserWithPermissions = User & {

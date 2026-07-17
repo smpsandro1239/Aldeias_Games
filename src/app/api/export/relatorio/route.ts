@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 function generatePDFReport(data: string, type: string): string {
   // Simplified HTML report that can be printed
@@ -32,9 +33,9 @@ function generatePDFReport(data: string, type: string): string {
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const body = await request.json();
     const { tipo, aldeiaId, eventoId, dataInicio, dataFim } = body;

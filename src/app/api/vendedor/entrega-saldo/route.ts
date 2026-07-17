@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,9 +12,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Apenas vendedores podem solicitar entrega
-    if (!hasRole(user.role, ['vendedor'])) {
-      return NextResponse.json({ error: 'Apenas vendedores podem solicitar entregas' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'EXECUTE_VENDA');
+    if (denied) return denied;
 
     const body = await request.json();
     const { valor, observacoes } = body;
@@ -116,9 +116,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se é vendedor
-    if (!hasRole(user.role, ['vendedor'])) {
-      return NextResponse.json({ error: 'Apenas vendedores podem aceder a este endpoint' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'EXECUTE_VENDA');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');

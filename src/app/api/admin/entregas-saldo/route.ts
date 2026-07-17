@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,9 +12,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Apenas admins podem ver entregas
-    if (!hasRole(user.role, ['aldeia_admin', 'super_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       where.estado = estado;
     }
 
-    if (aldeiaId && hasRole(user.role, ['super_admin'])) {
+    if (aldeiaId && user.role === 'super_admin') {
       where.aldeiaId = aldeiaId;
     }
 
@@ -80,9 +80,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Apenas admins podem confirmar/rejeitar
-    if (!hasRole(user.role, ['aldeia_admin', 'super_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const body = await request.json();
     const { entregaId, acao, observacoes } = body; // acao: 'confirmar' | 'rejeitar' | 'concluir'

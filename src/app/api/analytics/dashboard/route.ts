@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 /**
  * GET /api/analytics/dashboard
@@ -10,9 +11,9 @@ import { getFullUserFromRequest, hasRole } from '@/lib/auth';
 export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     const url = new URL(request.url);
     const periodo = url.searchParams.get('periodo') || '30d';
@@ -99,15 +100,15 @@ export async function GET(request: NextRequest) {
         totalParticipacoes,
         receitaTotal: receitaTotal._sum.valorPago || 0,
       },
-      participacoesPorDia: participacoesPorDia.map((p) => ({
+      participacoesPorDia: participacoesPorDia.map((p: { data: string; count: bigint }) => ({
         data: p.data,
         count: Number(p.count),
       })),
-      jogosPorTipo: jogosPorTipo.map((j) => ({
+      jogosPorTipo: jogosPorTipo.map((j: { tipo: string | null; _count: { id: number } }) => ({
         tipo: j.tipo,
         count: j._count.id,
       })),
-      topJogos: topJogos.map((j) => ({
+      topJogos: topJogos.map((j: { id: string; nome: string; tipo: string; totalParticipacoes: number; totalAngariado: number; estado: string }) => ({
         id: j.id,
         nome: j.nome,
         tipo: j.tipo,
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
         angariado: j.totalAngariado,
         estado: j.estado,
       })),
-      pagamentos: estadoPagamentos.map((p) => ({
+      pagamentos: estadoPagamentos.map((p: { estadoPagamento: string | null; _count: { id: number }; _sum: { valorPago: number | null } }) => ({
         estado: p.estadoPagamento,
         count: p._count.id,
         total: p._sum.valorPago || 0,

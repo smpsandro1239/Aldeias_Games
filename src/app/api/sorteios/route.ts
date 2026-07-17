@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getFullUserFromRequest, hasRole } from '@/lib/auth'
+import { getFullUserFromRequest } from '@/lib/auth'
+import { requirePermission } from '@/lib/rbac/checkPermission'
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit'
 import { logSorteio } from '@/lib/audit'
 import { createLogger, extractRequestContext } from '@/lib/logger'
@@ -11,9 +12,9 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request)
     log.info('Sorteio commit/reveal solicitado', { userId: user?.id })
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA')
+    if (denied) return denied
 
     const rateLimit = await checkRateLimit(user.id, rateLimitConfigs.sorteios);
     if (!rateLimit.allowed) return createRateLimitResponse(rateLimit.resetTime)
@@ -67,9 +68,9 @@ export async function POST(request: NextRequest) {
   const log = createLogger(extractRequestContext(request));
   try {
     const user = await getFullUserFromRequest(request)
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA')
+    if (denied) return denied
     log.info('Sorteio executado', { userId: user.id })
 
     const rateLimit = await checkRateLimit(user.id, rateLimitConfigs.sorteios);
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
       const letra = config.letras[letraIdx];
       winningCoord = `${letra}${num}`;
 
-      const vencedor = jogo.participacoes.find((p) => {
+      const vencedor = jogo.participacoes.find((p: (typeof jogo.participacoes)[number]) => {
         const d = JSON.parse(p.dadosParticipacao);
         return d.letra === letra && d.numero === num;
       });

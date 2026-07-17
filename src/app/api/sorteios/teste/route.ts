@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { logSorteio } from '@/lib/audit';
 import crypto from 'crypto';
@@ -9,9 +10,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     // RATE LIMITING: limite de testes de sorteio (10/min - mais restritivo)
     const rateLimitKey = `sorteio-teste:${user.id}`;
@@ -96,12 +97,12 @@ export async function POST(request: NextRequest) {
       resultado = { letraVencedora: letra, numeroVencedor: numero };
 
       // Encontrar vencedores entre as participações reais
-      const vencedoresPoio = jogo.participacoes.filter((p) => {
+      const vencedoresPoio = jogo.participacoes.filter((p: (typeof jogo.participacoes)[number]) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
         return dados.letra === letra && dados.numero === numero;
       });
 
-      vencedores = vencedoresPoio.map((v, index: number) => ({
+      vencedores = vencedoresPoio.map((v: (typeof vencedoresPoio)[number], index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
@@ -131,12 +132,12 @@ export async function POST(request: NextRequest) {
       resultado = { numeroVencedor };
 
       // Encontrar vencedores entre as participações reais
-      const vencedoresRifa = jogo.participacoes.filter((p) => {
+      const vencedoresRifa = jogo.participacoes.filter((p: (typeof jogo.participacoes)[number]) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
         return dados.numero === numeroVencedor;
       });
 
-      vencedores = vencedoresRifa.map((v, index: number) => ({
+      vencedores = vencedoresRifa.map((v: (typeof vencedoresRifa)[number], index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {

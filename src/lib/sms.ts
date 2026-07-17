@@ -49,6 +49,7 @@ export async function sendSMS(options: SMSOptions): Promise<boolean> {
 }
 
 async function sendTwilioSMS(options: SMSOptions): Promise<boolean> {
+  // @ts-ignore - twilio is an optional peer dependency
   const twilio = await import('twilio');
   const client = twilio.default(
     process.env.TWILIO_ACCOUNT_SID,
@@ -68,6 +69,7 @@ async function sendTwilioSMS(options: SMSOptions): Promise<boolean> {
 }
 
 async function sendAWSSNS(options: SNSOptions): Promise<boolean> {
+  // @ts-ignore - @aws-sdk/client-sns is an optional peer dependency
   const { SNSClient, PublishCommand } = await import('@aws-sdk/client-sns');
   const client = new SNSClient({ region: process.env.AWS_REGION });
 

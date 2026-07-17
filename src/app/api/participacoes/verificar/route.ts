@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
 import crypto from 'crypto';
 
 // Rate limiting
@@ -13,9 +14,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
     
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requireAnyOfPermissions(user.id, ['MANAGE_ALDEIA', 'EXECUTE_VENDA']);
+    if (denied) return denied;
 
     // Rate limiting
     const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';

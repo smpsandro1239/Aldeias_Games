@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getUserFromRequest, hasRole } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,9 +83,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Apenas admins podem alterar configurações da aldeia
-    if (!hasRole(userData.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json({ error: 'Apenas administradores podem alterar configurações' }, { status: 403 });
-    }
+    const denied = await requirePermission(userData.userId, 'MANAGE_ALDEIA');
+    if (denied) return denied;
 
     // Buscar o usuário completo
     const user = await prisma.user.findUnique({

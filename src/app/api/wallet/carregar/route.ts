@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,8 +28,9 @@ export async function POST(request: NextRequest) {
     // Utilizadores normais podem fazer pedido ao vendedor
     if (metodoCarregamento === 'vendedor') {
       // Todos os utilizadores podem pedir ao vendedor
-    } else if (!hasRole(user.role, ['super_admin', 'aldeia_admin', 'vendedor'])) {
-      return NextResponse.json({ error: 'Não autorizado. Apenas admins e vendedores podem registar carregamentos.' }, { status: 403 });
+    } else {
+      const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
+      if (denied) return denied;
     }
 
     if (!valor || valor <= 0) {

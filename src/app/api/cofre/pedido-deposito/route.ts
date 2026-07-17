@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
 import { logAudit } from '@/lib/audit';
 import { criarDepositoSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
-      return NextResponse.json({ error: 'Apenas vendedores, admins de aldeia e super admins podem depositar no cofre' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
+    if (denied) return denied;
 
     const body = await request.json();
     const validation = criarDepositoSchema.safeParse(body);
@@ -93,9 +94,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
+    if (denied) return denied;
 
     const url = new URL(request.url);
     const estado = url.searchParams.get('estado');
