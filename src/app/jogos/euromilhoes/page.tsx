@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useWallet } from "@/components/providers/wallet-provider";
 import {
   ArrowLeft,
   Trophy,
@@ -73,6 +74,7 @@ const randomOptions = [1, 2, 3, 4, 5];
 
 export default function EuromilhoesPage() {
   const router = useRouter();
+  const { refreshBalance } = useWallet();
 
   const [jogo, setJogo] = useState<Jogo | null>(null);
   const [grelha, setGrelha] = useState<Grelha | null>(null);
@@ -299,6 +301,7 @@ export default function EuromilhoesPage() {
         setPaymentModalOpen(false);
         setParticipacaoConfirmada(true);
         toast.success("Participação confirmada!");
+        refreshBalance();
 
         // Refresh grelha data
         if (jogo) {

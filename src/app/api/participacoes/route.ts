@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
           ganhador: true,
           premioEntregue: true,
           createdAt: true,
+          dadosParticipacao: true,
           hashParticipacao: true,
           hashRaspe: true,
           dadosVerificacao: true,

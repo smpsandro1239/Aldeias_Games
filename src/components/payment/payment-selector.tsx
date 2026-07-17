@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { PaymentCard } from "./payment-card";
 import { MetodoPagamento, getAvailableMethods, AldeiaSettings } from "@/lib/payment-commissions";
+import { useWallet } from "@/components/providers/wallet-provider";
 
 interface PaymentSelectorProps {
   amount: number;
@@ -21,7 +22,7 @@ export function PaymentSelector({
 }: PaymentSelectorProps) {
   const [availableMethods, setAvailableMethods] = useState<MetodoPagamento[]>([]);
   const [selected, setSelected] = useState<MetodoPagamento | null>(selectedMethod || null);
-  const [saldo, setSaldo] = useState(0);
+  const { saldo } = useWallet();
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -51,20 +52,6 @@ export function PaymentSelector({
     };
 
     loadUserData();
-
-    const loadSaldo = async () => {
-      try {
-        const res = await fetch("/api/wallet");
-        const data = await res.json();
-        if (data.saldo !== undefined) {
-          setSaldo(data.saldo);
-        }
-      } catch (e) {
-        console.error("Erro ao buscar saldo:", e);
-      }
-    };
-
-    loadSaldo();
   }, [selected]);
 
   const handleSelect = (method: MetodoPagamento) => {

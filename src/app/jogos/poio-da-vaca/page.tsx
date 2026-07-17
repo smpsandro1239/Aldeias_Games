@@ -3,6 +3,7 @@ import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useWallet } from "@/components/providers/wallet-provider";
 import {
   Grid2X2,
   CheckCircle2,
@@ -158,7 +159,7 @@ export default function PoioDaVacaPage() {
   const [confirmacaoModalOpen, setConfirmacaoModalOpen] = useState(false);
   const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
   const [notificationSent, setNotificationSent] = useState(false);
-  const [saldo, setSaldo] = useState(0);
+  const { saldo, refreshBalance } = useWallet();
   const [pagamentoPendente, setPagamentoPendente] = useState<any>(null);
   const [jogadorForm, setJogadorForm] = useState({
     nome: "",
@@ -189,7 +190,6 @@ export default function PoioDaVacaPage() {
   useEffect(() => {
     fetchJogo();
     fetchApostas();
-    fetchSaldo();
     
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -210,18 +210,6 @@ export default function PoioDaVacaPage() {
       } catch (e) {}
     }
   }, []);
-
-  const fetchSaldo = async () => {
-    try {
-      const res = await apiRequest("/api/wallet");
-      const data = await res.json();
-      if (data.saldo !== undefined) {
-        setSaldo(data.saldo);
-      }
-    } catch (e) {
-      console.error("Erro ao buscar saldo:", e);
-    }
-  };
 
   const fetchJogo = async () => {
     try {
@@ -472,7 +460,7 @@ export default function PoioDaVacaPage() {
         setSelectedSquares([]);
         setJogadorForm({ nome: "", telefone: "", email: "", notificacao: "whatsapp" });
         setPagamentoPendente(null);
-        fetchSaldo();
+        refreshBalance();
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || "Erro ao registar aposta.");

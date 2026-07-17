@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { User, LogOut, Settings, Wallet, House } from "lucide-react";
 import { toast } from "sonner";
+import { useWallet } from "@/components/providers/wallet-provider";
 
 interface User {
   id: string;
@@ -26,27 +27,13 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [saldo, setSaldo] = useState<number>(0);
+  const { saldo } = useWallet();
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-    
-    // Fetch saldo
-    const fetchSaldo = async () => {
-      try {
-        const res = await fetch("/api/wallet");
-        if (res.ok) {
-          const data = await res.json();
-          setSaldo(data.saldo || 0);
-        }
-      } catch (e) {
-        console.error("Erro ao buscar saldo:", e);
-      }
-    };
-    fetchSaldo();
   }, []);
 
   const handleLogout = () => {

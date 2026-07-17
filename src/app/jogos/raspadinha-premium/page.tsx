@@ -3,6 +3,7 @@ import { apiRequest } from '@/lib/api-client';
 
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useWallet } from "@/components/providers/wallet-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
@@ -106,7 +107,7 @@ function RaspadinhaPremiumContent() {
   const [showPurchaseAnimation, setShowPurchaseAnimation] = useState(false);
   const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [saldo, setSaldo] = useState(0);
+  const { saldo, refreshBalance } = useWallet();
   const { playScratch } = useScratchSound();
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -179,22 +180,6 @@ function RaspadinhaPremiumContent() {
       setLoading(false);
     }
   };
-
-  const fetchSaldo = async () => {
-    try {
-      const res = await apiRequest("/api/wallet");
-      const data = await res.json();
-      if (data.saldo !== undefined) {
-        setSaldo(data.saldo);
-      }
-    } catch (e) {
-      console.error("Erro ao buscar saldo:", e);
-    }
-  };
-
-  useEffect(() => {
-    fetchSaldo();
-  }, []);
 
   const initSlotsFromGrid = (grid: Prize[]) => {
     setSlots(grid.map((prize, i) => ({
@@ -354,7 +339,7 @@ function RaspadinhaPremiumContent() {
           }
           
           toast.success("Raspadinha registada com sucesso!");
-          fetchSaldo();
+          refreshBalance();
         } else {
           toast.error("Erro ao iniciar jogo");
         }

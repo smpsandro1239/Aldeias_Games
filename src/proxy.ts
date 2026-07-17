@@ -10,8 +10,23 @@ function generateNonce(): string {
   return btoa(String.fromCharCode(...array));
 }
 
-// CSP header with nonce-based script-src (style-src keeps unsafe-inline for Radix/Tailwind)
+// CSP header — strict in production, permissive in dev (Next.js HMR needs unsafe-eval + inline)
 function buildCspHeader(nonce: string): string {
+  if (process.env.NODE_ENV !== "production") {
+    return [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://fonts.gstatic.com https://www.google.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https://api.stripe.com https://worldtimeapi.org https://www.googleapis.com https://appleid.apple.com https://api.mbway.pt https://euromillions-api.vercel.app https://api.fugete.com",
+      "frame-src 'self' https://js.stripe.com",
+      "worker-src 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join("; ");
+  }
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' https://js.stripe.com`,

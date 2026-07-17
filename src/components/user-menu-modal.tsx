@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { User, LogOut, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { useWallet } from "@/components/providers/wallet-provider";
 
 interface User {
   id: string;
@@ -23,44 +24,21 @@ interface UserMenuModalProps {
 export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [saldo, setSaldo] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const { saldo, loading: walletLoading } = useWallet();
 
   useEffect(() => {
-    const loadUserData = async () => {
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser);
-        } catch (e) {
-          console.error("Error parsing user data:", e);
-          localStorage.removeItem("user");
-        }
-        
-        // Fetch real balance from API
-        try {
-          const response = await fetch("/api/wallet");
-          
-          if (response.ok) {
-            const data = await response.json();
-            setSaldo(data.saldo || 0);
-          } else {
-            console.error("Failed to fetch balance");
-            setSaldo(0);
-          }
-        } catch (error) {
-          console.error("Error fetching balance:", error);
-          setSaldo(0);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+        localStorage.removeItem("user");
       }
-    };
-
-    loadUserData();
+    }
+    setLoading(false);
   }, []);
 
   const handleLogout = () => {
@@ -72,7 +50,7 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
     router.push("/");
   };
 
-  if (loading) {
+  if (loading || walletLoading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md bg-surface-container border border-primary/10 p-0 overflow-hidden">

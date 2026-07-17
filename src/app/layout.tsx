@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
 import { OfflineProvider } from "@/components/providers/offline-provider";
+import { WalletProvider } from "@/components/providers/wallet-provider";
 import { SentryInit } from "@/components/sentry-init";
 import { Toaster } from "@/components/ui/sonner";
 import { AnalyticsInit } from "@/components/analytics-init";
@@ -92,12 +93,14 @@ export default async function RootLayout({
         >
           <ReactQueryProvider>
             <OfflineProvider>
-              <SentryInit />
-              <AnalyticsInit />
-              <RouteAnnouncer />
-              {children}
-              <CookieConsentBanner />
-              <Toaster position="top-right" richColors />
+              <WalletProvider>
+                <SentryInit />
+                <AnalyticsInit />
+                <RouteAnnouncer />
+                {children}
+                <CookieConsentBanner />
+                <Toaster position="top-right" richColors />
+              </WalletProvider>
             </OfflineProvider>
           </ReactQueryProvider>
         </ThemeProvider>

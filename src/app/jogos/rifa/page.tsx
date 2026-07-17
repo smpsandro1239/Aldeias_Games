@@ -3,6 +3,7 @@ import { apiRequest } from '@/lib/api-client';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useWallet } from "@/components/providers/wallet-provider";
 import {
   ArrowLeft,
   Calendar,
@@ -92,7 +93,7 @@ export default function RifaPage() {
   });
   const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
   const [numeroSorte, setNumeroSorte] = useState<string>("");
-  const [saldo, setSaldo] = useState(0);
+  const { saldo, refreshBalance } = useWallet();
   const [paymentModalOpen, setCreditCardModalOpen] = useState(false);
   const [confirmacaoModalOpen, setConfirmacaoModalOpen] = useState(false);
   const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
@@ -107,7 +108,6 @@ export default function RifaPage() {
 
   useEffect(() => {
     fetchJogo();
-    fetchSaldo();
     
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -246,18 +246,6 @@ export default function RifaPage() {
       console.error("Erro ao carregar jogo:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchSaldo = async () => {
-    try {
-      const res = await apiRequest("/api/wallet");
-      const data = await res.json();
-      if (data.saldo !== undefined) {
-        setSaldo(data.saldo);
-      }
-    } catch (e) {
-      console.error("Erro ao buscar saldo:", e);
     }
   };
 
@@ -453,6 +441,7 @@ export default function RifaPage() {
         }
 
         toast.success("Participação confirmada!");
+        refreshBalance();
       } else {
         const errorData = await response.json().catch(() => null);
         toast.error(errorData?.error || "Erro ao participar");
