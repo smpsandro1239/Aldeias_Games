@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -274,11 +275,13 @@ function EventoCard({
     >
       {evento.imagemUrl && (
         <div className="aspect-video w-full overflow-hidden bg-surface-container-low">
-          <img
+          <Image
             src={evento.imagemUrl}
             alt={evento.nome}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
+            width={640}
+            height={360}
+            unoptimized
           />
         </div>
       )}
@@ -324,11 +327,13 @@ function AldeiaCard({
       className="group bg-surface-container rounded-2xl p-4 border border-outline-variant/10 hover:border-primary/30 transition-colors text-left w-full flex items-center gap-3"
     >
       {aldeia.logoUrl ? (
-        <img
+        <Image
           src={aldeia.logoUrl}
           alt={`Logo de ${aldeia.nome}`}
           className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/30 shrink-0"
-          loading="lazy"
+          width={40}
+          height={40}
+          unoptimized
         />
       ) : (
         <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
@@ -362,23 +367,23 @@ export function LandingPage({
   const [stats, setStats] = useState<Stats>({ aldeias: 0, utilizadores: 0, angariado: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const res = await fetch("/api/public/stats");
-      const data = await res.json();
-      if (data.success) {
-        setStats(data.data);
-      }
-    } catch {
-      // Silently fail - stats are non-critical
-    } finally {
-      setStatsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/public/stats");
+        const data = await res.json();
+        if (!cancelled && data.success) {
+          setStats(data.data);
+        }
+      } catch {
+        // Silently fail - stats are non-critical
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const displayedJogos = jogos.slice(0, 4);
   const displayedEventos = eventos.slice(0, 6);
