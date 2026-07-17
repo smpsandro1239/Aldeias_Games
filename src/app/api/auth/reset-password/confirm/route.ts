@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { hash } from 'bcryptjs';
+import { checkRateLimit, createRateLimitResponse, getClientIdentifier, rateLimitConfigs } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 5 tentativas por hora
+    const clientId = getClientIdentifier(request);
+    const rateResult = await checkRateLimit(clientId, rateLimitConfigs.resetPassword);
+    if (!rateResult.allowed) {
+      return createRateLimitResponse(rateResult.resetTime);
+    }
+
     const body = await request.json();
     const { token, novaPassword } = body;
 

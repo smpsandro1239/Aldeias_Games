@@ -78,7 +78,7 @@ export function AdminCofre() {
   const [rejectLevId, setRejectLevId] = useState<string | null>(null);
   const [rejectLevMotivo, setRejectLevMotivo] = useState("");
 
-  const getToken = useCallback(() => localStorage.getItem("token") || "", []);
+  const getToken = useCallback(() => "", []);
   const getAldeiaId = useCallback(() => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -89,19 +89,12 @@ export function AdminCofre() {
   }, []);
 
   const fetchData = useCallback(async () => {
-    const token = getToken();
     const aldeiaId = getAldeiaId();
     try {
       const [depRes, vaultRes, levRes] = await Promise.all([
-        apiRequest("/api/cofre/pedido-deposito", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        apiRequest(`/api/cofre/historico${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        apiRequest(`/api/cofre/levantamento${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        apiRequest("/api/cofre/pedido-deposito"),
+        apiRequest(`/api/cofre/historico${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`),
+        apiRequest(`/api/cofre/levantamento${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`),
       ]);
 
       if (depRes.ok) {

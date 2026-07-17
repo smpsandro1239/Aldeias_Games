@@ -54,13 +54,12 @@ export function useAuth() {
       const initAuth = async () => {
         try {
           const user = localStorage.getItem("user");
-          const token = localStorage.getItem("token");
 
-          if (user && token) {
+          if (user) {
             const parsedUser = JSON.parse(user);
             setState({
               user: parsedUser,
-              token: token,
+              token: null,
               isLoading: false,
               isAuthenticated: true,
             });
@@ -69,7 +68,6 @@ export function useAuth() {
           }
         } catch {
           localStorage.removeItem("user");
-          localStorage.removeItem("token");
           setState((prev) => ({ ...prev, isLoading: false }));
         }
       };
@@ -96,14 +94,12 @@ export function useAuth() {
         return { success: false, requiresTwoFactor: true, error: data.message || "Código 2FA necessário" };
       }
 
+      // Armazenar apenas dados do utilizador (não o token — httpOnly cookie já é suficiente)
       localStorage.setItem("user", JSON.stringify(data.user));
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
 
       setState({
         user: data.user,
-        token: data.token,
+        token: null,
         isLoading: false,
         isAuthenticated: true,
       });
@@ -131,14 +127,12 @@ export function useAuth() {
         throw new Error(responseData.error || "Erro ao registar");
       }
 
+      // Armazenar apenas dados do utilizador (não o token — httpOnly cookie já é suficiente)
       localStorage.setItem("user", JSON.stringify(responseData.user));
-      if (responseData.token) {
-        localStorage.setItem("token", responseData.token);
-      }
 
       setState({
         user: responseData.user,
-        token: responseData.token,
+        token: null,
         isLoading: false,
         isAuthenticated: true,
       });
@@ -184,10 +178,11 @@ export function useAuth() {
     });
   }, []);
 
-   const getAuthHeaders = useCallback(() => {
-     const token = state.token || localStorage.getItem("token");
-     return token ? { Authorization: `Bearer ${token}` } : {};
-   }, [state.token]);
+  // Token é gerenciado exclusivamente pelo httpOnly cookie (set pelo server).
+  // Não é necessário enviar Authorization header — o browser envia o cookie automaticamente.
+  const getAuthHeaders = useCallback(() => {
+    return {};
+  }, []);
 
   const isSuperAdmin = state.user?.role === "super_admin";
   const isAldeiaAdmin = state.user?.role === "aldeia_admin";

@@ -86,7 +86,7 @@ export function FinanceiroOverview() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("visao-geral");
 
-  const getToken = useCallback(() => localStorage.getItem("token") || "", []);
+  const getToken = useCallback(() => "", []);
   const getAldeiaId = useCallback(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}").aldeiaId || undefined;
@@ -99,9 +99,7 @@ export function FinanceiroOverview() {
     const token = getToken();
     const aldeiaId = getAldeiaId();
     try {
-      const res = await apiRequest(`/api/cofre/resumo${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiRequest(`/api/cofre/resumo${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`);
       if (res.ok) {
         const json = await res.json();
         setData(json.data);

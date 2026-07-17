@@ -57,12 +57,7 @@ export default function PremiosPage() {
 
   const fetchSaldo = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      
-      const res = await fetch("/api/users/perfil", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch("/api/users/perfil");
       if (res.ok) {
         const data = await res.json();
         if (data.data?.saldo !== undefined) {
@@ -76,20 +71,12 @@ export default function PremiosPage() {
 
    const fetchPremios = async () => {
      try {
-       const token = localStorage.getItem("token");
-       if (!token) {
-         setLoading(false);
-         return;
-       }
-
        // Fetch all participations with pagination
        const allParticipacoes: any[] = [];
        let page = 1;
        let hasMore = true;
        while (hasMore) {
-         const res = await fetch(`/api/participacoes?page=${page}&limit=50`, {
-           headers: { Authorization: `Bearer ${token}` },
-         });
+         const res = await fetch(`/api/participacoes?page=${page}&limit=50`);
          if (res.ok) {
            const data = await res.json();
            allParticipacoes.push(...(data.data || []));

@@ -182,25 +182,10 @@ export async function getFullUserFromRequest(request: NextRequest) {
      },
    });
 
-  // If user not found in DB (e.g. demo user without matching DB record),
-  // construct minimal user from token data
+  // Se o utilizador não existe na BD (ex: conta apagada), negar acesso.
+  // Antes, fabricava um user sintético do JWT — isso Permitia acesso a contas apagadas.
   if (!user) {
-    return {
-      id: tokenData.userId,
-      nome: tokenData.email.split('@')[0],
-      email: tokenData.email,
-      role: tokenData.role as any,
-      aldeiaId: tokenData.aldeiaId ?? null,
-      saldo: 0,
-      comissaoPercentual: 0,
-      comissaoTotal: 0,
-      emailVerificado: true,
-      notificacoesEmail: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      telefone: null,
-      aldeia: null,
-    };
+    return null;
   }
 
   // If user has no direct aldeiaId, fallback to first userAldeiaRole

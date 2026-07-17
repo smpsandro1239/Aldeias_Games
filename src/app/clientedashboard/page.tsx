@@ -22,12 +22,7 @@ export default function ClienteDashboardPage() {
   const [mounted, setMounted] = useState(false);
 
   const getToken = useCallback(() => {
-    try {
-      return localStorage.getItem("token");
-    } catch (error) {
-      console.error("Error accessing localStorage:", error);
-      return null;
-    }
+    return "";
   }, []);
 
   useEffect(() => {
@@ -43,9 +38,6 @@ export default function ClienteDashboardPage() {
   }
 
   const token = getToken();
-  if (!token) {
-    return <LoaderScreen message="Token não encontrado" />;
-  }
 
   return (
     <RoleGuard

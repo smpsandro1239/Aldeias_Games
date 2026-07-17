@@ -1,6 +1,8 @@
 "use client";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { FinanceiroOverview } from "@/features/admin/financeiro-overview";
+import dynamic from "next/dynamic";
+
+const FinanceiroOverview = dynamic(() => import("@/features/admin/financeiro-overview").then(mod => ({ default: mod.FinanceiroOverview })), { ssr: false });
 
 const FinanceiroPage = () => {
   return (

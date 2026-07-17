@@ -51,20 +51,12 @@ export function AldeiaWizardModal({ open, onComplete }: AldeiaWizardModalProps) 
 
     setSaving(true);
     try {
-      const token = localStorage.getItem("token");
       const savedUserStr = localStorage.getItem("user");
-      
-      if (!token) {
-        toast.error("Sessão expirada. Faça login novamente.");
-        window.location.href = "/";
-        return;
-      }
       
       const res = await apiRequest("/api/users/perfil", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ aldeiaId: selectedId }),
       });

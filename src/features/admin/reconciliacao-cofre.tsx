@@ -59,13 +59,11 @@ export function ReconciliacaoCofre() {
   const [search, setSearch] = useState("");
   const [selectedVendedor, setSelectedVendedor] = useState<string | null>(null);
 
-  const getToken = useCallback(() => localStorage.getItem("token") || "", []);
+  const getToken = useCallback(() => "", []);
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await apiRequest("/api/cofre/reconciliacao", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await apiRequest("/api/cofre/reconciliacao");
       if (res.ok) {
         const data = await res.json();
         setVendedores(data.data.vendedores);

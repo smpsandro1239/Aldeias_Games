@@ -140,10 +140,7 @@ export default function PerfilPage() {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/users/perfil", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch("/api/users/perfil");
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data) {
@@ -179,12 +176,10 @@ export default function PerfilPage() {
     const selectedAldeia = aldeias.find(a => a.id === formData.aldeiaId) || undefined;
     
     try {
-      const token = localStorage.getItem("token");
       const response = await fetch("/api/users/perfil", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           nome: formData.nome,

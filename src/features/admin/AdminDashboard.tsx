@@ -37,7 +37,7 @@ import {
 } from "@/components/modals";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";
 
-import { DashboardAnalytics } from "./analytics-dashboard";
+const DashboardAnalytics = lazy(() => import("./analytics-dashboard").then(mod => ({ default: mod.DashboardAnalytics })));
 
 import {
    OverviewTab,
@@ -994,7 +994,9 @@ export default function AdminDashboard({
 
         {/* Analytics Tab */}
         <TabsContent value="analytics">
-          <DashboardAnalytics token={token} aldeiaId={aldeiaId} />
+          <Suspense fallback={<div className="flex items-center justify-center p-8 text-muted-foreground">A carregar analytics...</div>}>
+            <DashboardAnalytics token={token} aldeiaId={aldeiaId} />
+          </Suspense>
         </TabsContent>
 
         {/* Eventos Tab */}

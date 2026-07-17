@@ -27,17 +27,7 @@ export default function JogosPage() {
 
   const fetchJogos = useCallback(async () => {
     try {
-      let token: string | null = null;
-      try {
-        token = localStorage.getItem("token");
-      } catch (storageError) {
-        console.warn("Erro ao acessar localStorage:", storageError);
-      }
-
-      const headers: HeadersInit = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(API_ENDPOINT, { headers });
+      const res = await fetch(API_ENDPOINT);
       if (res.ok) {
         const data = await res.json();
         setJogos(data.data || []);

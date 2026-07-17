@@ -212,12 +212,8 @@ export default function PoioDaVacaPage() {
   }, []);
 
   const fetchSaldo = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
     try {
-      const res = await apiRequest("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await apiRequest("/api/wallet");
       const data = await res.json();
       if (data.saldo !== undefined) {
         setSaldo(data.saldo);
@@ -258,7 +254,6 @@ export default function PoioDaVacaPage() {
 
   const fetchApostas = async () => {
     try {
-      const token = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
       let userParam = "";
       if (storedUser) {
@@ -266,11 +261,8 @@ export default function PoioDaVacaPage() {
         userParam = "&user=" + btoa(JSON.stringify(userData));
       }
 
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
       const response = await fetch(`/api/apostas?tipo=poio_da_vaca${userParam}`, {
-        headers
+        headers: {}
       });
       const data = await response.json();
       if (data.data) {
@@ -402,19 +394,9 @@ export default function PoioDaVacaPage() {
         if (metodo === "dinheiro") {
           await criarAposta(true, "dinheiro");
         } else if (metodo === "saldo") {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            toast.error("Precisa de sessão para usar saldo");
-            return;
-          }
           // criarAposta will handle the saldo payment via the apostas API
           await criarAposta(true, "saldo");
         } else if (metodo === "mbway") {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            toast.error("Precisa de sessão para usar MBWay");
-            return;
-          }
           const tel = jogadorForm.telefone;
           if (!tel) {
             toast.error("Telefone obrigatório para MBWay");
@@ -424,7 +406,6 @@ export default function PoioDaVacaPage() {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
               telefone: tel,
@@ -460,15 +441,9 @@ export default function PoioDaVacaPage() {
         usarSaldo
       };
 
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      const token = localStorage.getItem("token");
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
       const response = await apiRequest("/api/apostas", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(aposta)
       });
 

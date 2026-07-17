@@ -52,13 +52,11 @@ export function SuperAdminCofre() {
   const [search, setSearch] = useState("");
   const [confirmDepId, setConfirmDepId] = useState<string | null>(null);
 
-  const getToken = useCallback(() => localStorage.getItem("token") || "", []);
+  const getToken = useCallback(() => "", []);
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await apiRequest("/api/superadmin/cofre", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await apiRequest("/api/superadmin/cofre");
       if (res.ok) {
         const data = await res.json();
         setAldeias(data.data.aldeias);

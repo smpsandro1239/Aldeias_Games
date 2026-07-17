@@ -36,11 +36,9 @@ export function RoleGuard({ allowedRoles, children, redirectPath, panelName }: R
   const [hasAccess, setHasAccess] = useState(false);
 
   const checkAccess = useCallback(() => {
-    let token: string | null = null;
     let userStr: string | null = null;
 
     try {
-      token = localStorage.getItem("token");
       userStr = localStorage.getItem("user");
     } catch (storageError) {
       console.error("Erro ao acessar localStorage:", storageError);
@@ -49,7 +47,7 @@ export function RoleGuard({ allowedRoles, children, redirectPath, panelName }: R
       return;
     }
 
-    if (!token || !userStr) {
+    if (!userStr) {
       toast.error("Sessão expirada. Por favor, faça login novamente.");
       router.push("/");
       return;

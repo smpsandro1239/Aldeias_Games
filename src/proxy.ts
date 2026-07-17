@@ -270,7 +270,37 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // === SECURITY HEADERS ===
+  const response = NextResponse.next();
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // === CORS para API routes ===
+  if (pathname.startsWith("/api/")) {
+    const origin = request.headers.get("origin");
+    const allowedOrigins = [
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "https://aldeiasgames.pt",
+      "https://www.aldeiasgames.pt",
+    ];
+
+    if (origin && allowedOrigins.includes(origin)) {
+      response.headers.set("Access-Control-Allow-Origin", origin);
+    }
+
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-csrf-token");
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+    response.headers.set("Access-Control-Max-Age", "86400");
+
+    if (request.method === "OPTIONS") {
+      return new NextResponse(null, { status: 204, headers: response.headers });
+    }
+  }
+
+  return response;
 }
 
 export const config = {

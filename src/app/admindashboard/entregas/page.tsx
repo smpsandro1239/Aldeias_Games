@@ -67,9 +67,7 @@ useEffect(() => {
 
 const fetchEntregas = async () => {
       try {
-        const res = await fetch("/api/admin/entregas-saldo", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await fetch("/api/admin/entregas-saldo");
        if (res.ok) {
          const data = await res.json();
          setEntregas(data.data || []);
@@ -87,7 +85,6 @@ const fetchEntregas = async () => {
        const res = await fetch(`/api/admin/entregas-saldo/${entregaId}/confirmar`, {
          method: "POST",
          headers: {
-           Authorization: `Bearer ${localStorage.getItem("token")}`,
            "Content-Type": "application/json"
          }
        });
@@ -112,7 +109,6 @@ const fetchEntregas = async () => {
          method: "PATCH",
          headers: {
            "Content-Type": "application/json",
-           Authorization: `Bearer ${localStorage.getItem("token")}`
          },
          body: JSON.stringify({ entregaId, acao })
        });

@@ -38,8 +38,8 @@ export async function secureFetch<T>(
 }
 
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  // Auth is now handled by httpOnly cookie — no token in localStorage
+  return null;
 }
 
 export function validateToken(token: string | null): boolean {

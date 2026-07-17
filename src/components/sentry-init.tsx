@@ -13,8 +13,8 @@ export function SentryInit() {
         
         integrations: [
           Sentry.replayIntegration({
-            maskAllText: false,
-            blockAllMedia: false,
+            maskAllText: true,
+            blockAllMedia: true,
           }),
           Sentry.browserTracingIntegration(),
         ],

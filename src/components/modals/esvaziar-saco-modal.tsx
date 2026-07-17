@@ -35,15 +35,7 @@ function useSaldo(open: boolean) {
 
     const fetchSaldo = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Sessão expirada");
-          return;
-        }
-
-        const res = await fetch("/api/users/perfil", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch("/api/users/perfil");
 
         if (!res.ok) {
           throw new Error("Erro ao buscar saldo");
@@ -86,17 +78,10 @@ export function EsvaziarSacoModal({ open, onOpenChange, aldeiaId, aldeiaNome }: 
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Sessão expirada");
-        return;
-      }
-
       const res = await apiRequest("/api/wallet/adjust", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           valor: -valorNum,

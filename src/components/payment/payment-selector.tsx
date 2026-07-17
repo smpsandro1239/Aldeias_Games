@@ -53,12 +53,8 @@ export function PaymentSelector({
     loadUserData();
 
     const loadSaldo = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
       try {
-        const res = await fetch("/api/wallet", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch("/api/wallet");
         const data = await res.json();
         if (data.saldo !== undefined) {
           setSaldo(data.saldo);

@@ -250,12 +250,8 @@ export default function RifaPage() {
   };
 
   const fetchSaldo = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
     try {
-      const res = await apiRequest("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await apiRequest("/api/wallet");
       const data = await res.json();
       if (data.saldo !== undefined) {
         setSaldo(data.saldo);
@@ -331,23 +327,12 @@ export default function RifaPage() {
         if (metodo === "dinheiro") {
           await criarParticipacao("dinheiro");
         } else if (metodo === "saldo") {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            toast.error("Precisa de login para usar saldo");
-            return;
-          }
           await criarParticipacao("saldo");
         } else if (metodo === "stripe") {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            toast.error("Precisa de login para usar cartão");
-            return;
-          }
           const res = await apiRequest("/api/pagamentos/stripe", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
               valor: numerosSelecionados.length * jogo.preco,
@@ -366,11 +351,6 @@ export default function RifaPage() {
             toast.error("Erro: URL de pagamento não disponível");
           }
         } else if (metodo === "mbway") {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            toast.error("Precisa de login para usar MBWay");
-            return;
-          }
           if (!participante.telefone) {
             toast.error("Telefone obrigatório para MBWay");
             return;
@@ -379,7 +359,6 @@ export default function RifaPage() {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
               telefone: participante.telefone,
@@ -404,8 +383,6 @@ export default function RifaPage() {
 
   const criarParticipacao = async (metodo: "dinheiro" | "saldo" | "mbway") => {
     if (!jogo) return;
-
-    const token = localStorage.getItem("token");
 
     const payload: Record<string, unknown> = {
       jogoId: jogo.id,
@@ -436,12 +413,9 @@ export default function RifaPage() {
     }
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
       const response = await apiRequest("/api/participacoes", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 

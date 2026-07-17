@@ -25,12 +25,8 @@ function SuccessContent() {
       }
 
       try {
-        const token = localStorage.getItem("token");
-        
         // Verificar estado do pagamento
-        const res = await fetch(`/api/pagamentos/stripe?sessionId=${sessionId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const res = await fetch(`/api/pagamentos/stripe?sessionId=${sessionId}`);
 
         const data = await res.json();
 
@@ -39,18 +35,14 @@ function SuccessContent() {
           setAmount(data.data.amount / 100);
           
           // Buscar saldo atualizado após pagamento bem-sucedido
-          if (token) {
-            try {
-              const walletRes = await fetch("/api/wallet", {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              const walletData = await walletRes.json();
-              if (walletData.saldo !== undefined) {
-                setSaldoAtual(walletData.saldo);
-              }
-            } catch (e) {
-              console.error("Erro ao buscar saldo:", e);
+          try {
+            const walletRes = await fetch("/api/wallet");
+            const walletData = await walletRes.json();
+            if (walletData.saldo !== undefined) {
+              setSaldoAtual(walletData.saldo);
             }
+          } catch (e) {
+            console.error("Erro ao buscar saldo:", e);
           }
         } else {
           setStatus("pending");

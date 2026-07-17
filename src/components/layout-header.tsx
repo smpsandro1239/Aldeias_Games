@@ -89,6 +89,13 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
     <>
       {/* Header com navegação integrada */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-outline-variant/20">
+        {/* Skip to main content — WCAG 2.4.1 */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-[9999] focus:top-2 focus:left-2 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:font-bold"
+        >
+          Saltar para o conteúdo principal
+        </a>
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logo */}
           <div className="flex items-center gap-3">

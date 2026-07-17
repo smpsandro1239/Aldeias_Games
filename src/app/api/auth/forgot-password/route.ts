@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { checkRateLimit, createRateLimitResponse, getClientIdentifier, rateLimitConfigs } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 3 pedidos por hora
+    const clientId = getClientIdentifier(request);
+    const rateResult = await checkRateLimit(clientId, rateLimitConfigs.forgotPassword);
+    if (!rateResult.allowed) {
+      return createRateLimitResponse(rateResult.resetTime);
+    }
+
     const body = await request.json();
     const { email } = body;
 

@@ -36,19 +36,14 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
     
     // Fetch saldo
     const fetchSaldo = async () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const res = await fetch("/api/wallet", {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setSaldo(data.saldo || 0);
-          }
-        } catch (e) {
-          console.error("Erro ao buscar saldo:", e);
+      try {
+        const res = await fetch("/api/wallet");
+        if (res.ok) {
+          const data = await res.json();
+          setSaldo(data.saldo || 0);
         }
+      } catch (e) {
+        console.error("Erro ao buscar saldo:", e);
       }
     };
     fetchSaldo();

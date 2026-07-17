@@ -40,22 +40,13 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
         
         // Fetch real balance from API
         try {
-          const token = localStorage.getItem("token");
-          if (token) {
-            const response = await fetch("/api/wallet", {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              setSaldo(data.saldo || 0);
-            } else {
-              console.error("Failed to fetch balance");
-              setSaldo(0);
-            }
+          const response = await fetch("/api/wallet");
+          
+          if (response.ok) {
+            const data = await response.json();
+            setSaldo(data.saldo || 0);
           } else {
+            console.error("Failed to fetch balance");
             setSaldo(0);
           }
         } catch (error) {

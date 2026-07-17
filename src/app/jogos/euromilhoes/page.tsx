@@ -243,14 +243,6 @@ export default function EuromilhoesPage() {
       return;
     }
 
-    if (metodo === "saldo" || metodo === "stripe") {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Precisa de login para este método de pagamento.");
-        return;
-      }
-    }
-
     await criarParticipacao(metodo);
   };
 
@@ -261,7 +253,6 @@ export default function EuromilhoesPage() {
 
     setSubmetendo(true);
 
-    const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : null;
 
@@ -288,7 +279,6 @@ export default function EuromilhoesPage() {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const response = await apiRequest("/api/participacoes", {
         method: "POST",

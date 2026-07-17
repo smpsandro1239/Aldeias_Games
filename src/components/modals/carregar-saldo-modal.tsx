@@ -118,12 +118,8 @@ function useSaldo(userId: string) {
 
   useEffect(() => {
     const fetchSaldo = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
       try {
-        const res = await fetch("/api/wallet", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch("/api/wallet");
         const data = await res.json();
         if (typeof data.saldo === 'number') {
           setSaldo(data.saldo);
@@ -256,16 +252,10 @@ export function CarregarSaldoModal({
       }
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("Sessão expirada");
-          return;
-        }
         const res = await apiRequest("/api/wallet/carregar", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             valor: valorNum,
@@ -305,16 +295,10 @@ export function CarregarSaldoModal({
 
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Sessão expirada");
-        return;
-      }
       const res = await apiRequest("/api/wallet/carregar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           valor: valorNum,

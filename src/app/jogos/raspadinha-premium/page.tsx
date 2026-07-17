@@ -165,11 +165,7 @@ function RaspadinhaPremiumContent() {
     if (!jogoId) return;
     
     try {
-      const token = localStorage.getItem("token");
-      const headers: HeadersInit = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-      
-      const res = await fetch(`/api/jogos/${jogoId}`, { headers });
+      const res = await fetch(`/api/jogos/${jogoId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.data) {
@@ -185,12 +181,8 @@ function RaspadinhaPremiumContent() {
   };
 
   const fetchSaldo = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
     try {
-      const res = await apiRequest("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await apiRequest("/api/wallet");
       const data = await res.json();
       if (data.saldo !== undefined) {
         setSaldo(data.saldo);
@@ -236,21 +228,11 @@ function RaspadinhaPremiumContent() {
      }
 
      try {
-       if (metodo === "dinheiro") {
+        if (metodo === "dinheiro") {
          await criarParticipacao("dinheiro");
        } else if (metodo === "saldo") {
-         const token = localStorage.getItem("token");
-         if (!token) {
-           toast.error("Precisa de login para usar saldo");
-           return;
-         }
          await criarParticipacao("saldo");
        } else if (metodo === "mbway") {
-         const token = localStorage.getItem("token");
-         if (!token) {
-           toast.error("Precisa de login para usar MBWay");
-           return;
-         }
          if (!participante.telefone) {
            toast.error("Telefone obrigatório para MBWay");
            return;
@@ -259,7 +241,6 @@ function RaspadinhaPremiumContent() {
            method: "POST",
            headers: { 
              "Content-Type": "application/json",
-             Authorization: `Bearer ${token}`
            },
            body: JSON.stringify({
              telefone: participante.telefone,
@@ -274,17 +255,11 @@ function RaspadinhaPremiumContent() {
          }
          toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
          await criarParticipacao("pendente");
-} else if (metodo === "stripe") {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            toast.error("Precisa de login para usar cartão");
-            return;
-          }
+        } else if (metodo === "stripe") {
           const res = await apiRequest("/api/pagamentos/stripe", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
               valor: jogo.preco,
@@ -313,8 +288,6 @@ function RaspadinhaPremiumContent() {
   const criarParticipacao = async (metodo: "dinheiro" | "saldo" | "pendente") => {
     if (!jogo) return;
 
-    const token = localStorage.getItem("token");
-
     const payload: Record<string, unknown> = {
       jogoId: jogo.id,
       dadosParticipacao: {},
@@ -331,12 +304,9 @@ function RaspadinhaPremiumContent() {
     }
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
       const response = await apiRequest("/api/participacoes", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
@@ -454,14 +424,10 @@ function RaspadinhaPremiumContent() {
     if (!pId || premioClaimed) return;
     
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       const res = await apiRequest(`/api/participacoes/${pId}/claim-premio`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
 

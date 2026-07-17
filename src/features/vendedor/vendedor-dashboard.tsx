@@ -117,12 +117,10 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
     }
 
     try {
-      const token = localStorage.getItem("token");
       const res = await apiRequest("/api/vendedor/entrega-saldo", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           valor,

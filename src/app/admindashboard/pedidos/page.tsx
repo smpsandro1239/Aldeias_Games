@@ -73,12 +73,7 @@ useEffect(() => {
  
 const fetchPedidos = async () => {
       try {
-        const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`,
-         {
-           headers: { 
-             Authorization: `Bearer ${localStorage.getItem("token")}`,
-           },
-         });
+        const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`);
         
         if (res.ok) {
           const data = await res.json();
@@ -96,7 +91,6 @@ const fetchPedidos = async () => {
        const res = await fetch(`/api/admin/pedidos-carregamento/${pedidoId}/confirmar`, {
          method: "POST",
          headers: { 
-           Authorization: `Bearer ${localStorage.getItem("token")}`,
            "Content-Type": "application/json"
          },
        });

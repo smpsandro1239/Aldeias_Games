@@ -51,10 +51,7 @@ export default function PedidosPage() {
   const fetchPedidos = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await apiRequest("/api/pedidos-carregamento", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await apiRequest("/api/pedidos-carregamento");
       const data = await res.json();
       if (data.success) {
         setPedidos(data.data || []);
@@ -69,12 +66,10 @@ export default function PedidosPage() {
   const handleConfirmar = async (pedidoId: string) => {
     setProcessing(pedidoId);
     try {
-      const token = localStorage.getItem("token");
       const res = await apiRequest("/api/pedidos-carregamento", {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ pedidoId, acao: "confirmar" })
       });
@@ -96,12 +91,10 @@ export default function PedidosPage() {
   const handleRejeitar = async (pedidoId: string) => {
     setProcessing(pedidoId);
     try {
-      const token = localStorage.getItem("token");
       const res = await apiRequest("/api/pedidos-carregamento", {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ pedidoId, acao: "rejeitar" })
       });

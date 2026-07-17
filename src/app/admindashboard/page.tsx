@@ -37,13 +37,7 @@ export default function AdminDashboardPage() {
 
   const getStoredData = useCallback(() => {
     try {
-      const savedToken = localStorage.getItem("token");
       const savedUser = localStorage.getItem("user");
-
-      if (!savedToken) {
-        setError("Token não encontrado. Faça login novamente.");
-        return null;
-      }
 
       if (!savedUser) {
         setError("Utilizador não encontrado. Faça login novamente.");
@@ -51,7 +45,7 @@ export default function AdminDashboardPage() {
       }
 
       const parsedUser = JSON.parse(savedUser) as User;
-      return { token: savedToken, user: parsedUser };
+      return { token: "", user: parsedUser };
     } catch (e) {
       console.error("Erro ao carregar dados:", e);
       setError("Erro ao carregar dados.");
