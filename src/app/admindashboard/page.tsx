@@ -45,7 +45,7 @@ export default function AdminDashboardPage() {
       }
 
       const parsedUser = JSON.parse(savedUser) as User;
-      return { token: "", user: parsedUser };
+      return { user: parsedUser };
     } catch (e) {
       console.error("Erro ao carregar dados:", e);
       setError("Erro ao carregar dados.");
@@ -94,7 +94,6 @@ export default function AdminDashboardPage() {
     >
       <LayoutHeader>
         <AdminDashboard
-          token={storedData.token}
           aldeiaId={storedData.user.aldeiaId}
           userRole={storedData.user.role}
           aldeia={storedData.user.aldeia}

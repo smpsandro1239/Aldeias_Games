@@ -68,7 +68,6 @@ export default function SuperAdminDashboardPage() {
     >
       <LayoutHeader>
         <AdminDashboard
-          token=""
           aldeiaId={user.aldeiaId}
           userRole={user.role}
           aldeia={user.aldeia}

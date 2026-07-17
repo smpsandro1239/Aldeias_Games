@@ -2,7 +2,6 @@
 import { apiRequest } from '@/lib/api-client';
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { StatCard } from "@/components/ui/StatCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -70,7 +69,6 @@ import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
 
 interface AdminDashboardProps {
-  token: string;
   aldeiaId?: string;
   userRole?: string;
   aldeia?: {
@@ -84,13 +82,11 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({
-  token,
   aldeiaId,
   userRole = "aldeia_admin",
   aldeia,
 }: AdminDashboardProps) {
    const router = useRouter();
-   const queryClient = useQueryClient();
 
    // Estados principais
    const [activeTab, setActiveTab] = useState("overview");
@@ -149,7 +145,6 @@ export default function AdminDashboard({
   const getApi = useCallback(async (url: string, revalidate: number = 30) => {
     try {
       const res = await apiRequest(url, {
-        headers: { Authorization: `Bearer ${token}` },
         next: { revalidate },
       });
       if (res.ok) {
@@ -167,7 +162,6 @@ export default function AdminDashboard({
     try {
       const q = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=pendente` : "?estado=pendente";
       const res = await apiRequest(`/api/admin/pedidos-carregamento${q}`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -176,13 +170,12 @@ export default function AdminDashboard({
     } catch (error) {
       console.error("Erro ao buscar pedidos pendentes:", error);
     }
-  }, [token, aldeiaId]);
+  }, [aldeiaId]);
 
   const fetchEntregasPendentes = useCallback(async () => {
     try {
       const q = aldeiaId ? `?aldeiaId=${aldeiaId}&estado=solicitado` : "?estado=solicitado";
       const res = await apiRequest(`/api/admin/entregas-saldo${q}`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
@@ -191,10 +184,9 @@ export default function AdminDashboard({
     } catch (error) {
       console.error("Erro ao buscar entregas pendentes:", error);
     }
-  }, [token, aldeiaId]);
+  }, [aldeiaId]);
 
   const fetchData = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
 
     try {
@@ -242,7 +234,7 @@ export default function AdminDashboard({
     } finally {
       setLoading(false);
     }
-  }, [token, aldeiaId, userRole, getApi, fetchPedidosPendentes, fetchEntregasPendentes]);
+  }, [aldeiaId, userRole, getApi, fetchPedidosPendentes, fetchEntregasPendentes]);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -274,9 +266,6 @@ export default function AdminDashboard({
     try {
       const res = await apiRequest("/api/eventos/process-recurring", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (res.ok) {
@@ -291,7 +280,7 @@ export default function AdminDashboard({
       console.error("Erro:", error);
       toast.error("Erro ao processar eventos recorrentes");
     }
-  }, [token, fetchData]);
+  }, [fetchData]);
 
   const handleSaveEvento = useCallback(async (data: any) => {
     const isEditing = !!data.id;
@@ -308,7 +297,6 @@ export default function AdminDashboard({
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(eventoData),
       });
@@ -322,7 +310,6 @@ export default function AdminDashboard({
           try {
             // Buscar jogos existentes do evento
             const jogosRes = await apiRequest(`/api/jogos?eventoId=${eventoId}`, {
-              headers: { Authorization: `Bearer ${token}` },
             });
 
             let jogosExistentes: any[] = [];
@@ -353,7 +340,6 @@ export default function AdminDashboard({
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify(jogoData),
               });
@@ -363,7 +349,6 @@ export default function AdminDashboard({
             for (const jogo of jogosParaRemover) {
               // Verificar se o jogo tem participações
               const participacoesRes = await fetch(`/api/participacoes?jogoId=${jogo.id}&limit=1`, {
-                headers: { Authorization: `Bearer ${token}` },
               });
 
               if (participacoesRes.ok) {
@@ -374,7 +359,6 @@ export default function AdminDashboard({
                 if (totalParticipacoes === 0) {
                   await fetch(`/api/jogos/${jogo.id}`, {
                     method: "DELETE",
-                    headers: { Authorization: `Bearer ${token}` },
                   });
                 }
               }
@@ -407,7 +391,7 @@ export default function AdminDashboard({
       console.error('Erro ao salvar evento:', error);
       toast.error(error.message || "Erro ao salvar evento");
     }
-  }, [token, fetchData, setEventoModalOpen]);
+  }, [fetchData, setEventoModalOpen]);
 
   const handleSaveJogo = useCallback(async (data: any) => {
     const isEditing = !!data.id;
@@ -419,7 +403,6 @@ export default function AdminDashboard({
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -441,7 +424,7 @@ export default function AdminDashboard({
       }
       throw error;
     }
-  }, [token, fetchData, setJogoModalOpen]);
+  }, [fetchData, setJogoModalOpen]);
 
    const handleToggleJogoEstado = useCallback((jogo: Jogo) => {
      const novoEstado = jogo.estado === 'aberto' ? 'fechado' : 'aberto';
@@ -453,7 +436,6 @@ export default function AdminDashboard({
      // Buscar total de participações concluídas do jogo (apenas pagamentos confirmados)
      try {
        const res = await fetch(`/api/participacoes?jogoId=${jogo.id}&estadoPagamento=concluido&page=1&limit=1`, {
-         headers: { Authorization: `Bearer ${token}` },
        });
        if (res.ok) {
          const data = await res.json();
@@ -468,19 +450,18 @@ export default function AdminDashboard({
        setTestJogoTotalParticipacoes(0);
      }
       setTestJogoOpen(true);
-    }, [token]);
+  }, []);
 
    const executeToggleJogoEstado = useCallback(async () => {
      if (!toggleJogoData) return;
      const { jogo, novoEstado } = toggleJogoData;
      try {
-       const res = await fetch(`/api/jogos/${jogo.id}`, {
-         method: "PUT",
-         headers: {
-           "Content-Type": "application/json",
-           Authorization: `Bearer ${token}`,
-         },
-         body: JSON.stringify({ estado: novoEstado }),
+        const res = await fetch(`/api/jogos/${jogo.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ estado: novoEstado }),
        });
        const data = await res.json();
        if (res.ok) {
@@ -503,7 +484,7 @@ export default function AdminDashboard({
      } finally {
        setToggleJogoData(null);
      }
-   }, [toggleJogoData, token, fetchData, userRole]);
+    }, [toggleJogoData, fetchData, userRole]);
 
   const handleSaveAldeia = useCallback(async (data: any) => {
     const isEditing = !!data.id;
@@ -515,7 +496,6 @@ export default function AdminDashboard({
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -531,7 +511,7 @@ export default function AdminDashboard({
     } catch (error: any) {
       toast.error(error.message || "Erro ao salvar organização");
     }
-  }, [token, fetchData, setAldeiaModalOpen]);
+  }, [fetchData, setAldeiaModalOpen]);
 
   const handleSaveUser = useCallback(async (data: any) => {
     const isEditing = !!data.id;
@@ -552,7 +532,6 @@ export default function AdminDashboard({
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(userData),
       });
@@ -568,7 +547,7 @@ export default function AdminDashboard({
     } catch (error: any) {
       toast.error(error.message || "Erro ao salvar utilizador");
     }
-  }, [token, fetchData, setUserModalOpen, userRole, aldeiaId]);
+  }, [fetchData, setUserModalOpen, userRole, aldeiaId]);
 
   const handleConvertPrize = useCallback(async (participacaoId: string, valor: number) => {
     try {
@@ -576,7 +555,6 @@ export default function AdminDashboard({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ participacaoId, valor }),
       });
@@ -592,7 +570,7 @@ export default function AdminDashboard({
     } catch (error) {
       toast.error("Erro ao converter prémio");
     }
-  }, [token, fetchData, setConvertPrizeOpen]);
+  }, [fetchData, setConvertPrizeOpen]);
 
   const requestDelete = useCallback((type: string, id: string) => {
     setDeleteData({ type, id });
@@ -613,7 +591,6 @@ export default function AdminDashboard({
     try {
       const res = await fetch(urls[deleteData.type], {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
@@ -628,7 +605,7 @@ export default function AdminDashboard({
     } finally {
       setDeleteData(null);
     }
-  }, [deleteData, token, fetchData]);
+  }, [deleteData, fetchData]);
 
   const getEstadoBadge = useCallback((estado: string) => {
     const variants: Record<string, any> = {
@@ -1254,7 +1231,7 @@ export default function AdminDashboard({
           if (selectedPremio) {
             const res = await fetch(`/api/participacoes/${selectedPremio.id}`, {
               method: 'PUT',
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ premioEntregue: true })
             });
             if(res.ok) { toast.success("Marcado como entregue"); fetchData(); }
@@ -1297,7 +1274,6 @@ export default function AdminDashboard({
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
                       },
                       body: JSON.stringify({ jogoId: testJogo.id, observacoes }),
                     });
