@@ -408,6 +408,22 @@ export function LandingPage({
             viu crescer. Aqui, a tradição encontra a tecnologia e tu podes ser o
             elo que une gerações.
           </p>
+          <div className="flex flex-wrap gap-3 mt-8">
+            <Button
+              onClick={onRegisterClick}
+              className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-6 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform gap-2"
+            >
+              Criar Conta Grátis
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onLoginClick}
+              className="px-6 py-3 rounded-xl border-outline-variant/20 text-foreground"
+            >
+              Entrar
+            </Button>
+          </div>
         </div>
         <div className="hidden lg:block w-48 h-48 bg-surface-container rounded-2xl relative overflow-hidden shrink-0">
           <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent" />
