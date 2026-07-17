@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/db";
 import {
   checkRateLimit,
   getClientIdentifier,
@@ -6,6 +7,10 @@ import {
 } from "@/lib/rate-limit";
 
 describe("Rate Limiting", () => {
+  beforeAll(async () => {
+    await prisma.rateLimit.deleteMany();
+  });
+
   describe("checkRateLimit", () => {
     it("deve permitir requests dentro do limite", async () => {
       const result = await checkRateLimit("test-ip-1-v2", rateLimitConfigs.login);

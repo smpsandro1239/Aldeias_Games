@@ -1,8 +1,7 @@
 // src/lib/rbac/resolvePermissions.ts
+import { prisma } from "@/lib/db";
 // @ts-ignore
-import { PrismaClient, PermissionKey, RoleName, User, UserGlobalRole, UserAldeiaRole, UserPermission, Role, RolePermission, Permission } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { PermissionKey, RoleName } from "@prisma/client";
 
 // Tipo completo do utilizador com includes
 type UserWithPermissions = User & {

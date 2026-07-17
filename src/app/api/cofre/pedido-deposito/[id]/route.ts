@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
 import { logAudit } from '@/lib/audit';
 
 export async function PUT(
@@ -10,9 +11,13 @@ export async function PUT(
 ) {
   try {
     const user = await getFullUserFromRequest(request);
-    if (!user || !hasRole(user.role, ['aldeia_admin', 'super_admin'])) {
+    if (!user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
+
+    // RBAC: cofre requires MANAGE_ALDEIA or VIEW_ALDEIA (admin roles)
+    const denied = await requireAnyOfPermissions(user.id, ['MANAGE_ALDEIA', 'VIEW_ALDEIA']);
+    if (denied) return denied;
 
     const { id } = await params;
     const body = await request.json();

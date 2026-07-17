@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// JWT_SECRET is set in setup.ts before all tests
+
 // Mock jose before importing proxy
 vi.mock('jose', () => ({
   jwtVerify: vi.fn(),

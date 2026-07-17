@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import { createJogoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import { createHash } from 'crypto';
@@ -204,12 +205,13 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    if (!user || !hasRole(user.role, ['super_admin', 'aldeia_admin'])) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 403 }
-      );
+    if (!user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
+
+    // RBAC: create jogo requires CREATE_JOGO permission (aldeia_admin / super_admin)
+    const denied = await requirePermission(user.id, 'CREATE_JOGO', user.aldeiaId || undefined);
+    if (denied) return denied;
 
     const body = await request.json();
     const validation = createJogoSchema.safeParse(body);

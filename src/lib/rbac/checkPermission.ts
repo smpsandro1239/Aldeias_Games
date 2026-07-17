@@ -1,4 +1,5 @@
-// src/lib/rbac/checkPermission.ts
+import { prisma } from "@/lib/db";
+import { NextResponse } from "next/server";
 // @ts-ignore
 import { PermissionKey } from "@prisma/client";
 import { resolvePermissions } from "./resolvePermissions";
@@ -61,4 +62,45 @@ export async function requireAnyPermission(
   }
 
   return true;
+}
+
+/**
+ * API route guard — returns null if authorized, NextResponse 403 if not.
+ * Usage in API routes:
+ *   const denied = await requirePermission(user.id, "CREATE_JOGO", aldeiaId);
+ *   if (denied) return denied;
+ */
+export async function requirePermission(
+  userId: string,
+  permission: PermissionKey,
+  aldeiaId?: string
+): Promise<NextResponse | null> {
+  try {
+    await checkPermission(userId, permission, aldeiaId);
+    return null;
+  } catch {
+    return NextResponse.json(
+      { error: "Acesso negado: permissão insuficiente" },
+      { status: 403 }
+    );
+  }
+}
+
+/**
+ * API route guard — returns null if user has ANY of the permissions, NextResponse 403 if not.
+ */
+export async function requireAnyOfPermissions(
+  userId: string,
+  permissions: PermissionKey[],
+  aldeiaId?: string
+): Promise<NextResponse | null> {
+  try {
+    await requireAnyPermission(userId, permissions, aldeiaId);
+    return null;
+  } catch {
+    return NextResponse.json(
+      { error: "Acesso negado: permissão insuficiente" },
+      { status: 403 }
+    );
+  }
 }
