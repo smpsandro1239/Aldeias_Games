@@ -38,10 +38,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Signature inválida' }, { status: 400 });
     }
 
-    const existingEvent = await prisma.transacao.findFirst({
+    // IDEMPOTENCY: Check if this event was already processed
+    // Check participacao (stores stripeEventId in dadosParticipacao JSON)
+    const existingByEvent = await prisma.participacao.findFirst({
+      where: { dadosParticipacao: { contains: event.id } },
+    });
+    if (existingByEvent) return NextResponse.json({ received: true });
+    // Check transactions (stores event.id as referencia for carregamento)
+    const existingTransacao = await prisma.transacao.findFirst({
       where: { referencia: event.id },
     });
-    if (existingEvent) return NextResponse.json({ received: true });
+    if (existingTransacao) return NextResponse.json({ received: true });
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -122,10 +129,16 @@ export async function POST(request: NextRequest) {
         }
 
         if (tipo === 'carregamento_saldo' && userId) {
+          // IDEMPOTENCY: Check if this session was already processed
+          const existingCarregamento = await prisma.transacao.findFirst({
+            where: { referencia: session.id, tipo: 'carregamento_saldo' },
+          });
+          if (existingCarregamento) return NextResponse.json({ received: true });
+
           const valor = session.amount_total ? session.amount_total / 100 : 0;
           await prisma.user.update({ where: { id: userId }, data: { saldo: { increment: valor } } });
           await prisma.transacao.create({
-            data: { userId, valor, tipo: 'carregamento_saldo', descricao: 'Carregamento Stripe', referencia: session.id }
+            data: { userId, valor, tipo: 'carregamento_saldo', descricao: 'Carregamento Stripe', referencia: event.id, dadosAdicionais: { stripeSessionId: session.id } }
           });
         }
         break;

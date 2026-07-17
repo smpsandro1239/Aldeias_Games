@@ -35,36 +35,42 @@ export async function POST(request: NextRequest) {
       const tipoTransacao = dados?.tipo || dados?.metadata?.tipo;
 
       if (tipoTransacao === 'carregamento_saldo') {
-        const carregamento = await prisma.transacao.findFirst({
-          where: {
-            tipo: 'carregamento_saldo',
-            dadosAdicionais: {
-              path: '$.transactionId',
-              equals: result.transactionId,
-            },
-          },
-        });
-
-        if (carregamento) {
-          const dadosOld = carregamento.dadosAdicionais as Record<string, unknown> | undefined;
-          if (dadosOld?.estado !== 'concluido') {
-            await prisma.user.update({
-              where: { id: carregamento.userId },
-              data: { saldo: { increment: carregamento.valor } },
-            });
-
-            await prisma.transacao.update({
-              where: { id: carregamento.id },
-              data: {
-                dadosAdicionais: {
-                  ...dadosOld,
-                  estado: 'concluido',
-                  confirmedAt: new Date().toISOString(),
-                },
+        // IDEMPOTENCY: Use atomic findFirst + update inside a transaction to prevent double-credit
+        const carregamento = await prisma.$transaction(async (tx) => {
+          const c = await tx.transacao.findFirst({
+            where: {
+              tipo: 'carregamento_saldo',
+              dadosAdicionais: {
+                path: '$.transactionId',
+                equals: result.transactionId,
               },
-            });
-          }
-        }
+            },
+          });
+
+          if (!c) return null;
+
+          const dadosOld = c.dadosAdicionais as Record<string, unknown> | undefined;
+          if (dadosOld?.estado === 'concluido') return c; // already processed
+
+          // Mark as confirmed atomically
+          await tx.transacao.update({
+            where: { id: c.id },
+            data: {
+              dadosAdicionais: {
+                ...dadosOld,
+                estado: 'concluido',
+                confirmedAt: new Date().toISOString(),
+              },
+            },
+          });
+
+          await tx.user.update({
+            where: { id: c.userId },
+            data: { saldo: { increment: c.valor } },
+          });
+
+          return c;
+        });
       }
 
       const participacao = await prisma.participacao.findFirst({

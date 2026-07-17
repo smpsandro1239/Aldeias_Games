@@ -19,6 +19,9 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          // NOTE: 'unsafe-inline' in script-src is required by Next.js for hydration scripts.
+          // 'unsafe-eval' is intentionally NOT used (not needed by Next.js 16).
+          // TODO: Migrate to nonce-based CSP using custom server or next-src nonce injection.
           { key: 'Content-Security-Policy', value: [
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' https://js.stripe.com",
@@ -28,6 +31,9 @@ const nextConfig = {
             "connect-src 'self' https://api.stripe.com https://worldtimeapi.org https://www.googleapis.com https://appleid.apple.com https://api.mbway.pt https://euromillions-api.vercel.app https://api.fugete.com",
             "frame-src 'self' https://js.stripe.com",
             "worker-src 'self'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
             "upgrade-insecure-requests",
           ].join('; ') + ';' },
         ],

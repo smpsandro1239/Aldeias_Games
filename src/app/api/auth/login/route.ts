@@ -19,8 +19,8 @@ import { verifyMFAOTP } from '@/lib/mfa';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutos
 
-// Demo users: only loaded when ENABLE_DEMO_USERS=true AND NODE_ENV !== 'production'
-const ENABLE_DEMO_USERS = process.env.ENABLE_DEMO_USERS === 'true';
+// Demo users: BLOCKED unconditionally in production regardless of env vars
+const DEMO_USERS_ALLOWED = process.env.ENABLE_DEMO_USERS === 'true' && process.env.NODE_ENV !== 'production';
 
 type DemoUser = {
   id: string;
@@ -35,7 +35,7 @@ type DemoUser = {
   passwordHash: string;
 };
 
-const demoUsers: Record<string, DemoUser> | null = ENABLE_DEMO_USERS ? {
+const demoUsers: Record<string, DemoUser> | null = DEMO_USERS_ALLOWED ? {
   'admin@aldeias.pt': {
     id: 'user-super-admin',
     email: 'admin@aldeias.pt',
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     const { email, password, totpCode } = validation.data;
 
-    const demoUser = (ENABLE_DEMO_USERS && process.env.NODE_ENV !== 'production')
+    const demoUser = DEMO_USERS_ALLOWED
       ? await getDemoUser(email, password)
       : null;
 

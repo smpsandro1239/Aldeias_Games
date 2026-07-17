@@ -1,243 +1,182 @@
 /**
- * Sistema de Rate Limiting com suporte a Redis (Upstash) em produção
- * 
- * Em desenvolvimento: in-memory Map
- * Em produção: Upstash Redis (se configurado) ou fallback in-memory
+ * Rate Limiting — Prisma-backed (production) + in-memory fallback (development)
+ *
+ * Production: uses Prisma `rateLimit` table (persists across serverless invocations)
+ * Development: in-memory Map with 10x relaxed limits
  */
+
+import { prisma } from '@/lib/db';
 
 interface RateLimitEntry {
   count: number;
   resetTime: number;
 }
 
-// Configurações pré-definidas para diferentes endpoints
+// Configurations per endpoint
 export const rateLimitConfigs = {
-  // Login: 5 tentativas por 15 minutos
-  login: {
-    maxRequests: 5,
-    windowMs: 15 * 60 * 1000, // 15 minutos
-  },
-  // Register: 3 tentativas por hora
-  register: {
-    maxRequests: 3,
-    windowMs: 60 * 60 * 1000,
-  },
-  // Forgot password: 3 tentativas por hora
-  forgotPassword: {
-    maxRequests: 3,
-    windowMs: 60 * 60 * 1000, // 1 hora
-  },
-  // Reset password: 5 tentativas por hora
-  resetPassword: {
-    maxRequests: 5,
-    windowMs: 60 * 60 * 1000, // 1 hora
-  },
-  // API geral: 100 requests por minuto
-  api: {
-    maxRequests: 100,
-    windowMs: 60 * 1000,
-  },
-  // Participações: 20 por minuto
-  participacoes: {
-    maxRequests: 20,
-    windowMs: 60 * 1000,
-  },
-  // Claim prémio: 10 por minuto
-  claimPremio: {
-    maxRequests: 10,
-    windowMs: 60 * 1000,
-  },
-  // Sorteios: 5 por minuto
-  sorteios: {
-    maxRequests: 5,
-    windowMs: 60 * 1000,
-  },
-  // Pagamentos: 10 por minuto
-  pagamentos: {
-    maxRequests: 10,
-    windowMs: 60 * 1000,
-  },
-  // 2FA verify: 5 tentativas por 5 minutos (brute-force protection)
-  twoFactor: {
-    maxRequests: 5,
-    windowMs: 5 * 60 * 1000,
-  },
+  login:        { maxRequests: 5,  windowMs: 15 * 60 * 1000 },
+  register:     { maxRequests: 3,  windowMs: 60 * 60 * 1000 },
+  forgotPassword: { maxRequests: 3, windowMs: 60 * 60 * 1000 },
+  resetPassword:  { maxRequests: 5, windowMs: 60 * 60 * 1000 },
+  api:          { maxRequests: 100, windowMs: 60 * 1000 },
+  participacoes: { maxRequests: 20, windowMs: 60 * 1000 },
+  claimPremio:  { maxRequests: 10, windowMs: 60 * 1000 },
+  sorteios:     { maxRequests: 5,  windowMs: 60 * 1000 },
+  pagamentos:   { maxRequests: 10, windowMs: 60 * 1000 },
+  twoFactor:    { maxRequests: 5,  windowMs: 5 * 60 * 1000 },
 };
 
-// === IN-MEMORY STORE (development fallback) ===
+// === IN-MEMORY STORE (development only) ===
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Limpar entradas expiradas a cada 5 minutos
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
     const now = Date.now();
     rateLimitStore.forEach((entry, key) => {
-      if (entry.resetTime < now) {
-        rateLimitStore.delete(key);
-      }
+      if (entry.resetTime < now) rateLimitStore.delete(key);
     });
   }, 5 * 60 * 1000);
 }
 
-// === REDIS SUPPORT (production) ===
-let redisClient: any = null;
-
-async function getRedisClient() {
-  if (redisClient) return redisClient;
-  
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  
-  if (!url || !token) return null;
-  
-  try {
-    const { Redis } = await import('@upstash/redis');
-    redisClient = new Redis({ url, token });
-    return redisClient;
-  } catch {
-    return null;
-  }
-}
-
 /**
- * Obter identificador do cliente (IP ou fallback)
+ * Get client identifier (IP or UA+path fallback)
  */
 export function getClientIdentifier(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded?.split(',')[0]?.trim() || 
-             request.headers.get('x-real-ip') || 
+  const ip = forwarded?.split(',')[0]?.trim() ||
+             request.headers.get('x-real-ip') ||
              'unknown';
-  
-  // Se não houver IP, usar User-Agent + path como fallback
+
   if (ip === 'unknown') {
     const userAgent = request.headers.get('user-agent') || 'unknown';
     const url = new URL(request.url);
     return `ua:${userAgent.slice(0, 50)}:${url.pathname}`;
   }
-  
+
   return ip;
 }
 
 /**
- * Verificar rate limit (Redis se disponível, senão in-memory)
+ * Check rate limit — Prisma in production, in-memory in development
  */
 export async function checkRateLimit(
   identifier: string,
   config: typeof rateLimitConfigs.api
-): Promise<{
-  allowed: boolean;
-  remaining: number;
-  resetTime: number;
-}> {
-  // Em desenvolvimento, usar limites mais permissivos (10x maiores)
+): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  // Development: relaxed limits (10x) + in-memory
   if (process.env.NODE_ENV === 'development') {
-    const devConfig = { ...config, maxRequests: config.maxRequests * 10 };
-    return checkRateLimitMemory(identifier, devConfig);
+    return checkRateLimitMemory(identifier, { ...config, maxRequests: config.maxRequests * 10 });
   }
-  
-  const redis = await getRedisClient();
-  
-  if (redis) {
-    return checkRateLimitRedis(redis, identifier, config);
-  }
-  
-  return checkRateLimitMemory(identifier, config);
+
+  return checkRateLimitPrisma(identifier, config);
 }
 
 /**
- * Rate limiting com Redis (produção)
+ * Prisma-backed rate limiting (production)
+ * Uses upsert + atomic increment to handle concurrent requests safely
  */
-async function checkRateLimitRedis(
-  redis: any,
+async function checkRateLimitPrisma(
   identifier: string,
   config: typeof rateLimitConfigs.api
-): Promise<{
-  allowed: boolean;
-  remaining: number;
-  resetTime: number;
-}> {
-  const key = `ratelimit:${identifier}:${config.maxRequests}:${config.windowMs}`;
-  const now = Date.now();
-  const windowStart = now - config.windowMs;
-  
+): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  const key = `rl:${identifier}:${config.windowMs}`;
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + config.windowMs);
+
   try {
-    // Usar pipeline para atomicidade
-    const pipeline = redis.pipeline();
-    pipeline.zremrangebyscore(key, 0, windowStart);
-    pipeline.zadd(key, { score: now, member: `${now}-${Math.random()}` });
-    pipeline.zcard(key);
-    pipeline.expire(key, Math.ceil(config.windowMs / 1000));
-    
-    const results = await pipeline.exec();
-    const count = results[2] as number;
-    
-    const resetTime = now + config.windowMs;
-    const remaining = Math.max(0, config.maxRequests - count);
-    
+    // Try to find existing entry
+    const existing = await prisma.rateLimit.findUnique({ where: { key } });
+
+    if (existing && existing.expiresAt > now) {
+      // Window still active — check count
+      if (existing.count >= config.maxRequests) {
+        return {
+          allowed: false,
+          remaining: 0,
+          resetTime: existing.expiresAt.getTime(),
+        };
+      }
+
+      // Increment count atomically
+      const updated = await prisma.rateLimit.update({
+        where: { key },
+        data: { count: { increment: 1 } },
+      });
+
+      return {
+        allowed: true,
+        remaining: Math.max(0, config.maxRequests - updated.count),
+        resetTime: updated.expiresAt.getTime(),
+      };
+    }
+
+    // No entry or expired — create new window
+    const created = await prisma.rateLimit.upsert({
+      where: { key },
+      create: { key, count: 1, expiresAt },
+      update: { count: 1, expiresAt },
+    });
+
     return {
-      allowed: count <= config.maxRequests,
-      remaining,
-      resetTime,
+      allowed: true,
+      remaining: config.maxRequests - 1,
+      resetTime: created.expiresAt.getTime(),
     };
   } catch (error) {
-    // Fallback para in-memory se Redis falhar
-    console.error('Redis rate limit error, falling back to memory:', error);
-    return checkRateLimitMemory(identifier, config);
+    // If Prisma fails (DB down), fail open — allow request but log
+    console.error('Rate limit DB error, failing open:', error);
+    return {
+      allowed: true,
+      remaining: config.maxRequests,
+      resetTime: Date.now() + config.windowMs,
+    };
   }
 }
 
 /**
- * Rate limiting em memória (desenvolvimento)
+ * In-memory rate limiting (development only)
  */
 function checkRateLimitMemory(
   identifier: string,
   config: typeof rateLimitConfigs.api
-): {
-  allowed: boolean;
-  remaining: number;
-  resetTime: number;
-} {
+): { allowed: boolean; remaining: number; resetTime: number } {
   const now = Date.now();
   const key = `${identifier}:${config.maxRequests}:${config.windowMs}`;
   const entry = rateLimitStore.get(key);
 
   if (!entry || entry.resetTime < now) {
-    // Nova janela
-    rateLimitStore.set(key, {
-      count: 1,
-      resetTime: now + config.windowMs,
-    });
-    return {
-      allowed: true,
-      remaining: config.maxRequests - 1,
-      resetTime: now + config.windowMs,
-    };
+    rateLimitStore.set(key, { count: 1, resetTime: now + config.windowMs });
+    return { allowed: true, remaining: config.maxRequests - 1, resetTime: now + config.windowMs };
   }
 
   if (entry.count >= config.maxRequests) {
-    // Limite excedido
-    return {
-      allowed: false,
-      remaining: 0,
-      resetTime: entry.resetTime,
-    };
+    return { allowed: false, remaining: 0, resetTime: entry.resetTime };
   }
 
-  // Incrementar contador
   entry.count++;
-  return {
-    allowed: true,
-    remaining: config.maxRequests - entry.count,
-    resetTime: entry.resetTime,
-  };
+  return { allowed: true, remaining: config.maxRequests - entry.count, resetTime: entry.resetTime };
 }
 
 /**
- * Criar resposta de erro de rate limit
+ * Cleanup expired rate limit entries (call from cron or admin endpoint)
+ */
+export async function cleanupExpiredRateLimits(): Promise<number> {
+  try {
+    const result = await prisma.rateLimit.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+    return result.count;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Create 429 response
  */
 export function createRateLimitResponse(resetTime: number): Response {
   const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
-  
+
   return new Response(
     JSON.stringify({
       error: 'Muitas requisições. Tente novamente mais tarde.',
@@ -254,7 +193,7 @@ export function createRateLimitResponse(resetTime: number): Response {
 }
 
 /**
- * Adicionar headers de rate limit à resposta
+ * Add rate limit headers to response
  */
 export function addRateLimitHeaders(
   response: Response,
