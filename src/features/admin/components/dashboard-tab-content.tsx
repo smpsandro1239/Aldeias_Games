@@ -11,7 +11,7 @@ import {
   UsersTab,
   ComissoesTab,
   VerificarTab,
-} from "./components";
+} from ".";
 
 import type {
   Stats,
@@ -26,16 +26,16 @@ import type {
 } from "./types";
 
 const DashboardAnalytics = lazy(() =>
-  import("./analytics-dashboard").then((mod) => ({ default: mod.DashboardAnalytics }))
+  import("../analytics-dashboard").then((mod) => ({ default: mod.DashboardAnalytics }))
 );
 const AldeiasTab = lazy(() =>
-  import("./components").then((mod) => ({ default: mod.AldeiasTab }))
+  import(".").then((mod) => ({ default: mod.AldeiasTab }))
 );
 const TransacoesTab = lazy(() =>
-  import("./components").then((mod) => ({ default: mod.TransacoesTab }))
+  import(".").then((mod) => ({ default: mod.TransacoesTab }))
 );
 const AuditoriaTab = lazy(() =>
-  import("./components").then((mod) => ({ default: mod.AuditoriaTab }))
+  import(".").then((mod) => ({ default: mod.AuditoriaTab }))
 );
 
 interface DashboardTabContentProps {

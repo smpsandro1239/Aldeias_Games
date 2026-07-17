@@ -3,6 +3,31 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
+// Nonce generation for CSP — per-request, cryptographically random
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array));
+}
+
+// CSP header with nonce-based script-src (style-src keeps unsafe-inline for Radix/Tailwind)
+function buildCspHeader(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' https://js.stripe.com`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://fonts.gstatic.com https://www.google.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://api.stripe.com https://worldtimeapi.org https://www.googleapis.com https://appleid.apple.com https://api.mbway.pt https://euromillions-api.vercel.app https://api.fugete.com",
+    "frame-src 'self' https://js.stripe.com",
+    "worker-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
+
 // Rate limit config per route
 const RATE_LIMIT_CONFIG: Record<string, { maxRequests: number; windowMs: number }> = {
   "/api/auth/login": { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 attempts / 15min
@@ -104,6 +129,23 @@ if (!JWT_SECRET_RAW) {
 const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW);
 
 export async function proxy(request: NextRequest) {
+  const nonce = generateNonce();
+  const response = await proxyInner(request);
+
+  // Clone response to add CSP headers (proxy responses may be immutable)
+  const finalResponse = new NextResponse(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: new Headers(response.headers),
+  });
+
+  finalResponse.headers.set("Content-Security-Policy", buildCspHeader(nonce));
+  finalResponse.headers.set("x-nonce", nonce);
+
+  return finalResponse;
+}
+
+async function proxyInner(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // === RATE LIMITING FOR API ROUTES ===
