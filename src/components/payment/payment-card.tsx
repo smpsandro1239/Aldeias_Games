@@ -67,7 +67,7 @@ export function PaymentCard({ method, selected, onClick, disabled }: PaymentCard
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-full p-4 rounded-xl flex items-center gap-3 transition-all border-2",
+        "w-full p-3 sm:p-4 rounded-xl flex items-center gap-2.5 sm:gap-3 transition-all border-2",
         config.bgColor,
         config.borderColor,
         selected 
@@ -76,18 +76,18 @@ export function PaymentCard({ method, selected, onClick, disabled }: PaymentCard
         disabled && "opacity-50 cursor-not-allowed hover:scale-100"
       )}
     >
-      <Icon className={cn("w-6 h-6", config.textColor)} />
-      <div className="text-left flex-1">
-        <p className={cn("font-medium", config.textColor)}>{config.label}</p>
-        <p className="text-xs opacity-60">{commission.description}</p>
+      <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", config.textColor)} />
+      <div className="text-left flex-1 min-w-0">
+        <p className={cn("font-medium text-sm sm:text-base", config.textColor)}>{config.label}</p>
+        <p className="text-[10px] sm:text-xs opacity-60 truncate">{commission.description}</p>
       </div>
       {hasFee ? (
-        <div className="flex flex-col items-end">
-          <span className="text-xs text-accent font-medium">{commission.label}</span>
-          <span className="text-[10px] text-accent/60">com taxa</span>
+        <div className="flex flex-col items-end shrink-0">
+          <span className="text-[10px] sm:text-xs text-accent font-medium">{commission.label}</span>
+          <span className="text-[9px] sm:text-[10px] text-accent/60">com taxa</span>
         </div>
       ) : (
-        <span className="text-xs text-primary font-medium">Sem taxa</span>
+        <span className="text-[10px] sm:text-xs text-primary font-medium shrink-0">Sem taxa</span>
       )}
       {selected && (
         <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">

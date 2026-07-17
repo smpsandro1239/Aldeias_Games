@@ -14,6 +14,7 @@ import { PaymentSelector } from "@/components/payment";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
+import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
 
 function RaspadinhaLoading() {
   return (
@@ -104,6 +105,7 @@ function RaspadinhaPremiumContent() {
   const [gamePhase, setGamePhase] = useState<GamePhase>("not_paid");
   const [premioClaimed, setPremioClaimed] = useState(false);
   const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
+  const [winningSlotIds, setWinningSlotIds] = useState<number[]>([]);
   const [showPurchaseAnimation, setShowPurchaseAnimation] = useState(false);
   const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -122,6 +124,10 @@ function RaspadinhaPremiumContent() {
   });
   
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [playerDataConfirmOpen, setPlayerDataConfirmOpen] = useState(false);
+  const [playerDataModified, setPlayerDataModified] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const [userOriginalData, setUserOriginalData] = useState({ nome: "", telefone: "", email: "" });
 
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const isDraggingRef = useRef<Map<number, boolean>>(new Map());
@@ -151,11 +157,15 @@ function RaspadinhaPremiumContent() {
         const userData = JSON.parse(storedUser);
         if (userData.role) setUserRole(userData.role);
         if (userData.nome) {
-          setParticipante(prev => ({
-            ...prev,
-            nome: userData.nome,
+          const originalData = {
+            nome: userData.nome || "",
             telefone: userData.telefone || "",
             email: userData.email || ""
+          };
+          setUserOriginalData(originalData);
+          setParticipante(prev => ({
+            ...prev,
+            ...originalData
           }));
         }
       } catch {}
@@ -192,8 +202,32 @@ function RaspadinhaPremiumContent() {
     setCanvasesInitialized(false);
   };
 
+  const isNonRegularUser = userRole === "vendedor" || userRole === "aldeia_admin" || userRole === "super_admin";
+
   const handleJogar = () => {
     if (!jogoId) return;
+    if (isNonRegularUser && !playerDataModified) {
+      setPlayerDataConfirmOpen(true);
+    } else {
+      setPaymentModalOpen(true);
+    }
+  };
+
+  const handlePlayerConfirmOwnData = () => {
+    setPlayerDataConfirmOpen(false);
+    setPlayerDataModified(false);
+    setPaymentModalOpen(true);
+  };
+
+  const handlePlayerConfirmNewData = (data: { nome: string; telefone: string; email: string }) => {
+    setParticipante(prev => ({
+      ...prev,
+      nome: data.nome,
+      telefone: data.telefone,
+      email: data.email,
+    }));
+    setPlayerDataModified(true);
+    setPlayerDataConfirmOpen(false);
     setPaymentModalOpen(true);
   };
 
@@ -405,8 +439,9 @@ function RaspadinhaPremiumContent() {
     }
   }, [slots, initSlotCanvas, gamePhase]);
 
-  const claimPremio = useCallback(async (pId: string) => {
-    if (!pId || premioClaimed) return;
+  const claimPremio = useCallback(async (pId: string, claimType: "carteira" | "cofre" | "jogar_novamente" = "carteira") => {
+    if (!pId || premioClaimed || claiming) return;
+    setClaiming(true);
     
     try {
       const res = await apiRequest(`/api/participacoes/${pId}/claim-premio`, {
@@ -414,6 +449,7 @@ function RaspadinhaPremiumContent() {
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ claimType }),
       });
 
       const data = await res.json();
@@ -421,6 +457,14 @@ function RaspadinhaPremiumContent() {
       if (data.success) {
         setCreditedAmount(data.creditedAmount);
         setPremioClaimed(true);
+        refreshBalance();
+        if (claimType === "cofre") {
+          toast.success("Prémio entregue ao cofre com sucesso!");
+        } else if (claimType === "jogar_novamente") {
+          toast.success("Prémio convertido em crédito para jogar novamente!");
+        } else {
+          toast.success("Prémio creditado na sua carteira!");
+        }
       } else if (data.alreadyClaimed) {
         setCreditedAmount(data.creditedAmount);
         setPremioClaimed(true);
@@ -430,8 +474,11 @@ function RaspadinhaPremiumContent() {
       }
     } catch (error) {
       console.error("Erro ao reclamar prémio:", error);
+      toast.error("Erro ao reclamar prémio");
+    } finally {
+      setClaiming(false);
     }
-  }, [premioClaimed]);
+  }, [premioClaimed, claiming, refreshBalance]);
 
   const scratchSlot = useCallback(
     async (slotId: number, x: number, y: number) => {
@@ -539,10 +586,8 @@ function RaspadinhaPremiumContent() {
               setWinningPrize(prize);
               setShowWin(true);
               confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
-              
-              if (participacaoId && !premioClaimed) {
-                claimPremio(participacaoId);
-              }
+              const winningIds = newSlots.filter(s => s.prize?.id === prize.id).map(s => s.id);
+              setWinningSlotIds(winningIds.slice(0, 3));
             }
           });
 
@@ -554,7 +599,7 @@ function RaspadinhaPremiumContent() {
         });
       }
     },
-    [slots, playScratch, jogoId, participacaoId, premioClaimed, claimPremio]
+    [slots, playScratch, jogoId]
   );
 
   const handlePointerDown = useCallback(
@@ -618,10 +663,8 @@ function RaspadinhaPremiumContent() {
           setWinningPrize(prize);
           setShowWin(true);
           confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
-          
-          if (participacaoId && !premioClaimed) {
-            claimPremio(participacaoId);
-          }
+          const winningIds = newSlots.filter(s => s.prize?.id === prize.id).map(s => s.id);
+          setWinningSlotIds(winningIds.slice(0, 3));
         }
       });
 
@@ -629,7 +672,7 @@ function RaspadinhaPremiumContent() {
       setGamePhase("all_revealed");
       return newSlots;
     });
-  }, [slots, participacaoId, premioClaimed, claimPremio]);
+  }, [slots]);
 
   const handleComprarNova = () => {
     setGamePhase("not_paid");
@@ -637,14 +680,26 @@ function RaspadinhaPremiumContent() {
     setTotalRevealed(0);
     setParticipacaoId(null);
     setWinningPrize(null);
+    setWinningSlotIds([]);
     setShowWin(false);
     setPremioClaimed(false);
     setCreditedAmount(null);
+    setClaiming(false);
     initializedRef.current = false;
     setCanvasesInitialized(false);
     scratchGridRef.current.clear();
     lastPosRef.current.clear();
     canvasRefs.current.clear();
+
+    if (isNonRegularUser) {
+      setPlayerDataModified(false);
+      setParticipante(prev => ({
+        ...prev,
+        nome: userOriginalData.nome,
+        telefone: userOriginalData.telefone,
+        email: userOriginalData.email,
+      }));
+    }
   };
 
   if (loading) {
@@ -802,7 +857,11 @@ function RaspadinhaPremiumContent() {
                 {slots.map((slot) => (
                   <div
                     key={slot.id}
-                    className="relative aspect-square rounded-2xl overflow-hidden bg-surface-container-highest"
+                    className={`relative aspect-square rounded-2xl overflow-hidden bg-surface-container-highest transition-all duration-500 ${
+                      slot.revealed && winningSlotIds.includes(slot.id)
+                        ? "ring-2 ring-primary shadow-[0_0_12px_rgba(255,215,0,0.6)]"
+                        : ""
+                    }`}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
@@ -898,6 +957,53 @@ function RaspadinhaPremiumContent() {
             </button>
           )}
 
+          {gamePhase === "all_revealed" && winningPrize && !premioClaimed && !isNonRegularUser && (
+            <button
+              disabled={claiming}
+              onClick={() => {
+                if (participacaoId) claimPremio(participacaoId, "carteira");
+              }}
+              className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-2xl shadow-xl shadow-glow active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Trophy className="w-5 h-5" />
+              <span className="text-lg">Reclamar Prémio - {winningPrize.valorDinheiroAlternative}€</span>
+            </button>
+          )}
+
+          {gamePhase === "all_revealed" && winningPrize && !premioClaimed && isNonRegularUser && (
+            <div className="flex flex-col gap-2">
+              <button
+                disabled={claiming}
+                onClick={() => {
+                  if (participacaoId) claimPremio(participacaoId, "pagar_cliente");
+                }}
+                className="w-full py-3 bg-green-600 text-white font-bold rounded-2xl active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Trophy className="w-5 h-5" />
+                <span>Pagar ao Cliente - {winningPrize.valorDinheiroAlternative}€</span>
+              </button>
+              <button
+                disabled={claiming}
+                onClick={() => {
+                  if (participacaoId) claimPremio(participacaoId, "cofre");
+                }}
+                className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Trophy className="w-5 h-5" />
+                <span>Entregar ao Cofre - {winningPrize.valorDinheiroAlternative}€</span>
+              </button>
+              <button
+                disabled={claiming}
+                onClick={() => {
+                  if (participacaoId) claimPremio(participacaoId, "jogar_novamente");
+                }}
+                className="w-full py-3 bg-surface-container-low text-muted-foreground font-semibold rounded-2xl border border-outline-variant/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+              >
+                Usar para Jogar Novamente
+              </button>
+            </div>
+          )}
+
           {gamePhase === "all_revealed" && (
             <button
               onClick={handleComprarNova}
@@ -991,56 +1097,113 @@ function RaspadinhaPremiumContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowWin(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+            onClick={premioClaimed ? () => setShowWin(false) : undefined}
           >
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
-              className="bg-surface-container rounded-3xl p-8 mx-4 max-w-sm w-full text-center border border-primary/30 shadow-2xl shadow-glow"
+              className="bg-surface-container rounded-3xl p-5 sm:p-8 max-w-[90vw] sm:max-w-sm w-full text-center border border-primary/30 shadow-2xl shadow-glow"
               onClick={(e) => e.stopPropagation()}
             >
               <motion.div
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 0.5, repeat: 3 }}
-                className="text-6xl mb-4"
+                className="mb-3 sm:mb-4"
               >
-                <Trophy className="text-primary w-16 h-16 mx-auto" />
+                <Trophy className="text-primary w-12 h-12 sm:w-16 sm:h-16 mx-auto" />
               </motion.div>
 
-              <h2 className="font-serif text-3xl font-bold text-primary mb-2">
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary mb-2">
                 PARABÉNS!
               </h2>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-sm sm:text-base text-muted-foreground mb-3">
                 Ganhou: {winningPrize.nome}!
               </p>
-              <p className="text-5xl font-bold text-secondary mb-2">
+              <p className="text-4xl sm:text-5xl font-bold text-secondary mb-4">
                 {winningPrize.valorDinheiroAlternative}€
               </p>
-              
+
               {premioClaimed && creditedAmount !== null && (
                 <motion.p
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-green-400 mb-6 font-medium"
+                  className="text-sm text-green-400 mb-5 font-medium"
                 >
-                  ✓ {creditedAmount}€ creditado na sua carteira!
+                  ✓ {creditedAmount > 0 ? `${creditedAmount}€ creditado na sua carteira!` : "Prémio processado!"}
                 </motion.p>
               )}
-              
-              {!premioClaimed && (
-                <p className="text-sm text-muted-foreground/60 mb-6">
-                  A processar o seu prémio...
-                </p>
+
+              {!premioClaimed && !isNonRegularUser && (
+                <div className="mb-5 space-y-3">
+                  <button
+                    disabled={claiming}
+                    onClick={() => {
+                      if (participacaoId) claimPremio(participacaoId, "carteira");
+                    }}
+                    className="w-full py-3.5 sm:py-4 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all shadow-xl shadow-glow disabled:opacity-50"
+                  >
+                    {claiming ? "A processar..." : "Reclamar Prémio"}
+                  </button>
+                  <button
+                    onClick={() => setShowWin(false)}
+                    className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Reclamar mais tarde
+                  </button>
+                </div>
               )}
 
-              <button
-                onClick={() => setShowWin(false)}
-                className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all"
-              >
-                {premioClaimed ? "Fechar" : "Receber Prémio"}
-              </button>
+              {!premioClaimed && isNonRegularUser && (
+                <div className="mb-5 space-y-2">
+                  <p className="text-xs text-muted-foreground/60 mb-2">
+                    Como administrador/vendedor, escolha como处理 o prémio:
+                  </p>
+                  <button
+                    disabled={claiming}
+                    onClick={() => {
+                      if (participacaoId) claimPremio(participacaoId, "pagar_cliente");
+                    }}
+                    className="w-full py-3 bg-green-600 text-white font-bold rounded-2xl active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    {claiming ? "A processar..." : `Pagar ao Cliente - ${winningPrize.valorDinheiroAlternative}€`}
+                  </button>
+                  <button
+                    disabled={claiming}
+                    onClick={() => {
+                      if (participacaoId) claimPremio(participacaoId, "cofre");
+                    }}
+                    className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    {claiming ? "A processar..." : "Entregar ao Cofre"}
+                  </button>
+                  <button
+                    disabled={claiming}
+                    onClick={() => {
+                      if (participacaoId) claimPremio(participacaoId, "jogar_novamente");
+                    }}
+                    className="w-full py-3 bg-surface-container-low text-muted-foreground font-semibold rounded-2xl border border-outline-variant/20 active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    Usar para Jogar Novamente
+                  </button>
+                  <button
+                    onClick={() => setShowWin(false)}
+                    className="w-full py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Reclamar mais tarde
+                  </button>
+                </div>
+              )}
+
+              {premioClaimed && (
+                <button
+                  onClick={() => setShowWin(false)}
+                  className="w-full py-3.5 sm:py-4 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all"
+                >
+                  Fechar
+                </button>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -1049,14 +1212,14 @@ function RaspadinhaPremiumContent() {
       <BottomNav />
 
         <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-          <DialogContent className="max-w-[95vw] sm:max-w-lg bg-surface-container border border-outline-variant/10 p-4 overflow-hidden">
-           <DialogHeader className="p-4 pb-2">
+          <DialogContent className="max-w-[95vw] sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 sm:p-6 overflow-hidden max-h-[92vh] flex flex-col">
+           <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-2">
              <DialogTitle className="font-headline text-xl flex items-center gap-2">
                <Euro className="w-5 h-5 text-primary" />
                Pagamento - Raspadinha
              </DialogTitle>
            </DialogHeader>
-           <div className="px-4 pb-4 space-y-4">
+           <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 overflow-y-auto flex-1 min-h-0">
              <div className="bg-surface-container-high rounded-xl p-4 text-center">
                <p className="text-xs text-on-surface-variant">Total a pagar</p>
                <p className="font-headline text-3xl text-primary">{preco}€</p>
@@ -1065,12 +1228,12 @@ function RaspadinhaPremiumContent() {
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground uppercase tracking-wider">Nome</label>
               <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-                <User className="w-5 h-5 text-primary" />
+                <User className="w-5 h-5 text-primary shrink-0" />
                 <input
                   type="text"
                   value={participante.nome}
                   onChange={(e) => setParticipante({ ...participante, nome: e.target.value })}
-                  className="flex-1 bg-transparent outline-none text-foreground"
+                  className="flex-1 bg-transparent outline-none text-foreground min-w-0"
                   placeholder="O seu nome"
                 />
               </div>
@@ -1079,12 +1242,12 @@ function RaspadinhaPremiumContent() {
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground uppercase tracking-wider">Telemóvel</label>
               <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-                <Phone className="w-5 h-5 text-primary" />
+                <Phone className="w-5 h-5 text-primary shrink-0" />
                 <input
                   type="tel"
                   value={participante.telefone}
                   onChange={(e) => setParticipante({ ...participante, telefone: e.target.value })}
-                  className="flex-1 bg-transparent outline-none text-foreground"
+                  className="flex-1 bg-transparent outline-none text-foreground min-w-0"
                   placeholder="912 345 678"
                 />
               </div>
@@ -1092,42 +1255,42 @@ function RaspadinhaPremiumContent() {
 
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground uppercase tracking-wider">Receber Notificação</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setParticipante({ ...participante, notificacao: "whatsapp" })}
-                  className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                  className={`p-2.5 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all ${
                     participante.notificacao === "whatsapp" 
                       ? "bg-[#25D366] text-foreground" 
                       : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                   }`}
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span className="text-xs font-medium">WhatsApp</span>
+                  <span className="text-[10px] sm:text-xs font-medium">WhatsApp</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setParticipante({ ...participante, notificacao: "email" })}
-                  className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                  className={`p-2.5 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all ${
                     participante.notificacao === "email" 
                       ? "bg-primary text-foreground" 
                       : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                   }`}
                 >
                   <Mail className="w-4 h-4" />
-                  <span className="text-xs font-medium">Email</span>
+                  <span className="text-[10px] sm:text-xs font-medium">Email</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setParticipante({ ...participante, notificacao: "nenhum" })}
-                  className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
+                  className={`p-2.5 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all ${
                     participante.notificacao === "nenhum" 
                       ? "bg-[#666] text-foreground" 
                       : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
                   }`}
                 >
                   <Bell className="w-4 h-4" />
-                  <span className="text-xs font-medium">Nenhum</span>
+                  <span className="text-[10px] sm:text-xs font-medium">Nenhum</span>
                 </button>
               </div>
             </div>
@@ -1221,6 +1384,17 @@ function RaspadinhaPremiumContent() {
         open={confirmacaoModalOpen}
         onOpenChange={setConfirmacaoModalOpen}
         participacao={participacaoCriada}
+      />
+
+      {/* Modal de Confirmação de Dados do Jogador */}
+      <PlayerDataConfirmModal
+        open={playerDataConfirmOpen}
+        onOpenChange={setPlayerDataConfirmOpen}
+        userName={userOriginalData.nome}
+        userPhone={userOriginalData.telefone}
+        userEmail={userOriginalData.email}
+        onConfirmWithOwnData={handlePlayerConfirmOwnData}
+        onConfirmWithNewData={handlePlayerConfirmNewData}
       />
 
     </div>

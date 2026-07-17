@@ -48,30 +48,74 @@ npx next build --webpack
 
 ### Cashbox / Vault System (Rastreabilidade)
 Three pockets track physical money flow:
-- **Vendedor.Cashbox** — cash in the seller's possession (incremented on top-up confirmation)
+- **Vendedor.Cashbox** — cash in the seller's possession (incremented on cash sales and top-up confirmation)
 - **Vault** — village general cashbox (credited when admin confirms seller deposit)
 - **Player.Wallet** — digital balance
 
-Flow:
-1. Seller confirms top-up → `Player.Wallet += valor` + `Vendedor.Cashbox += valor`
-2. Seller delivers cash to village admin → creates `PedidoDepositoCofre` (pending)
-3. Admin confirms → `Vendedor.Cashbox -= valor` + `Vault += valor`
+Flow completo de vendas de rua:
+```
+1. Vendedor vende rifa/raspadinha a cliente em dinheiro
+   → POST /api/participacoes (metodoPagamento: 'dinheiro')
+   → VendedorCashbox += valor (tipo: RECEBIDO_DO_JOGADOR)
+   → Participacao criada com nomeCliente, telefoneCliente, emailCliente
 
-Every operation is recorded with `criadoPor`, `confirmadoPor`, timestamps, and cross-references.
+2. Cliente ganha prémio → vendedor paga em dinheiro ao cliente
+   → POST /api/participacoes/[id]/claim-premio (claimType: 'pagar_cliente')
+   → VendedorCashbox -= valor (tipo: PAGO_AO_JOGADOR)
+
+3. Vendedor deposita excedente no cofre da aldeia
+   → POST /api/cofre/pedido-deposito (cria pedido pendente)
+   → Admin confirma: PUT /api/cofre/pedido-deposito/[id]
+   → VendedorCashbox -= valor, Vault += valor
+
+4. Admin retira do cofre para despesas
+   → POST /api/cofre/levantamento (cria pedido pendente)
+   → Outro admin confirma: PUT /api/cofre/levantamento/[id]
+   → Vault -= valor
+   → Todos os vendedores da aldeia são notificados
+```
+
+Regras de aprovação de levantamento:
+- Se existe mais de 1 admin na aldeia, o admin que criou NÃO pode aprovar sozinho (precisa de outro admin)
+- Se só existe 1 admin, pode auto-aprovar (não há outro disponível)
+- Ao confirmar, todos os vendedores da aldeia recebem notificação com valor, motivo e quem autorizou
+
+CashboxTipo enum values:
+- `RECEBIDO_DO_JOGADOR` — dinheiro recebido do jogador (venda ou carregamento)
+- `DEPOSITADO_NO_COFRE` — depositado no cofre da aldeia
+- `LEVANTAMENTO_COFRE` — levantamento do cofre
+- `PAGO_AO_JOGADOR` — prémio pago ao cliente em dinheiro
 
 API Endpoints:
-- `PUT /api/carregamento/[id]` — modified to also increment seller cashbox
-- `GET /api/vendedor/cashbox` — seller's cashbox balance + transactions
-- `POST /api/cofre/pedido-deposito` — create deposit request
-- `GET /api/cofre/pedido-deposito` — list deposit requests (seller sees own, admin sees village)
-- `PUT /api/cofre/pedido-deposito/[id]` — confirm/reject deposit
-- `GET /api/cofre/historico` — vault transaction history (admin/super_admin)
+- `PUT /api/carregamento/[id]` — confirmar carregamento → incrementa caixa do vendedor
+- `POST /api/participacoes` — criar participação → incrementa caixa se pagamento em dinheiro
+- `POST /api/participacoes/[id]/claim-premio` — reclamar prémio (claimType: carteira/cofre/jogar_novamente/pagar_cliente)
+- `GET /api/vendedor/cashbox` — saldo e transações da caixa do vendedor
+- `POST /api/cofre/pedido-deposito` — criar pedido de depósito
+- `GET /api/cofre/pedido-deposito` — listar pedidos de depósito
+- `PUT /api/cofre/pedido-deposito/[id]` — confirmar/rejeitar depósito
+- `POST /api/cofre/levantamento` — criar pedido de levantamento
+- `PUT /api/cofre/levantamento/[id]` — confirmar/rejeitar levantamento
+- `GET /api/cofre/historico` — histórico de transações do vault
+
+### Role-Based Prize Claiming
+Utilizadores normais (`user`) reclamam prémios para a carteira.
+Vendedores e administradores (`vendedor`, `aldeia_admin`, `super_admin`) têm 3 opções:
+- **Pagar ao Cliente** (`pagar_cliente`) — desconta da caixa, dinheiro vai diretamente ao cliente
+- **Entregar ao Cofre** (`cofre`) — desconta da caixa, cria PedidoDepositoCofre pendente
+- **Usar para Jogar Novamente** (`jogar_novamente`) — credita no saldo do vendedor para jogar
+
+### Player Data Confirmation (Vendedores)
+Componente: `src/components/modals/player-data-confirm-modal.tsx`
+Quando um vendedor/admin abre um jogo, se os dados (nome, telefone, email) coincidem com os seus próprios:
+- Aparece modal a perguntar se quer jogar com os seus dados ou inserir dados do cliente
+- Se insere dados do cliente → `playerDataModified = true`, não volta a perguntar nessa sessão
+- Ao jogar novamente (`handleComprarNova`), os dados são rebotados para os do utilizador e volta a perguntar
 
 Pages:
-- `/admindashboard/cofre` — admin manages deposit requests + vault history
-- `/admindashboard/cofre/reconciliacao` — reconciliation page comparing cashbox vs vault per seller
-- `GET /api/cofre/reconciliacao` — reconciliation data (total received, deposited, current balances, discrepancies per seller)
-- Seller dashboard "Caixa" tab — seller sees cashbox + creates deposit requests
+- `/admindashboard/cofre` — admin gere pedidos de depósito + histórico do vault
+- `/admindashboard/cofre/reconciliacao` — reconciliação caixa vs vault por vendedor
+- Seller dashboard "Caixa" tab — vendedor vê caixa + cria pedidos de depósito
 
 ### Export CSV
 - Utility: `src/lib/export-utils.ts` — `generateCSV()`, `downloadCSV()` (with BOM for Excel)

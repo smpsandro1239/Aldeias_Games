@@ -446,6 +446,28 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        // --- LÓGICA DE CAIXA DO VENDEDOR ---
+        // Quando vendedor vende em dinheiro, o valor entra na sua caixa física
+        if (data.metodoPagamento === 'dinheiro' && effectiveUser && hasRole(effectiveUser.role, ['vendedor', 'aldeia_admin'])) {
+          const valorVenda = jogo.preco * data.quantidade;
+          const cashbox = await tx.vendedorCashbox.upsert({
+            where: { userId: effectiveUser.id },
+            create: { userId: effectiveUser.id, saldo: valorVenda },
+            update: { saldo: { increment: valorVenda } },
+          });
+
+          await tx.vendedorCashboxTransaction.create({
+            data: {
+              cashboxId: cashbox.id,
+              tipo: 'RECEBIDO_DO_JOGADOR',
+              valor: valorVenda,
+              descricao: `Venda de ${data.quantidade}x ${jogo.nome} (dinheiro)`,
+              referencia: participacoes[0]?.id,
+              criadoPorId: effectiveUser.id,
+            },
+          });
+        }
+
         return { participacoes, valorTotal };
       });
     });

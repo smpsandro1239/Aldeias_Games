@@ -47,7 +47,17 @@ export async function PUT(
     }
 
     if (levantamento.criadoPorId === user.id) {
-      return NextResponse.json({ error: 'Não pode aprovar o próprio levantamento' }, { status: 403 });
+      const otherAdmins = await prisma.user.count({
+        where: {
+          aldeiaId: levantamento.vault.aldeiaId,
+          role: { in: ['aldeia_admin', 'super_admin'] },
+          deletedAt: null,
+          id: { not: user.id },
+        },
+      });
+      if (otherAdmins > 0) {
+        return NextResponse.json({ error: 'Não pode aprovar o próprio levantamento. Aguarde outro administrador.' }, { status: 403 });
+      }
     }
 
     if (acao === 'confirmar') {
@@ -104,6 +114,27 @@ export async function PUT(
           lida: false,
         },
       });
+
+      const vendedores = await prisma.user.findMany({
+        where: {
+          aldeiaId: levantamento.vault.aldeiaId,
+          role: 'vendedor',
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      if (vendedores.length > 0) {
+        await prisma.notificacao.createMany({
+          data: vendedores.map((v: { id: string }) => ({
+            userId: v.id,
+            tipo: 'sistema' as const,
+            titulo: 'Levantamento do cofre',
+            mensagem: `Foi realizado um levantamento de ${levantamento.valor.toFixed(2)}€ do cofre da aldeia por ${user.nome}. Motivo: ${levantamento.descricao || 'Não especificado'}.`,
+            lida: false,
+          })),
+        });
+      }
 
       return NextResponse.json({ success: true, message: 'Levantamento confirmado' });
     }

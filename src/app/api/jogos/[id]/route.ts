@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       where: { id },
       include: {
         evento: { select: { id: true, nome: true, slug: true, aldeiaId: true } },
-        premios: { select: { id: true, nome: true, descricao: true, valorEstimado: true, posicao: true } }
+        premios: { select: { id: true, nome: true, descricao: true, ordem: true } }
       }
     });
     if (!jogo) return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
