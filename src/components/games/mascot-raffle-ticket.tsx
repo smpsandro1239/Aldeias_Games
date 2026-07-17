@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React from "react";
 
 export type MascotRaffleTicketProps = {
@@ -99,9 +100,12 @@ export default function MascotRaffleTicket({
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               {logoSrc ? (
-                <img 
+                <Image 
                   src={logoSrc} 
                   alt="Logo" 
+                  width={64}
+                  height={64}
+                  unoptimized
                   className="w-16 h-16 object-contain rounded-full bg-foreground/20 p-1"
                 />
               ) : (
@@ -157,9 +161,12 @@ export default function MascotRaffleTicket({
               style={{ backgroundColor: colors.secondary }}
             >
               {mascotImage ? (
-                <img 
+                <Image 
                   src={mascotImage} 
                   alt="Mascote" 
+                  width={200}
+                  height={200}
+                  unoptimized
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -338,9 +345,12 @@ export default function MascotRaffleTicket({
               style={{ backgroundColor: colors.primary }}
             >
               {mascotImage ? (
-                <img 
+                <Image 
                   src={mascotImage} 
                   alt="M" 
+                  width={48}
+                  height={48}
+                  unoptimized
                   className="w-12 h-12 object-cover rounded-full"
                 />
               ) : (

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { LayoutHeader } from "@/components/layout-header";
 import { LoaderScreen } from "@/components/loader-screen";
@@ -82,9 +83,12 @@ export default function AldeiaDashboardPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
               {aldeia.logoUrl ? (
-                <img 
+                <Image 
                   src={aldeia.logoUrl} 
                   alt={aldeia.nome} 
+                  width={32}
+                  height={32}
+                  unoptimized
                   className="h-8 w-8 rounded" 
                 />
               ) : (

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User as UserIcon, Mail, Phone, MapPin, Save, Camera, ChevronDown, Search, X, Wallet, Shield, FileText, ShieldCheck } from "lucide-react";
@@ -274,7 +275,7 @@ export default function PerfilPage() {
             />
             <div className="w-24 h-24 rounded-full bg-surface-container-low border-2 border-primary flex items-center justify-center overflow-hidden">
               {profileImage ? (
-                 <img src={profileImage} alt="Foto de perfil" className="w-full h-full object-cover" />
+                 <Image src={profileImage} alt="Foto de perfil" width={96} height={96} unoptimized className="w-full h-full object-cover" />
                ) : (
                  <UserIcon className="w-12 h-12 text-primary" />
                )}

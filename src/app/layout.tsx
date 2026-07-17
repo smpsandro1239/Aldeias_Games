@@ -8,6 +8,7 @@ import { SentryInit } from "@/components/sentry-init";
 import { Toaster } from "@/components/ui/sonner";
 import { AnalyticsInit } from "@/components/analytics-init";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
+import { RouteAnnouncer } from "@/components/route-announcer";
 
 const inter = Inter({ subsets: ["latin", "latin-ext"] });
 const notoSerif = Noto_Serif({ 
@@ -90,6 +91,7 @@ export default function RootLayout({
             <OfflineProvider>
               <SentryInit />
               <AnalyticsInit />
+              <RouteAnnouncer />
               {children}
               <CookieConsentBanner />
               <Toaster position="top-right" richColors />

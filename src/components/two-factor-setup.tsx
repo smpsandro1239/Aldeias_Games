@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Shield, ShieldCheck, ShieldOff, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -172,7 +173,7 @@ export function TwoFactorSetup({ isMandatory = false }: TwoFactorSetupProps) {
               Use Google Authenticator, Authy ou outra app TOTP
             </p>
             <div className="inline-block bg-white p-3 rounded-xl">
-              <img src={qrCode} alt="QR Code 2FA" className="w-48 h-48" />
+              <Image src={qrCode} alt="QR Code 2FA" width={192} height={192} unoptimized className="w-48 h-48" />
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 
 export type UltimateRaffleTicketProps = {
@@ -288,7 +289,7 @@ export default function UltimateRaffleTicket({
             <div className="flex items-start justify-between mb-4 relative z-10">
               <div className="flex items-center gap-3">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-foreground/20 p-2" />
+                  <Image src={logoUrl} alt="Logo" width={64} height={64} unoptimized className="w-16 h-16 object-contain rounded-lg bg-foreground/20 p-2" />
                 ) : (
                   <div className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                     {organizationName.charAt(0)}
@@ -328,9 +329,9 @@ export default function UltimateRaffleTicket({
             <div className="flex gap-4 mb-4 relative z-10">
               <div className="w-32 h-32 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border-2" style={{ borderColor: "rgba(255,255,255,0.3)" }}>
                 {extras.showPrizeImage && extras.prizeImageUrl ? (
-                  <img src={extras.prizeImageUrl} alt="Prémio" className="w-full h-full object-cover" />
+                  <Image src={extras.prizeImageUrl} alt="Prémio" width={128} height={128} unoptimized className="w-full h-full object-cover" />
                 ) : mascotUrl ? (
-                  <img src={mascotUrl} alt="Mascote" className="w-full h-full object-cover" />
+                  <Image src={mascotUrl} alt="Mascote" width={128} height={128} unoptimized className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center">
                     <span className="text-4xl">🏆</span>
@@ -417,7 +418,7 @@ export default function UltimateRaffleTicket({
                 {content.stubTitle}
               </div>
 
-              {logoUrl && <img src={logoUrl} alt="Logo" className="w-12 h-12 mx-auto mb-2 object-contain" />}
+              {logoUrl && <Image src={logoUrl} alt="Logo" width={48} height={48} unoptimized className="w-12 h-12 mx-auto mb-2 object-contain" />}
 
               <p className="text-xs font-bold leading-tight" style={getTextStyle(theme.stubTextColor)}>
                 {organizationName}

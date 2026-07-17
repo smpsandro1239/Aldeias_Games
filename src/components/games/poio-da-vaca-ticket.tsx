@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 
 export type PoioDaVacaTicketProps = {
@@ -219,7 +220,7 @@ export default function PoioDaVacaTicket({
           <div className="flex items-start justify-between mb-4 p-6">
             <div className="flex items-center gap-3">
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain rounded-lg bg-foreground/20 p-2" />
+                <Image src={logoUrl} alt="Logo" width={64} height={64} unoptimized className="w-16 h-16 object-contain rounded-lg bg-foreground/20 p-2" />
               ) : (
                 <div className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                   {organizationName.charAt(0)}
