@@ -439,7 +439,7 @@ function RaspadinhaPremiumContent() {
     }
   }, [slots, initSlotCanvas, gamePhase]);
 
-  const claimPremio = useCallback(async (pId: string, claimType: "carteira" | "cofre" | "jogar_novamente" = "carteira") => {
+  const claimPremio = useCallback(async (pId: string, claimType: "carteira" | "cofre" | "jogar_novamente" | "pagar_cliente" = "carteira") => {
     if (!pId || premioClaimed || claiming) return;
     setClaiming(true);
     
@@ -957,7 +957,7 @@ function RaspadinhaPremiumContent() {
             </button>
           )}
 
-          {gamePhase === "all_revealed" && winningPrize && !premioClaimed && !isNonRegularUser && (
+          {gamePhase === "all_revealed" && winningPrize && !premioClaimed && (!isNonRegularUser || !playerDataModified) && (
             <button
               disabled={claiming}
               onClick={() => {
@@ -970,7 +970,7 @@ function RaspadinhaPremiumContent() {
             </button>
           )}
 
-          {gamePhase === "all_revealed" && winningPrize && !premioClaimed && isNonRegularUser && (
+          {gamePhase === "all_revealed" && winningPrize && !premioClaimed && isNonRegularUser && playerDataModified && (
             <div className="flex flex-col gap-2">
               <button
                 disabled={claiming}
@@ -1135,7 +1135,7 @@ function RaspadinhaPremiumContent() {
                 </motion.p>
               )}
 
-              {!premioClaimed && !isNonRegularUser && (
+              {!premioClaimed && (!isNonRegularUser || !playerDataModified) && (
                 <div className="mb-5 space-y-3">
                   <button
                     disabled={claiming}
@@ -1155,7 +1155,7 @@ function RaspadinhaPremiumContent() {
                 </div>
               )}
 
-              {!premioClaimed && isNonRegularUser && (
+              {!premioClaimed && isNonRegularUser && playerDataModified && (
                 <div className="mb-5 space-y-2">
                   <p className="text-xs text-muted-foreground/60 mb-2">
                     Como administrador/vendedor, escolha como处理 o prémio:

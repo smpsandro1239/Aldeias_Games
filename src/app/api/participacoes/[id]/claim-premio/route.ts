@@ -23,7 +23,7 @@ function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number
   return { allowed: true };
 }
 
-type ClaimType = 'carteira' | 'cofre' | 'jogar_novamente';
+type ClaimType = 'carteira' | 'cofre' | 'jogar_novamente' | 'pagar_cliente';
 
 const ROLES_WITH_CASHBOX = ['vendedor', 'aldeia_admin', 'super_admin'];
 
@@ -95,7 +95,7 @@ export async function POST(
 
     const isNonRegularUser = ROLES_WITH_CASHBOX.includes(user.role);
 
-    if (claimType === 'carteira' && isNonRegularUser) {
+    if (claimType === 'carteira' && isNonRegularUser && participacao.userId !== user.id) {
       return NextResponse.json(
         { error: 'Utilizadores com perfil de vendedor/administrador não podem reclamar prémios para a carteira. Use "cofre", "jogar_novamente" ou "pagar_cliente".' },
         { status: 400 }
