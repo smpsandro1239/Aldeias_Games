@@ -145,3 +145,16 @@ Pages:
 - `prisma/schema.prisma` — database schema
 - `prisma/seed-full.ts` — comprehensive seed
 - `next.config.js` — Next.js config (no Sentry config exists)
+
+### Raspadinha — maxGanhadores (Limite de Prémios)
+- `configuracao.maxGanhadores` (number, opcional) — limita o número total de ganhadores do jogo
+- **Não bloqueia a venda**: quando o limite é atingido, o jogo **continua aberto** e gera receita normalmente
+- Participações subsequentes são criadas mas **todas perdem** — `determineRaspadinhaOutcome(config, forceLoss=true)` força `hasWin: false`
+- A grid continua a mostrar prémios como filler (para efeito visual), mas nenhum prémio com valor forma 3-símbolos-iguais
+- Flag `_limiteAtingido` é passada de `validate()` para `prepareData()` via objecto `data` (campo `[key: string]: unknown`)
+- `validate()` define `(data as Record<string, unknown>)._limiteAtingido = true` quando `ganhadoresCount >= maxGanhadores` — não rejeita a participação
+- `prepareData()` lê a flag e chama `determineRaspadinhaOutcome(config, forceLoss)` 
+- `postCreate()` **não fecha o jogo** — apenas notifica admins e vendedor quando o limite é atingido
+- Notificação inclui: nome do último ganhador, nome do vendedor, valor do prémio, e mensagem que o jogo continua aberto
+- Configuração no modal admin: toggle "Limitar número total de ganhadores" + input numérico (guardado em `configuracao.maxGanhadores`)
+- Testes: `src/__tests__/unit/raspadinha.test.ts` (25 testes incluindo validação do forceLoss, grid, probabilidades)
