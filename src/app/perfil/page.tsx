@@ -94,8 +94,21 @@ export default function PerfilPage() {
       
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setProfileImage(base64);
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX = 256;
+          let w = img.width;
+          let h = img.height;
+          if (w > h) { if (w > MAX) { h = (h * MAX) / w; w = MAX; } }
+          else { if (h > MAX) { w = (w * MAX) / h; h = MAX; } }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0, w, h);
+          setProfileImage(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -211,7 +224,8 @@ export default function PerfilPage() {
 
         toast.success("Perfil atualizado com sucesso!");
       } else {
-        toast.error("Erro ao atualizar perfil na API");
+        const err = await response.json().catch(() => null);
+        toast.error(err?.error || `Erro ${response.status}`);
       }
     } catch (error) {
       console.error("Erro ao guardar perfil:", error);
