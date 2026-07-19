@@ -93,8 +93,16 @@ export default function EuromilhoesPage() {
   const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
   const [submetendo, setSubmetendo] = useState(false);
   const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.role) setUserRole(parsed.role);
+      }
+    } catch {}
     fetchData();
   }, []);
 
@@ -473,7 +481,7 @@ export default function EuromilhoesPage() {
               Participar Novamente
             </Button>
           </main>
-          <BottomNav />
+          <BottomNav role={userRole || undefined} />
         </div>
       </LayoutHeader>
     );

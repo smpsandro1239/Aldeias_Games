@@ -733,7 +733,8 @@ function RaspadinhaPremiumContent() {
             Tentar Novamente
           </button>
         </main>
-        <BottomNav />
+      <BottomNav role={userRole || undefined} />
+
       </div>
     );
   }

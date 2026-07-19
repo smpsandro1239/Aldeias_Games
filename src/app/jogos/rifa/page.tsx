@@ -574,7 +574,7 @@ export default function RifaPage() {
             Participar Novamente
           </Button>
         </main>
-        <BottomNav />
+        <BottomNav role={userRole || undefined} />
       </div>
       </LayoutHeader>
     );

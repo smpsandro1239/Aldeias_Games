@@ -503,7 +503,7 @@ export default function ConfiguracoesPage() {
         </Button>
       </main>
 
-      <BottomNav />
+      <BottomNav role={user?.role} />
 
       <Dialog open={ajudaModalOpen} onOpenChange={setAjudaModalOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-surface-container border border-primary/10">

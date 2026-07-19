@@ -244,7 +244,7 @@ export default function PedidosPage() {
           </div>
           )}
         </main>
-        <BottomNav />
+        <BottomNav role={currentUser?.role} />
       </div>
     </LayoutHeader>
   );
