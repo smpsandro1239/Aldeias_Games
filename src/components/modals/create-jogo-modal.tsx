@@ -82,6 +82,7 @@ interface JogoFormData {
   numeroBlocos: string;
   permitirStripe: boolean;
   valorPremios: string;
+  raspadinhaMaxGanhadores: string;
 }
 
 interface JogoMetrics {
@@ -178,6 +179,7 @@ const getInitialState = (initialData?: JogoData) => ({
     numeroBlocos: "1",
     permitirStripe: false,
     valorPremios: "",
+    raspadinhaMaxGanhadores: "0",
   } as JogoFormData,
   raspadinhaPremios: initialData?.premios && initialData.tipo === GAME_TYPES.RASPADINHA
     ? initialData.premios.map((p, i) => ({
@@ -487,6 +489,10 @@ function buildJogoData(
     config.subtitulo = formData.raspadinhaSubtitulo;
     config.organizacao = formData.raspadinhaOrganizacao;
     config.premios = raspadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
+    const maxGanhadores = safeParseInt(formData.raspadinhaMaxGanhadores, 0);
+    if (maxGanhadores > 0) {
+      config.maxGanhadores = maxGanhadores;
+    }
   }
 
   let premiosData: Array<{nome: string; valorDinheiroAlternative: number; percentagem?: number; ordem: number}> = [];
@@ -949,6 +955,37 @@ export function CreateJogoModal({
                         ))}
                       </div>
 
+                    </div>
+
+                    <div className="border-t pt-4 mt-2 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={formData.raspadinhaMaxGanhadores !== "0"}
+                            onChange={(e) => updateFormData({ raspadinhaMaxGanhadores: e.target.checked ? "10" : "0" })}
+                          />
+                          <div className="w-9 h-5 bg-gray-300 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                        <Label className="text-sm">Limitar número total de ganhadores</Label>
+                      </div>
+                      {formData.raspadinhaMaxGanhadores !== "0" && (
+                        <div className="grid gap-2">
+                          <Label htmlFor="raspadinhaMaxGanhadores">Máximo de ganhadores neste jogo</Label>
+                          <Input
+                            id="raspadinhaMaxGanhadores"
+                            type="number"
+                            min="1"
+                            max="100000"
+                            value={formData.raspadinhaMaxGanhadores}
+                            onChange={(e) => updateFormData({ raspadinhaMaxGanhadores: e.target.value })}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Quando este limite for atingido, as participações seguintes serão sem prémio.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>
