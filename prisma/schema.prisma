@@ -343,7 +343,7 @@ model Jogo {
   preco                   Float
   stockInicial            Int
   stockAtual              Int
-  limitePorUsuario        Int        @default(10)
+  limitePorUsuario        Int        @default(0)
   custoQuadrado           Float?
   valorPremioVaca         Float?
   custoPremioDinheiro     Float?

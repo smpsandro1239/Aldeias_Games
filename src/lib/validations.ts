@@ -139,7 +139,7 @@ const baseJogoSchema = z.object({
   configuracao: z.record(z.any()),
   preco: z.number().min(0.5, 'Preço mínimo é 0.50€'),
   stockInicial: z.number().int().min(1, 'Stock deve ser pelo menos 1'),
-  limitePorUsuario: z.number().int().min(1).default(10),
+  limitePorUsuario: z.number().int().min(0).default(0),
   eventoId: z.string(),
   estado: z.enum(['aberto', 'fechado', 'suspenso']).default('aberto'),
   modoSorteio: z.enum(['app', 'externo']).default('app'),

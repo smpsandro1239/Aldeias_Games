@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         preco: tipoJogo === 'rifa' ? 2 : 3,
         stockInicial: 100,
         stockAtual: 100,
-        limitePorUsuario: 10,
+        limitePorUsuario: 0,
         estado: 'aberto',
         eventoId,
         aldeiaId: evento.aldeiaId,

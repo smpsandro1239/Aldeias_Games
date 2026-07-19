@@ -433,7 +433,7 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
       descricao: (jogo as any).descricao,
       preco: jogo.preco,
       stockInicial: jogo.stockInicial ?? 100,
-      limitePorUsuario: (config.limitePorUsuario as number) ?? 10,
+      limitePorUsuario: (config.limitePorUsuario as number) ?? 0,
       eventoId: jogo.eventoId,
       configuracao: config,
     };

@@ -159,7 +159,7 @@ const getInitialState = (initialData?: JogoData) => ({
     descricao: initialData?.descricao || "",
     preco: initialData?.preco?.toString() || "2",
     stockInicial: initialData?.stockInicial?.toString() || "100",
-    limitePorUsuario: initialData?.limitePorUsuario?.toString() || "10",
+    limitePorUsuario: initialData?.limitePorUsuario?.toString() || "0",
     numeroInicial: "1",
     numeroFinal: "1000",
     modoSorteio: (initialData?.modoSorteio || "app") as "app" | "externo",
@@ -517,7 +517,7 @@ function buildJogoData(
     descricao: formData.descricao,
     preco: safeParseFloat(formData.preco, 0),
     stockInicial: safeParseInt(formData.stockInicial, 100),
-    limitePorUsuario: safeParseInt(formData.limitePorUsuario, 10),
+    limitePorUsuario: safeParseInt(formData.limitePorUsuario, 0),
     eventoId,
     configuracao: config,
     modoSorteio: formData.modoSorteio,
@@ -819,6 +819,31 @@ export function CreateJogoModal({
                     />
                   </div>
                 </div>
+                <div className="flex items-center gap-3 mt-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={formData.limitePorUsuario !== "0"}
+                      onChange={(e) => updateFormData({ limitePorUsuario: e.target.checked ? "10" : "0" })}
+                    />
+                    <div className="w-9 h-5 bg-gray-300 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                  <Label className="text-sm">Limitar participações por utilizador</Label>
+                </div>
+                {formData.limitePorUsuario !== "0" && (
+                  <div className="grid gap-2 mt-2">
+                    <Label htmlFor="limitePorUsuario">Máximo de participações por utilizador</Label>
+                    <Input
+                      id="limitePorUsuario"
+                      type="number"
+                      min="1"
+                      max="1000"
+                      value={formData.limitePorUsuario}
+                      onChange={(e) => updateFormData({ limitePorUsuario: e.target.value })}
+                    />
+                  </div>
+                )}
               )}
 
               {formData.tipo === GAME_TYPES.RASPADINHA && (
