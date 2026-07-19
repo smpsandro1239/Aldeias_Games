@@ -14,11 +14,12 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET é obrigatório. Define a variável de ambiente JWT_SECRET.');
+function getSecret(): Uint8Array {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET é obrigatório. Define a variável de ambiente JWT_SECRET.');
+  }
+  return new TextEncoder().encode(JWT_SECRET);
 }
-
-const secret = new TextEncoder().encode(JWT_SECRET);
 
 export interface JWTPayload {
   userId: string;
@@ -91,7 +92,7 @@ export async function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): P
      .setProtectedHeader({ alg: 'HS256' })
      .setIssuedAt()
      .setExpirationTime(JWT_EXPIRATION)
-     .sign(secret);
+      .sign(getSecret());
 
    return token;
 }
@@ -101,7 +102,7 @@ export async function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): P
  */
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getSecret());
     return payload as unknown as JWTPayload;
   } catch {
     return null;

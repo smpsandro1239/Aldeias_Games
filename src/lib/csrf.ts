@@ -3,13 +3,15 @@ import { SignJWT, jwtVerify } from 'jose';
 
 const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET;
 
-if (!CSRF_SECRET) {
-  throw new Error('CSRF_SECRET ou JWT_SECRET é obrigatório. Define a variável de ambiente CSRF_SECRET.');
+function getSecret(): Uint8Array {
+  if (!CSRF_SECRET) {
+    throw new Error('CSRF_SECRET ou JWT_SECRET é obrigatório. Define a variável de ambiente CSRF_SECRET.');
+  }
+  return new TextEncoder().encode(CSRF_SECRET);
 }
 
 const CSRF_HEADER_NAME = 'x-csrf-token';
 const CSRF_COOKIE_NAME = 'csrf-token';
-const secret = new TextEncoder().encode(CSRF_SECRET);
 
 /**
  * Gera um novo CSRF token assinado
@@ -19,7 +21,7 @@ export async function generateCsrfToken(): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1h')
-    .sign(secret);
+    .sign(getSecret());
   return token;
 }
 
@@ -44,7 +46,7 @@ export async function validateCsrf(request: NextRequest): Promise<boolean> {
   }
 
   try {
-    await jwtVerify(tokenFromHeader, secret);
+    await jwtVerify(tokenFromHeader, getSecret());
     return true;
   } catch (error) {
     console.error('CSRF validation failed:', error);
