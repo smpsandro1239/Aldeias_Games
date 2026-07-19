@@ -1,5 +1,8 @@
 import crypto from 'crypto';
 import { GameHandler, JogoWithEvento, ParticipacaoRequestData } from './types';
+// @ts-ignore - @prisma/client types generated at build time
+import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/db';
 
 interface RaspadinhaPremio {
   nome: string;
@@ -19,10 +22,14 @@ interface RaspadinhaOutcome {
   roll: number;
 }
 
-function determineRaspadinhaOutcome(config: RaspadinhaConfig): RaspadinhaOutcome {
+function determineRaspadinhaOutcome(config: RaspadinhaConfig, forceLoss = false): RaspadinhaOutcome {
   const premios = config.premios || [];
   const rollInt = crypto.randomInt(0, 10000);
   const roll = rollInt / 10000;
+
+  if (forceLoss) {
+    return { hasWin: false, winningPrize: null, roll };
+  }
 
   let cumulativeBp = 0;
   for (const premio of premios) {
@@ -111,12 +118,65 @@ function generateHash(seed: string, resultado: string, salt: string, timestamp?:
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+function parseConfig(jogo: JogoWithEvento): RaspadinhaConfig {
+  return typeof jogo.configuracao === 'string'
+    ? JSON.parse(jogo.configuracao)
+    : (jogo.configuracao as RaspadinhaConfig);
+}
+
+function getConfiguredPremios(jogo: JogoWithEvento) {
+  const config = parseConfig(jogo);
+  return config.premios || [];
+}
+
 export const raspadinhaHandler: GameHandler = {
+  async validate(data: ParticipacaoRequestData, jogo: JogoWithEvento) {
+    const premios = getConfiguredPremios(jogo);
+
+    if (premios.length === 0) {
+      throw new Error('Raspadinha sem prémios configurados');
+    }
+
+    const totalPercentagem = premios.reduce(
+      (sum, p) => sum + (p.percentagem || 0),
+      0
+    );
+    if (totalPercentagem > 100) {
+      throw new Error(
+        `Soma das percentagens (${totalPercentagem}%) excede 100%`
+      );
+    }
+
+    if (jogo.stockAtual < (data.quantidade || 1)) {
+      throw new Error('Stock insuficiente');
+    }
+
+    const config = parseConfig(jogo);
+    const maxGanhadores =
+      typeof config.maxGanhadores === 'number' && config.maxGanhadores > 0
+        ? config.maxGanhadores
+        : null;
+
+    if (maxGanhadores !== null) {
+      const ganhadoresCount = await prisma.participacao.count({
+        where: {
+          jogoId: jogo.id,
+          ganhador: true,
+          resultadoRaspe: { not: 'sem_premio' },
+        },
+      });
+      if (ganhadoresCount >= maxGanhadores) {
+        (data as Record<string, unknown>)._limiteAtingido = true;
+      }
+    }
+  },
+
   prepareData(data: ParticipacaoRequestData, jogo: JogoWithEvento) {
     const config: RaspadinhaConfig = typeof jogo.configuracao === 'string'
       ? JSON.parse(jogo.configuracao)
       : jogo.configuracao as RaspadinhaConfig;
-    const outcome = determineRaspadinhaOutcome(config);
+    const forceLoss = (data as Record<string, unknown>)._limiteAtingido === true;
+    const outcome = determineRaspadinhaOutcome(config, forceLoss);
     const grid = buildGridFromOutcome(outcome, config);
     const rngSeed = crypto.randomBytes(32).toString('hex');
     const uniqueSalt = crypto.randomBytes(32).toString('hex');
@@ -138,5 +198,86 @@ export const raspadinhaHandler: GameHandler = {
         roll: outcome.roll,
       }),
     };
+  },
+
+  async postCreate(
+    tx: Prisma.TransactionClient,
+    _data: ParticipacaoRequestData,
+    jogo: JogoWithEvento,
+    participacoes: Prisma.Participacao[]
+  ) {
+    const participacao = participacoes[0];
+    if (!participacao || !participacao.ganhador) return;
+
+    const config = parseConfig(jogo);
+    const maxGanhadores =
+      typeof config.maxGanhadores === 'number' && config.maxGanhadores > 0
+        ? config.maxGanhadores
+        : null;
+    if (maxGanhadores === null) return;
+
+    const ganhadoresCount = await tx.participacao.count({
+      where: {
+        jogoId: jogo.id,
+        ganhador: true,
+        resultadoRaspe: { not: 'sem_premio' },
+      },
+    });
+
+    if (ganhadoresCount >= maxGanhadores) {
+      let vendedorNome: string | null = null;
+      if (participacao.vendedorId) {
+        const vendedor = await tx.user.findUnique({
+          where: { id: participacao.vendedorId },
+          select: { nome: true },
+        });
+        vendedorNome = vendedor?.nome ?? null;
+      }
+
+      const nomeCliente = participacao.nomeCliente || 'Anónimo';
+      const resultado = participacao.resultadoRaspe || 'desconhecido';
+
+      const premiosConfig = config.premios || [];
+      const premioConfig = premiosConfig.find((p) => p.nome === resultado);
+      const valorPremio = premioConfig?.valorDinheiroAlternative ?? 0;
+
+      const admins = await tx.user.findMany({
+        where: { aldeiaId: jogo.evento.aldeiaId, role: 'aldeia_admin' },
+        select: { id: true },
+      });
+
+      const vendedorIds = new Set<string>();
+      if (participacao.vendedorId) {
+        vendedorIds.add(participacao.vendedorId);
+      }
+
+      const notificacaoData = [
+        ...admins.map((admin: { id: string }) => ({
+          userId: admin.id,
+          tipo: 'sistema' as const,
+          titulo: 'Limite de ganhadores atingido',
+          mensagem: `O jogo "${jogo.nome}" atingiu o limite de ${maxGanhadores} ganhadores. ` +
+            `Último ganhador: ${nomeCliente}` +
+            `${vendedorNome ? ` (vendido por ${vendedorNome})` : ''} — ` +
+            `Prémio: ${resultado} (${valorPremio}€). ` +
+            `O jogo continua aberto para vendas (sem prémios).`,
+          lida: false,
+        })),
+      ];
+
+      for (const vid of vendedorIds) {
+        notificacaoData.push({
+          userId: vid,
+          tipo: 'sistema' as const,
+          titulo: 'Limite de ganhadores atingido',
+          mensagem: `O jogo "${jogo.nome}" atingiu o limite de ${maxGanhadores} ganhadores. ` +
+            `A partir de agora, todas as participações serão sem prémio. ` +
+            `O jogo continua aberto para vendas.`,
+          lida: false,
+        });
+      }
+
+      await tx.notificacao.createMany({ data: notificacaoData });
+    }
   },
 };
