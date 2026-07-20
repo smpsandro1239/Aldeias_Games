@@ -65,13 +65,20 @@ export default function ConfiguracoesPage() {
       setUser(userData);
       if (userData.aldeiaId) {
         fetchAldeia(userData.aldeiaId);
+      } else {
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
   }, []);
 
   const fetchAldeia = async (aldeiaId: string) => {
     try {
-      const response = await fetch(`/api/aldeias/${aldeiaId}`);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/aldeias/${aldeiaId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!response.ok) {
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
@@ -127,10 +134,12 @@ export default function ConfiguracoesPage() {
     
     setSaving(true);
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`/api/aldeias/${aldeia.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           permitirStripe: formData.permitirStripe,

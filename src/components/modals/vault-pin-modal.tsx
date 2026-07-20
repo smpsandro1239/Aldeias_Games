@@ -36,7 +36,10 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
         apiRequest("/api/users/vault-pin", {
           headers: { Authorization: `Bearer ${token}` },
         })
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error("Erro");
+            return res.json();
+          })
           .then((d) => {
             setPinEnabled(d.data?.vaultPinEnabled ?? false);
             if (!d.data?.vaultPinEnabled) setMode("setup");
@@ -134,22 +137,21 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm bg-surface-container border border-primary/10 p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="font-serif text-xl text-accent flex items-center gap-2">
-            <Shield className="h-5 w-5" />
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm bg-surface-container border border-primary/10 p-0 overflow-hidden">
+        <DialogHeader className="p-4 sm:p-6 pb-2">
+          <DialogTitle className="font-serif text-lg sm:text-xl text-accent flex items-center gap-2">
+            <Shield className="h-5 w-5 shrink-0" />
             Cofre Geral
           </DialogTitle>
         </DialogHeader>
 
-        <div className="px-6 pb-6 space-y-4">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
           {loading && (
             <div className="text-center py-8">
               <div className="animate-pulse text-muted-foreground">A carregar...</div>
             </div>
           )}
 
-          {/* SETUP MODE */}
           {!loading && mode === "setup" && (
             <>
               <p className="text-sm text-muted-foreground text-center">
@@ -213,7 +215,6 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
             </>
           )}
 
-          {/* VERIFY MODE */}
           {!loading && mode === "verify" && (
             <>
               <div className="text-center">
@@ -252,12 +253,11 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
             </>
           )}
 
-          {/* VIEW MODE */}
           {!loading && mode === "view" && vaultSaldo !== null && (
             <>
-              <div className="bg-surface-container-low rounded-xl p-6 text-center">
+              <div className="bg-surface-container-low rounded-xl p-4 sm:p-6 text-center">
                 <p className="text-xs text-muted-foreground mb-2">Saldo do Cofre da Aldeia</p>
-                <p className="font-serif text-4xl text-primary">{formatCurrency(vaultSaldo)}</p>
+                <p className="font-serif text-3xl sm:text-4xl text-primary">{formatCurrency(vaultSaldo)}</p>
               </div>
               <button
                 onClick={() => {

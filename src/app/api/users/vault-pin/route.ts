@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest, hashPassword, verifyPassword } from '@/lib/auth';
-import { requirePermission } from '@/lib/rbac/checkPermission';
 
 // GET - Verificar se PIN está configurado
 export async function GET(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    const denied = await requirePermission(user.id, 'EXECUTE_VENDA');
-    if (denied) return denied;
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { vaultPinEnabled: true },
+    });
 
     return NextResponse.json({
       success: true,
-      data: { vaultPinEnabled: user.vaultPinEnabled ?? false },
+      data: { vaultPinEnabled: dbUser?.vaultPinEnabled ?? false },
     });
   } catch (error) {
     console.error('Error checking vault PIN:', error);
@@ -26,14 +28,11 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    const denied = await requirePermission(user.id, 'EXECUTE_VENDA');
-    if (denied) return denied;
 
     const body = await request.json();
     const { action, pin, password, confirmPin } = body;
 
     if (action === 'setup') {
-      // Configurar PIN pela primeira vez
       if (!pin || !password) {
         return NextResponse.json({ error: 'PIN e password são obrigatórios' }, { status: 400 });
       }
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'PINs não coincidem' }, { status: 400 });
       }
 
-      // Verificar password do utilizador
       const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: { password: true } });
       if (!fullUser) {
         return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 404 });
@@ -55,7 +53,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Password incorreta' }, { status: 401 });
       }
 
-      // Hash do PIN e guardar
       const hashedPin = await hashPassword(pin);
       await prisma.user.update({
         where: { id: user.id },
@@ -66,7 +63,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'verify') {
-      // Verificar PIN e devolver saldo do cofre
       if (!pin) {
         return NextResponse.json({ error: 'PIN é obrigatório' }, { status: 400 });
       }
@@ -85,7 +81,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'PIN incorreta' }, { status: 401 });
       }
 
-      // Buscar saldo do cofre da aldeia
       if (!fullUser.aldeiaId) {
         return NextResponse.json({ error: 'Aldeia não associada' }, { status: 400 });
       }
