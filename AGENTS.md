@@ -5,9 +5,11 @@
 ### Pre-deploy Checklist
 1. **Prisma versions pinned**: `package.json` must have exact versions `"prisma": "6.19.3"` and `"@prisma/client": "6.19.3"` (no caret).
 2. **postinstall script**: `npx --yes prisma@6.19.3 generate` (NOT `node node_modules/.bin/prisma generate` — `.bin/prisma` does not exist on Vercel).
-3. **vercel.json buildCommand**: `npx prisma@6.19.3 generate && next build` (must match pinned version).
+3. **vercel.json buildCommand**: `npx prisma@6.19.3 generate && rm -rf .next && next build` (must include `rm -rf .next` to clear stale build cache).
 4. **TypeScript/React types** in `dependencies` (not `devDependencies`) — Vercel cannot find them in devDependencies.
 5. **Git author**: `git config user.name sandropereira` / `git config user.email 94222305+smpsandro1239@users.noreply.github.com` — must match GitHub account for Vercel author identification.
+6. **No module-scope throws in lib files**: `src/lib/auth.ts` and `src/lib/csrf.ts` use lazy validation (`getSecret()` function) — NEVER `throw` at module scope for env vars, otherwise the build crashes during page data collection.
+7. **No stale files in .next cache**: Vercel restores build cache from previous deployments. If files were deleted, they may reappear. The `rm -rf .next` in buildCommand prevents this.
 
 ### Common Build Errors & Fixes
 
@@ -19,6 +21,17 @@
 | `Cannot find name 'apiRequest'` | Add `import { apiRequest } from "@/lib/api-client"` |
 | `location is not defined` (non-blocking) | Caused by 3rd-party lib accessing `location` at module scope during SSR. Build still succeeds. |
 | `Turbopack not supported on win32` | Local Windows cannot run Turbopack — use `npx next build --webpack` locally or rely on Vercel (Linux) for Turbopack builds |
+| `JWT_SECRET é obrigatório` during build | Fix: use lazy validation in `auth.ts`/`csrf.ts` (function `getSecret()`, not module-scope throw). If this error appears, it means a lib file throws at import time during static page generation. |
+| Stale files in build (e.g. deleted pages reappear) | Vercel build cache restores old `.next` directory. Fix: `rm -rf .next` in buildCommand, or manually clear cache in Vercel dashboard (Settings → Build & Development → Redeploy → Clear build cache). |
+
+### PowerShell Notes (Windows)
+- `git commit -m "msg"` fails in PowerShell due to quote handling. Use `cmd /c` with temp file:
+  ```cmd
+  echo commit message> %TEMP%\commit_msg.txt
+  git commit -F %TEMP%\commit_msg.txt
+  ```
+- Alternatively: `git add -A && git commit -F C:\Users\smpsa\AppData\Local\Temp\commit_msg.txt`
+- Heredocs (`<<<`) and `<<` are NOT supported in PowerShell. Use `cmd /c` + temp files.
 
 ### Commit Flow
 ```bash
@@ -141,10 +154,12 @@ Pages:
 
 ### Key Files
 - `package.json` — scripts, dependencies, prisma version
-- `vercel.json` — build command
+- `vercel.json` — build command (includes `rm -rf .next` for cache cleanup)
 - `prisma/schema.prisma` — database schema
 - `prisma/seed-full.ts` — comprehensive seed
 - `next.config.js` — Next.js config (no Sentry config exists)
+- `src/lib/auth.ts` — JWT auth with lazy `getSecret()` validation
+- `src/lib/csrf.ts` — CSRF with lazy `getSecret()` validation
 
 ### Raspadinha — maxGanhadores (Limite de Prémios)
 - `configuracao.maxGanhadores` (number, opcional) — limita o número total de ganhadores do jogo
