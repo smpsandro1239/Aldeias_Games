@@ -448,7 +448,7 @@ export async function POST(request: NextRequest) {
 
         // --- LÓGICA DE CAIXA DO VENDEDOR ---
         // Quando vendedor vende em dinheiro, o valor entra na sua caixa física
-        if (data.metodoPagamento === 'dinheiro' && effectiveUser && hasRole(effectiveUser.role, ['vendedor', 'aldeia_admin'])) {
+        if (data.metodoPagamento === 'dinheiro' && effectiveUser && hasRole(effectiveUser.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
           const valorVenda = jogo.preco * data.quantidade;
           const cashbox = await tx.vendedorCashbox.upsert({
             where: { userId: effectiveUser.id },
