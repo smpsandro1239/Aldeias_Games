@@ -11,6 +11,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AnalyticsInit } from "@/components/analytics-init";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { RouteAnnouncer } from "@/components/route-announcer";
+import { SeedInitializer } from "@/components/seed-initializer";
+import { ensureSeeded } from "@/lib/db-init";
 
 const inter = Inter({ subsets: ["latin", "latin-ext"] });
 const notoSerif = Noto_Serif({ 
@@ -81,6 +83,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const nonce = (await headers()).get("x-nonce") || undefined;
+  await ensureSeeded();
 
   return (
     <html lang="pt-PT" suppressHydrationWarning nonce={nonce}>
@@ -97,6 +100,7 @@ export default async function RootLayout({
                 <SentryInit />
                 <AnalyticsInit />
                 <RouteAnnouncer />
+                <SeedInitializer />
                 {children}
                 <CookieConsentBanner />
                 <Toaster position="top-right" richColors />
