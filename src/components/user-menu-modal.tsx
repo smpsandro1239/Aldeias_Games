@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut, Settings, Banknote } from "lucide-react";
+import { User, LogOut, Settings, Banknote, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/components/providers/wallet-provider";
 import { apiRequest } from "@/lib/api-client";
+import { VaultPinModal } from "@/components/modals/vault-pin-modal";
 
 interface User {
   id: string;
@@ -28,6 +29,7 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const { saldo, loading: walletLoading } = useWallet();
   const [cashboxSaldo, setCashboxSaldo] = useState<number | null>(null);
+  const [vaultPinOpen, setVaultPinOpen] = useState(false);
 
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
 
@@ -86,6 +88,7 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-surface-container border border-primary/10 p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
@@ -109,6 +112,18 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
                 {cashboxSaldo !== null ? `${cashboxSaldo.toFixed(2)} €` : "..."}
               </p>
             </div>
+          )}
+          {showCashbox && (
+            <button
+              onClick={() => {
+                onOpenChange(false);
+                setVaultPinOpen(true);
+              }}
+              className="w-full py-3 text-center text-primary hover:bg-primary/10 rounded-xl flex items-center justify-center gap-2"
+            >
+              <Shield className="h-4 w-4" />
+              Ver Cofre Geral
+            </button>
           )}
           <button 
             onClick={() => {
@@ -142,6 +157,8 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
         </div>
       </DialogContent>
     </Dialog>
+    <VaultPinModal open={vaultPinOpen} onOpenChange={setVaultPinOpen} />
+    </>
   );
 }
 

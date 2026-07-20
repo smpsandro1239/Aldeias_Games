@@ -1,0 +1,278 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Shield, Lock, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { apiRequest } from "@/lib/api-client";
+
+interface VaultPinModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
+  const [pinEnabled, setPinEnabled] = useState<boolean | null>(null);
+  const [mode, setMode] = useState<"setup" | "verify" | "view">("verify");
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [vaultSaldo, setVaultSaldo] = useState<number | null>(null);
+  const [showPin, setShowPin] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setPin("");
+      setConfirmPin("");
+      setPassword("");
+      setVaultSaldo(null);
+      setShowPin(false);
+      setMode("verify");
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (token) {
+        apiRequest("/api/users/vault-pin", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((d) => {
+            setPinEnabled(d.data?.vaultPinEnabled ?? false);
+            if (!d.data?.vaultPinEnabled) setMode("setup");
+          })
+          .catch(() => setPinEnabled(false))
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [open]);
+
+  const handleSetup = async () => {
+    if (pin.length < 4) {
+      toast.error("PIN deve ter pelo menos 4 dígitos");
+      return;
+    }
+    if (pin !== confirmPin) {
+      toast.error("PINs não coincidem");
+      return;
+    }
+    if (!password) {
+      toast.error("Insira a sua password");
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await apiRequest("/api/users/vault-pin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: "setup", pin, confirmPin, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("PIN configurado com sucesso!");
+        setPinEnabled(true);
+        setMode("verify");
+        setPin("");
+        setConfirmPin("");
+        setPassword("");
+      } else {
+        toast.error(data.error || "Erro ao configurar PIN");
+      }
+    } catch {
+      toast.error("Erro ao configurar PIN");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!pin) {
+      toast.error("Insira o PIN");
+      return;
+    }
+    setVerifying(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await apiRequest("/api/users/vault-pin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: "verify", pin }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setVaultSaldo(data.data.saldo);
+        setMode("view");
+      } else {
+        toast.error(data.error || "PIN incorreto");
+        setPin("");
+      }
+    } catch {
+      toast.error("Erro ao verificar PIN");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      if (mode === "setup") handleSetup();
+      else if (mode === "verify") handleVerify();
+    }
+  };
+
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm bg-surface-container border border-primary/10 p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="font-serif text-xl text-accent flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Cofre Geral
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="px-6 pb-6 space-y-4">
+          {loading && (
+            <div className="text-center py-8">
+              <div className="animate-pulse text-muted-foreground">A carregar...</div>
+            </div>
+          )}
+
+          {/* SETUP MODE */}
+          {!loading && mode === "setup" && (
+            <>
+              <p className="text-sm text-muted-foreground text-center">
+                Configure um PIN de 4 a 6 dígitos para aceder ao cofre da aldeia.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Novo PIN</label>
+                  <div className="relative">
+                    <input
+                      type={showPin ? "text" : "password"}
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                      onKeyDown={handleKeyDown}
+                      placeholder="****"
+                      className="w-full bg-surface-container-low border border-primary/20 rounded-xl px-4 py-3 text-center text-lg tracking-[0.5em] font-mono text-accent placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin(!showPin)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent"
+                    >
+                      {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Confirmar PIN</label>
+                  <input
+                    type={showPin ? "text" : "password"}
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={confirmPin}
+                    onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+                    onKeyDown={handleKeyDown}
+                    placeholder="****"
+                    className="w-full bg-surface-container-low border border-primary/20 rounded-xl px-4 py-3 text-center text-lg tracking-[0.5em] font-mono text-accent placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Password da conta</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="••••••••"
+                    className="w-full bg-surface-container-low border border-primary/20 rounded-xl px-4 py-3 text-center text-accent placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/50"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleSetup}
+                disabled={loading}
+                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 disabled:opacity-50"
+              >
+                {loading ? "A configurar..." : "Configurar PIN"}
+              </button>
+            </>
+          )}
+
+          {/* VERIFY MODE */}
+          {!loading && mode === "verify" && (
+            <>
+              <div className="text-center">
+                <Lock className="h-10 w-10 text-primary mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Introduza o PIN para ver o saldo do cofre
+                </p>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPin ? "text" : "password"}
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                  onKeyDown={handleKeyDown}
+                  placeholder="****"
+                  autoFocus
+                  className="w-full bg-surface-container-low border border-primary/20 rounded-xl px-4 py-3 text-center text-lg tracking-[0.5em] font-mono text-accent placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-accent"
+                >
+                  {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <button
+                onClick={handleVerify}
+                disabled={verifying || !pin}
+                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 disabled:opacity-50"
+              >
+                {verifying ? "A verificar..." : "Ver Saldo"}
+              </button>
+            </>
+          )}
+
+          {/* VIEW MODE */}
+          {!loading && mode === "view" && vaultSaldo !== null && (
+            <>
+              <div className="bg-surface-container-low rounded-xl p-6 text-center">
+                <p className="text-xs text-muted-foreground mb-2">Saldo do Cofre da Aldeia</p>
+                <p className="font-serif text-4xl text-primary">{formatCurrency(vaultSaldo)}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setPin("");
+                  setVaultSaldo(null);
+                  setMode("verify");
+                }}
+                className="w-full py-3 text-center text-secondary hover:bg-secondary/10 rounded-xl"
+              >
+                Voltar a verificar
+              </button>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

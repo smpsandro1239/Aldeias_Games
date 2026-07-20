@@ -34,6 +34,8 @@ model User {
   comissaoPercentual Float   @default(10) // % de comissão por venda
   comissaoAtiva      Boolean @default(true) // se comissões estão ativas
   comissaoTotal      Float   @default(0) // total acumulado em comissões
+  vaultPin           String? // PIN hashed para acesso ao cofre
+  vaultPinEnabled    Boolean @default(false) // se PIN do cofre está configurado
 
   alteracoes            AlteracaoParticipacao[]
   logsAcesso            LogAcesso[]

@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut, Settings, Wallet, House, Banknote } from "lucide-react";
+import { User, LogOut, Settings, Wallet, House, Banknote, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/components/providers/wallet-provider";
 import { apiRequest } from "@/lib/api-client";
+import { VaultPinModal } from "@/components/modals/vault-pin-modal";
 
 interface User {
   id: string;
@@ -30,6 +31,7 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { saldo } = useWallet();
   const [cashboxSaldo, setCashboxSaldo] = useState<number | null>(null);
+  const [vaultPinOpen, setVaultPinOpen] = useState(false);
 
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
 
@@ -117,6 +119,18 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
                 </p>
               </div>
             )}
+            {showCashbox && (
+              <button
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  setVaultPinOpen(true);
+                }}
+                className="w-full py-3 text-center text-primary hover:bg-primary/10 rounded-xl flex items-center justify-center gap-2"
+              >
+                <Shield className="h-4 w-4" />
+                Ver Cofre Geral
+              </button>
+            )}
             <button 
               onClick={() => {
                 setUserMenuOpen(false);
@@ -149,6 +163,7 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
           </div>
         </DialogContent>
       </Dialog>
+      <VaultPinModal open={vaultPinOpen} onOpenChange={setVaultPinOpen} />
     </>
   );
 }
