@@ -33,6 +33,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
+import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
 
 interface Jogo {
   id: string;
@@ -171,11 +172,15 @@ export default function PoioDaVacaPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userAldeiaId, setUserAldeiaId] = useState<string | null>(null);
   const [userNome, setUserNome] = useState<string | null>(null);
+  const [playerDataConfirmOpen, setPlayerDataConfirmOpen] = useState(false);
+  const [playerDataModified, setPlayerDataModified] = useState(false);
+  const [userOriginalData, setUserOriginalData] = useState({ nome: "", telefone: "", email: "" });
 
   const randomOptions = [1, 3, 5, 10, 15, 20, 30];
 
   const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
   const isVendedor = userRole === "vendedor";
+  const isNonRegularUser = userRole === "vendedor" || userRole === "aldeia_admin" || userRole === "super_admin";
 
   const numerosOcupados = apostas.flatMap(a => a.numeros);
   
@@ -200,6 +205,11 @@ export default function PoioDaVacaPage() {
         if (user.aldeiaId) setUserAldeiaId(user.aldeiaId);
         if (user.nome) {
           setUserNome(user.nome);
+          setUserOriginalData({
+            nome: user.nome || "",
+            telefone: user.telefone || "",
+            email: user.email || ""
+          });
           setJogadorForm(prev => ({
             ...prev,
             nome: user.nome || "",
@@ -326,6 +336,28 @@ export default function PoioDaVacaPage() {
       return;
     }
     
+    if (isNonRegularUser && !playerDataModified) {
+      setPlayerDataConfirmOpen(true);
+    } else {
+      setBetModalOpen(true);
+    }
+  };
+
+  const handlePlayerConfirmOwnData = () => {
+    setPlayerDataConfirmOpen(false);
+    setPlayerDataModified(false);
+    setBetModalOpen(true);
+  };
+
+  const handlePlayerConfirmNewData = (data: { nome: string; telefone: string; email: string }) => {
+    setJogadorForm(prev => ({
+      ...prev,
+      nome: data.nome,
+      telefone: data.telefone,
+      email: data.email,
+    }));
+    setPlayerDataModified(true);
+    setPlayerDataConfirmOpen(false);
     setBetModalOpen(true);
   };
 
@@ -961,6 +993,16 @@ export default function PoioDaVacaPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PlayerDataConfirmModal
+        open={playerDataConfirmOpen}
+        onOpenChange={setPlayerDataConfirmOpen}
+        userName={userOriginalData.nome}
+        userPhone={userOriginalData.telefone}
+        userEmail={userOriginalData.email}
+        onConfirmWithOwnData={handlePlayerConfirmOwnData}
+        onConfirmWithNewData={handlePlayerConfirmNewData}
+      />
       </div>
     </LayoutHeader>
   );

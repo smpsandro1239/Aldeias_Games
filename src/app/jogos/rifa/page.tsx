@@ -37,6 +37,7 @@ import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
+import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
 
 interface Jogo {
   id: string;
@@ -102,9 +103,13 @@ export default function RifaPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
   const [numerosJogados, setNumerosJogados] = useState<number[]>([]);
+  const [playerDataConfirmOpen, setPlayerDataConfirmOpen] = useState(false);
+  const [playerDataModified, setPlayerDataModified] = useState(false);
+  const [userOriginalData, setUserOriginalData] = useState({ nome: "", telefone: "", email: "" });
 
   const randomOptions = [1, 2, 3, 5, 10, 20];
   const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
+  const isNonRegularUser = userRole === "vendedor" || userRole === "aldeia_admin" || userRole === "super_admin";
 
   useEffect(() => {
     fetchJogo();
@@ -114,6 +119,11 @@ export default function RifaPage() {
       const userData = JSON.parse(storedUser);
       setUser(userData);
       setUserRole(userData.role);
+      setUserOriginalData({
+        nome: userData.nome || "",
+        telefone: userData.telefone || "",
+        email: userData.email || ""
+      });
       setParticipante({
         nome: userData.nome || "",
         telefone: userData.telefone || "",
@@ -291,6 +301,28 @@ export default function RifaPage() {
       return;
     }
 
+    if (isNonRegularUser && !playerDataModified) {
+      setPlayerDataConfirmOpen(true);
+    } else {
+      setCreditCardModalOpen(true);
+    }
+  };
+
+  const handlePlayerConfirmOwnData = () => {
+    setPlayerDataConfirmOpen(false);
+    setPlayerDataModified(false);
+    setCreditCardModalOpen(true);
+  };
+
+  const handlePlayerConfirmNewData = (data: { nome: string; telefone: string; email: string }) => {
+    setParticipante(prev => ({
+      ...prev,
+      nome: data.nome,
+      telefone: data.telefone,
+      email: data.email,
+    }));
+    setPlayerDataModified(true);
+    setPlayerDataConfirmOpen(false);
     setCreditCardModalOpen(true);
   };
 
@@ -923,6 +955,16 @@ export default function RifaPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <PlayerDataConfirmModal
+          open={playerDataConfirmOpen}
+          onOpenChange={setPlayerDataConfirmOpen}
+          userName={userOriginalData.nome}
+          userPhone={userOriginalData.telefone}
+          userEmail={userOriginalData.email}
+          onConfirmWithOwnData={handlePlayerConfirmOwnData}
+          onConfirmWithNewData={handlePlayerConfirmNewData}
+        />
 
         </main>
       </div>
