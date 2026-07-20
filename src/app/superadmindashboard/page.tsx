@@ -7,7 +7,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { LoaderScreen } from "@/components/loader-screen";
 
 const AdminDashboard = dynamic(
-  () => import("@/features/admin/AdminDashboard").then((mod) => mod.default),
+  () => import("@/features/admin/SuperAdminDashboard").then((mod) => mod.default),
   { ssr: false }
 );
 
