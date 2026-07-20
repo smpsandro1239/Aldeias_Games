@@ -31,6 +31,7 @@ import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
+import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
 import { apiRequest } from "@/lib/api-client";
 
 interface Jogo {
@@ -94,6 +95,9 @@ export default function EuromilhoesPage() {
   const [submetendo, setSubmetendo] = useState(false);
   const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [playerDataConfirmOpen, setPlayerDataConfirmOpen] = useState(false);
+  const [playerDataModified, setPlayerDataModified] = useState(false);
+  const [userOriginalData, setUserOriginalData] = useState({ nome: "", telefone: "", email: "" });
 
   useEffect(() => {
     try {
@@ -101,10 +105,25 @@ export default function EuromilhoesPage() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed.role) setUserRole(parsed.role);
+        if (parsed.nome) {
+          setUserOriginalData({
+            nome: parsed.nome || "",
+            telefone: parsed.telefone || "",
+            email: parsed.email || "",
+          });
+          setParticipante(prev => ({
+            ...prev,
+            nome: parsed.nome || "",
+            telefone: parsed.telefone || "",
+            email: parsed.email || "",
+          }));
+        }
       }
     } catch {}
     fetchData();
   }, []);
+
+  const isNonRegularUser = userRole === "vendedor" || userRole === "aldeia_admin" || userRole === "super_admin";
 
   useEffect(() => {
     if (grelha) {
@@ -240,6 +259,29 @@ export default function EuromilhoesPage() {
       toast.error(`Selecione pelo menos 1 número.`);
       return;
     }
+
+    if (isNonRegularUser && !playerDataModified) {
+      setPlayerDataConfirmOpen(true);
+    } else {
+      setPaymentModalOpen(true);
+    }
+  };
+
+  const handlePlayerConfirmOwnData = () => {
+    setPlayerDataConfirmOpen(false);
+    setPlayerDataModified(false);
+    setPaymentModalOpen(true);
+  };
+
+  const handlePlayerConfirmNewData = (data: { nome: string; telefone: string; email: string }) => {
+    setParticipante(prev => ({
+      ...prev,
+      nome: data.nome,
+      telefone: data.telefone,
+      email: data.email,
+    }));
+    setPlayerDataModified(true);
+    setPlayerDataConfirmOpen(false);
     setPaymentModalOpen(true);
   };
 
@@ -874,6 +916,16 @@ export default function EuromilhoesPage() {
         open={confirmacaoModalOpen}
         onOpenChange={setConfirmacaoModalOpen}
         participacao={participacaoCriada}
+      />
+
+      <PlayerDataConfirmModal
+        open={playerDataConfirmOpen}
+        onOpenChange={setPlayerDataConfirmOpen}
+        userName={userOriginalData.nome}
+        userPhone={userOriginalData.telefone}
+        userEmail={userOriginalData.email}
+        onConfirmWithOwnData={handlePlayerConfirmOwnData}
+        onConfirmWithNewData={handlePlayerConfirmNewData}
       />
     </LayoutHeader>
   );
