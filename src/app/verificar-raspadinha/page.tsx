@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Search, Check, X, Loader2, Hash, Calendar, Gamepad2, MapPin } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { LayoutHeader } from "@/components/layout-header";
 
 interface VerificationResult {
   valido: boolean;
@@ -49,8 +50,9 @@ export default function VerificarRaspadinhaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="container max-w-2xl mx-auto px-4 py-12">
+    <LayoutHeader>
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+        <div className="container max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Shield className="w-8 h-8 text-primary" />
@@ -147,7 +149,8 @@ export default function VerificarRaspadinhaPage() {
           <p>Esta verificação confirma que o hash foi gerado pelo sistema e não foi adulterado.</p>
           <p>Cada participação tem um hash único gerado antes do jogo ser revelado.</p>
         </div>
+        </div>
       </div>
-    </div>
+    </LayoutHeader>
   );
 }
