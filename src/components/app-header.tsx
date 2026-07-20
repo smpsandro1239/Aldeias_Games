@@ -45,19 +45,16 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
   useEffect(() => {
     if (userMenuOpen && showCashbox) {
       setCashboxSaldo(null);
-      const token = localStorage.getItem("token");
-      if (token) {
-        apiRequest("/api/vendedor/cashbox", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then(async (res) => {
+      apiRequest("/api/vendedor/cashbox")
+        .then(async (res) => {
           if (res.ok) {
             const d = await res.json();
             setCashboxSaldo(d.data?.saldo ?? 0);
           } else {
             setCashboxSaldo(0);
           }
-        }).catch(() => setCashboxSaldo(0));
-      }
+        })
+        .catch(() => setCashboxSaldo(0));
     }
   }, [userMenuOpen, showCashbox]);
 

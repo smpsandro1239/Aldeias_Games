@@ -50,24 +50,16 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   useEffect(() => {
     if (open && showCashbox) {
       setCashboxSaldo(null);
-      const token = localStorage.getItem("token");
-      if (token) {
-        apiRequest("/api/vendedor/cashbox", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then(async (res) => {
+      apiRequest("/api/vendedor/cashbox")
+        .then(async (res) => {
           if (res.ok) {
             const d = await res.json();
             setCashboxSaldo(d.data?.saldo ?? 0);
           } else {
-            const err = await res.json().catch(() => ({}));
-            console.error("Cashbox API error:", res.status, err);
             setCashboxSaldo(0);
           }
-        }).catch((err) => {
-          console.error("Cashbox fetch failed:", err);
-          setCashboxSaldo(0);
-        });
-      }
+        })
+        .catch(() => setCashboxSaldo(0));
     }
   }, [open, showCashbox]);
 
