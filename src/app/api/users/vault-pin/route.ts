@@ -140,6 +140,51 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === 'admin-reset') {
+      const { targetUserId } = body;
+      if (!targetUserId) {
+        return NextResponse.json({ error: 'targetUserId é obrigatório' }, { status: 400 });
+      }
+
+      const isAdmin = user.role === 'super_admin' || user.role === 'aldeia_admin';
+      if (!isAdmin) {
+        return NextResponse.json({ error: 'Apenas administradores podem repor PIN' }, { status: 403 });
+      }
+
+      const targetUser = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { id: true, aldeiaId: true, nome: true, vaultPinEnabled: true },
+      });
+
+      if (!targetUser) {
+        return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 404 });
+      }
+
+      if (user.role === 'aldeia_admin' && targetUser.aldeiaId !== user.aldeiaId) {
+        return NextResponse.json({ error: 'Não tens permissão para repor o PIN deste utilizador' }, { status: 403 });
+      }
+
+      await prisma.user.update({
+        where: { id: targetUserId },
+        data: { vaultPin: null, vaultPinEnabled: false },
+      });
+
+      await prisma.notificacao.create({
+        data: {
+          userId: targetUserId,
+          tipo: 'sistema',
+          titulo: 'PIN do cofre reposto',
+          mensagem: `O teu PIN do cofre foi reposto por um administrador. Podes configurar um novo PIN.`,
+          lida: false,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `PIN de ${targetUser.nome} foi reposto com sucesso`,
+      });
+    }
+
     return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
   } catch (error) {
     console.error('Error with vault PIN:', error);

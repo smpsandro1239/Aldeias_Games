@@ -108,7 +108,7 @@ export async function PUT(
       await prisma.notificacao.create({
         data: {
           userId: levantamento.criadoPorId,
-          tipo: 'sistema',
+          tipo: 'levantamento_confirmado',
           titulo: 'Levantamento aprovado',
           mensagem: `O teu levantamento de ${levantamento.valor.toFixed(2)}€ foi aprovado por ${user.nome}.`,
           lida: false,
@@ -128,7 +128,7 @@ export async function PUT(
         await prisma.notificacao.createMany({
           data: vendedores.map((v: { id: string }) => ({
             userId: v.id,
-            tipo: 'sistema' as const,
+            tipo: 'levantamento_confirmado' as const,
             titulo: 'Levantamento do cofre',
             mensagem: `Foi realizado um levantamento de ${levantamento.valor.toFixed(2)}€ do cofre da aldeia por ${user.nome}. Motivo: ${levantamento.descricao || 'Não especificado'}.`,
             lida: false,
@@ -174,7 +174,7 @@ export async function PUT(
       await prisma.notificacao.create({
         data: {
           userId: levantamento.criadoPorId,
-          tipo: 'sistema',
+          tipo: 'levantamento_rejeitado',
           titulo: 'Levantamento rejeitado',
           mensagem: `O teu levantamento de ${levantamento.valor.toFixed(2)}€ foi rejeitado${observacoes ? `: ${observacoes}` : ''}.`,
           lida: false,

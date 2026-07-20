@@ -2,6 +2,8 @@
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
+@variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     /* Material Design 3 - Dark Theme (Professional) */

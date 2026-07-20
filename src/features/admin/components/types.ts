@@ -76,6 +76,7 @@ export interface User {
   telefone?: string;
   role: string;
   aldeiaId?: string;
+  vaultPinEnabled?: boolean;
   // ... outros campos
 }
 

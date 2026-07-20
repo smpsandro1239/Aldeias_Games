@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
               const config: RaspadinhaConfig = typeof jogo.configuracao === 'string' ? JSON.parse(jogo.configuracao) : jogo.configuracao as RaspadinhaConfig;
               const outcome = determineRaspadinhaOutcome(config);
               grid = buildGridFromOutcome(outcome, config);
-              resultadoRaspe = outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win';
+              resultadoRaspe = outcome.hasWin ? (outcome.winningPrize?.nome || 'sem_premio') : 'sem_premio';
               hashParticipacao = generateHash(seed, resultadoRaspe, uniqueSalt, timestamp);
             } else if (jogo.tipo === 'rifa') {
               const num = Array.isArray(numerosArray) ? numerosArray[i] : null;

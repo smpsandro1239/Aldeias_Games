@@ -83,6 +83,7 @@ interface JogoFormData {
   permitirStripe: boolean;
   valorPremios: string;
   raspadinhaMaxGanhadores: string;
+  raspadinhaMaxPremioTotal: string;
 }
 
 interface JogoMetrics {
@@ -180,6 +181,7 @@ const getInitialState = (initialData?: JogoData) => ({
     permitirStripe: false,
     valorPremios: "",
     raspadinhaMaxGanhadores: "0",
+    raspadinhaMaxPremioTotal: "0",
   } as JogoFormData,
   raspadinhaPremios: initialData?.premios && initialData.tipo === GAME_TYPES.RASPADINHA
     ? initialData.premios.map((p, i) => ({
@@ -492,6 +494,10 @@ function buildJogoData(
     const maxGanhadores = safeParseInt(formData.raspadinhaMaxGanhadores, 0);
     if (maxGanhadores > 0) {
       config.maxGanhadores = maxGanhadores;
+    }
+    const maxPremioTotal = safeParseInt(formData.raspadinhaMaxPremioTotal, 0);
+    if (maxPremioTotal > 0) {
+      config.maxPremioTotal = maxPremioTotal;
     }
   }
 
@@ -983,6 +989,34 @@ export function CreateJogoModal({
                           />
                           <p className="text-xs text-muted-foreground">
                             Quando este limite for atingido, as participações seguintes serão sem prémio.
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={formData.raspadinhaMaxPremioTotal !== "0"}
+                            onChange={(e) => updateFormData({ raspadinhaMaxPremioTotal: e.target.checked ? "100" : "0" })}
+                          />
+                          <div className="w-9 h-5 bg-gray-300 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                        <Label className="text-sm">Limitar valor total de prémios (pool)</Label>
+                      </div>
+                      {formData.raspadinhaMaxPremioTotal !== "0" && (
+                        <div className="grid gap-2">
+                          <Label htmlFor="raspadinhaMaxPremioTotal">Valor máximo do pool de prémios (€)</Label>
+                          <Input
+                            id="raspadinhaMaxPremioTotal"
+                            type="number"
+                            min="1"
+                            max="1000000"
+                            value={formData.raspadinhaMaxPremioTotal}
+                            onChange={(e) => updateFormData({ raspadinhaMaxPremioTotal: e.target.value })}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Quando o total de prémios distribuídos atingir este valor, as participações seguintes serão sem prémio.
                           </p>
                         </div>
                       )}

@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         telefone: true,
         role: true,
         aldeiaId: true,
+        vaultPinEnabled: true,
         emailVerificado: true,
         createdAt: true,
       },

@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import {
   Plus,
   Edit,
-  Trash2
+  Trash2,
+  KeyRound
 } from "lucide-react";
 import { User } from "../types";
 
@@ -27,6 +28,7 @@ export function UsersTab({
 }: UsersTabProps) {
   const [userSearch, setUserSearch] = useState("");
   const [userPage, setUserPage] = useState(1);
+  const [resettingPinUserId, setResettingPinUserId] = useState<string | null>(null);
 
   const filteredUsers = useMemo(() => {
     const searchLower = userSearch.toLowerCase();
@@ -43,6 +45,29 @@ export function UsersTab({
   useEffect(() => {
     setUserPage(1);
   }, [userSearch]);
+
+  const handleResetPin = async (userId: string, userName: string) => {
+    if (!confirm(`Repor o PIN do cofre de ${userName}? O utilizador terá de configurar um novo PIN.`)) return;
+    setResettingPinUserId(userId);
+    try {
+      const res = await fetch("/api/users/vault-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "admin-reset", targetUserId: userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao repor PIN");
+        return;
+      }
+      alert(data.message || "PIN reposto com sucesso");
+      window.location.reload();
+    } catch {
+      alert("Erro ao repor PIN");
+    } finally {
+      setResettingPinUserId(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -127,18 +152,30 @@ export function UsersTab({
                        className="flex flex-wrap gap-2 items-center self-stretch sm:self-auto"
                        onClick={(e) => e.stopPropagation()}
                      >
-                       <Button
-                         variant="ghost"
-                         size="icon"
-                         onClick={() => {
-                           setSelectedUser(u);
-                           setUserModalOpen(true);
-                         }}
-                         title="Editar"
-                       >
-                         <Edit className="h-4 w-4" />
-                       </Button>
-                       <Button
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedUser(u);
+                            setUserModalOpen(true);
+                          }}
+                          title="Editar"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        {u.vaultPinEnabled && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-amber-600 hover:text-amber-700"
+                            disabled={resettingPinUserId === u.id}
+                            onClick={() => handleResetPin(u.id, u.nome)}
+                            title="Repor PIN do cofre"
+                          >
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
                          variant="ghost"
                          size="icon"
                          className="text-destructive"

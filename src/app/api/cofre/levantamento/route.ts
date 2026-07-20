@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       await prisma.notificacao.createMany({
         data: admins.map((admin: any) => ({
           userId: admin.id,
-          tipo: 'sistema',
+          tipo: 'levantamento_criado',
           titulo: 'Levantamento do cofre solicitado',
           mensagem: `${user.nome} solicitou um levantamento de ${valor.toFixed(2)}€ do cofre. Destino: ${destino}`,
           lida: false,

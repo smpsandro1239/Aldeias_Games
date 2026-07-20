@@ -169,6 +169,35 @@ export const raspadinhaHandler: GameHandler = {
         (data as Record<string, unknown>)._limiteAtingido = true;
       }
     }
+
+    const maxPremioTotal =
+      typeof config.maxPremioTotal === 'number' && config.maxPremioTotal > 0
+        ? config.maxPremioTotal
+        : null;
+
+    if (maxPremioTotal !== null && !(data as Record<string, unknown>)._limiteAtingido) {
+      const winningParticipacoes = await prisma.participacao.findMany({
+        where: {
+          jogoId: jogo.id,
+          ganhador: true,
+          resultadoRaspe: { not: 'sem_premio' },
+        },
+        select: { dadosParticipacao: true },
+      });
+
+      let totalPremiosDistribuidos = 0;
+      for (const p of winningParticipacoes) {
+        try {
+          const dados = JSON.parse(p.dadosParticipacao);
+          const prizeValue = dados.winningPrize?.valorDinheiroAlternative || 0;
+          totalPremiosDistribuidos += prizeValue;
+        } catch {}
+      }
+
+      if (totalPremiosDistribuidos >= maxPremioTotal) {
+        (data as Record<string, unknown>)._limiteAtingido = true;
+      }
+    }
   },
 
   prepareData(data: ParticipacaoRequestData, jogo: JogoWithEvento) {
@@ -182,12 +211,13 @@ export const raspadinhaHandler: GameHandler = {
     const uniqueSalt = crypto.randomBytes(32).toString('hex');
     const timestamp = new Date().toISOString();
 
-    const hash = generateHash(rngSeed, outcome.hasWin ? (outcome.winningPrize?.nome || 'no_win') : 'no_win', uniqueSalt, timestamp);
+    const resultadoStr = outcome.hasWin ? (outcome.winningPrize?.nome || 'sem_premio') : 'sem_premio';
+    const hash = generateHash(rngSeed, resultadoStr, uniqueSalt, timestamp);
 
     return {
       seedRaspe: rngSeed,
       hashRaspe: hash,
-      resultadoRaspe: outcome.hasWin ? outcome.winningPrize?.nome : 'sem_premio',
+      resultadoRaspe: resultadoStr,
       dadosParticipacao: JSON.stringify({
         grid,
         winningPrize: outcome.hasWin ? outcome.winningPrize : null,

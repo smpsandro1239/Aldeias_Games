@@ -173,3 +173,77 @@ Pages:
 - Notificação inclui: nome do último ganhador, nome do vendedor, valor do prémio, e mensagem que o jogo continua aberto
 - Configuração no modal admin: toggle "Limitar número total de ganhadores" + input numérico (guardado em `configuracao.maxGanhadores`)
 - Testes: `src/__tests__/unit/raspadinha.test.ts` (25 testes incluindo validação do forceLoss, grid, probabilidades)
+
+### Raspadinha — maxPremioTotal (Pool de Prémios)
+- `configuracao.maxPremioTotal` (number, opcional) — limita o valor total de prémios distribuídos no jogo
+- **Não bloqueia a venda**: quando o pool é esgotado, o jogo continua aberto e gera receita
+- Participações subsequentes são criadas mas **todas perdem** — `determineRaspadinhaOutcome(config, forceLoss=true)` força `hasWin: false`
+- Cálculo do pool: soma dos `premioValor` de todas as participações ganhadoras existentes no jogo
+- `validate()` calcula `totalPremiosDistribuidos` e compara com `maxPremioTotal` — define `_poolEsgotado = true` se excedido
+- `prepareData()` lê a flag e chama `determineRaspadinhaOutcome(config, forceLoss)`
+- Configuração no modal admin: toggle "Limitar valor total de prémios (pool)" + input numérico em euros (guardado em `configuracao.maxPremioTotal`)
+- Pode ser combinado com `maxGanhadores` (ambos os limites funcionam independentemente)
+
+### Verificação Pública de Raspadinhas
+- `/verificar-raspadinha` — página pública para qualquer pessoa verificar o resultado de uma raspadinha
+- Não requer autenticação — basta introduzir o hash da participação
+- `GET /api/verificar-publico?hash=...` — endpoint público (sem auth) que valida e retorna resultado
+- Retorna: estado (ganhou/perdeu), prémio (se ganhou), data, tipo de jogo
+- Botão "Verificar" no BottomNav para utilizadores não autenticados
+
+### Vault PIN System (Segurança do Cofre)
+- Campos no model `User`: `vaultPin` (String, hashed), `vaultPinEnabled` (Boolean)
+- PIN serve para aceder ao saldo do cofre — vendedores e admins configuram o PIN próprio
+- Fluxo:
+  1. Setup: POST `/api/users/vault-pin` com `action: 'setup'`, `pin`, `password` (verificação de password)
+  2. Verificação: POST com `action: 'verify'`, `pin` — retorna saldo da aldeia (ou todas as aldeias para super_admin)
+  3. PIN deve ter 4-6 dígitos, armazenado com bcrypt (via `hashPassword`)
+- Modal: `src/components/modals/vault-pin-modal.tsx` — suporta setup (configurar PIN), view (ver saldo), e verify (verificar PIN)
+- Super admin vê todas as aldeias com saldo individual e total consolidado
+- `aldeia_admin` e `vendedor` veem apenas a sua aldeia
+- PIN obrigatório para aceder ao saldo do cofre no dashboard do vendedor e na aba Cofre do admin
+
+### Reposição de PIN pelo Admin (Admin Reset)
+- Endpoint: `POST /api/users/vault-pin` com `action: 'admin-reset'` + `targetUserId`
+- `super_admin` pode repor PIN de qualquer utilizador
+- `aldeia_admin` só pode repor PIN de utilizadores da sua aldeia
+- Ao repor: `vaultPin = null`, `vaultPinEnabled = false`
+- Notificação enviada ao utilizador a informar que o PIN foi reposto
+- UI: botão KeyRound (icon de chave) amarelo no `UsersTab` ao lado de Editar/Eliminar — visível apenas quando `vaultPinEnabled === true`
+
+### Auto-Seed (Inicialização Automática)
+- `src/lib/db-init.ts` — `ensureSeeded()` verifica se a DB tem dados e executa seed se vazia
+- `src/app/api/seed/route.ts` — endpoint GET (status) + POST (trigger seed)
+- `src/components/seed-initializer.tsx` — componente client que dispara POST /api/seed no mount
+- Integrado no `src/app/layout.tsx` — `ensureSeeded()` roda server-side em cada page load
+-解决了 cenário de cold start no Vercel onde a DB pode estar vazia
+
+### Navigation Role-Based
+- `src/components/layout-header.tsx` — desktop header e hamburger menu adaptados por role:
+  - `super_admin`: Dashboard, Aldeias, Jogos, Cofre, RBAC
+  - `aldeia_admin`: Dashboard, Eventos, Jogos, Cofre
+  - `vendedor`: Dashboard, Jogos, Caixa
+  - `user`: Início, Jogos, Participações
+  - Não autenticado: Início, Jogos
+- `src/components/bottom-nav.tsx` — BottomNav mobile adaptado por role:
+  - Todos os roles autenticados: Início, Jogos, Participações
+  - `super_admin`: + Aldeias, Dashboard
+  - `aldeia_admin`: + Eventos, Dashboard
+  - `vendedor`: + Caixa
+  - Não autenticado: Início, Jogos, Verificar
+
+### Dark/Light Mode Toggle (Correção)
+- Toggle de tema (sol/lua) em `src/components/layout-header.tsx` — desktop e mobile
+- Usa `next-themes` com `attribute="class"` (adicional classe `.dark` ou `.light` no `<html>`)
+- **Problema corrigido**: `tailwind.config.js` tinha cores hardcoded do tema escuro — `bg-background` sempre resolvia para o valor estático escuro, ignorando a troca de variáveis CSS
+- **Correção**: `tailwind.config.js` agora usa referências CSS (`hsl(var(--background))`) em vez de valores estáticos
+- **Correção**: Adicionado `@variant dark (&:where(.dark, .dark *));` em `globals.css` para suportar variant `dark:` com toggling por classe (Tailwind v4)
+- CSS variables em `globals.css`: `:root` = tema escuro (default), `.light` = tema claro
+- `suppressHydrationWarning` no `<html>` para evitar hydration mismatch do next-themes
+
+### Notificações — Tipos de Levantamento
+- `TipoNotificacao` enum inclui tipos dedicados para levantamentos:
+  - `levantamento_criado` — quando um admin cria pedido de levantamento (notifica outros admins)
+  - `levantamento_confirmado` — quando levantamento é aprovado (notifica criador + todos os vendedores da aldeia)
+  - `levantamento_rejeitado` — quando levantamento é rejeitado (notifica criador)
+- Antes usava `tipo: 'sistema'` para tudo — agora cada estado tem o seu tipo para filtragem e UI

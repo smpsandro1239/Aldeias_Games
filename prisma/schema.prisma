@@ -697,6 +697,9 @@ enum TipoNotificacao {
   deposito_criado
   deposito_confirmado
   deposito_rejeitado
+  levantamento_criado
+  levantamento_confirmado
+  levantamento_rejeitado
 }
 
 model GamificacaoEvento {
