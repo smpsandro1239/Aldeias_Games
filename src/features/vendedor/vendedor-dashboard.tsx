@@ -38,7 +38,7 @@ import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { POSView } from "./pos-view";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PedidosCarregamentoInline } from "./pedidos-inline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";
@@ -75,10 +75,11 @@ interface Jogo {
 
 export function VendedorDashboard({ token }: VendedorDashboardProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState<Stats | null>(null);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("vendas");
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "vendas");
   const [pedidosPendentesCount, setPedidosPendentesCount] = useState(0);
   const [saldoAngariado, setSaldoAngariado] = useState<{
     totalAngariado: number;
@@ -162,44 +163,35 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
   useEffect(() => {
     fetchData();
-  }, [token]);
+  }, []);
 
    const fetchData = async () => {
-     if (!token) return;
      setLoading(true);
 
      try {
        // Fetch stats
-       const statsRes = await apiRequest("/api/dashboard/vendedor", {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+       const statsRes = await apiRequest("/api/dashboard/vendedor");
        if (statsRes.ok) {
          const statsData = await statsRes.json();
          setStats(statsData.data);
        }
 
        // Fetch jogos disponíveis
-       const jogosRes = await apiRequest("/api/jogos?ativos=true", {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+       const jogosRes = await apiRequest("/api/jogos?ativos=true");
        if (jogosRes.ok) {
          const jogosData = await jogosRes.json();
          setJogos(jogosData.data);
        }
 
        // Fetch pedidos pendentes count
-       const pedidosRes = await apiRequest("/api/pedidos-carregamento?estado=pendente", {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+       const pedidosRes = await apiRequest("/api/pedidos-carregamento?estado=pendente");
        if (pedidosRes.ok) {
          const pedidosData = await pedidosRes.json();
          setPedidosPendentesCount(pedidosData.data?.length || 0);
        }
 
        // Fetch saldo angariado
-       const saldoRes = await apiRequest("/api/vendedor/saldo-angariado", {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+       const saldoRes = await apiRequest("/api/vendedor/saldo-angariado");
        if (saldoRes.ok) {
          const saldoData = await saldoRes.json();
          setSaldoAngariado(saldoData.data || {
@@ -226,7 +218,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         jogoId: novaVenda.jogoId,
@@ -412,7 +403,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           <POSView jogos={jogos} onSell={async (data) => {
             const res = await apiRequest("/api/participacoes", {
               method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify(data),
             });
             if (res.ok) {

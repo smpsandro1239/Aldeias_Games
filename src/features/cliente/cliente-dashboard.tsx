@@ -131,7 +131,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
    useEffect(() => {
      fetchData();
-   }, [token]);
+   }, []);
 
    // Resetar páginas quando busca mudar
    useEffect(() => {
@@ -142,31 +142,25 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
    }, [searchQuery]);
 
    const fetchData = async () => {
-     if (!token) return;
      setLoading(true);
 
      try {
        // Fetch participações
-       const partRes = await apiRequest("/api/participacoes", {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+       const partRes = await apiRequest("/api/participacoes");
        if (partRes.ok) {
          const partData = await partRes.json();
          setParticipacoes(partData.data);
        }
 
        // Fetch jogos disponíveis
-       const jogosRes = await apiRequest("/api/jogos?ativos=true", {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+       const jogosRes = await apiRequest("/api/jogos?ativos=true");
        if (jogosRes.ok) {
          const jogosData = await jogosRes.json();
          setJogos(jogosData.data);
        }
 
        // Fetch saldo
-       const walletRes = await apiRequest("/api/wallet", {
-         headers: { Authorization: `Bearer ${token}` },
+       const walletRes = await apiRequest("/api/wallet");
        });
        if (walletRes.ok) {
          const walletData = await walletRes.json();
@@ -175,9 +169,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
        }
 
        // Fetch perfil do utilizador (inclui nome, email, telefone)
-       const perfilRes = await apiRequest("/api/users/perfil", {
-         headers: { Authorization: `Bearer ${token}` },
-       });
+        const perfilRes = await apiRequest("/api/users/perfil");
        if (perfilRes.ok) {
          const perfilData = await perfilRes.json();
          const profile = perfilData.data;
@@ -271,7 +263,6 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         jogoId: selectedJogo.id,
@@ -308,7 +299,6 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
     const response = await fetch(`/api/participacoes/${id}/revelar`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!response.ok) {

@@ -55,12 +55,8 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
   const fetchData = async () => {
     try {
       const [cashRes, depRes] = await Promise.all([
-        apiRequest("/api/vendedor/cashbox", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        apiRequest("/api/cofre/pedido-deposito", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        apiRequest("/api/vendedor/cashbox"),
+        apiRequest("/api/cofre/pedido-deposito"),
       ]);
 
       if (cashRes.ok) {
@@ -78,7 +74,7 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
     }
   };
 
-  useEffect(() => { fetchData(); }, [token]);
+  useEffect(() => { fetchData(); }, []);
 
   const handleDepositar = async () => {
     const valor = parseFloat(valorDeposito);
@@ -96,7 +92,6 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           valor,

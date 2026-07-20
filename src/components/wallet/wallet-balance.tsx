@@ -45,14 +45,11 @@ export function WalletBalance({ token, className = "", showAddButton = true, com
 
   useEffect(() => {
     fetchWallet();
-  }, [token]);
+  }, []);
 
   const fetchWallet = async () => {
-    if (!token) return;
     try {
-      const res = await apiRequest("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiRequest("/api/wallet");
       if (res.ok) {
         const data = await res.json();
         setSaldo(data.saldo || 0);
@@ -197,7 +194,6 @@ export function AddBalanceModal({ open, onOpenChange, onSuccess, token }: AddBal
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             valor: parseFloat(amount),
@@ -246,7 +242,6 @@ export function AddBalanceModal({ open, onOpenChange, onSuccess, token }: AddBal
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             telefone: telefone,
@@ -273,7 +268,6 @@ export function AddBalanceModal({ open, onOpenChange, onSuccess, token }: AddBal
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             valor: parseFloat(amount),
@@ -519,13 +513,11 @@ export function WalletHistory({ token }: { token: string }) {
 
   useEffect(() => {
     fetchHistory();
-  }, [token]);
+  }, []);
 
   const fetchHistory = async () => {
     try {
-      const res = await apiRequest("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiRequest("/api/wallet");
       if (res.ok) {
         const data = await res.json();
         setTransactions(data.transacoes || []);

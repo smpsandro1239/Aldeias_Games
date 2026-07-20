@@ -46,9 +46,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
   const fetchPedidos = async () => {
     setLoading(true);
     try {
-      const res = await apiRequest("/api/pedidos-carregamento", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await apiRequest("/api/pedidos-carregamento");
       const data = await res.json();
       if (data.success) {
         setPedidos(data.data || []);
@@ -62,7 +60,7 @@ export function PedidosCarregamentoInline({ token }: Props) {
 
   useEffect(() => {
     fetchPedidos();
-  }, [token]);
+  }, []);
 
   const handleConfirmar = async (pedidoId: string) => {
     setProcessing(pedidoId);
@@ -71,7 +69,6 @@ export function PedidosCarregamentoInline({ token }: Props) {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ pedidoId, acao: "confirmar" })
       });
@@ -97,7 +94,6 @@ export function PedidosCarregamentoInline({ token }: Props) {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ pedidoId, acao: "rejeitar" })
       });
