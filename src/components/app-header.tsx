@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut, Settings, Wallet, House } from "lucide-react";
+import { User, LogOut, Settings, Wallet, House, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/components/providers/wallet-provider";
+import { apiRequest } from "@/lib/api-client";
 
 interface User {
   id: string;
@@ -28,6 +29,22 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
   const [user, setUser] = useState<User | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { saldo } = useWallet();
+  const [cashboxSaldo, setCashboxSaldo] = useState<number | null>(null);
+
+  const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
+
+  useEffect(() => {
+    if (userMenuOpen && showCashbox) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        apiRequest("/api/vendedor/cashbox", {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => {
+          if (res.ok) res.json().then(d => setCashboxSaldo(d.data?.saldo ?? 0));
+        }).catch(() => {});
+      }
+    }
+  }, [userMenuOpen, showCashbox]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -91,6 +108,15 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
               <p className="text-xs text-muted-foreground mb-1">O meu Saldo Aldeias</p>
               <p className="font-serif text-3xl text-primary">{saldo.toFixed(2)} €</p>
             </div>
+            {showCashbox && (
+              <div className="bg-surface-container-low rounded-xl p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Saldo na Caixa</p>
+                <p className="font-serif text-2xl text-accent flex items-center justify-center gap-2">
+                  <Banknote className="h-5 w-5" />
+                  {cashboxSaldo !== null ? `${cashboxSaldo.toFixed(2)} €` : "..."}
+                </p>
+              </div>
+            )}
             <button 
               onClick={() => {
                 setUserMenuOpen(false);
