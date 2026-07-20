@@ -214,6 +214,151 @@ teste-tudo.bat
 
 > ⚠️ **Importante**: Os scripts devem ser executados no **cmd.exe** (não PowerShell) e com terminações de linha **CRLF** (Windows). LF (Unix) pode causar saltos de instruções no parser do batch.
 
+## 💰 Fluxo de Pagamento — Dinheiro vs Saldo (e todos os outros métodos)
+
+Entendo a tua preocupação. Quando se trata de dinheiro, **tudo tem de ser rastreável, transparente e verificável**. Vou explicar detalhadamente como cada método de pagamento funciona, onde o dinheiro "entra e sai", e onde podes consultar cada movimento.
+
+---
+
+### 🔹 Pagamento em DINHEIRO (numerário)
+
+**O que acontece:**
+O vendedor recebe o dinheiro **em mãos** do cliente. Este dinheiro **não passa pela carteira digital** — é dinheiro físico.
+
+| O que | Acontece | Onde se reflete |
+|-------|----------|-----------------|
+| **AUMENTA** | `VendedorCashbox.saldo` | Caixa física do vendedor (dinheiro em mãos) |
+| **AUMENTA** | `Jogo.totalAngariado` | Total arrecadado pelo jogo |
+| **AUMENTA** | `Evento.totalAngariado` | Total arrecadado pelo evento |
+| **NÃO MEXE** | `User.saldo` (carteira digital) | Cliente não tem conta ou não usou saldo |
+| **NÃO MEXE** | `Vault.saldo` (cofre) | Só muda quando o vendedor **deposita** no cofre |
+
+**Exemplo prático:**
+Cliente compra uma rifa de 5€ em dinheiro ao vendedor.
+- O vendedor fica com **+5€ na sua caixa** (dinheiro físico).
+- O jogo regista **+5€ angariados**.
+- O cliente **não perde saldo** (porque não usou carteira).
+
+**Onde consultar:**
+- Saldo da caixa: `GET /api/vendedor/cashbox` ou no dashboard do vendedor (aba "Caixa").
+- Transações da caixa: `vendedor_cashbox_transaction` (cada venda registada).
+- Participação: `participacoes` com `metodoPagamento = 'dinheiro'`.
+
+---
+
+### 🔹 Pagamento em SALDO (carteira digital)
+
+**O que acontece:**
+O valor é **debitado da carteira digital** do utilizador (ou do vendedor, se este estiver a comprar para um cliente externo).
+
+| O que | Acontece | Onde se reflete |
+|-------|----------|-----------------|
+| **DIMINUI** | `User.saldo` | Carteira digital do comprador (cliente ou vendedor) |
+| **AUMENTA** | `User.saldo` (cashback) | Se houver cashback configurado (ex: 5%), o comprador recebe esse valor de volta |
+| **AUMENTA** | `Jogo.totalAngariado` | Total arrecadado pelo jogo |
+| **AUMENTA** | `Evento.totalAngariado` | Total arrecadado pelo evento |
+| **NÃO MEXE** | `VendedorCashbox` | Não há dinheiro físico envolvido |
+| **NÃO MEXE** | `Vault.saldo` | Só muda se o jogo for de uma aldeia e o valor for para o cofre (neste caso, não) |
+
+**Exemplo prático:**
+Cliente compra uma rifa de 5€ com saldo.
+- O cliente perde **5€** da sua carteira.
+- Se houver 5% cashback, recebe **+0,25€** de volta (efetivamente paga 4,75€).
+- O jogo regista **+5€ angariados**.
+- O vendedor **não vê esse dinheiro na caixa** (porque foi transação digital).
+
+**Onde consultar:**
+- Saldo da carteira: `GET /api/users/perfil` ou no modal "A minha Conta".
+- Transações de saldo: `transacoes` (tipo `pagamento_jogo` e `cashback`).
+- Participação: `participacoes` com `metodoPagamento = 'saldo'`.
+
+---
+
+### 🔁 Comparação Direta: Dinheiro vs Saldo
+
+| Característica | Dinheiro | Saldo |
+|----------------|----------|-------|
+| **Quem tem o dinheiro?** | Vendedor (caixa física) | Carteira digital do utilizador |
+| **Aumenta caixa do vendedor?** | ✅ Sim | ❌ Não |
+| **Diminui saldo do comprador?** | ❌ Não (não há saldo envolvido) | ✅ Sim |
+| **Cashback?** | ❌ Não (só em saldo) | ✅ Sim (se configurado) |
+| **Rastreio na BD?** | `vendedor_cashbox_transaction` | `transacoes` |
+
+---
+
+### 🔹 Outros Métodos de Pagamento
+
+| Método | Estado | Saldo mexe? | Caixa mexe? | Quando se conclui? |
+|--------|--------|-------------|-------------|-------------------|
+| **Dinheiro** | `concluido` | ❌ Não | ✅ Sim (entrada) | Imediato |
+| **Saldo** | `concluido` | ✅ Sim (débito + cashback) | ❌ Não | Imediato |
+| **MBWay** | `pendente` | ❌ Não (só cashback via webhook) | ❌ Não | Após confirmação do pagamento (webhook) |
+| **Stripe** | `pendente` | ❌ Não (só cashback via webhook) | ❌ Não | Após confirmação do pagamento (webhook) |
+| **Transferência** | `pendente` | ❌ Não | ❌ Não | Após confirmação manual |
+
+**Observações importantes:**
+- **MBWay e Stripe**: O pagamento é processado externamente. Quando o webhook confirma o pagamento, o estado da participação passa a `concluido` e o cashback (se houver) é creditado.
+- **Transferência**: Requer confirmação manual por um administrador (não é automático).
+- **Dinheiro**: É o único método que **afeta a caixa do vendedor** e o único que não requer confirmação externa.
+
+---
+
+### 🧭 Onde Consultar Cada Métrica (Rastreabilidade Total)
+
+| Métrica | Onde ver (API) | Onde ver (Base de Dados) | Onde ver (Dashboard) |
+|---------|----------------|--------------------------|----------------------|
+| **Saldo da carteira** | `GET /api/users/perfil` | `users.saldo` | "A minha Conta" |
+| **Transações de saldo** | `GET /api/wallet/transactions` | `transacoes` | "Carteira" (dashboard utilizador) |
+| **Caixa do vendedor** | `GET /api/vendedor/cashbox` | `vendedor_cashbox.saldo` | Dashboard vendedor → "Caixa" |
+| **Transações da caixa** | `GET /api/vendedor/cashbox` | `vendedor_cashbox_transaction` | Dashboard vendedor → "Caixa" (histórico) |
+| **Cofre da aldeia** | `POST /api/users/vault-pin` (com PIN) | `vault.saldo` | `/admindashboard/cofre` ou `/superadmindashboard/cofre` |
+| **Histórico do cofre** | `GET /api/cofre/historico` | `vault_transaction` | `/admindashboard/cofre` (aba "Histórico") |
+| **Total angariado (jogo)** | `GET /api/jogos/{id}` | `jogos.totalAngariado` | Dashboard admin → "Jogos" |
+| **Total angariado (evento)** | `GET /api/eventos/{id}` | `eventos.totalAngariado` | Dashboard admin → "Eventos" |
+| **Participações** | `GET /api/participacoes?jogoId=X` | `participacoes` | Dashboard admin → "Verificar" |
+| **Audit Log** | `GET /api/admin/audit-logs` | `audit_logs` | Dashboard super admin → "Auditoria" |
+
+---
+
+### 🛡️ Como Validar a Integridade dos Dados (Veracidade)
+
+Para garantir que cada euro está registado corretamente, existem **3 camadas de verificação**:
+
+1. **Registo da ação** — Cada participação tem:
+   - `hashParticipacao` (SHA-256 do seed + dados)
+   - `dadosVerificacao` (seed, timestamp, salt)
+   - Permite recriar a participação e verificar se foi adulterada.
+
+2. **Registo financeiro** — Cada movimentação é registada:
+   - `transacoes` para saldo digital (quem, quanto, quando, motivo)
+   - `vendedor_cashbox_transaction` para caixa física (quem, quanto, quando, motivo)
+   - `vault_transaction` para cofre (quem, quanto, quando, motivo)
+
+3. **Audit trail** — Cada ação administrativa é registada em:
+   - `audit_logs` (quem fez o quê, quando, de que IP)
+   - `log_acessos` (logins, acessos a áreas sensíveis)
+
+---
+
+### ✅ Conclusão
+
+O sistema foi desenhado para que **cada euro seja rastreável em pelo menos dois pontos diferentes**, permitindo cruzar informações e detetar discrepâncias.
+
+| Método | Entra em | Sai de | Rastreio em |
+|--------|----------|--------|-------------|
+| Dinheiro | Caixa do vendedor | — | `vendedor_cashbox_transaction` |
+| Saldo | — | Carteira do utilizador | `transacoes` |
+| MBWay | — | — | Webhook + `transacoes` (cashback) |
+| Stripe | — | — | Webhook + `transacoes` (cashback) |
+
+**Se precisares de validar manualmente, podes:**
+- Cruzar `totalAngariado` do jogo com a soma de `valorPago` das participações com `estadoPagamento = 'concluido'`.
+- Cruzar `User.saldo` com a soma de todas as `transacoes` do utilizador.
+- Cruzar `VendedorCashbox.saldo` com a soma de todas as `vendedor_cashbox_transaction` do vendedor.
+- Cruzar `Vault.saldo` com a soma de todas as `vault_transaction` da aldeia.
+
+**Tudo está registado, tudo é verificável.** 🚀
+
 ## 🏗️ Stack Tecnológica
 
 - **Frontend**: React 19, Next.js 16, TypeScript, Tailwind CSS 4, shadcn/ui, Radix UI.
