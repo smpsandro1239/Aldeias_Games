@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import { LoaderScreen } from "@/components/loader-screen";
 import { UserMenuModal } from "@/components/user-menu-modal";
-import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon } from "lucide-react";
+import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon, Banknote } from "lucide-react";
 
 // Constants
 const ROLE_PATHS = {
@@ -22,18 +22,22 @@ const NAV_ITEMS = {
     { icon: Building2, label: "Aldeias", path: "/superadmindashboard?tab=aldeias" },
     { icon: BarChart3, label: "Stats", path: "/superadmindashboard?tab=analytics" },
     { icon: Settings, label: "Config", path: "/configuracoes" },
+    { icon: Gamepad2, label: "Jogos", path: "/jogos" },
   ],
   aldeia_admin: [
     { icon: Compass, label: "Dashboard", path: "/admindashboard" },
     { icon: Calendar, label: "Eventos", path: "/admindashboard?tab=eventos" },
     { icon: Gamepad2, label: "Jogos", path: "/admindashboard?tab=jogos" },
+    { icon: Banknote, label: "Cofre", path: "/admindashboard/cofre" },
     { icon: Users, label: "Equipa", path: "/admindashboard?tab=users" },
     { icon: BarChart3, label: "Verificar", path: "/verificar-hash" },
   ],
   vendedor: [
     { icon: LayoutDashboard, label: "Vendas", path: "/vendedordashboard" },
     { icon: Wallet, label: "Pedidos", path: "/vendedordashboard/pedidos" },
+    { icon: Banknote, label: "Caixa", path: "/vendedordashboard?tab=cofre" },
     { icon: TrendingUp, label: "Histórico", path: "/vendedordashboard?tab=historico" },
+    { icon: Gamepad2, label: "Jogos", path: "/jogos" },
     { icon: BarChart3, label: "Verificar", path: "/verificar-hash" },
   ],
   user: [
@@ -124,10 +128,30 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center gap-6">
               {isAuthenticated && user?.role === 'super_admin' && (
-                 <button onClick={() => router.push("/superadmindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Painel</button>
+                <>
+                  <button onClick={() => router.push("/superadmindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Painel</button>
+                  <button onClick={() => router.push("/superadmindashboard?tab=aldeias")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Aldeias</button>
+                  <button onClick={() => router.push("/configuracoes")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Config</button>
+                </>
               )}
               {isAuthenticated && user?.role === 'aldeia_admin' && (
-                 <button onClick={() => router.push("/admindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Dashboard</button>
+                <>
+                  <button onClick={() => router.push("/admindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Dashboard</button>
+                  <button onClick={() => router.push("/admindashboard?tab=eventos")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Eventos</button>
+                  <button onClick={() => router.push("/admindashboard/cofre")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Cofre</button>
+                </>
+              )}
+              {isAuthenticated && user?.role === 'vendedor' && (
+                <>
+                  <button onClick={() => router.push("/vendedordashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Vendas</button>
+                  <button onClick={() => router.push("/vendedordashboard?tab=cofre")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Caixa</button>
+                </>
+              )}
+              {isAuthenticated && user?.role === 'user' && (
+                <>
+                  <button onClick={() => router.push("/participacoes")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Participações</button>
+                  <button onClick={() => router.push("/perfil")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Perfil</button>
+                </>
               )}
                <button onClick={() => router.push('/jogos')} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Jogos</button>
               {!isAuthenticated && (
