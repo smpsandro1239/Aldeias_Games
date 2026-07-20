@@ -34,19 +34,6 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
 
   useEffect(() => {
-    if (open && showCashbox) {
-      const token = localStorage.getItem("token");
-      if (token) {
-        apiRequest("/api/vendedor/cashbox", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then(res => {
-          if (res.ok) res.json().then(d => setCashboxSaldo(d.data?.saldo ?? 0));
-        }).catch(() => {});
-      }
-    }
-  }, [open, showCashbox]);
-
-  useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       try {
@@ -59,6 +46,30 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (open && showCashbox) {
+      setCashboxSaldo(null);
+      const token = localStorage.getItem("token");
+      if (token) {
+        apiRequest("/api/vendedor/cashbox", {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(async (res) => {
+          if (res.ok) {
+            const d = await res.json();
+            setCashboxSaldo(d.data?.saldo ?? 0);
+          } else {
+            const err = await res.json().catch(() => ({}));
+            console.error("Cashbox API error:", res.status, err);
+            setCashboxSaldo(0);
+          }
+        }).catch((err) => {
+          console.error("Cashbox fetch failed:", err);
+          setCashboxSaldo(0);
+        });
+      }
+    }
+  }, [open, showCashbox]);
 
   const handleLogout = () => {
     setUser(null);
@@ -109,7 +120,7 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
               <p className="text-xs text-muted-foreground mb-1">Saldo na Caixa</p>
               <p className="font-serif text-2xl text-accent flex items-center justify-center gap-2">
                 <Banknote className="h-5 w-5" />
-                {cashboxSaldo !== null ? `${cashboxSaldo.toFixed(2)} €` : "..."}
+                {cashboxSaldo !== null ? `${cashboxSaldo.toFixed(2)} €` : "A carregar..."}
               </p>
             </div>
           )}

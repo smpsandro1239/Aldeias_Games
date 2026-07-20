@@ -36,24 +36,30 @@ export function AppHeader({ title = "Aldeias Games", showBackButton = false, sho
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
 
   useEffect(() => {
-    if (userMenuOpen && showCashbox) {
-      const token = localStorage.getItem("token");
-      if (token) {
-        apiRequest("/api/vendedor/cashbox", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then(res => {
-          if (res.ok) res.json().then(d => setCashboxSaldo(d.data?.saldo ?? 0));
-        }).catch(() => {});
-      }
-    }
-  }, [userMenuOpen, showCashbox]);
-
-  useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
   }, []);
+
+  useEffect(() => {
+    if (userMenuOpen && showCashbox) {
+      setCashboxSaldo(null);
+      const token = localStorage.getItem("token");
+      if (token) {
+        apiRequest("/api/vendedor/cashbox", {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(async (res) => {
+          if (res.ok) {
+            const d = await res.json();
+            setCashboxSaldo(d.data?.saldo ?? 0);
+          } else {
+            setCashboxSaldo(0);
+          }
+        }).catch(() => setCashboxSaldo(0));
+      }
+    }
+  }, [userMenuOpen, showCashbox]);
 
   const handleLogout = () => {
     setUser(null);
