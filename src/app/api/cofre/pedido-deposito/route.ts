@@ -25,16 +25,20 @@ export async function POST(request: NextRequest) {
 
     const { valor, descricao, referencias } = validation.data;
 
-    const cashbox = await prisma.vendedorCashbox.findUnique({
-      where: { userId: user.id }
-    });
+    const isAdmin = user.role === 'aldeia_admin' || user.role === 'super_admin';
 
-    if (!cashbox || cashbox.saldo < valor) {
-      return NextResponse.json({ error: 'Saldo insuficiente na caixa do vendedor' }, { status: 400 });
+    if (!isAdmin) {
+      const cashbox = await prisma.vendedorCashbox.findUnique({
+        where: { userId: user.id }
+      });
+
+      if (!cashbox || cashbox.saldo < valor) {
+        return NextResponse.json({ error: 'Saldo insuficiente na caixa do vendedor' }, { status: 400 });
+      }
     }
 
     if (!user.aldeiaId) {
-      return NextResponse.json({ error: 'Vendedor sem aldeia associada' }, { status: 400 });
+      return NextResponse.json({ error: 'Utilizador sem aldeia associada' }, { status: 400 });
     }
 
     const pedido = await prisma.pedidoDepositoCofre.create({
@@ -45,8 +49,30 @@ export async function POST(request: NextRequest) {
         descricao: descricao || `Depósito de ${valor}€`,
         referencias: referencias ? JSON.stringify(referencias) : null,
         criadoPorId: user.id,
+        ...(isAdmin ? { estado: 'confirmado' as const, confirmadoPorId: user.id, confirmadoAt: new Date() } : {}),
       }
     });
+
+    if (isAdmin) {
+      const vault = await prisma.vault.upsert({
+        where: { aldeiaId: user.aldeiaId },
+        update: { saldo: { increment: valor } },
+        create: { aldeiaId: user.aldeiaId!, saldo: valor },
+      });
+
+      await prisma.vaultTransaction.create({
+        data: {
+          vaultId: vault.id,
+          tipo: 'deposito',
+          valor,
+          descricao: descricao || `Depósito de ${valor}€`,
+          estado: 'confirmado',
+          criadoPorId: user.id,
+          aprovadoPorId: user.id,
+          dataAprovacao: new Date(),
+        }
+      });
+    }
 
     // Log audit
     const ip = request.headers.get('x-forwarded-for') || undefined;
@@ -54,34 +80,36 @@ export async function POST(request: NextRequest) {
     logAudit({
       userId: user.id,
       aldeiaId: user.aldeiaId ?? undefined,
-      action: 'deposito.criado',
+      action: isAdmin ? 'deposito.cofre_direto' : 'deposito.criado',
       resource: 'pedido-deposito',
       resourceId: pedido.id,
-      metadata: { valor, descricao: descricao || null },
+      metadata: { valor, descricao: descricao || null, autoConfirmado: isAdmin },
       ip,
       userAgent,
     });
 
-    // Notify admins of this aldeia
-    const admins = await prisma.user.findMany({
-      where: {
-        aldeiaId: user.aldeiaId,
-        role: 'aldeia_admin',
-        deletedAt: null,
-      },
-      select: { id: true },
-    });
-
-    if (admins.length > 0) {
-      await prisma.notificacao.createMany({
-        data: admins.map((admin: any) => ({
-          userId: admin.id,
-          tipo: 'deposito_criado',
-          titulo: 'Novo pedido de depósito',
-          mensagem: `${user.nome} criou um pedido de depósito de ${valor}€`,
-          lida: false,
-        })),
+    if (!isAdmin) {
+      // Notify admins of this aldeia (only for vendedor deposits)
+      const admins = await prisma.user.findMany({
+        where: {
+          aldeiaId: user.aldeiaId,
+          role: 'aldeia_admin',
+          deletedAt: null,
+        },
+        select: { id: true },
       });
+
+      if (admins.length > 0) {
+        await prisma.notificacao.createMany({
+          data: admins.map((admin: any) => ({
+            userId: admin.id,
+            tipo: 'deposito_criado',
+            titulo: 'Novo pedido de depósito',
+            mensagem: `${user.nome} criou um pedido de depósito de ${valor}€`,
+            lida: false,
+          })),
+        });
+      }
     }
 
     return NextResponse.json({ success: true, data: pedido });

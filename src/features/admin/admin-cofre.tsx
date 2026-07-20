@@ -65,6 +65,10 @@ export function AdminCofre() {
   const [activeTab, setActiveTab] = useState("pendentes");
 
   const [levantamentoModalOpen, setLevantamentoModalOpen] = useState(false);
+  const [depositoModalOpen, setDepositoModalOpen] = useState(false);
+  const [valorDeposito, setValorDeposito] = useState("");
+  const [descricaoDeposito, setDescricaoDeposito] = useState("");
+  const [depositoSubmitting, setDepositoSubmitting] = useState(false);
   const [levValor, setLevValor] = useState("");
   const [levDescricao, setLevDescricao] = useState("");
   const [levDestino, setLevDestino] = useState("");
@@ -161,6 +165,45 @@ export function AdminCofre() {
       }
     } catch (error) {
       toast.error("Erro ao rejeitar depósito");
+    }
+  };
+
+  const handleCriarDeposito = async () => {
+    const valor = parseFloat(valorDeposito);
+    if (!valor || valor <= 0) {
+      toast.error("Insira um valor válido");
+      return;
+    }
+    if (!descricaoDeposito.trim() || descricaoDeposito.trim().length < 3) {
+      toast.error("Descrição deve ter pelo menos 3 caracteres");
+      return;
+    }
+
+    setDepositoSubmitting(true);
+    try {
+      const res = await apiRequest("/api/cofre/pedido-deposito", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          valor,
+          descricao: descricaoDeposito.trim(),
+        })
+      });
+
+      if (res.ok) {
+        toast.success("Depósito registado com sucesso!");
+        setDepositoModalOpen(false);
+        setValorDeposito("");
+        setDescricaoDeposito("");
+        fetchData();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Erro ao criar depósito");
+      }
+    } catch {
+      toast.error("Erro ao criar depósito");
+    } finally {
+      setDepositoSubmitting(false);
     }
   };
 
@@ -361,6 +404,10 @@ export function AdminCofre() {
             <TabsTrigger value="historico">Movimentos</TabsTrigger>
           </TabsList>
           <div className="flex gap-2">
+            <Button size="sm" onClick={() => setDepositoModalOpen(true)} className="bg-green-600 hover:bg-green-700">
+              <Send className="w-4 h-4 mr-2" />
+              Depositar no Cofre
+            </Button>
             <Button variant="outline" size="sm" onClick={() => window.location.href = '/admindashboard/cofre/reconciliacao'}>
               <Scale className="w-4 h-4 mr-2" />
               Reconciliação
@@ -855,6 +902,59 @@ export function AdminCofre() {
       variant="destructive"
       onConfirm={() => { if (rejectLevId && rejectLevMotivo.trim()) { handleRejeitarLevantamento(rejectLevId, rejectLevMotivo); setRejectLevId(null); setRejectLevMotivo(""); } }}
     />
+
+    <Dialog open={depositoModalOpen} onOpenChange={setDepositoModalOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Send className="w-5 h-5 text-green-600" />
+            Depositar no Cofre da Aldeia
+          </DialogTitle>
+          <DialogDescription>
+            Regista a entrada de dinheiro físico no cofre. O depósito ficará registado no histórico de movimentos.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="valorDeposito">Valor a Depositar (€) *</Label>
+            <Input
+              id="valorDeposito"
+              type="number"
+              step="0.01"
+              min="0.01"
+              value={valorDeposito}
+              onChange={(e) => setValorDeposito(e.target.value)}
+              placeholder="0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="descricaoDeposito">Descrição *</Label>
+            <Textarea
+              id="descricaoDeposito"
+              value={descricaoDeposito}
+              onChange={(e) => setDescricaoDeposito(e.target.value)}
+              placeholder="Ex: Depósito de vendas do evento, Receitas da festa..."
+              rows={3}
+            />
+          </div>
+          <div className="text-xs text-muted-foreground bg-green-500/10 p-3 rounded-lg border border-green-500/20">
+            <p className="font-medium text-green-700 mb-1">Nota:</p>
+            <p>O valor será creditado diretamente no cofre da aldeia.</p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDepositoModalOpen(false)}>Cancelar</Button>
+          <Button
+            onClick={handleCriarDeposito}
+            disabled={depositoSubmitting || !valorDeposito || !descricaoDeposito.trim()}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            {depositoSubmitting ? "A registar..." : "Registar Depósito"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
