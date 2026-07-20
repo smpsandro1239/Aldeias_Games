@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
       const fullUser = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { vaultPin: true, vaultPinEnabled: true, aldeiaId: true },
+        select: { vaultPin: true, vaultPinEnabled: true, aldeiaId: true, role: true },
       });
 
       if (!fullUser || !fullUser.vaultPinEnabled || !fullUser.vaultPin) {
@@ -81,18 +81,62 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'PIN incorreta' }, { status: 401 });
       }
 
+      // Super admin: ver todas as aldeias
+      if (fullUser.role === 'super_admin') {
+        const aldeias = await prisma.aldeia.findMany({
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            nome: true,
+            slug: true,
+            vault: {
+              select: { saldo: true },
+            },
+          },
+          orderBy: { nome: 'asc' },
+        });
+
+        const data = aldeias.map((a) => ({
+          aldeiaId: a.id,
+          nome: a.nome,
+          slug: a.slug,
+          saldo: a.vault?.saldo ?? 0,
+        }));
+
+        const total = data.reduce((sum, a) => sum + a.saldo, 0);
+
+        return NextResponse.json({
+          success: true,
+          data: { aldeias: data, total },
+        });
+      }
+
+      // Admin de aldeia / vendedor: ver apenas a sua aldeia
       if (!fullUser.aldeiaId) {
         return NextResponse.json({ error: 'Aldeia não associada' }, { status: 400 });
       }
 
-      const vault = await prisma.vault.findUnique({
-        where: { aldeiaId: fullUser.aldeiaId },
-        select: { saldo: true },
+      const aldeia = await prisma.aldeia.findUnique({
+        where: { id: fullUser.aldeiaId },
+        select: {
+          id: true,
+          nome: true,
+          slug: true,
+          vault: { select: { saldo: true } },
+        },
       });
 
       return NextResponse.json({
         success: true,
-        data: { saldo: vault?.saldo ?? 0 },
+        data: {
+          aldeias: [{
+            aldeiaId: aldeia!.id,
+            nome: aldeia!.nome,
+            slug: aldeia!.slug,
+            saldo: aldeia!.vault?.saldo ?? 0,
+          }],
+          total: aldeia!.vault?.saldo ?? 0,
+        },
       });
     }
 

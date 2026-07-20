@@ -79,24 +79,24 @@ export function PlayerDataConfirmModal({
 
               <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => onConfirmWithOwnData()}
+                  onClick={() => setEditing(true)}
                   className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  <Check className="w-4 h-4" />
-                  Sim, jogar com os meus dados
+                  <User className="w-4 h-4" />
+                  Inserir dados do cliente
                 </button>
                 <button
-                  onClick={() => setEditing(true)}
+                  onClick={() => onConfirmWithOwnData()}
                   className="w-full py-3 bg-surface-container-low text-muted-foreground font-semibold rounded-xl border border-outline-variant/20 active:scale-[0.98] transition-all"
                 >
-                  Inserir dados do cliente
+                  Sim, jogar com os meus dados
                 </button>
               </div>
             </>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Insira os dados do jogador para quem está a comprar a raspadinha.
+                Insira os dados do jogador para quem está a comprar.
               </p>
 
               <div className="space-y-3">

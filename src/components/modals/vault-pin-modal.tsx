@@ -6,6 +6,13 @@ import { Shield, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api-client";
 
+interface AldeiaSaldo {
+  aldeiaId: string;
+  nome: string;
+  slug: string;
+  saldo: number;
+}
+
 interface VaultPinModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,18 +26,25 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [vaultSaldo, setVaultSaldo] = useState<number | null>(null);
+  const [aldeias, setAldeias] = useState<AldeiaSaldo[]>([]);
+  const [totalSaldo, setTotalSaldo] = useState<number>(0);
   const [showPin, setShowPin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (open) {
       setPin("");
       setConfirmPin("");
       setPassword("");
-      setVaultSaldo(null);
+      setAldeias([]);
+      setTotalSaldo(0);
       setShowPin(false);
       setMode("verify");
       setLoading(true);
+
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      setIsSuperAdmin(user.role === "super_admin");
+
       const token = localStorage.getItem("token");
       if (token) {
         apiRequest("/api/users/vault-pin", {
@@ -112,7 +126,8 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
       });
       const data = await res.json();
       if (res.ok) {
-        setVaultSaldo(data.data.saldo);
+        setAldeias(data.data.aldeias || []);
+        setTotalSaldo(data.data.total || 0);
         setMode("view");
       } else {
         toast.error(data.error || "PIN incorreto");
@@ -137,7 +152,7 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm bg-surface-container border border-primary/10 p-0 overflow-hidden">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm bg-surface-container border border-primary/10 p-0 overflow-hidden max-h-[85vh] overflow-y-auto">
         <DialogHeader className="p-4 sm:p-6 pb-2">
           <DialogTitle className="font-serif text-lg sm:text-xl text-accent flex items-center gap-2">
             <Shield className="h-5 w-5 shrink-0" />
@@ -253,16 +268,37 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
             </>
           )}
 
-          {!loading && mode === "view" && vaultSaldo !== null && (
+          {!loading && mode === "view" && (
             <>
+              {isSuperAdmin && aldeias.length > 1 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground text-center mb-3">
+                    Saldo por Aldeia
+                  </p>
+                  {aldeias.map((a) => (
+                    <div
+                      key={a.aldeiaId}
+                      className="flex items-center justify-between bg-surface-container-low rounded-xl px-4 py-3"
+                    >
+                      <span className="text-sm text-accent font-medium">{a.nome}</span>
+                      <span className="font-mono text-sm text-primary">{formatCurrency(a.saldo)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="bg-surface-container-low rounded-xl p-4 sm:p-6 text-center">
-                <p className="text-xs text-muted-foreground mb-2">Saldo do Cofre da Aldeia</p>
-                <p className="font-serif text-3xl sm:text-4xl text-primary">{formatCurrency(vaultSaldo)}</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  {isSuperAdmin && aldeias.length > 1 ? "Saldo Total" : "Saldo do Cofre da Aldeia"}
+                </p>
+                <p className="font-serif text-3xl sm:text-4xl text-primary">{formatCurrency(totalSaldo)}</p>
               </div>
+
               <button
                 onClick={() => {
                   setPin("");
-                  setVaultSaldo(null);
+                  setAldeias([]);
+                  setTotalSaldo(0);
                   setMode("verify");
                 }}
                 className="w-full py-3 text-center text-secondary hover:bg-secondary/10 rounded-xl"
