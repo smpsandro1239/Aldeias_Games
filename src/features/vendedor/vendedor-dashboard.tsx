@@ -378,37 +378,9 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           </div>
         </div>
 
-        {/* ===== TABS (deep dive) — logo abaixo das quick actions ===== */}
+        {/* ===== TABS (deep dive) — menu no fundo do conteúdo ===== */}
         <div>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="flex overflow-x-auto gap-1 bg-surface-container-low p-1 rounded-xl">
-              <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                <TrendingUp className="h-4 w-4" /> Geral
-              </TabsTrigger>
-              <TabsTrigger value="pos" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                <ShoppingCart className="h-4 w-4" /> POS
-              </TabsTrigger>
-              <TabsTrigger value="vendas" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                <Gamepad2 className="h-4 w-4" /> Venda
-              </TabsTrigger>
-              <TabsTrigger value="pedidos" className="relative flex items-center gap-1.5 text-sm px-3 py-2">
-                <Wallet className="h-4 w-4" /> Pedidos
-                {pedidosPendentesCount > 0 && (
-                  <Badge className="ml-1 h-5 min-w-5 p-0 flex items-center justify-center bg-destructive text-white text-xs">
-                    {pedidosPendentesCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="angariacao" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                <Banknote className="h-4 w-4" /> Angariação
-              </TabsTrigger>
-              <TabsTrigger value="cofre" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                <Wallet className="h-4 w-4" /> Caixa
-              </TabsTrigger>
-              <TabsTrigger value="historico" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                <History className="h-4 w-4" /> Histórico
-              </TabsTrigger>
-            </TabsList>
 
             {/* ===== OVERVIEW TAB ===== */}
             <TabsContent value="overview" className="space-y-6">
@@ -789,6 +761,38 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* ===== TAB MENU — no fundo do conteúdo ===== */}
+            <div className="pt-2">
+              <TabsList className="flex overflow-x-auto gap-1 bg-surface-container-low p-1 rounded-xl">
+                <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2">
+                  <TrendingUp className="h-4 w-4" /> Geral
+                </TabsTrigger>
+                <TabsTrigger value="pos" className="flex items-center gap-1.5 text-sm px-3 py-2">
+                  <ShoppingCart className="h-4 w-4" /> POS
+                </TabsTrigger>
+                <TabsTrigger value="vendas" className="flex items-center gap-1.5 text-sm px-3 py-2">
+                  <Gamepad2 className="h-4 w-4" /> Venda
+                </TabsTrigger>
+                <TabsTrigger value="pedidos" className="relative flex items-center gap-1.5 text-sm px-3 py-2">
+                  <Send className="h-4 w-4" /> Pedidos
+                  {pedidosPendentesCount > 0 && (
+                    <Badge className="ml-1 h-5 min-w-5 p-0 flex items-center justify-center bg-destructive text-white text-xs">
+                      {pedidosPendentesCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="angariacao" className="flex items-center gap-1.5 text-sm px-3 py-2">
+                  <BarChart3 className="h-4 w-4" /> Angariação
+                </TabsTrigger>
+                <TabsTrigger value="cofre" className="flex items-center gap-1.5 text-sm px-3 py-2">
+                  <Wallet className="h-4 w-4" /> Caixa
+                </TabsTrigger>
+                <TabsTrigger value="historico" className="flex items-center gap-1.5 text-sm px-3 py-2">
+                  <History className="h-4 w-4" /> Histórico
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </Tabs>
         </div>
 
