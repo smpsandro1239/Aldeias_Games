@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev --webpack --hostname 0.0.0.0",
     "dev:stable": "node ./node_modules/next/dist/bin/next dev --webpack --hostname 0.0.0.0",
-    "build": "next build --webpack",
+    "build": "rm -rf .next && next build --webpack",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
