@@ -160,6 +160,13 @@ export function PedidosCarregamentoInline({ token }: Props) {
                           <Phone className="w-3 h-3" /> {pedido.user.telefone}
                         </p>
                       )}
+                      <p className="text-xs text-orange-400 mt-1 capitalize">
+                        {pedido.metodoPagamento === 'vendedor' ? 'Presencial' :
+                         pedido.metodoPagamento === 'dinheiro' ? 'Dinheiro' :
+                         pedido.metodoPagamento === 'mbway' ? 'MBWay' :
+                         pedido.metodoPagamento === 'transferencia' ? 'Transferência' :
+                         pedido.metodoPagamento}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -218,6 +225,13 @@ export function PedidosCarregamentoInline({ token }: Props) {
                       <p className="font-semibold">{pedido.valor.toFixed(2)}€</p>
                       <p className="text-xs text-muted-foreground">
                         {pedido.user?.nome} • {formatDate(pedido.createdAt)}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {pedido.metodoPagamento === 'vendedor' ? 'Presencial' :
+                         pedido.metodoPagamento === 'dinheiro' ? 'Dinheiro' :
+                         pedido.metodoPagamento === 'mbway' ? 'MBWay' :
+                         pedido.metodoPagamento === 'transferencia' ? 'Transferência' :
+                         pedido.metodoPagamento}
                       </p>
                     </div>
                     <Badge className={`${getEstadoColor(pedido.estado)}`}>

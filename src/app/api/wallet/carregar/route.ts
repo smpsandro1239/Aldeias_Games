@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
     // Utilizadores normais podem fazer pedido ao vendedor
     if (metodoCarregamento === 'vendedor') {
       // Todos os utilizadores podem pedir ao vendedor
+    } else if (body.vendedorId) {
+      // Todos os utilizadores podem carregar quando escolhem um vendedor responsável
     } else {
       const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
       if (denied) return denied;
@@ -45,8 +47,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Para "pedido ao vendedor", criar um pedido pendente
-    if (metodoCarregamento === 'vendedor' && body.vendedorId) {
+    // Para "pedido ao vendedor" (ou qualquer método com vendedor selecionado), criar um pedido pendente
+    if (body.vendedorId) {
       const aldeiaTargetIdForPedido = aldeiaId || user.aldeiaId;
       const pedido = await prisma.pedidoCarregamento.create({
         data: {
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           vendedorId: body.vendedorId,
           aldeiaId: aldeiaTargetIdForPedido,
+          metodoPagamento: metodoCarregamento || 'vendedor',
         },
         include: {
           vendedor: { select: { id: true, nome: true, telefone: true } },
@@ -62,27 +65,29 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // TODO: Notificar vendedor via push/email/etc
       // Notificar vendedor sobre novo pedido de carregamento
       try {
+        const metodoLabel = metodoCarregamento === 'vendedor' ? 'presencialmente' :
+                           metodoCarregamento === 'dinheiro' ? 'em dinheiro' :
+                           metodoCarregamento === 'mbway' ? 'via MBWay' :
+                           metodoCarregamento === 'transferencia' ? 'por transferência' : metodoCarregamento;
         await (prisma.notificacao as any).create({
           data: {
             userId: body.vendedorId,
             tipo: 'sistema',
             titulo: '💰 Novo pedido de carregamento',
-            mensagem: `Utilizador ${user.nome} pediu um carregamento de €${valor.toFixed(2)}.`,
+            mensagem: `Utilizador ${user.nome} pediu um carregamento de €${valor.toFixed(2)} ${metodoLabel}. Confirme ao receber o pagamento.`,
             estado: 'pendente',
             dadosAdicionais: {
               pedidoId: pedido.id,
               valor,
-              metodoCarregamento: 'vendedor',
+              metodoCarregamento: metodoCarregamento || 'vendedor',
               user: { nome: user.nome, email: user.email, telefone: user.telefone },
             }
           }
         });
       } catch (error) {
         console.error('Erro ao criar notificação para vendedor:', error);
-        // Don't fail the request if notification fails
       }
 
       return NextResponse.json({

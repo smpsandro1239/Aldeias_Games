@@ -244,52 +244,8 @@ export function CarregarSaldoModal({
       return;
     }
 
-    // Para pedido ao vendedor, validar seleção
-    if (state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR) {
-      if (!state.selectedVendedor) {
-        toast.error("Selecione um vendedor");
-        return;
-      }
-      dispatch({ type: 'SET_LOADING', payload: true });
-      try {
-        const res = await apiRequest("/api/wallet/carregar", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            valor: valorNum,
-            metodoCarregamento: PAYMENT_METHODS.VENDEDOR,
-            vendedorId: state.selectedVendedor.id,
-            descricao: state.descricao || `Pedido de carregamento para ${eventoNome || aldeiaNome}`,
-            eventoId,
-            aldeiaId
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          toast.error(data.error || "Erro ao criar pedido");
-          return;
-        }
-
-        dispatch({
-          type: 'SET_PEDIDO_RESULT',
-          payload: {
-            vendedor: state.selectedVendedor,
-            valor: valorNum,
-            descricao: state.descricao || `Pedido de carregamento para ${eventoNome || aldeiaNome}`
-          }
-        });
-        toast.success("Pedido enviado ao vendedor!");
-
-      } catch (error) {
-        console.error("Erro ao criar pedido:", error);
-        toast.error("Erro ao criar pedido");
-      } finally {
-        dispatch({ type: 'SET_LOADING', payload: false });
-      }
+    if (!state.selectedVendedor) {
+      toast.error("Selecione um vendedor para processar o carregamento");
       return;
     }
 
@@ -303,6 +259,7 @@ export function CarregarSaldoModal({
         body: JSON.stringify({
           valor: valorNum,
           metodoCarregamento: state.metodoCarregamento,
+          vendedorId: state.selectedVendedor.id,
           nomeTitularConta: state.dadosConta.nomeTitularConta,
           iban: state.dadosConta.iban,
           telefoneMBWay: state.dadosConta.telefoneMBWay,
@@ -315,17 +272,23 @@ export function CarregarSaldoModal({
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Erro ao carregar saldo");
+        toast.error(data.error || "Erro ao criar pedido de carregamento");
         return;
       }
 
-      dispatch({ type: 'SET_CARREGAMENTO_RESULT', payload: data.data });
-      setSaldo(data.data.saldoAtual);
-      toast.success("Saldo carregado com sucesso!");
+      dispatch({
+        type: 'SET_PEDIDO_RESULT',
+        payload: {
+          vendedor: state.selectedVendedor,
+          valor: valorNum,
+          descricao: state.descricao || `Pedido de carregamento para ${eventoNome || aldeiaNome}`
+        }
+      });
+      toast.success("Pedido de carregamento criado!");
 
     } catch (error) {
-      console.error("Erro ao carregar:", error);
-      toast.error("Erro ao carregar saldo");
+      console.error("Erro ao criar pedido:", error);
+      toast.error("Erro ao criar pedido de carregamento");
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -582,47 +545,48 @@ export function CarregarSaldoModal({
             </div>
           </div>
 
-          {state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR && (
-            <div className="space-y-2">
-              <Label htmlFor="vendedor-select">Escolher Vendedor *</Label>
-              <div className="relative">
-                <button
-                  id="vendedor-select"
-                  type="button"
-                  onClick={toggleVendedorDropdown}
-                  className="w-full p-4 rounded-xl bg-surface-container-low text-left flex items-center justify-between"
-                  aria-expanded={state.vendedorDropdownOpen}
-                  aria-haspopup="listbox"
-                  aria-describedby="vendedor-error"
-                >
-                  <span>{state.selectedVendedor?.nome || "Selecione um vendedor"}</span>
-                  <ChevronDown className="w-5 h-5" aria-hidden="true" />
-                </button>
-                {state.vendedorDropdownOpen && (
-                  <div className="absolute z-10 w-full bg-surface-container-high border border-outline-variant/10 rounded-xl mt-1 max-h-48 overflow-y-auto" role="listbox" aria-labelledby="vendedor-select">
-                    {state.vendedores.map((v) => (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => handleVendedorSelect(v)}
-                        className="w-full p-3 text-left hover:bg-surface-container-low flex items-center gap-2"
-                        role="option"
-                        aria-selected={state.selectedVendedor?.id === v.id}
-                      >
-                        <User className="w-4 h-4" aria-hidden="true" />
-                        {v.nome}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR && !state.selectedVendedor && (
-                  <p id="vendedor-error" className="text-sm text-red-500 mt-1" role="alert">
-                    Selecione um vendedor
-                  </p>
-                )}
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="vendedor-select">Vendedor Responsável *</Label>
+            <p className="text-xs text-on-surface-variant">
+              Selecione o vendedor que está presente para processar o carregamento
+            </p>
+            <div className="relative">
+              <button
+                id="vendedor-select"
+                type="button"
+                onClick={toggleVendedorDropdown}
+                className="w-full p-4 rounded-xl bg-surface-container-low text-left flex items-center justify-between"
+                aria-expanded={state.vendedorDropdownOpen}
+                aria-haspopup="listbox"
+                aria-describedby="vendedor-error"
+              >
+                <span>{state.selectedVendedor?.nome || "Selecione um vendedor"}</span>
+                <ChevronDown className="w-5 h-5" aria-hidden="true" />
+              </button>
+              {state.vendedorDropdownOpen && (
+                <div className="absolute z-10 w-full bg-surface-container-high border border-outline-variant/10 rounded-xl mt-1 max-h-48 overflow-y-auto" role="listbox" aria-labelledby="vendedor-select">
+                  {state.vendedores.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => handleVendedorSelect(v)}
+                      className="w-full p-3 text-left hover:bg-surface-container-low flex items-center gap-2"
+                      role="option"
+                      aria-selected={state.selectedVendedor?.id === v.id}
+                    >
+                      <User className="w-4 h-4" aria-hidden="true" />
+                      {v.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!state.selectedVendedor && (
+                <p id="vendedor-error" className="text-sm text-red-500 mt-1" role="alert">
+                  Selecione um vendedor para processar o carregamento
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
           {state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA && state.dadosConta.iban && (
             <div className="bg-secondary/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
@@ -661,11 +625,11 @@ export function CarregarSaldoModal({
 
           <Button
             onClick={handleCarregar}
-            disabled={state.loading || !state.valor || safeParseFloat(state.valor) <= 0}
+            disabled={state.loading || !state.valor || safeParseFloat(state.valor) <= 0 || !state.selectedVendedor}
             className="w-full py-6 sticky bottom-0"
-            aria-label={state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR ? `Pedir ao vendedor ${state.valor || "0"} euros` : `Confirmar carregamento de ${state.valor || "0"} euros`}
+            aria-label={`Criar pedido de carregamento de ${state.valor || "0"} euros`}
           >
-            {state.loading ? "A processar..." : state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR ? `Pedir ao Vendedor (${state.valor || "0"}€)` : `Confirmar Carregamento de €${state.valor || "0"}`}
+            {state.loading ? "A processar..." : `Criar Pedido (${state.valor || "0"}€)`}
           </Button>
         </div>
       </DialogContent>
