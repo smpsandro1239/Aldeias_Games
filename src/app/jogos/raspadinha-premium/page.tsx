@@ -2,19 +2,19 @@
 import { apiRequest } from '@/lib/api-client';
 
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useWallet } from "@/components/providers/wallet-provider";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Coins, Heart, Trophy, LucideIcon, Home, Gamepad2, User, House, Lock, Loader2, Ticket, Phone, Mail, MessageCircle, Bell, Euro, HelpCircle, Info, TrendingUp, Calculator } from "lucide-react";
-import { UserMenuButton } from "@/components/user-menu-button";
-import { BottomNav } from "@/components/bottom-nav";
-import { PaymentSelector } from "@/components/payment";
+import { ArrowLeft, Star, Sparkles, Gem, Trophy, Lock, Loader2, Ticket, HelpCircle, Info, Calculator } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
+import { useGamePage } from "@/hooks/useGamePage";
+import { GamePaymentDialog } from "@/components/game-payment-dialog";
+import { BottomNav } from "@/components/bottom-nav";
+import { UserMenuButton } from "@/components/user-menu-button";
 
 function RaspadinhaLoading() {
   return (
@@ -26,21 +26,6 @@ function RaspadinhaLoading() {
     </div>
   );
 }
-
-const iconMap: Record<string, LucideIcon> = {
-  military_tech: Trophy,
-  stars: Star,
-  diamond: Gem,
-  coins: Coins,
-  favorite: Heart,
-  home: Home,
-  sports_esports: Gamepad2,
-  person: User,
-  trophy: Trophy,
-  star: Star,
-  coin: Coins,
-  heart: Heart,
-};
 
 interface Prize {
   id: string;
@@ -91,11 +76,24 @@ type GamePhase = "not_paid" | "payment_loading" | "paid" | "all_revealed";
 
 function RaspadinhaPremiumContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const jogoId = searchParams.get("id");
-  
-  const [jogo, setJogo] = useState<Jogo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    jogo, loading, jogoId,
+    userRole, isAdmin, isNonRegularUser,
+    participante, setParticipante,
+    userOriginalData,
+    paymentModalOpen, setPaymentModalOpen,
+    confirmacaoModalOpen, setConfirmacaoModalOpen,
+    participacaoCriada, setParticipacaoCriada,
+    participacaoConfirmada, setParticipacaoConfirmada,
+    playerDataConfirmOpen, setPlayerDataConfirmOpen,
+    playerDataModified, setPlayerDataModified,
+    refreshBalance,
+    fetchJogo,
+    handlePlayerConfirmOwnData,
+    handlePlayerConfirmNewData,
+    processarPagamento,
+  } = useGamePage<Jogo>();
+
   const [slots, setSlots] = useState<SlotState[]>([]);
   const [showWin, setShowWin] = useState(false);
   const [winningPrize, setWinningPrize] = useState<Prize | null>(null);
@@ -107,27 +105,8 @@ function RaspadinhaPremiumContent() {
   const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
   const [winningSlotIds, setWinningSlotIds] = useState<number[]>([]);
   const [showPurchaseAnimation, setShowPurchaseAnimation] = useState(false);
-  const [participacaoConfirmada, setParticipacaoConfirmada] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const { saldo, refreshBalance } = useWallet();
-  const { playScratch } = useScratchSound();
-
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [confirmacaoModalOpen, setConfirmacaoModalOpen] = useState(false);
-  const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
-  const [pagamentoPendente, setPagamentoPendente] = useState<any>(null);
-  const [participante, setParticipante] = useState({
-    nome: "",
-    telefone: "",
-    email: "",
-    notificacao: "whatsapp" as "whatsapp" | "email" | "nenhum"
-  });
-  
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
-  const [playerDataConfirmOpen, setPlayerDataConfirmOpen] = useState(false);
-  const [playerDataModified, setPlayerDataModified] = useState(false);
   const [claiming, setClaiming] = useState(false);
-  const [userOriginalData, setUserOriginalData] = useState({ nome: "", telefone: "", email: "" });
 
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const isDraggingRef = useRef<Map<number, boolean>>(new Map());
@@ -138,58 +117,12 @@ function RaspadinhaPremiumContent() {
   const CELL_SIZE = 6;
   const initializedRef = useRef(false);
 
-  const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
-
   useEffect(() => {
-    // Always clear old session data - force fresh payment
     if (jogoId) {
       sessionStorage.removeItem(`raspadinha_${jogoId}`);
       fetchJogo();
-    } else {
-      setLoading(false);
     }
-  }, [jogoId]);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        if (userData.role) setUserRole(userData.role);
-        if (userData.nome) {
-          const originalData = {
-            nome: userData.nome || "",
-            telefone: userData.telefone || "",
-            email: userData.email || ""
-          };
-          setUserOriginalData(originalData);
-          setParticipante(prev => ({
-            ...prev,
-            ...originalData
-          }));
-        }
-      } catch {}
-    }
-  }, []);
-
-  const fetchJogo = async () => {
-    if (!jogoId) return;
-    
-    try {
-      const res = await fetch(`/api/jogos/${jogoId}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.data) {
-          setJogo(data.data);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar jogo:", error);
-      toast.error("Erro ao carregar o jogo");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [jogoId, fetchJogo]);
 
   const initSlotsFromGrid = (grid: Prize[]) => {
     setSlots(grid.map((prize, i) => ({
@@ -202,107 +135,9 @@ function RaspadinhaPremiumContent() {
     setCanvasesInitialized(false);
   };
 
-  const isNonRegularUser = userRole === "vendedor" || userRole === "aldeia_admin" || userRole === "super_admin";
-
-  const handleJogar = () => {
-    if (!jogoId) return;
-    if (isNonRegularUser && !playerDataModified) {
-      setPlayerDataConfirmOpen(true);
-    } else {
-      setPaymentModalOpen(true);
-    }
+  const processarPagamentoLocal = async (metodo: "dinheiro" | "saldo" | "mbway" | "stripe" | "transferencia") => {
+    await processarPagamento(metodo, criarParticipacao);
   };
-
-  const handlePlayerConfirmOwnData = () => {
-    setPlayerDataConfirmOpen(false);
-    setPlayerDataModified(false);
-    setPaymentModalOpen(true);
-  };
-
-  const handlePlayerConfirmNewData = (data: { nome: string; telefone: string; email: string }) => {
-    setParticipante(prev => ({
-      ...prev,
-      nome: data.nome,
-      telefone: data.telefone,
-      email: data.email,
-    }));
-    setPlayerDataModified(true);
-    setPlayerDataConfirmOpen(false);
-    setPaymentModalOpen(true);
-  };
-
-   const processarPagamento = async (metodo: "dinheiro" | "saldo" | "mbway" | "stripe" | "transferencia") => {
-     if (!jogo) return;
-
-     // Check if user is allowed to use dinheiro method
-     const user = JSON.parse(localStorage.getItem("user") || "{}");
-     const userRole = user.role;
-     
-     // Only vendedor, aldeia_admin, and super_admin can use dinheiro
-     const canUseDinheiro = ['vendedor', 'aldeia_admin', 'super_admin'].includes(userRole);
-     
-     if (metodo === "dinheiro" && !canUseDinheiro) {
-       toast.error("Apenas vendedores e administradores podem pagar em dinheiro");
-       return;
-     }
-
-     try {
-        if (metodo === "dinheiro") {
-         await criarParticipacao("dinheiro");
-       } else if (metodo === "saldo") {
-         await criarParticipacao("saldo");
-       } else if (metodo === "mbway") {
-         if (!participante.telefone) {
-           toast.error("Telefone obrigatório para MBWay");
-           return;
-         }
-         const res = await apiRequest("/api/pagamentos/mbway", {
-           method: "POST",
-           headers: { 
-             "Content-Type": "application/json",
-           },
-           body: JSON.stringify({
-             telefone: participante.telefone,
-             valor: jogo.preco,
-             descricao: `Raspadinha: ${jogo.nome}`
-           })
-         });
-         const data = await res.json();
-         if (!res.ok) {
-           toast.error(data.error || "Erro ao iniciar pagamento MBWay");
-           return;
-         }
-         toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
-         await criarParticipacao("pendente");
-        } else if (metodo === "stripe") {
-          const res = await apiRequest("/api/pagamentos/stripe", {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              valor: jogo.preco,
-              descricao: `Raspadinha: ${jogo.nome}`,
-              metadata: { jogoId: jogo.id }
-            })
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            toast.error(data.error || "Erro ao processar pagamento");
-            return;
-          }
-          // Redirect to Stripe checkout
-          if (data.data?.url) {
-            window.location.href = data.data.url;
-          } else {
-            toast.error("Erro: URL de pagamento não disponível");
-          }
-        }
-     } catch (error) {
-       console.error("Erro no pagamento:", error);
-       toast.error("Erro ao processar pagamento");
-     }
-   };
 
   const criarParticipacao = async (metodo: "dinheiro" | "saldo" | "pendente") => {
     if (!jogo) return;
@@ -1212,97 +1047,17 @@ function RaspadinhaPremiumContent() {
 
       <BottomNav />
 
-        <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-          <DialogContent className="max-w-[95vw] sm:max-w-lg bg-surface-container border border-outline-variant/10 p-0 sm:p-6 overflow-hidden max-h-[92vh] flex flex-col">
-           <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-2">
-             <DialogTitle className="font-headline text-xl flex items-center gap-2">
-               <Euro className="w-5 h-5 text-primary" />
-               Pagamento - Raspadinha
-             </DialogTitle>
-           </DialogHeader>
-           <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 overflow-y-auto flex-1 min-h-0">
-             <div className="bg-surface-container-high rounded-xl p-4 text-center">
-               <p className="text-xs text-on-surface-variant">Total a pagar</p>
-               <p className="font-headline text-3xl text-primary">{preco}€</p>
-             </div>
-
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground uppercase tracking-wider">Nome</label>
-              <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-                <User className="w-5 h-5 text-primary shrink-0" />
-                <input
-                  type="text"
-                  value={participante.nome}
-                  onChange={(e) => setParticipante({ ...participante, nome: e.target.value })}
-                  className="flex-1 bg-transparent outline-none text-foreground min-w-0"
-                  placeholder="O seu nome"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground uppercase tracking-wider">Telemóvel</label>
-              <div className="flex items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
-                <Phone className="w-5 h-5 text-primary shrink-0" />
-                <input
-                  type="tel"
-                  value={participante.telefone}
-                  onChange={(e) => setParticipante({ ...participante, telefone: e.target.value })}
-                  className="flex-1 bg-transparent outline-none text-foreground min-w-0"
-                  placeholder="912 345 678"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground uppercase tracking-wider">Receber Notificação</label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setParticipante({ ...participante, notificacao: "whatsapp" })}
-                  className={`p-2.5 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all ${
-                    participante.notificacao === "whatsapp" 
-                      ? "bg-[#25D366] text-foreground" 
-                      : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
-                  }`}
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-[10px] sm:text-xs font-medium">WhatsApp</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setParticipante({ ...participante, notificacao: "email" })}
-                  className={`p-2.5 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all ${
-                    participante.notificacao === "email" 
-                      ? "bg-primary text-foreground" 
-                      : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
-                  }`}
-                >
-                  <Mail className="w-4 h-4" />
-                  <span className="text-[10px] sm:text-xs font-medium">Email</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setParticipante({ ...participante, notificacao: "nenhum" })}
-                  className={`p-2.5 sm:p-3 rounded-xl flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 transition-all ${
-                    participante.notificacao === "nenhum" 
-                      ? "bg-[#666] text-foreground" 
-                      : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
-                  }`}
-                >
-                  <Bell className="w-4 h-4" />
-                  <span className="text-[10px] sm:text-xs font-medium">Nenhum</span>
-                </button>
-              </div>
-            </div>
-
-            <PaymentSelector
-              amount={preco}
-              onSelect={processarPagamento}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <GamePaymentDialog
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
+        amount={preco}
+        gameName="Raspadinha"
+        showCustomerForm={true}
+        participante={participante}
+        setParticipante={setParticipante}
+        onSelect={processarPagamentoLocal}
+        description={`Raspadinha: ${jogo?.nome || ''}`}
+      />
 
       <Dialog open={howItWorksOpen} onOpenChange={setHowItWorksOpen}>
         <DialogContent className="max-w-[90vw] sm:max-w-md bg-surface-container border border-outline-variant/10 p-4 overflow-hidden max-h-[85vh] overflow-y-auto">

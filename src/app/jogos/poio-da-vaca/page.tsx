@@ -1,20 +1,13 @@
 "use client";
 import { apiRequest } from '@/lib/api-client';
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useWallet } from "@/components/providers/wallet-provider";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Grid2X2,
   CheckCircle2,
-  Calendar,
-  MapPin,
   Ticket,
   Star,
-  Map,
-  Award,
-  ArrowLeft,
-  Home,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
@@ -25,15 +18,14 @@ import {
   UserPlus,
   MessageCircle,
   Bell,
-  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
-import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
+import { useGamePage } from "@/hooks/useGamePage";
 
 interface Jogo {
   id: string;
@@ -151,16 +143,25 @@ function getRentabilidadeStatus(rentabilidade: number): {
 
 export default function PoioDaVacaPage() {
   const router = useRouter();
+  const {
+    jogo: baseJogo, setJogo: setBaseJogo, loading, setLoading, jogoId,
+    userRole, isAdmin, isNonRegularUser,
+    userOriginalData,
+    playerDataConfirmOpen, setPlayerDataConfirmOpen,
+    playerDataModified, setPlayerDataModified,
+    refreshBalance,
+    handlePlayerConfirmOwnData: baseHandlePlayerConfirmOwnData,
+    handlePlayerConfirmNewData: baseHandlePlayerConfirmNewData,
+  } = useGamePage<Jogo & { dimensoesCampo?: string | null; custoQuadrado?: number | null }>();
+
+  const jogo = baseJogo as Jogo | null;
+  const setJogo = setBaseJogo;
+
   const [selectedSquares, setSelectedSquares] = useState<number[]>([]);
-  const [jogo, setJogo] = useState<Jogo | null>(null);
-  const [loading, setLoading] = useState(true);
   const [apostas, setApostas] = useState<Aposta[]>([]);
   const [betModalOpen, setBetModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [confirmacaoModalOpen, setConfirmacaoModalOpen] = useState(false);
   const [participacaoCriada, setParticipacaoCriada] = useState<any>(null);
-  const [notificationSent, setNotificationSent] = useState(false);
-  const { saldo, refreshBalance } = useWallet();
   const [pagamentoPendente, setPagamentoPendente] = useState<any>(null);
   const [jogadorForm, setJogadorForm] = useState({
     nome: "",
@@ -169,19 +170,11 @@ export default function PoioDaVacaPage() {
     notificacao: "whatsapp" as "whatsapp" | "email" | "nenhum"
   });
   const [vendedorId, setVendedorId] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [userAldeiaId, setUserAldeiaId] = useState<string | null>(null);
   const [userNome, setUserNome] = useState<string | null>(null);
-  const [playerDataConfirmOpen, setPlayerDataConfirmOpen] = useState(false);
-  const [playerDataModified, setPlayerDataModified] = useState(false);
-  const [userOriginalData, setUserOriginalData] = useState({ nome: "", telefone: "", email: "" });
 
   const randomOptions = [1, 3, 5, 10, 15, 20, 30];
-
-  const isAdmin = userRole === "super_admin" || userRole === "admin" || userRole === "aldeia_admin";
   const isVendedor = userRole === "vendedor";
-  const isNonRegularUser = userRole === "vendedor" || userRole === "aldeia_admin" || userRole === "super_admin";
-
   const numerosOcupados = apostas.flatMap(a => a.numeros);
   
   const apostasParaLista = isVendedor 
@@ -192,65 +185,20 @@ export default function PoioDaVacaPage() {
     ? apostas.filter(a => a.jogadorNome === userNome)
     : [];
 
-  useEffect(() => {
-    fetchJogo();
-    fetchApostas();
-    
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        if (user.id) setVendedorId(user.id);
-        if (user.role) setUserRole(user.role);
-        if (user.aldeiaId) setUserAldeiaId(user.aldeiaId);
-        if (user.nome) {
-          setUserNome(user.nome);
-          setUserOriginalData({
-            nome: user.nome || "",
-            telefone: user.telefone || "",
-            email: user.email || ""
-          });
-          setJogadorForm(prev => ({
-            ...prev,
-            nome: user.nome || "",
-            telefone: user.telefone || "",
-            email: user.email || ""
-          }));
-        }
-      } catch (e) {}
-    }
-  }, []);
-
-  const fetchJogo = async () => {
+  const fetchJogo = useCallback(async () => {
+    if (!jogoId) { setLoading(false); return; }
     try {
-      const jogoId = new URL(window.location.href).searchParams.get('id');
-
-      let url = "/api/jogos?ativos=true&tipo=poio_da_vaca";
-      if (jogoId) {
-        url = `/api/jogos/${jogoId}`;
-      }
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      let jogoData;
-      if (jogoId) {
-        jogoData = data.data || data;
-      } else if (data.data && data.data.length > 0) {
-        jogoData = data.data[0];
-      }
-
-      if (jogoData) {
-        setJogo(jogoData);
+      const res = await fetch(`/api/jogos/${jogoId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data) setJogo(data.data);
       }
     } catch (error) {
       console.error("Erro ao carregar jogo:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    } finally { setLoading(false); }
+  }, [jogoId, setJogo, setLoading]);
 
-  const fetchApostas = async () => {
+  const fetchApostas = useCallback(async () => {
     try {
       const storedUser = localStorage.getItem("user");
       let userParam = "";
@@ -273,7 +221,30 @@ export default function PoioDaVacaPage() {
     } catch (error) {
       console.error("Erro ao carregar apostas:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchJogo();
+    fetchApostas();
+    
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.id) setVendedorId(user.id);
+        if (user.aldeiaId) setUserAldeiaId(user.aldeiaId);
+        if (user.nome) {
+          setUserNome(user.nome);
+          setJogadorForm(prev => ({
+            ...prev,
+            nome: user.nome || "",
+            telefone: user.telefone || "",
+            email: user.email || ""
+          }));
+        }
+      } catch (e) {}
+    }
+  }, [fetchJogo, fetchApostas]);
 
   const dimensoes: Dimensoes = jogo?.dimensoesCampo 
     ? JSON.parse(jogo.dimensoesCampo)

@@ -159,10 +159,9 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
          setJogos(jogosData.data);
        }
 
-       // Fetch saldo
-       const walletRes = await apiRequest("/api/wallet");
-       });
-       if (walletRes.ok) {
+        // Fetch saldo
+        const walletRes = await apiRequest("/api/wallet");
+        if (walletRes.ok) {
          const walletData = await walletRes.json();
          setSaldo(walletData.saldo);
          setWalletStats(walletData);
@@ -232,7 +231,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
 
   const handleRevelarRaspadinha = (participacao: Participacao) => {
     setSelectedParticipacao(participacao);
-    router.push(`/raspadinha-premium?participacaoId=${participacao.id}`);
+    router.push(`/jogos/raspadinha-premium?participacaoId=${participacao.id}`);
   };
 
   const handleVerVitoria = (participacao: Participacao) => {
@@ -283,7 +282,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       setSelecaoPoioDaVaca([]);
 
       if (selectedJogo.tipo === "raspadinha" && data.participacao) {
-        router.push(`/raspadinha-premium?participacaoId=${data.participacao.id}`);
+        router.push(`/jogos/raspadinha-premium?participacaoId=${data.participacao.id}`);
       }
 
       fetchData();
@@ -808,7 +807,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
             // Redirecionar para página de raspadinha premium
             if (selectedParticipacao?.jogo?.tipo === "raspadinha") {
               setSelectedParticipacao(null);
-              router.push(`/raspadinha-premium?participacaoId=${selectedParticipacao.id}`);
+              router.push(`/jogos/raspadinha-premium?participacaoId=${selectedParticipacao.id}`);
             }
           }}
         />
