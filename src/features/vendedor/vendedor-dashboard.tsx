@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
-import { POSView } from "./pos-view";
+
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { PedidosCarregamentoInline } from "./pedidos-inline";
@@ -333,8 +333,8 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <QuickAction
               icon={<ShoppingCart className="h-5 w-5" />}
-              label="POS Mobile"
-              onClick={() => setActiveTab("pos")}
+              label="Jogos"
+              onClick={() => router.push("/jogos")}
               color="blue"
             />
             <QuickAction
@@ -447,24 +447,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            {/* ===== POS TAB ===== */}
-            <TabsContent value="pos">
-              <POSView jogos={jogos} onSell={async (data) => {
-                const res = await apiRequest("/api/participacoes", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(data),
-                });
-                if (res.ok) {
-                  toast.success("Venda realizada!");
-                  fetchData();
-                } else {
-                  const err = await res.json();
-                  toast.error(err.error);
-                }
-              }} loading={loading} />
             </TabsContent>
 
             {/* ===== VENDAS TAB ===== */}
@@ -768,9 +750,9 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                 <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2">
                   <TrendingUp className="h-4 w-4" /> Geral
                 </TabsTrigger>
-                <TabsTrigger value="pos" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                  <ShoppingCart className="h-4 w-4" /> POS
-                </TabsTrigger>
+                <button onClick={() => router.push("/jogos")} className="flex items-center gap-1.5 text-sm px-3 py-2 hover:bg-surface-container-high rounded-md transition-colors">
+                  <ShoppingCart className="h-4 w-4" /> Jogos
+                </button>
                 <TabsTrigger value="vendas" className="flex items-center gap-1.5 text-sm px-3 py-2">
                   <Gamepad2 className="h-4 w-4" /> Venda
                 </TabsTrigger>
