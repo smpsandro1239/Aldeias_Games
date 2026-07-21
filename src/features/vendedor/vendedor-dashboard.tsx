@@ -106,6 +106,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
   const [entregaModalOpen, setEntregaModalOpen] = useState(false);
   const [verificarHashOpen, setVerificarHashOpen] = useState(false);
   const [valorEntrega, setValorEntrega] = useState("");
+  const [depositoExternoOpen, setDepositoExternoOpen] = useState(false);
 
   // Handler para solicitar entrega
   const handleSolicitarEntrega = async () => {
@@ -271,7 +272,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         {/* ===== QUICK ACTIONS ===== */}
         <div>
           <h2 className="font-serif text-lg font-semibold text-accent mb-3">Ações Rápidas</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 md:grid-cols-4 gap-3">
             <QuickAction
               icon={<ShoppingCart className="h-5 w-5" />}
               label="Jogos"
@@ -309,6 +310,21 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
               label="Histórico"
               onClick={() => setActiveTab("historico")}
               color="emerald"
+            />
+            <QuickAction
+              icon={<Banknote className="h-5 w-5" />}
+              label="Depositar"
+              onClick={() => {
+                setActiveTab("cofre");
+                setTimeout(() => setDepositoExternoOpen(true), 100);
+              }}
+              color="green"
+            />
+            <QuickAction
+              icon={<Send className="h-5 w-5" />}
+              label="Pedir Saldo"
+              onClick={() => setActiveTab("pedidos")}
+              color="cyan"
             />
           </div>
         </div>
@@ -486,7 +502,11 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 
             {/* ===== COFRE TAB ===== */}
             <TabsContent value="cofre" className="space-y-4">
-              <VendedorCashbox token={token} />
+              <VendedorCashbox
+                token={token}
+                externalDepositOpen={depositoExternoOpen}
+                onExternalDepositOpenChange={setDepositoExternoOpen}
+              />
             </TabsContent>
 
             {/* ===== HISTORICO TAB ===== */}
@@ -709,7 +729,7 @@ function QuickAction({
   icon, label, onClick, color, badge,
 }: {
   icon: React.ReactNode; label: string; onClick: () => void;
-  color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
+  color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange" | "green" | "cyan";
   badge?: number;
 }) {
   const colorMap = {
@@ -719,6 +739,8 @@ function QuickAction({
     amber: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400",
     pink: "bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400",
     orange: "bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 dark:text-orange-400",
+    green: "bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:text-green-400",
+    cyan: "bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20 dark:text-cyan-400",
   };
   return (
     <button

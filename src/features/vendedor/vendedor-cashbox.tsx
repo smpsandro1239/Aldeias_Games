@@ -45,7 +45,7 @@ function getRoleLabel(role: string) {
   }
 }
 
-export function VendedorCashbox({ token, userRole }: { token: string; userRole?: string }) {
+export function VendedorCashbox({ token, userRole, externalDepositOpen, onExternalDepositOpenChange }: { token: string; userRole?: string; externalDepositOpen?: boolean; onExternalDepositOpenChange?: (open: boolean) => void }) {
   const [cashbox, setCashbox] = useState<CashboxData | null>(null);
   const [depositos, setDepositos] = useState<DepositoData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +87,12 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
 
   useEffect(() => { fetchData(1); }, []);
   useEffect(() => { if (transacoesPage > 1) fetchData(transacoesPage); }, [transacoesPage]);
+
+  useEffect(() => {
+    if (externalDepositOpen !== undefined) {
+      setDepositoModalOpen(externalDepositOpen);
+    }
+  }, [externalDepositOpen]);
 
   const handleDepositar = async () => {
     const valor = parseFloat(valorDeposito);
@@ -313,7 +319,10 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
         </CardContent>
       </Card>
 
-      <Dialog open={depositoModalOpen} onOpenChange={setDepositoModalOpen}>
+      <Dialog open={depositoModalOpen} onOpenChange={(open) => {
+        setDepositoModalOpen(open);
+        onExternalDepositOpenChange?.(open);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Depositar no Cofre da Aldeia</DialogTitle>
