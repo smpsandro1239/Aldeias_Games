@@ -77,6 +77,7 @@ export interface User {
   role: string;
   aldeiaId?: string;
   vaultPinEnabled?: boolean;
+  comissaoAtiva?: boolean;
   // ... outros campos
 }
 

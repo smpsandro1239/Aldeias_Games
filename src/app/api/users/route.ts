@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         role: true,
         aldeiaId: true,
         vaultPinEnabled: true,
+        comissaoAtiva: true,
         emailVerificado: true,
         createdAt: true,
       },

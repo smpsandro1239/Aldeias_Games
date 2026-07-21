@@ -9,7 +9,8 @@ import {
   Plus,
   Edit,
   Trash2,
-  KeyRound
+  KeyRound,
+  Percent
 } from "lucide-react";
 import { User } from "../types";
 
@@ -29,6 +30,7 @@ export function UsersTab({
   const [userSearch, setUserSearch] = useState("");
   const [userPage, setUserPage] = useState(1);
   const [resettingPinUserId, setResettingPinUserId] = useState<string | null>(null);
+  const [togglingComissaoUserId, setTogglingComissaoUserId] = useState<string | null>(null);
 
   const filteredUsers = useMemo(() => {
     const searchLower = userSearch.toLowerCase();
@@ -66,6 +68,28 @@ export function UsersTab({
       alert("Erro ao repor PIN");
     } finally {
       setResettingPinUserId(null);
+    }
+  };
+
+  const handleToggleComissao = async (userId: string, current: boolean) => {
+    const action = current ? "desligar" : "ligar";
+    setTogglingComissaoUserId(userId);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comissaoAtiva: !current }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Erro ao alterar comissões");
+        return;
+      }
+      window.location.reload();
+    } catch {
+      alert("Erro ao alterar comissões");
+    } finally {
+      setTogglingComissaoUserId(null);
     }
   };
 
@@ -144,9 +168,15 @@ export function UsersTab({
                        <p className="text-sm text-muted-foreground truncate">
                          {u.email}
                        </p>
-                       <p className="text-xs text-muted-foreground">
-                         {u.telefone ? `Tlm: ${u.telefone}` : "Sem telemóvel"} • Perfil: {u.role}
-                       </p>
+                        <p className="text-xs text-muted-foreground">
+                          {u.telefone ? `Tlm: ${u.telefone}` : "Sem telemóvel"} • Perfil: {u.role}
+                          {(u.role === "vendedor" || u.role === "aldeia_admin") && (
+                            <span className={`ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${u.comissaoAtiva ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+                              <Percent className="h-2.5 w-2.5" />
+                              {u.comissaoAtiva ? "On" : "Off"}
+                            </span>
+                          )}
+                        </p>
                      </div>
                      <div
                        className="flex flex-wrap gap-2 items-center self-stretch sm:self-auto"
@@ -173,6 +203,18 @@ export function UsersTab({
                             title="Repor PIN do cofre"
                           >
                             <KeyRound className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {(u.role === "vendedor" || u.role === "aldeia_admin") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={u.comissaoAtiva ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-accent"}
+                            disabled={togglingComissaoUserId === u.id}
+                            onClick={() => handleToggleComissao(u.id, u.comissaoAtiva ?? false)}
+                            title={u.comissaoAtiva ? "Desligar comissões" : "Ligar comissões"}
+                          >
+                            <Percent className="h-4 w-4" />
                           </Button>
                         )}
                         <Button

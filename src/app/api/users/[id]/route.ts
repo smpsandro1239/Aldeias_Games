@@ -73,6 +73,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
        }
        updateData.aldeiaId = newAldeiaId;
     }
+    if (body.comissaoAtiva !== undefined) {
+       updateData.comissaoAtiva = body.comissaoAtiva;
+    }
 
      const updated = await prisma.user.update({
        where: { id },

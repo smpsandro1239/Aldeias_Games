@@ -378,44 +378,8 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
           </div>
         </div>
 
-        {/* ===== RECENT ACTIVITY ===== */}
-        {stats?.ultimasVendas && stats.ultimasVendas.length > 0 && (
-          <div>
-            <h2 className="font-serif text-lg font-semibold text-accent mb-3">Atividade Recente</h2>
-            <Card className="bg-card border-outline-variant/10">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">Últimas Vendas</h3>
-                  <button onClick={() => setActiveTab("historico")} className="text-xs text-primary hover:underline flex items-center gap-1">
-                    Ver tudo <ArrowRight className="h-3 w-3" />
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {stats.ultimasVendas.slice(0, 5).map((venda) => (
-                    <div key={venda.id} className="flex items-center justify-between py-1.5 border-b border-outline-variant/5 last:border-0">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-accent truncate">{venda.jogo?.nome || "Jogo"}</p>
-                        <p className="text-xs text-muted-foreground">{formatDateTime(venda.createdAt)}</p>
-                      </div>
-                      <div className="text-right ml-3 shrink-0">
-                        <p className="text-sm font-bold text-emerald-500">
-                          +{formatCurrency(venda.valor)}
-                        </p>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {venda.metodoPagamento}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* ===== TABS (deep dive) ===== */}
+        {/* ===== TABS (deep dive) — logo abaixo das quick actions ===== */}
         <div>
-          <h2 className="font-serif text-lg font-semibold text-accent mb-3">Gestão Detalhada</h2>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="flex overflow-x-auto gap-1 bg-surface-container-low p-1 rounded-xl">
               <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2">
@@ -827,6 +791,41 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* ===== ATIVIDADE RECENTE — no fundo ===== */}
+        {stats?.ultimasVendas && stats.ultimasVendas.length > 0 && (
+          <div>
+            <h2 className="font-serif text-lg font-semibold text-accent mb-3">Atividade Recente</h2>
+            <Card className="bg-card border-outline-variant/10">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">Últimas Vendas</h3>
+                  <button onClick={() => setActiveTab("historico")} className="text-xs text-primary hover:underline flex items-center gap-1">
+                    Ver tudo <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {stats.ultimasVendas.slice(0, 5).map((venda) => (
+                    <div key={venda.id} className="flex items-center justify-between py-1.5 border-b border-outline-variant/5 last:border-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-accent truncate">{venda.jogo?.nome || "Jogo"}</p>
+                        <p className="text-xs text-muted-foreground">{formatDateTime(venda.createdAt)}</p>
+                      </div>
+                      <div className="text-right ml-3 shrink-0">
+                        <p className="text-sm font-bold text-emerald-500">
+                          +{formatCurrency(venda.valor)}
+                        </p>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {venda.metodoPagamento}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Modal Solicitar Entrega */}
