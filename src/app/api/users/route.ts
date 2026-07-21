@@ -5,6 +5,7 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { createUserSchema } from '@/lib/validations';
 import bcrypt from 'bcryptjs';
+import { getPaginationFromRequest, createPagination, createPaginatedResponse } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const aldeiaId = searchParams.get('aldeiaId');
+    const { page, limit } = getPaginationFromRequest(request);
 
     const where: Prisma.UserWhereInput = {};
     if (user.role === 'aldeia_admin') {
@@ -24,24 +26,31 @@ export async function GET(request: NextRequest) {
       where.aldeiaId = aldeiaId;
     }
 
-    const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        telefone: true,
-        role: true,
-        aldeiaId: true,
-        vaultPinEnabled: true,
-        comissaoAtiva: true,
-        emailVerificado: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const { skip, take } = createPagination(page, limit);
 
-    return NextResponse.json({ data: users });
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          telefone: true,
+          role: true,
+          aldeiaId: true,
+          vaultPinEnabled: true,
+          comissaoAtiva: true,
+          emailVerificado: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return NextResponse.json(createPaginatedResponse(users, total, page, limit));
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }

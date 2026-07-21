@@ -10,17 +10,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Banknote, Send, History, Wallet, RefreshCw, Check, X, Clock } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
+import { Pagination } from "@/components/ui/pagination";
 
 interface CashboxData {
   saldo: number;
-  transacoes: Array<{
-    id: string;
-    tipo: string;
-    valor: number;
-    descricao: string;
-    referencia: string | null;
-    createdAt: string;
-  }>;
+}
+
+interface CashboxTransacao {
+  id: string;
+  tipo: string;
+  valor: number;
+  descricao: string;
+  referencia: string | null;
+  createdAt: string;
 }
 
 interface DepositoData {
@@ -49,19 +51,28 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
   const [loading, setLoading] = useState(true);
   const [depositoModalOpen, setDepositoModalOpen] = useState(false);
   const [valorDeposito, setValorDeposito] = useState("");
+  const [transacoes, setTransacoes] = useState<CashboxTransacao[]>([]);
+  const [transacoesTotal, setTransacoesTotal] = useState(0);
+  const [transacoesPage, setTransacoesPage] = useState(1);
+  const transacoesLimit = 20;
 
   const roleLabel = getRoleLabel(userRole || 'vendedor');
 
-  const fetchData = async () => {
+  const fetchData = async (page?: number) => {
     try {
+      const currentPage = page ?? transacoesPage;
       const [cashRes, depRes] = await Promise.all([
-        apiRequest("/api/vendedor/cashbox"),
+        apiRequest(`/api/vendedor/cashbox?page=${currentPage}&limit=${transacoesLimit}`),
         apiRequest("/api/cofre/pedido-deposito"),
       ]);
 
       if (cashRes.ok) {
         const data = await cashRes.json();
         setCashbox(data.data);
+        if (data.data?.transacoes) {
+          setTransacoes(data.data.transacoes.data || []);
+          setTransacoesTotal(data.data.transacoes.pagination?.total || 0);
+        }
       }
       if (depRes.ok) {
         const data = await depRes.json();
@@ -74,7 +85,8 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(1); }, []);
+  useEffect(() => { if (transacoesPage > 1) fetchData(transacoesPage); }, [transacoesPage]);
 
   const handleDepositar = async () => {
     const valor = parseFloat(valorDeposito);
@@ -103,7 +115,7 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
         toast.success("Pedido de depósito enviado ao administrador!");
         setDepositoModalOpen(false);
         setValorDeposito("");
-        fetchData();
+        fetchData(transacoesPage);
       } else {
         const err = await res.json();
         toast.error(err.error || "Erro ao criar pedido");
@@ -173,16 +185,16 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
               Movimentações da Caixa
             </CardTitle>
             <CardDescription>
-              Últimas 50 operações registadas
+              Histórico de movimentações da caixa
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData}>
+          <Button variant="outline" size="sm" onClick={() => fetchData(transacoesPage)}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar
           </Button>
         </CardHeader>
         <CardContent>
-          {!cashbox || cashbox.transacoes.length === 0 ? (
+          {transacoes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>Nenhuma movimentação ainda</p>
@@ -190,7 +202,7 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
             </div>
           ) : (
             <div className="space-y-2">
-              {cashbox.transacoes.map((tx) => (
+              {transacoes.map((tx) => (
                 <div
                   key={tx.id}
                   className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl"
@@ -231,6 +243,12 @@ export function VendedorCashbox({ token, userRole }: { token: string; userRole?:
               ))}
             </div>
           )}
+          <Pagination
+            page={transacoesPage}
+            total={transacoesTotal}
+            limit={transacoesLimit}
+            onPageChange={setTransacoesPage}
+          />
         </CardContent>
       </Card>
 

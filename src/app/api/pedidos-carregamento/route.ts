@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
+import { getPaginationFromRequest, createPagination, createPaginatedResponse } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,46 +17,40 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const aldeiaId = url.searchParams.get('aldeiaId');
     const estado = url.searchParams.get('estado');
+    const { page, limit } = getPaginationFromRequest(request);
 
-    // Construir where clause
     const where: Record<string, unknown> = {};
 
-    // Super admin pode ver tudo - sem filtro
     if (user.role === 'super_admin') {
-      // continua sem filtro
-    }
-    // Se for vendedor, ver apenas os seus pedidos
-    else if (user.role === 'vendedor') {
+      // sem filtro
+    } else if (user.role === 'vendedor') {
       where.vendedorId = user.id;
-    } 
-    // Se for aldeia_admin, ver pedidos da aldeia
-    else if (user.role === 'aldeia_admin' && user.aldeiaId) {
+    } else if (user.role === 'aldeia_admin' && user.aldeiaId) {
       where.aldeiaId = user.aldeiaId;
-    } 
-    // Outros papéis não autorizados
-    else {
+    } else {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    if (estado) {
-      where.estado = estado;
-    }
+    if (estado) where.estado = estado;
+    if (aldeiaId) where.aldeiaId = aldeiaId;
 
-    if (aldeiaId) {
-      where.aldeiaId = aldeiaId;
-    }
+    const { skip, take } = createPagination(page, limit);
 
-    const pedidos = await prisma.pedidoCarregamento.findMany({
-      where,
-      include: {
-        user: { select: { id: true, nome: true, telefone: true } },
-        vendedor: { select: { id: true, nome: true, telefone: true } }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50
-    });
+    const [pedidos, total] = await Promise.all([
+      prisma.pedidoCarregamento.findMany({
+        where,
+        include: {
+          user: { select: { id: true, nome: true, telefone: true } },
+          vendedor: { select: { id: true, nome: true, telefone: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.pedidoCarregamento.count({ where }),
+    ]);
 
-    return NextResponse.json({ success: true, data: pedidos });
+    return NextResponse.json(createPaginatedResponse(pedidos, total, page, limit));
   } catch (error) {
     console.error('Erro ao listar pedidos:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });

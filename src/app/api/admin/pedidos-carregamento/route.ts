@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { logger } from '@/lib/logger';
+import { getPaginationFromRequest, createPagination, createPaginatedResponse } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,44 +16,42 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const estado = searchParams.get('estado');
+    const { page, limit } = getPaginationFromRequest(request);
 
-    // Construir filtro
     const where: Prisma.PedidoCarregamentoWhereInput = {};
-    
+
     if (estado && estado !== 'todos') {
       where.estado = estado;
     }
 
-    // Buscar pedidos do admin (aldeia) ou todos (super_admin)
     if (user.role === 'aldeia_admin' && user.aldeiaId) {
       where.aldeiaId = user.aldeiaId;
     }
 
-    // Buscar pedidos
-    const pedidos = await prisma.pedidoCarregamento.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            nome: true,
-            email: true,
-            telefone: true,
+    const { skip, take } = createPagination(page, limit);
+
+    const [pedidos, total] = await Promise.all([
+      prisma.pedidoCarregamento.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, nome: true, email: true, telefone: true },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.pedidoCarregamento.count({ where }),
+    ]);
 
-    // Mapear dados
-    const data = pedidos.map((p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => ({
+    const data = pedidos.map((p) => ({
       id: p.id,
       valor: p.valor,
       estado: p.estado,
       metodoPagamento: p.metodoPagamento || 'dinheiro',
       createdAt: p.createdAt,
-      userId: p.id,
+      userId: p.userId,
       user: p.user,
       vendedorId: p.vendedorId || '',
       vendedor: null,
@@ -60,7 +59,7 @@ export async function GET(request: NextRequest) {
       confirmadosPor: null,
     }));
 
-    return NextResponse.json({ data });
+    return NextResponse.json(createPaginatedResponse(data, total, page, limit));
   } catch (error) {
     logger.error('Erro ao buscar pedidos de carregamento', { error });
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });

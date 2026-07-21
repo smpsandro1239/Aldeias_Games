@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,36 +13,53 @@ import {
   Percent
 } from "lucide-react";
 import { User } from "../types";
+import { Pagination } from "@/components/ui/pagination";
 
 interface UsersTabProps {
-  users: User[];
+  users?: User[];
   setSelectedUser: (user: User | null) => void;
   setUserModalOpen: (open: boolean) => void;
   requestDelete: (type: string, id: string) => void;
 }
 
 export function UsersTab({
-  users,
+  users: usersProp,
   setSelectedUser,
   setUserModalOpen,
   requestDelete,
 }: UsersTabProps) {
-  const [userSearch, setUserSearch] = useState("");
+  const [users, setUsers] = useState<User[]>(usersProp || []);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [userPage, setUserPage] = useState(1);
+  const [userSearch, setUserSearch] = useState("");
   const [resettingPinUserId, setResettingPinUserId] = useState<string | null>(null);
   const [togglingComissaoUserId, setTogglingComissaoUserId] = useState<string | null>(null);
+  const limit = 50;
 
-  const filteredUsers = useMemo(() => {
-    const searchLower = userSearch.toLowerCase();
-    return users.filter((u) => {
-      if (!searchLower) return true;
-      return (
-        u.nome?.toLowerCase().includes(searchLower) ||
-        u.email?.toLowerCase().includes(searchLower) ||
-        u.telefone?.toLowerCase().includes(searchLower)
-      );
-    });
-  }, [users, userSearch]);
+  const fetchUsers = useCallback(async (page: number, search: string) => {
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (search) params.set("search", search);
+      const res = await fetch(`/api/users?${params}`);
+      if (res.ok) {
+        const json = await res.json();
+        setUsers(json.data || []);
+        setTotalUsers(json.pagination?.total || 0);
+      }
+    } catch {
+      // keep existing data
+    }
+  }, []);
+
+  useEffect(() => {
+    if (usersProp && usersProp.length > 0 && totalUsers === 0) {
+      setUsers(usersProp);
+    }
+  }, [usersProp, totalUsers]);
+
+  useEffect(() => {
+    fetchUsers(userPage, userSearch);
+  }, [userPage, userSearch, fetchUsers]);
 
   useEffect(() => {
     setUserPage(1);
@@ -72,7 +89,6 @@ export function UsersTab({
   };
 
   const handleToggleComissao = async (userId: string, current: boolean) => {
-    const action = current ? "desligar" : "ligar";
     setTogglingComissaoUserId(userId);
     try {
       const res = await fetch(`/api/users/${userId}`, {
@@ -108,7 +124,6 @@ export function UsersTab({
         </Button>
       </div>
 
-      {/* Filtros */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -141,128 +156,98 @@ export function UsersTab({
             </div>
           </div>
 
-          {/* Lista */}
           <div className="space-y-3">
-            {filteredUsers.length === 0 ? (
+            {users.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                {users.length === 0
-                  ? "Sem utilizadores"
-                  : "Nenhum utilizador corresponde aos filtros"}
+                Nenhum utilizador encontrado
               </p>
             ) : (
-               filteredUsers
-                 .slice((userPage - 1) * 50, userPage * 50)
-                 .map((u) => (
+               users.map((u) => (
+                 <div
+                   key={u.id}
+                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg border hover:bg-accent/5 transition-colors cursor-pointer"
+                 >
                    <div
-                     key={u.id}
-                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg border hover:bg-accent/5 transition-colors cursor-pointer"
+                     className="min-w-0 flex-1"
+                     onClick={() => {
+                       setSelectedUser(u);
+                       setUserModalOpen(true);
+                     }}
                    >
-                     <div
-                       className="min-w-0 flex-1"
+                     <h3 className="font-semibold truncate">{u.nome}</h3>
+                     <p className="text-sm text-muted-foreground truncate">
+                       {u.email}
+                     </p>
+                      <p className="text-xs text-muted-foreground">
+                        {u.telefone ? `Tlm: ${u.telefone}` : "Sem telemóvel"} • Perfil: {u.role}
+                        {(u.role === "vendedor" || u.role === "aldeia_admin") && (
+                          <span className={`ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${u.comissaoAtiva ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+                            <Percent className="h-2.5 w-2.5" />
+                            {u.comissaoAtiva ? "On" : "Off"}
+                          </span>
+                        )}
+                      </p>
+                   </div>
+                   <div
+                     className="flex flex-wrap gap-2 items-center self-stretch sm:self-auto"
+                     onClick={(e) => e.stopPropagation()}
+                   >
+                     <Button
+                       variant="ghost"
+                       size="icon"
                        onClick={() => {
                          setSelectedUser(u);
                          setUserModalOpen(true);
                        }}
+                       title="Editar"
                      >
-                       <h3 className="font-semibold truncate">{u.nome}</h3>
-                       <p className="text-sm text-muted-foreground truncate">
-                         {u.email}
-                       </p>
-                        <p className="text-xs text-muted-foreground">
-                          {u.telefone ? `Tlm: ${u.telefone}` : "Sem telemóvel"} • Perfil: {u.role}
-                          {(u.role === "vendedor" || u.role === "aldeia_admin") && (
-                            <span className={`ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${u.comissaoAtiva ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-muted text-muted-foreground"}`}>
-                              <Percent className="h-2.5 w-2.5" />
-                              {u.comissaoAtiva ? "On" : "Off"}
-                            </span>
-                          )}
-                        </p>
-                     </div>
-                     <div
-                       className="flex flex-wrap gap-2 items-center self-stretch sm:self-auto"
-                       onClick={(e) => e.stopPropagation()}
-                     >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedUser(u);
-                            setUserModalOpen(true);
-                          }}
-                          title="Editar"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {u.vaultPinEnabled && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-amber-600 hover:text-amber-700"
-                            disabled={resettingPinUserId === u.id}
-                            onClick={() => handleResetPin(u.id, u.nome)}
-                            title="Repor PIN do cofre"
-                          >
-                            <KeyRound className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {(u.role === "vendedor" || u.role === "aldeia_admin") && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={u.comissaoAtiva ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-accent"}
-                            disabled={togglingComissaoUserId === u.id}
-                            onClick={() => handleToggleComissao(u.id, u.comissaoAtiva ?? false)}
-                            title={u.comissaoAtiva ? "Desligar comissões" : "Ligar comissões"}
-                          >
-                            <Percent className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
+                       <Edit className="h-4 w-4" />
+                     </Button>
+                     {u.vaultPinEnabled && (
+                       <Button
                          variant="ghost"
                          size="icon"
-                         className="text-destructive"
-                         onClick={() => requestDelete("user", u.id)}
-                         title="Eliminar"
+                         className="text-amber-600 hover:text-amber-700"
+                         disabled={resettingPinUserId === u.id}
+                         onClick={() => handleResetPin(u.id, u.nome)}
+                         title="Repor PIN do cofre"
                        >
-                         <Trash2 className="h-4 w-4" />
+                         <KeyRound className="h-4 w-4" />
                        </Button>
-                     </div>
+                     )}
+                     {(u.role === "vendedor" || u.role === "aldeia_admin") && (
+                       <Button
+                         variant="ghost"
+                         size="icon"
+                         className={u.comissaoAtiva ? "text-emerald-600 hover:text-emerald-700" : "text-muted-foreground hover:text-accent"}
+                         disabled={togglingComissaoUserId === u.id}
+                         onClick={() => handleToggleComissao(u.id, u.comissaoAtiva ?? false)}
+                         title={u.comissaoAtiva ? "Desligar comissões" : "Ligar comissões"}
+                       >
+                         <Percent className="h-4 w-4" />
+                       </Button>
+                     )}
+                     <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                      onClick={() => requestDelete("user", u.id)}
+                      title="Eliminar"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                    </div>
-                 ))
+                 </div>
+               ))
             )}
           </div>
 
-           {/* Paginação */}
-           {filteredUsers.length > 50 && (
-             <div className="flex items-center justify-between pt-4 mt-4 border-t">
-               <p className="text-sm text-muted-foreground">
-                 Mostrando {(userPage - 1) * 50 + 1} a{" "}
-                 {Math.min(userPage * 50, filteredUsers.length)} de{" "}
-                 {filteredUsers.length} utilizadores
-               </p>
-               <div className="flex items-center gap-2">
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   disabled={userPage === 1}
-                   onClick={() => setUserPage(userPage - 1)}
-                 >
-                   Anterior
-                 </Button>
-                 <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                   Página {userPage}
-                 </span>
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   disabled={userPage * 50 >= filteredUsers.length}
-                   onClick={() => setUserPage(userPage + 1)}
-                 >
-                   Próxima
-                 </Button>
-               </div>
-             </div>
-           )}
+          <Pagination
+            page={userPage}
+            total={totalUsers}
+            limit={limit}
+            onPageChange={setUserPage}
+          />
         </CardContent>
       </Card>
     </div>

@@ -17,6 +17,7 @@ import {
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { generateCSV, downloadCSV, formatDateISO } from "@/lib/export-utils";
+import { Pagination } from "@/components/ui/pagination";
 
 interface DepositoData {
   id: string;
@@ -32,17 +33,18 @@ interface DepositoData {
 
 interface VaultData {
   saldo: number;
-  transacoes: Array<{
-    id: string;
-    tipo: string;
-    valor: number;
-    descricao: string;
-    estado: string;
-    dataCriacao: string;
-    criadoPor: { id: string; nome: string };
-    aprovadoPor: { nome: string } | null;
-    observacoes: string | null;
-  }>;
+}
+
+interface VaultTransacao {
+  id: string;
+  tipo: string;
+  valor: number;
+  descricao: string;
+  estado: string;
+  dataCriacao: string;
+  criadoPor: { id: string; nome: string };
+  aprovadoPor: { nome: string } | null;
+  observacoes: string | null;
 }
 
 interface Levantamento {
@@ -63,6 +65,10 @@ export function AdminCofre() {
   const [levantamentos, setLevantamentos] = useState<Levantamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pendentes");
+  const [vaultTransacoes, setVaultTransacoes] = useState<VaultTransacao[]>([]);
+  const [vaultTransacoesTotal, setVaultTransacoesTotal] = useState(0);
+  const [vaultTransacoesPage, setVaultTransacoesPage] = useState(1);
+  const vaultTransacoesLimit = 20;
 
   const [levantamentoModalOpen, setLevantamentoModalOpen] = useState(false);
   const [depositoModalOpen, setDepositoModalOpen] = useState(false);
@@ -97,7 +103,7 @@ export function AdminCofre() {
     try {
       const [depRes, vaultRes, levRes] = await Promise.all([
         apiRequest("/api/cofre/pedido-deposito"),
-        apiRequest(`/api/cofre/historico${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`),
+        apiRequest(`/api/cofre/historico?page=${vaultTransacoesPage}&limit=${vaultTransacoesLimit}${aldeiaId ? `&aldeiaId=${aldeiaId}` : ''}`),
         apiRequest(`/api/cofre/levantamento${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`),
       ]);
 
@@ -108,6 +114,10 @@ export function AdminCofre() {
       if (vaultRes.ok) {
         const data = await vaultRes.json();
         setVault(data.data);
+        if (data.transacoes) {
+          setVaultTransacoes(data.transacoes.data || []);
+          setVaultTransacoesTotal(data.transacoes.pagination?.total || 0);
+        }
       }
       if (levRes.ok) {
         const data = await levRes.json();
@@ -118,7 +128,7 @@ export function AdminCofre() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [vaultTransacoesPage, vaultTransacoesLimit]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -314,7 +324,6 @@ export function AdminCofre() {
   const rejeitados = depositos.filter(d => d.estado === 'rejeitado');
   const levPendentes = levantamentos.filter(l => l.estado === 'pendente');
   const levProcessados = levantamentos.filter(l => l.estado !== 'pendente');
-  const vaultTransacoes = vault?.transacoes || [];
 
   return (
     <>
@@ -672,7 +681,7 @@ export function AdminCofre() {
                   <History className="w-5 h-5" />
                   <CardTitle>Movimentos do Cofre</CardTitle>
                 </div>
-                {vaultTransacoes.length > 0 && (
+                {vaultTransacoesTotal > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -706,6 +715,7 @@ export function AdminCofre() {
                   <p>Nenhum movimento registado</p>
                 </div>
               ) : (
+                <>
                 <div className="space-y-2">
                   {vaultTransacoes.map((tx) => (
                     <div
@@ -743,6 +753,13 @@ export function AdminCofre() {
                     </div>
                   ))}
                 </div>
+                <Pagination
+                  page={vaultTransacoesPage}
+                  total={vaultTransacoesTotal}
+                  limit={vaultTransacoesLimit}
+                  onPageChange={setVaultTransacoesPage}
+                />
+                </>
               )}
             </CardContent>
           </Card>

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { getPaginationFromRequest, createPagination, createPaginatedResponse } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,59 +12,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Apenas admins podem ver entregas
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
     const aldeiaId = searchParams.get('aldeiaId');
+    const { page, limit } = getPaginationFromRequest(request);
 
     let where: Prisma.EntregaSaldoWhereInput = {};
 
-    // Admin só vê entregas da sua aldeia, super_admin vê todas
     if (user.role === 'aldeia_admin' && user.aldeiaId) {
       where.aldeiaId = user.aldeiaId;
     }
+    if (estado) where.estado = estado;
+    if (aldeiaId && user.role === 'super_admin') where.aldeiaId = aldeiaId;
 
-    if (estado) {
-      where.estado = estado;
-    }
+    const { skip, take } = createPagination(page, limit);
 
-    if (aldeiaId && user.role === 'super_admin') {
-      where.aldeiaId = aldeiaId;
-    }
-
-    const entregas = await prisma.entregaSaldo.findMany({
-      where,
-      include: {
-        vendedor: {
-          select: { id: true, nome: true, email: true, telefone: true }
+    const [entregas, total] = await Promise.all([
+      prisma.entregaSaldo.findMany({
+        where,
+        include: {
+          vendedor: { select: { id: true, nome: true, email: true, telefone: true } },
+          admin: { select: { id: true, nome: true, email: true } },
         },
-        admin: {
-          select: { id: true, nome: true, email: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100
-    });
-
-    // Totais
-    const pendentes = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'solicitado');
-    const confirmadas = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'confirmado');
-    const concluidas = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'concluido');
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.entregaSaldo.count({ where }),
+    ]);
 
     return NextResponse.json({
-      data: entregas,
+      ...createPaginatedResponse(entregas, total, page, limit),
       resumo: {
-        total: entregas.length,
-        pendentes: pendentes.length,
-        valorPendente: pendentes.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0),
-        confirmadas: confirmadas.length,
-        valorConfirmado: confirmadas.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0),
-        concluidas: concluidas.length,
-        valorConcluido: concluidas.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0)
-      }
+        total,
+        pendentes: entregas.filter((e) => e.estado === 'solicitado').length,
+        valorPendente: entregas.filter((e) => e.estado === 'solicitado').reduce((acc, e) => acc + e.valor, 0),
+        confirmadas: entregas.filter((e) => e.estado === 'confirmado').length,
+        valorConfirmado: entregas.filter((e) => e.estado === 'confirmado').reduce((acc, e) => acc + e.valor, 0),
+        concluidas: entregas.filter((e) => e.estado === 'concluido').length,
+        valorConcluido: entregas.filter((e) => e.estado === 'concluido').reduce((acc, e) => acc + e.valor, 0),
+      },
     });
 
   } catch (error) {

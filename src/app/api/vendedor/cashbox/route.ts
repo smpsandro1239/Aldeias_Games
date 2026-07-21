@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
+import { getPaginationFromRequest, createPagination, createPaginatedResponse } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,31 +15,37 @@ export async function GET(request: NextRequest) {
       if (denied) return denied;
     }
 
+    const { page, limit } = getPaginationFromRequest(request);
+    const { skip, take } = createPagination(page, limit);
+
     let cashbox = await prisma.vendedorCashbox.findUnique({
       where: { userId: user.id },
-      include: {
-        transacoes: {
-          orderBy: { createdAt: 'desc' },
-          take: 50,
-        }
-      }
+      select: { saldo: true }
     });
 
     if (!cashbox) {
       cashbox = await prisma.vendedorCashbox.create({
         data: { userId: user.id, saldo: 0 },
-        include: {
-          transacoes: {
-            orderBy: { createdAt: 'desc' },
-            take: 50,
-          }
-        }
+        select: { saldo: true }
       });
     }
 
+    const [transacoes, total] = await Promise.all([
+      prisma.vendedorCashboxTransacao.findMany({
+        where: { cashbox: { userId: user.id } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.vendedorCashboxTransacao.count({ where: { cashbox: { userId: user.id } } }),
+    ]);
+
     return NextResponse.json({
       success: true,
-      data: cashbox
+      data: {
+        saldo: cashbox.saldo,
+        transacoes: createPaginatedResponse(transacoes, total, page, limit),
+      },
     });
   } catch (error) {
     console.error('Error fetching cashbox:', error);

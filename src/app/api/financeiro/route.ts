@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { getPaginationFromRequest, createPagination, createPaginatedResponse } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     const aldeiaId = url.searchParams.get('aldeiaId');
     const dataInicio = url.searchParams.get('dataInicio');
     const dataFim = url.searchParams.get('dataFim');
-    const tipo = url.searchParams.get('tipo'); // 'resumo', 'transacoes', 'conciliacao'
+    const { page, limit } = getPaginationFromRequest(request);
 
     let aldeiaFilter = {};
     if (user.role === 'aldeia_admin' && user.aldeiaId) {
@@ -26,102 +27,91 @@ export async function GET(request: NextRequest) {
     }
 
     const dateFilter: Record<string, unknown> = {};
-    if (dataInicio) {
-      dateFilter.gte = new Date(dataInicio);
-    }
-    if (dataFim) {
-      dateFilter.lte = new Date(dataFim);
-    }
+    if (dataInicio) dateFilter.gte = new Date(dataInicio);
+    if (dataFim) dateFilter.lte = new Date(dataFim);
     const hasDateFilter = dataInicio || dataFim;
 
-    // Buscar transações (carregamentos de carteira)
-    const transacoes = await prisma.transacao.findMany({
-      where: {
-        ...(hasDateFilter ? { createdAt: dateFilter } : {}),
-        user: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},
-        tipo: { in: ['carregamento_saldo', 'deposito'] },
-      },
-      include: {
-        user: {
-          select: { id: true, nome: true, email: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const userWhere = aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {};
 
-    // Buscar vendas
-    const vendas = await prisma.venda.findMany({
-      where: {
-        ...(hasDateFilter ? { createdAt: dateFilter } : {}),
-        vendedor: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},
-      },
-      include: {
-        vendedor: {
-          select: { id: true, nome: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const { skip, take } = createPagination(page, limit);
 
-    // Buscar participações pagas
-    const participacoes = await prisma.participacao.findMany({
-      where: {
-        ...(hasDateFilter ? { createdAt: dateFilter } : {}),
-        estadoPagamento: 'concluido',
-        jogo: { evento: aldeiaFilter },
-      },
-      select: {
-        id: true,
-        valorPago: true,
-        metodoPagamento: true,
-        createdAt: true,
-        jogo: {
-          select: { nome: true, tipo: true }
-        }
-      },
-    });
+    const [transacoesRaw, vendasRaw, participacoesRaw, totalTransacoes, totalVendasCount] = await Promise.all([
+      prisma.transacao.findMany({
+        where: {
+          ...(hasDateFilter ? { createdAt: dateFilter } : {}),
+          user: userWhere,
+          tipo: { in: ['carregamento_saldo', 'deposito'] },
+        },
+        include: { user: { select: { id: true, nome: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.venda.findMany({
+        where: {
+          ...(hasDateFilter ? { createdAt: dateFilter } : {}),
+          vendedor: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},
+        },
+        include: { vendedor: { select: { id: true, nome: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.participacao.findMany({
+        where: {
+          ...(hasDateFilter ? { createdAt: dateFilter } : {}),
+          estadoPagamento: 'concluido',
+          jogo: { evento: aldeiaFilter },
+        },
+        select: {
+          id: true, valorPago: true, metodoPagamento: true, createdAt: true,
+          jogo: { select: { nome: true, tipo: true } },
+        },
+      }),
+      prisma.transacao.count({
+        where: {
+          ...(hasDateFilter ? { createdAt: dateFilter } : {}),
+          user: userWhere,
+          tipo: { in: ['carregamento_saldo', 'deposito'] },
+        },
+      }),
+      prisma.venda.count({
+        where: {
+          ...(hasDateFilter ? { createdAt: dateFilter } : {}),
+          vendedor: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},
+        },
+      }),
+    ]);
 
-    // Calcular totais
-    const totalCarregamentos = transacoes
-      .filter((t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => (t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0)
-      .reduce((acc: number, t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => acc + t.valor, 0);
+    const totalCarregamentos = transacoesRaw
+      .filter((t) => (t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0)
+      .reduce((acc, t) => acc + t.valor, 0);
 
-    const totalVendas = vendas.reduce((acc: number, v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => acc + v.valor, 0);
-    const totalComissoes = vendas.reduce((acc: number, v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => acc + v.comissao, 0);
-    const totalParticipacoes = participacoes.reduce((acc: number, p: { id: string; valorPago: number; metodoPagamento: Prisma.MetodoPagamento; createdAt: Date; jogo: { nome: string; tipo: Prisma.TipoJogo } }) => acc + p.valorPago, 0);
+    const totalVendas = vendasRaw.reduce((acc, v) => acc + v.valor, 0);
+    const totalComissoes = vendasRaw.reduce((acc, v) => acc + v.comissao, 0);
+    const totalParticipacoes = participacoesRaw.reduce((acc, p) => acc + p.valorPago, 0);
 
-    // Agrupar por método de pagamento
     const porMetodo: Record<string, { carregamentos: number; vendas: number; participacoes: number }> = {};
-    
-    transacoes.forEach((t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => {
+
+    transacoesRaw.forEach((t) => {
       const metodo = t.metodoPagamento || 'dinheiro';
-      if (!porMetodo[metodo]) {
-        porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
-      }
-      if ((t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0) {
-        porMetodo[metodo].carregamentos += t.valor;
-      }
+      if (!porMetodo[metodo]) porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
+      if ((t.tipo === 'carregamento_saldo' || t.tipo === 'deposito') && t.valor > 0) porMetodo[metodo].carregamentos += t.valor;
     });
 
-    participacoes.forEach((p: { id: string; valorPago: number; metodoPagamento: Prisma.MetodoPagamento; createdAt: Date; jogo: { nome: string; tipo: Prisma.TipoJogo } }) => {
+    participacoesRaw.forEach((p) => {
       const metodo = p.metodoPagamento || 'dinheiro';
-      if (!porMetodo[metodo]) {
-        porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
-      }
+      if (!porMetodo[metodo]) porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
       porMetodo[metodo].participacoes += p.valorPago;
     });
 
-    vendas.forEach((v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => {
+    vendasRaw.forEach((v) => {
       const metodo = v.metodoPagamento || 'dinheiro';
-      if (!porMetodo[metodo]) {
-        porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
-      }
+      if (!porMetodo[metodo]) porMetodo[metodo] = { carregamentos: 0, vendas: 0, participacoes: 0 };
       porMetodo[metodo].vendas += v.valor;
     });
 
-    // Calcular reconciliação
     const totalReceitas = totalParticipacoes + totalCarregamentos;
     const diferenca = totalReceitas - totalVendas;
+
+    const transacoesRecentes = transacoesRaw.slice(skip, skip + take);
+    const vendasRecentes = vendasRaw.slice(skip, skip + take);
 
     const data = {
       resumo: {
@@ -133,28 +123,28 @@ export async function GET(request: NextRequest) {
         diferenca,
         percentagemDiferenca: totalReceitas > 0 ? ((diferenca / totalReceitas) * 100).toFixed(2) : '0',
       },
-      porMetodo: Object.entries(porMetodo).map(([metodo, valores]: [string, { carregamentos: number; vendas: number; participacoes: number }]) => ({
+      porMetodo: Object.entries(porMetodo).map(([metodo, valores]) => ({
         metodo,
         ...valores,
       })),
-      transacoesRecentes: transacoes.slice(0, 20).map((t: Prisma.TransacaoGetPayload<{ include: { user: { select: { id: true; nome: true; email: true } } } }>) => ({
-        id: t.id,
-        tipo: t.tipo,
-        valor: t.valor,
-        metodo: t.metodoPagamento,
-        descricao: t.descricao,
-        referencia: t.referencia,
-        utilizador: t.user?.nome,
-        data: t.createdAt,
-      })),
-      vendasRecentes: vendas.slice(0, 20).map((v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { id: true; nome: true } } } }>) => ({
-        id: v.id,
-        valor: v.valor,
-        comissao: v.comissao,
-        metodo: v.metodoPagamento,
-        vendedor: v.vendedor?.nome,
-        data: v.createdAt,
-      })),
+      transacoes: createPaginatedResponse(
+        transacoesRecentes.map((t) => ({
+          id: t.id, tipo: t.tipo, valor: t.valor, metodo: t.metodoPagamento,
+          descricao: t.descricao, referencia: t.referencia, utilizador: t.user?.nome, data: t.createdAt,
+        })),
+        totalTransacoes,
+        page,
+        limit,
+      ),
+      vendas: createPaginatedResponse(
+        vendasRecentes.map((v) => ({
+          id: v.id, valor: v.valor, comissao: v.comissao, metodo: v.metodoPagamento,
+          vendedor: v.vendedor?.nome, data: v.createdAt,
+        })),
+        totalVendasCount,
+        page,
+        limit,
+      ),
     };
 
     return NextResponse.json({ success: true, data });
