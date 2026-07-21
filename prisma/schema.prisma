@@ -258,6 +258,7 @@ model Aldeia {
   permitirStripe          Boolean          @default(false)
   permitirMBWay           Boolean          @default(false)
   metodosPagamentoDefault String?          @default("[\"saldo\",\"dinheiro\"]") // JSON array com métodos padrão para jogos
+  metodosPagamentoAceites String?          @default("[\"dinheiro\",\"saldo\",\"mbway\",\"stripe\",\"transferencia\",\"vendedor\"]") // JSON array com todos os métodos aceites (null = todos)
   iban                    String?
   nomeTitularConta        String?
   avisoPagamentosEnviado  Boolean          @default(false)

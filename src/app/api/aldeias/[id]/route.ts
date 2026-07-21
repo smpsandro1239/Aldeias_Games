@@ -13,6 +13,7 @@ const updateAldeiaSchema = z.object({
   permitirStripe: z.boolean().optional(),
   permitirMBWay: z.boolean().optional(),
   metodosPagamentoDefault: z.string().optional(),
+  metodosPagamentoAceites: z.string().optional(),
   iban: z.string().optional(),
   nomeTitularConta: z.string().optional(),
   nomeEscola: z.string().optional(),

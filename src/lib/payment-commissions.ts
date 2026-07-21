@@ -1,4 +1,6 @@
-export type MetodoPagamento = 'mbway' | 'dinheiro' | 'stripe' | 'transferencia' | 'saldo';
+export type MetodoPagamento = 'mbway' | 'dinheiro' | 'stripe' | 'transferencia' | 'saldo' | 'vendedor';
+
+export const ALL_PAYMENT_METHODS: MetodoPagamento[] = ['dinheiro', 'saldo', 'mbway', 'stripe', 'transferencia', 'vendedor'];
 
 export interface PaymentCommission {
   percent: number;
@@ -38,39 +40,57 @@ export const PAYMENT_COMMISSIONS: Record<MetodoPagamento, PaymentCommission> = {
     label: '~2.9% + €0.30',
     description: 'Comissão aplicada pela Stripe'
   },
+  vendedor: { 
+    percent: 0, 
+    fixed: 0, 
+    label: 'Sem comissão',
+    description: 'Carregamento presencial com vendedor'
+  },
 };
 
 export interface AldeiaSettings {
   permitirStripe?: boolean;
   permitirMBWay?: boolean;
+  metodosPagamentoAceites?: string | null;
+}
+
+export function parseMetodosPagamentoAceites(metodosPagamentoAceites?: string | null): MetodoPagamento[] {
+  if (!metodosPagamentoAceites) return [...ALL_PAYMENT_METHODS];
+  try {
+    const parsed = JSON.parse(metodosPagamentoAceites);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.filter((m: string) => ALL_PAYMENT_METHODS.includes(m as MetodoPagamento)) as MetodoPagamento[];
+    }
+  } catch {}
+  return [...ALL_PAYMENT_METHODS];
+}
+
+export function isMethodAllowed(method: string, metodosPagamentoAceites?: string | null): boolean {
+  const allowed = parseMetodosPagamentoAceites(metodosPagamentoAceites);
+  return allowed.includes(method as MetodoPagamento);
 }
 
 export function getAvailableMethods(
   userRole: string | null | undefined, 
   aldeiaSettings?: AldeiaSettings
 ): MetodoPagamento[] {
-  // Regular users (players) can only use saldo, mbway, stripe - NOT dinheiro
-  // Only vendedor, aldeia_admin, and super_admin can use dinheiro (for door-to-door sales)
+  const aceites = parseMetodosPagamentoAceites(aldeiaSettings?.metodosPagamentoAceites);
+  
+  // Regular users (players) can only use saldo, mbway, stripe - NOT dinheiro or vendedor
   if (userRole === 'super_admin') {
-    return ['dinheiro', 'saldo', 'mbway', 'stripe'];
+    return aceites.filter(m => m !== 'vendedor');
   }
   
-  if (userRole === 'aldeia_admin' && aldeiaSettings) {
-    const methods: MetodoPagamento[] = ['dinheiro', 'saldo'];
-    if (aldeiaSettings.permitirMBWay) methods.push('mbway');
-    if (aldeiaSettings.permitirStripe) methods.push('stripe');
-    return methods;
+  if (userRole === 'aldeia_admin') {
+    return aceites.filter(m => m !== 'vendedor');
   }
   
   if (userRole === 'vendedor') {
-    return ['dinheiro', 'saldo', 'mbway', 'stripe'];
+    return aceites.filter(m => m !== 'vendedor');
   }
   
-  // For regular users and any other roles: only saldo, mbway, stripe (NO dinheiro)
-  const methods: MetodoPagamento[] = ['saldo'];
-  if (aldeiaSettings?.permitirMBWay !== false) methods.push('mbway');
-  if (aldeiaSettings?.permitirStripe !== false) methods.push('stripe');
-  return methods;
+  // For regular users and any other roles: only saldo, mbway, stripe (NO dinheiro, NO vendedor)
+  return aceites.filter(m => m !== 'dinheiro' && m !== 'vendedor');
 }
 
 export function formatCommission(method: MetodoPagamento): string {

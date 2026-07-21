@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
+import { isMethodAllowed } from '@/lib/payment-commissions';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +38,20 @@ export async function POST(request: NextRequest) {
 
     if (!valor || valor <= 0) {
       return NextResponse.json({ error: 'Valor inválido' }, { status: 400 });
+    }
+
+    // Validar se o método de carregamento está aceite pela aldeia
+    const aldeiaTargetId = aldeiaId || user.aldeiaId;
+    if (aldeiaTargetId && metodoCarregamento) {
+      const aldeia = await prisma.aldeia.findUnique({
+        where: { id: aldeiaTargetId },
+        select: { metodosPagamentoAceites: true }
+      });
+      if (aldeia?.metodosPagamentoAceites && !isMethodAllowed(metodoCarregamento, aldeia.metodosPagamentoAceites)) {
+        return NextResponse.json({ 
+          error: 'Este método de pagamento não está disponível para esta aldeia' 
+        }, { status: 400 });
+      }
     }
 
     // Limite máximo de carregamento por transação (prevenir abuso)
@@ -109,7 +124,6 @@ export async function POST(request: NextRequest) {
     // PROTEÇÃO CONTRA INFLAÇÃO: Apenas registar a transação, não incrementar saldo automaticamente
     // O saldo só é incrementado quando o pagamento é confirmado via Stripe/MBWay webhook
     // Para carregamentos em dinheiro, o admin deve confirmar manualmente
-    const aldeiaTargetId = aldeiaId || user.aldeiaId;
 
     // Verificar se já existe um carregamento idêntico nos últimos 5 minutos (proteção contra duplicados)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);

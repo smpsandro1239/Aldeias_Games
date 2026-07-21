@@ -137,6 +137,7 @@ function useSaldo(userId: string) {
 // Hook customizado para dados da conta
 function useDadosConta(aldeiaId?: string) {
   const [dadosConta, setDadosConta] = useState<DadosConta>({});
+  const [metodosPagamentoAceites, setMetodosPagamentoAceites] = useState<string[]>(['dinheiro', 'mbway', 'transferencia', 'vendedor']);
 
   useEffect(() => {
     if (!aldeiaId) return;
@@ -153,6 +154,17 @@ function useDadosConta(aldeiaId?: string) {
             nomeTitularConta: data.data.nomeTitularConta,
             telefoneMBWay: data.data.telefoneMBWay
           });
+          // Parse metodosPagamentoAceites
+          if (data.data.metodosPagamentoAceites) {
+            try {
+              const aceites = JSON.parse(data.data.metodosPagamentoAceites);
+              if (Array.isArray(aceites) && aceites.length > 0) {
+                setMetodosPagamentoAceites(aceites);
+              }
+            } catch (e) {
+              console.error("Erro ao parsear métodos aceites:", e);
+            }
+          }
         }
       } catch (e) {
         console.error("Erro ao buscar dados da conta:", e);
@@ -161,7 +173,7 @@ function useDadosConta(aldeiaId?: string) {
     fetchDadosConta();
   }, [aldeiaId]);
 
-  return dadosConta;
+  return { dadosConta, metodosPagamentoAceites };
 }
 
 // Hook customizado para vendedores
@@ -202,7 +214,7 @@ export function CarregarSaldoModal({
   const [user, setUser] = useState<User | null>(null);
 
   const { saldo, setSaldo } = useSaldo(user?.id || "");
-  const dadosConta = useDadosConta(aldeiaId);
+  const { dadosConta, metodosPagamentoAceites } = useDadosConta(aldeiaId);
   const vendedores = useVendedores(open, aldeiaId);
 
   // Efeito para inicializar dados do usuário
@@ -231,6 +243,16 @@ export function CarregarSaldoModal({
   useEffect(() => {
     dispatch({ type: 'SET_VENDEDORES', payload: vendedores });
   }, [vendedores]);
+
+  // Auto-select first available method if current is not allowed
+  useEffect(() => {
+    if (!metodosPagamentoAceites.includes(state.metodoCarregamento)) {
+      const firstAvailable = metodosPagamentoAceites[0];
+      if (firstAvailable) {
+        dispatch({ type: 'SET_METODO', payload: firstAvailable as PaymentMethod });
+      }
+    }
+  }, [metodosPagamentoAceites, state.metodoCarregamento]);
 
   const handleCarregar = useCallback(async () => {
     const valorNum = safeParseFloat(state.valor);
@@ -466,83 +488,97 @@ export function CarregarSaldoModal({
 
           <div className="space-y-2">
             <Label>Método de Recebimento *</Label>
+            {metodosPagamentoAceites.length === 0 ? (
+              <div className="p-4 rounded-xl bg-destructive/10 border border-red-500/20 text-center">
+                <p className="text-sm text-red-400">Nenhum método de pagamento disponível. Contacte o administrador.</p>
+              </div>
+            ) : (
             <div className="grid gap-2" role="radiogroup" aria-label="Selecionar método de pagamento">
-              <button
-                type="button"
-                onClick={() => handleMetodoChange(PAYMENT_METHODS.DINHEIRO)}
-                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === PAYMENT_METHODS.DINHEIRO
-                    ? "bg-primary/20 text-green-400 border border-green-600/30"
-                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
-                }`}
-                role="radio"
-                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.DINHEIRO}
-                aria-label="Método Dinheiro - Recebido presencialmente"
-              >
-                <Euro className="w-5 h-5" aria-hidden="true" />
-                <div className="text-left">
-                  <p className="font-medium">Dinheiro</p>
-                  <p className="text-xs opacity-60">Recebido presencialmente</p>
-                </div>
-              </button>
+              {metodosPagamentoAceites.includes(PAYMENT_METHODS.DINHEIRO) && (
+                <button
+                  type="button"
+                  onClick={() => handleMetodoChange(PAYMENT_METHODS.DINHEIRO)}
+                  className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                    state.metodoCarregamento === PAYMENT_METHODS.DINHEIRO
+                      ? "bg-primary/20 text-green-400 border border-green-600/30"
+                      : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
+                  }`}
+                  role="radio"
+                  aria-checked={state.metodoCarregamento === PAYMENT_METHODS.DINHEIRO}
+                  aria-label="Método Dinheiro - Recebido presencialmente"
+                >
+                  <Euro className="w-5 h-5" aria-hidden="true" />
+                  <div className="text-left">
+                    <p className="font-medium">Dinheiro</p>
+                    <p className="text-xs opacity-60">Recebido presencialmente</p>
+                  </div>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => handleMetodoChange(PAYMENT_METHODS.MBWAY)}
-                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === PAYMENT_METHODS.MBWAY
-                    ? "bg-purple-600/20 text-primary border border-purple-600/30"
-                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
-                }`}
-                role="radio"
-                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.MBWAY}
-                aria-label="Método MBWay - Recebido via MBWay"
-              >
-                <Phone className="w-5 h-5" aria-hidden="true" />
-                <div className="text-left">
-                  <p className="font-medium">MBWay</p>
-                  <p className="text-xs opacity-60">Recebido via MBWay</p>
-                </div>
-              </button>
+              {metodosPagamentoAceites.includes(PAYMENT_METHODS.MBWAY) && (
+                <button
+                  type="button"
+                  onClick={() => handleMetodoChange(PAYMENT_METHODS.MBWAY)}
+                  className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                    state.metodoCarregamento === PAYMENT_METHODS.MBWAY
+                      ? "bg-purple-600/20 text-primary border border-purple-600/30"
+                      : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
+                  }`}
+                  role="radio"
+                  aria-checked={state.metodoCarregamento === PAYMENT_METHODS.MBWAY}
+                  aria-label="Método MBWay - Recebido via MBWay"
+                >
+                  <Phone className="w-5 h-5" aria-hidden="true" />
+                  <div className="text-left">
+                    <p className="font-medium">MBWay</p>
+                    <p className="text-xs opacity-60">Recebido via MBWay</p>
+                  </div>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => handleMetodoChange(PAYMENT_METHODS.TRANSFERENCIA)}
-                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA
-                    ? "bg-blue-600/20 text-primary border border-blue-600/30"
-                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
-                }`}
-                role="radio"
-                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA}
-                aria-label="Método Transferência - Transferência bancária"
-              >
-                <Building2 className="w-5 h-5" aria-hidden="true" />
-                <div className="text-left">
-                  <p className="font-medium">Transferência</p>
-                  <p className="text-xs opacity-60">Transferência bancária</p>
-                </div>
-              </button>
+              {metodosPagamentoAceites.includes(PAYMENT_METHODS.TRANSFERENCIA) && (
+                <button
+                  type="button"
+                  onClick={() => handleMetodoChange(PAYMENT_METHODS.TRANSFERENCIA)}
+                  className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                    state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA
+                      ? "bg-blue-600/20 text-primary border border-blue-600/30"
+                      : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
+                  }`}
+                  role="radio"
+                  aria-checked={state.metodoCarregamento === PAYMENT_METHODS.TRANSFERENCIA}
+                  aria-label="Método Transferência - Transferência bancária"
+                >
+                  <Building2 className="w-5 h-5" aria-hidden="true" />
+                  <div className="text-left">
+                    <p className="font-medium">Transferência</p>
+                    <p className="text-xs opacity-60">Transferência bancária</p>
+                  </div>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => handleMetodoChange(PAYMENT_METHODS.VENDEDOR)}
-                className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
-                  state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR
-                    ? "bg-accent/20 text-orange-400 border border-orange-600/30"
-                    : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
-                }`}
-                role="radio"
-                aria-checked={state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR}
-                aria-label="Método Pedir ao Vendedor - O vendedor traz o dinheiro"
-              >
-                <User className="w-5 h-5" aria-hidden="true" />
-                <div className="text-left">
-                  <p className="font-medium">Pedir ao Vendedor</p>
-                  <p className="text-xs opacity-60">O vendedor traz o dinheiro</p>
-                </div>
-              </button>
+              {metodosPagamentoAceites.includes(PAYMENT_METHODS.VENDEDOR) && (
+                <button
+                  type="button"
+                  onClick={() => handleMetodoChange(PAYMENT_METHODS.VENDEDOR)}
+                  className={`p-4 rounded-xl flex items-center gap-3 transition-all ${
+                    state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR
+                      ? "bg-accent/20 text-orange-400 border border-orange-600/30"
+                      : "bg-surface-container-low text-muted-foreground hover:bg-surface-container-high"
+                  }`}
+                  role="radio"
+                  aria-checked={state.metodoCarregamento === PAYMENT_METHODS.VENDEDOR}
+                  aria-label="Método Pedir ao Vendedor - O vendedor traz o dinheiro"
+                >
+                  <User className="w-5 h-5" aria-hidden="true" />
+                  <div className="text-left">
+                    <p className="font-medium">Pedir ao Vendedor</p>
+                    <p className="text-xs opacity-60">O vendedor traz o dinheiro</p>
+                  </div>
+                </button>
+              )}
             </div>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -8,6 +8,7 @@ import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/paginat
 import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
 import { createLogger, extractRequestContext } from '@/lib/logger';
+import { isMethodAllowed } from '@/lib/payment-commissions';
 // @ts-ignore - @prisma/client types generated at build time
 import { Prisma } from '@prisma/client';
 import { getGameHandler } from './_lib';
@@ -215,6 +216,20 @@ export async function POST(request: NextRequest) {
         { error: 'Este jogo não está aberto para participações' },
         { status: 400 }
       );
+    }
+
+    // Validar se o método de pagamento está aceite pela aldeia
+    if (data.metodoPagamento && jogo.aldeiaId) {
+      const aldeia = await prisma.aldeia.findUnique({
+        where: { id: jogo.aldeiaId },
+        select: { metodosPagamentoAceites: true }
+      });
+      if (aldeia?.metodosPagamentoAceites && !isMethodAllowed(data.metodoPagamento, aldeia.metodosPagamentoAceites)) {
+        return NextResponse.json(
+          { error: 'Este método de pagamento não está disponível para esta aldeia' },
+          { status: 400 }
+        );
+      }
     }
 
     let resolvedUserId: string | null = effectiveUser?.id ?? null;

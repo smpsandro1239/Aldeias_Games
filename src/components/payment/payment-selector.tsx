@@ -37,6 +37,7 @@ export function PaymentSelector({
           aldeiaSettings = {
             permitirStripe: user.permitirStripe,
             permitirMBWay: user.permitirMBWay,
+            metodosPagamentoAceites: user.aldeia?.metodosPagamentoAceites,
           };
         } catch (e) {
           console.error("Erro ao parse user:", e);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, CreditCard, Phone, Building2, AlertTriangle, Check, Copy, Wallet, Info, ExternalLink } from "lucide-react";
+import { ArrowLeft, Save, CreditCard, Phone, Building2, AlertTriangle, Check, Copy, Wallet, Info, ExternalLink, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ interface Aldeia {
   permitirStripe: boolean;
   permitirMBWay: boolean;
   metodosPagamentoDefault?: string;
+  metodosPagamentoAceites?: string;
   iban?: string;
   nomeTitularConta?: string;
   avisoPagamentosEnviado: boolean;
@@ -48,6 +49,15 @@ export default function ConfiguracoesPage() {
     metodosPagamentoDefault: '["saldo","dinheiro"]',
     iban: "",
     nomeTitularConta: "",
+  });
+
+  const [metodosPagamentoAceites, setMetodosPagamentoAceites] = useState({
+    dinheiro: true,
+    saldo: true,
+    mbway: true,
+    stripe: true,
+    transferencia: true,
+    vendedor: true,
   });
 
   const [defaultMethods, setDefaultMethods] = useState<MetodoPagamentoDefault>({
@@ -106,6 +116,21 @@ export default function ConfiguracoesPage() {
         } catch (e) {
           console.error("Erro ao parsear métodos padrão:", e);
         }
+
+        // Parse metodosPagamentoAceites
+        try {
+          const aceitesArr = JSON.parse(data.data.metodosPagamentoAceites || '["dinheiro","saldo","mbway","stripe","transferencia","vendedor"]');
+          setMetodosPagamentoAceites({
+            dinheiro: aceitesArr.includes("dinheiro"),
+            saldo: aceitesArr.includes("saldo"),
+            mbway: aceitesArr.includes("mbway"),
+            stripe: aceitesArr.includes("stripe"),
+            transferencia: aceitesArr.includes("transferencia"),
+            vendedor: aceitesArr.includes("vendedor"),
+          });
+        } catch (e) {
+          console.error("Erro ao parsear métodos aceites:", e);
+        }
       } else {
         throw new Error("Dados da aldeia não encontrados");
       }
@@ -131,6 +156,19 @@ export default function ConfiguracoesPage() {
     if (defaultMethodsArr.length === 0) {
       defaultMethodsArr.push("saldo", "dinheiro");
     }
+
+    // Build the aceites methods array from toggle states
+    const aceitesArr: string[] = [];
+    if (metodosPagamentoAceites.dinheiro) aceitesArr.push("dinheiro");
+    if (metodosPagamentoAceites.saldo) aceitesArr.push("saldo");
+    if (metodosPagamentoAceites.mbway) aceitesArr.push("mbway");
+    if (metodosPagamentoAceites.stripe) aceitesArr.push("stripe");
+    if (metodosPagamentoAceites.transferencia) aceitesArr.push("transferencia");
+    if (metodosPagamentoAceites.vendedor) aceitesArr.push("vendedor");
+
+    if (aceitesArr.length === 0) {
+      aceitesArr.push("dinheiro", "saldo");
+    }
     
     setSaving(true);
     try {
@@ -145,6 +183,7 @@ export default function ConfiguracoesPage() {
           permitirStripe: formData.permitirStripe,
           permitirMBWay: formData.permitirMBWay,
           metodosPagamentoDefault: JSON.stringify(defaultMethodsArr),
+          metodosPagamentoAceites: JSON.stringify(aceitesArr),
           iban: formData.iban || null,
           nomeTitularConta: formData.nomeTitularConta || null,
         }),
@@ -310,6 +349,157 @@ export default function ConfiguracoesPage() {
                   formData.permitirMBWay ? "translate-x-6" : "translate-x-0.5"
                 }`} />
               </button>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-outline-variant/20 pt-6">
+            <h3 className="font-serif text-accent font-bold mb-2 flex items-center gap-2">
+              <Check className="w-5 h-5" />
+              Métodos de Pagamento Aceites
+            </h3>
+            <p className="text-xs text-muted-foreground/60 mb-4">
+              Configure quais métodos de pagamento estão disponíveis em toda a aldeia (carregamento, jogos, etc). Métodos desativados não serão apresentados a nenhum utilizador.
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <span className="text-xl">💵</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-accent">Dinheiro</p>
+                    <p className="text-xs text-muted-foreground/60">Pagamento presencial</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMetodosPagamentoAceites({ ...metodosPagamentoAceites, dinheiro: !metodosPagamentoAceites.dinheiro })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    metodosPagamentoAceites.dinheiro ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
+                    metodosPagamentoAceites.dinheiro ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <span className="text-xl">💰</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-accent">Saldo Aldeias</p>
+                    <p className="text-xs text-muted-foreground/60">Carteira digital</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMetodosPagamentoAceites({ ...metodosPagamentoAceites, saldo: !metodosPagamentoAceites.saldo })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    metodosPagamentoAceites.saldo ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
+                    metodosPagamentoAceites.saldo ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <Phone className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-accent">MBWay</p>
+                    <p className="text-xs text-muted-foreground/60">Pagamento via telemóvel</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMetodosPagamentoAceites({ ...metodosPagamentoAceites, mbway: !metodosPagamentoAceites.mbway })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    metodosPagamentoAceites.mbway ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
+                    metodosPagamentoAceites.mbway ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-accent">Stripe (Cartão)</p>
+                    <p className="text-xs text-muted-foreground/60">Cartão de crédito/débito</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMetodosPagamentoAceites({ ...metodosPagamentoAceites, stripe: !metodosPagamentoAceites.stripe })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    metodosPagamentoAceites.stripe ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
+                    metodosPagamentoAceites.stripe ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-accent">Transferência Bancária</p>
+                    <p className="text-xs text-muted-foreground/60">Transferência IBAN</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMetodosPagamentoAceites({ ...metodosPagamentoAceites, transferencia: !metodosPagamentoAceites.transferencia })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    metodosPagamentoAceites.transferencia ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
+                    metodosPagamentoAceites.transferencia ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-accent">Vendedor (Carregamento)</p>
+                    <p className="text-xs text-muted-foreground/60">Carregamento presencial com vendedor</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMetodosPagamentoAceites({ ...metodosPagamentoAceites, vendedor: !metodosPagamentoAceites.vendedor })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    metodosPagamentoAceites.vendedor ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-foreground rounded-full transition-transform ${
+                    metodosPagamentoAceites.vendedor ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-3 p-3 bg-accent/10 border border-accent/20 rounded-xl">
+              <p className="text-xs text-accent flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                <strong>Importante:</strong> Métodos desativados não serão apresentados a nenhum utilizador na aldeia, incluindo carregamento de saldo e pagamento de jogos.
+              </p>
             </div>
           </div>
 

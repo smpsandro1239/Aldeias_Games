@@ -128,6 +128,7 @@ export interface Aldeia {
   slug?: string;
   logoUrl?: string;
   metodosPagamentoDefault?: string;
+  metodosPagamentoAceites?: string;
   // ... outros campos
 }
 
