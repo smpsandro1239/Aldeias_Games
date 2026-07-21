@@ -144,23 +144,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
     }
   };
 
-  // Form de nova venda
-  const [novaVenda, setNovaVenda] = useState<{
-    jogoId: string;
-    quantidade: number;
-    metodoPagamento: "mbway" | "dinheiro" | "stripe" | "transferencia";
-    nomeCliente: string;
-    telefoneCliente: string;
-    emailCliente: string;
-  }>({
-    jogoId: "",
-    quantidade: 1,
-    metodoPagamento: "dinheiro",
-    nomeCliente: "",
-    telefoneCliente: "",
-    emailCliente: "",
-  });
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -205,48 +188,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
       toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleNovaVenda = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const jogo = jogos.find((j) => j.id === novaVenda.jogoId);
-    if (!jogo) return;
-
-    const response = await apiRequest("/api/participacoes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jogoId: novaVenda.jogoId,
-        dadosParticipacao: { quantidade: novaVenda.quantidade },
-        quantidade: novaVenda.quantidade,
-        metodoPagamento: novaVenda.metodoPagamento,
-        dadosCliente:
-          novaVenda.nomeCliente && (novaVenda.telefoneCliente || novaVenda.emailCliente)
-            ? {
-                nome: novaVenda.nomeCliente,
-                telefone: novaVenda.telefoneCliente || undefined,
-                email: novaVenda.emailCliente || undefined,
-              }
-            : undefined,
-      }),
-    });
-
-    if (response.ok) {
-      toast.success("Venda registada com sucesso!");
-      setNovaVenda({
-        jogoId: "",
-        quantidade: 1,
-        metodoPagamento: "dinheiro",
-        nomeCliente: "",
-        telefoneCliente: "",
-        emailCliente: "",
-      });
-      fetchData();
-    } else {
-      const error = await response.json();
-      toast.error(error.error || "Erro ao registar venda");
     }
   };
 
@@ -336,12 +277,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
               label="Jogos"
               onClick={() => router.push("/jogos")}
               color="blue"
-            />
-            <QuickAction
-              icon={<Gamepad2 className="h-5 w-5" />}
-              label="Nova Venda"
-              onClick={() => setActiveTab("vendas")}
-              color="emerald"
             />
             <QuickAction
               icon={<Wallet className="h-5 w-5" />}
@@ -445,149 +380,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ===== VENDAS TAB ===== */}
-            <TabsContent value="vendas" className="space-y-4">
-              <Card className="bg-card border-outline-variant/10">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-serif">Nova Venda</CardTitle>
-                      <CardDescription className="text-base">Registe uma nova participação para um cliente</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <form onSubmit={handleNovaVenda} className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-3">
-                        <Label htmlFor="jogo" className="text-sm font-semibold">Jogo *</Label>
-                        <Select
-                          value={novaVenda.jogoId}
-                          onValueChange={(value) => setNovaVenda({ ...novaVenda, jogoId: value })}
-                        >
-                          <SelectTrigger className="h-12 bg-surface-container-low border-outline-variant/30">
-                            <SelectValue placeholder="Selecione o jogo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {jogos.map((jogo) => (
-                              <SelectItem key={jogo.id} value={jogo.id}>
-                                {jogo.nome} - {formatCurrency(jogo.preco)} (Stock: {jogo.stockAtual})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-3">
-                        <Label htmlFor="quantidade" className="text-sm font-semibold">Quantidade *</Label>
-                        <Input
-                          id="quantidade"
-                          type="number"
-                          min={1}
-                          value={novaVenda.quantidade}
-                          onChange={(e) =>
-                            setNovaVenda({ ...novaVenda, quantidade: parseInt(e.target.value) || 1 })
-                          }
-                          className="h-12 bg-surface-container-low border-outline-variant/30"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label htmlFor="metodo" className="text-sm font-semibold">Método de Pagamento *</Label>
-                      <Select
-                        value={novaVenda.metodoPagamento}
-                        onValueChange={(value: "mbway" | "dinheiro" | "stripe" | "transferencia") =>
-                          setNovaVenda({ ...novaVenda, metodoPagamento: value })
-                        }
-                      >
-                        <SelectTrigger className="h-12 bg-surface-container-low border-outline-variant/30">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                          <SelectItem value="mbway">MBWay</SelectItem>
-                          <SelectItem value="transferencia">Transferência</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="bg-surface-container-low/50 rounded-2xl p-4 border border-outline-variant/20">
-                      <h4 className="text-sm font-semibold mb-4">Dados do Cliente</h4>
-                      <div className="grid gap-4 md:grid-cols-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="nomeCliente" className="text-xs font-medium">Nome *</Label>
-                          <Input
-                            id="nomeCliente"
-                            placeholder="Nome obrigatório"
-                            value={novaVenda.nomeCliente}
-                            onChange={(e) =>
-                              setNovaVenda({ ...novaVenda, nomeCliente: e.target.value })
-                            }
-                            required
-                            className="bg-background border-outline-variant/30"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="telefoneCliente" className="text-xs font-medium">Telefone</Label>
-                          <Input
-                            id="telefoneCliente"
-                            placeholder="Pelo menos um contacto"
-                            value={novaVenda.telefoneCliente}
-                            onChange={(e) =>
-                              setNovaVenda({ ...novaVenda, telefoneCliente: e.target.value })
-                            }
-                            className="bg-background border-outline-variant/30"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="emailCliente" className="text-xs font-medium">Email</Label>
-                          <Input
-                            id="emailCliente"
-                            type="email"
-                            placeholder="Pelo menos um contacto"
-                            value={novaVenda.emailCliente}
-                            onChange={(e) =>
-                              setNovaVenda({ ...novaVenda, emailCliente: e.target.value })
-                            }
-                            className="bg-background border-outline-variant/30"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {novaVenda.jogoId && (
-                      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-2xl border border-primary/20">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground font-medium">Total da Venda</p>
-                            <p className="text-3xl font-bold text-primary">
-                              {formatCurrency(
-                                (jogos.find((j) => j.id === novaVenda.jogoId)?.preco || 0) *
-                                  novaVenda.quantidade
-                              )}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Quantidade</p>
-                            <p className="text-lg font-semibold">{novaVenda.quantidade}x</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <Button type="submit" className="w-full h-14 text-lg font-semibold rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" disabled={!novaVenda.jogoId}>
-                      <Check className="h-5 w-5 mr-3" />
-                      Registar Venda
-                    </Button>
-                  </form>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -753,9 +545,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                 <button onClick={() => router.push("/jogos")} className="flex items-center gap-1.5 text-sm px-3 py-2 hover:bg-surface-container-high rounded-md transition-colors">
                   <ShoppingCart className="h-4 w-4" /> Jogos
                 </button>
-                <TabsTrigger value="vendas" className="flex items-center gap-1.5 text-sm px-3 py-2">
-                  <Gamepad2 className="h-4 w-4" /> Venda
-                </TabsTrigger>
                 <TabsTrigger value="pedidos" className="relative flex items-center gap-1.5 text-sm px-3 py-2">
                   <Send className="h-4 w-4" /> Pedidos
                   {pedidosPendentesCount > 0 && (
