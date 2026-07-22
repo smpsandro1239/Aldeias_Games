@@ -274,9 +274,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (evento.estado !== 'ativo') {
+    if (evento.estado !== 'ativo' && evento.estado !== 'rascunho') {
       return NextResponse.json(
-        { error: 'Evento não está ativo. Só é possível criar jogos para eventos ativos.' },
+        { error: 'Evento não está disponível. Só é possível criar jogos para eventos ativos ou em rascunho.' },
         { status: 400 }
       );
     }

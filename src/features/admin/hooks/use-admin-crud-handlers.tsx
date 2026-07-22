@@ -123,10 +123,19 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
             const jogosParaRemover = jogosExistentes.filter((j: any) => !jogosSelecionados.includes(j.tipo));
 
             for (const tipoJogo of jogosParaCriar) {
+              const defaultConfig: Record<string, unknown> = {};
+              if (tipoJogo === "rifa") {
+                defaultConfig.numeroInicial = 1;
+                defaultConfig.numeroFinal = 100;
+                defaultConfig.dataSorteio = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+                defaultConfig.horaSorteio = "15:00";
+                defaultConfig.localSorteio = "Sede da Aldeia";
+              }
+
               const jogoData = {
                 nome: `${data.nome} - ${tipoJogo}`,
                 tipo: tipoJogo,
-                configuracao: "{}",
+                configuracao: JSON.stringify(defaultConfig),
                 preco: tipoJogo === "rifa" ? 2 : 3,
                 stockInicial: 100,
                 eventoId,
@@ -134,26 +143,26 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
                 estado: "aberto",
               };
 
-              await fetch("/api/jogos", {
+              const jogoRes = await apiRequest("/api/jogos", {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(jogoData),
               });
+              if (!jogoRes.ok) {
+                const err = await jogoRes.json().catch(() => ({}));
+                console.error(`Erro ao criar jogo ${tipoJogo}:`, err.error || jogoRes.status);
+              }
             }
 
             for (const jogo of jogosParaRemover) {
-              const participacoesRes = await fetch(`/api/participacoes?jogoId=${jogo.id}&limit=1`, {});
+              const participacoesRes = await apiRequest(`/api/participacoes?jogoId=${jogo.id}&limit=1`, {});
 
               if (participacoesRes.ok) {
                 const participacoesData = await participacoesRes.json();
                 const totalParticipacoes = participacoesData.pagination?.total || 0;
 
                 if (totalParticipacoes === 0) {
-                  await fetch(`/api/jogos/${jogo.id}`, {
-                    method: "DELETE",
-                  });
+                  await apiRequest(`/api/jogos/${jogo.id}`, { method: "DELETE" });
                 }
               }
             }
