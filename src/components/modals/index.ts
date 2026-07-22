@@ -26,6 +26,7 @@ export { POSView } from "@/features/vendedor/pos-view";
 export { SetupWizard } from "@/components/setup-wizard";
 export { GameTutorial, useTutorialSeen, markTutorialSeen } from "@/components/game-tutorial";
 export { QRCodeGenerator, QuickShare } from "@/components/qr-code-generator";
+export { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
 export { GamificationBadge, LevelProgress, GamificationDashboard, LEVELS, BADGES } from "@/components/gamification";
 export { 
   Skeleton, 

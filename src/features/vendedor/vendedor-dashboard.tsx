@@ -49,6 +49,7 @@ import { VerificarHashModal } from "@/components/verificar-hash-modal";
 import { VendedorCashbox } from "./vendedor-cashbox";
 import { NotificationBell } from "@/components/notification-bell";
 import { useAuth } from "@/hooks/use-auth";
+import { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
 
 interface VendedorDashboardProps {
   token: string;
@@ -67,6 +68,7 @@ interface Stats {
     metodoPagamento: string;
     createdAt: string;
     jogo?: { nome: string };
+    tipo?: 'aposta' | 'participacao';
   }[];
 }
 
@@ -107,6 +109,8 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
   const [verificarHashOpen, setVerificarHashOpen] = useState(false);
   const [valorEntrega, setValorEntrega] = useState("");
   const [depositoExternoOpen, setDepositoExternoOpen] = useState(false);
+  const [provaModalOpen, setProvaModalOpen] = useState(false);
+  const [provaParticipacaoId, setProvaParticipacaoId] = useState<string | null>(null);
 
   // Handler para solicitar entrega
   const handleSolicitarEntrega = async () => {
@@ -272,31 +276,18 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         {/* ===== QUICK ACTIONS ===== */}
         <div>
           <h2 className="font-serif text-lg font-semibold text-accent mb-3">Ações Rápidas</h2>
-          <div className="grid grid-cols-4 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-3">
+            <QuickAction
+              icon={<TrendingUp className="h-5 w-5" />}
+              label="Geral"
+              onClick={() => setActiveTab("overview")}
+              color="emerald"
+            />
             <QuickAction
               icon={<ShoppingCart className="h-5 w-5" />}
               label="Jogos"
               onClick={() => router.push("/jogos")}
               color="blue"
-            />
-            <QuickAction
-              icon={<Wallet className="h-5 w-5" />}
-              label="Caixa"
-              onClick={() => setActiveTab("cofre")}
-              color="amber"
-              badge={undefined}
-            />
-            <QuickAction
-              icon={<BarChart3 className="h-5 w-5" />}
-              label="Angariação"
-              onClick={() => setActiveTab("angariacao")}
-              color="violet"
-            />
-            <QuickAction
-              icon={<Hash className="h-5 w-5" />}
-              label="Verificar"
-              onClick={() => setVerificarHashOpen(true)}
-              color="pink"
             />
             <QuickAction
               icon={<Send className="h-5 w-5" />}
@@ -306,10 +297,28 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
               badge={pedidosPendentesCount > 0 ? pedidosPendentesCount : undefined}
             />
             <QuickAction
+              icon={<BarChart3 className="h-5 w-5" />}
+              label="Angariação"
+              onClick={() => setActiveTab("angariacao")}
+              color="violet"
+            />
+            <QuickAction
+              icon={<Wallet className="h-5 w-5" />}
+              label="Caixa"
+              onClick={() => setActiveTab("cofre")}
+              color="amber"
+            />
+            <QuickAction
               icon={<TrendingUp className="h-5 w-5" />}
               label="Histórico"
               onClick={() => setActiveTab("historico")}
-              color="emerald"
+              color="green"
+            />
+            <QuickAction
+              icon={<Hash className="h-5 w-5" />}
+              label="Verificar"
+              onClick={() => setVerificarHashOpen(true)}
+              color="pink"
             />
             <QuickAction
               icon={<Banknote className="h-5 w-5" />}
@@ -318,13 +327,13 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                 setActiveTab("cofre");
                 setTimeout(() => setDepositoExternoOpen(true), 100);
               }}
-              color="green"
+              color="cyan"
             />
             <QuickAction
               icon={<Send className="h-5 w-5" />}
               label="Pedir Saldo"
               onClick={() => setActiveTab("pedidos")}
-              color="cyan"
+              color="orange"
             />
           </div>
         </div>
@@ -524,6 +533,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                           <TableHead>Jogo</TableHead>
                           <TableHead>Método</TableHead>
                           <TableHead className="text-right">Valor</TableHead>
+                          <TableHead className="w-10"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -539,6 +549,22 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                               </TableCell>
                               <TableCell className="text-right font-medium">
                                 {formatCurrency(venda.valor)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {venda.tipo === 'participacao' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-primary"
+                                    title="Ver Prova"
+                                    onClick={() => {
+                                      setProvaParticipacaoId(venda.id);
+                                      setProvaModalOpen(true);
+                                    }}
+                                  >
+                                    <Hash className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))
@@ -582,6 +608,15 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
                 <TabsTrigger value="historico" className="flex items-center gap-1.5 text-sm px-3 py-2">
                   <History className="h-4 w-4" /> Histórico
                 </TabsTrigger>
+                <button onClick={() => setVerificarHashOpen(true)} className="flex items-center gap-1.5 text-sm px-3 py-2 hover:bg-surface-container-high rounded-md transition-colors">
+                  <Hash className="h-4 w-4" /> Verificar
+                </button>
+                <button onClick={() => { setActiveTab("cofre"); setTimeout(() => setDepositoExternoOpen(true), 100); }} className="flex items-center gap-1.5 text-sm px-3 py-2 hover:bg-surface-container-high rounded-md transition-colors">
+                  <Banknote className="h-4 w-4" /> Depositar
+                </button>
+                <button onClick={() => setActiveTab("pedidos")} className="flex items-center gap-1.5 text-sm px-3 py-2 hover:bg-surface-container-high rounded-md transition-colors">
+                  <Send className="h-4 w-4" /> Pedir Saldo
+                </button>
               </TabsList>
             </div>
           </Tabs>
@@ -678,6 +713,13 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
         open={verificarHashOpen}
         onOpenChange={setVerificarHashOpen}
         token={token}
+      />
+
+      {/* Modal de Prova de Jogo */}
+      <ProvaJogoModal
+        open={provaModalOpen}
+        onOpenChange={setProvaModalOpen}
+        participacaoId={provaParticipacaoId || undefined}
       />
     </div>
   );

@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
     }
 
     const [transacoes, total] = await Promise.all([
-      prisma.vendedorCashboxTransacao.findMany({
+      prisma.vendedorCashboxTransaction.findMany({
         where: { cashbox: { userId: user.id } },
         orderBy: { createdAt: 'desc' },
         skip,
         take,
       }),
-      prisma.vendedorCashboxTransacao.count({ where: { cashbox: { userId: user.id } } }),
+      prisma.vendedorCashboxTransaction.count({ where: { cashbox: { userId: user.id } } }),
     ]);
 
     return NextResponse.json({

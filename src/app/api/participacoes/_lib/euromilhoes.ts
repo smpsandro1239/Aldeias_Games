@@ -32,7 +32,7 @@ export const euromilhoesHandler: GameHandler = {
       throw new Error('Grelha bloqueada — o prazo de participação terminou');
     }
 
-    const numeros = data.numerosSelecionados;
+    const numeros = data.dadosParticipacao?.numeros || data.numerosSelecionados;
     if (!Array.isArray(numeros) || numeros.length < 1 || numeros.length > 50) {
       throw new Error('Selecione entre 1 a 50 números para o Euromilhões');
     }
@@ -54,7 +54,7 @@ export const euromilhoesHandler: GameHandler = {
   },
 
   prepareData(data: any) {
-    const numerosSelecionados = data.numerosSelecionados || [];
+    const numerosSelecionados = data.dadosParticipacao?.numeros || data.numerosSelecionados || [];
     const resultado = JSON.stringify(numerosSelecionados);
     const uniqueSalt = crypto.randomBytes(32).toString('hex');
     const seed = generateSeed();
@@ -70,13 +70,14 @@ export const euromilhoesHandler: GameHandler = {
   },
 
   async postCreate(tx, data, _jogo, _participacoes) {
-    if (data.grelhaId && data.numerosSelecionados) {
+    const nums = data.dadosParticipacao?.numeros || data.numerosSelecionados;
+    if (data.grelhaId && nums) {
       const grelha = await tx.grelhaEuromilhoes.findUnique({
         where: { id: data.grelhaId },
       });
       if (grelha) {
         const ocupados: number[] = JSON.parse(grelha.numerosOcupados);
-        for (const num of data.numerosSelecionados) {
+        for (const num of nums) {
           if (!ocupados.includes(num)) {
             ocupados.push(num);
           }

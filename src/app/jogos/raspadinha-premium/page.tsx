@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Trophy, Lock, Loader2, Ticket, HelpCircle, Info, Calculator } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Gem, Trophy, Lock, Loader2, Ticket, HelpCircle, Info, Calculator, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
+import { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
 import { useGamePage } from "@/hooks/useGamePage";
 import { GamePaymentDialog } from "@/components/game-payment-dialog";
 import { BottomNav } from "@/components/bottom-nav";
@@ -107,6 +108,7 @@ function RaspadinhaPremiumContent() {
   const [showPurchaseAnimation, setShowPurchaseAnimation] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [provaModalOpen, setProvaModalOpen] = useState(false);
 
   const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const isDraggingRef = useRef<Map<number, boolean>>(new Map());
@@ -434,7 +436,7 @@ function RaspadinhaPremiumContent() {
         });
       }
     },
-    [slots, playScratch, jogoId]
+    [slots, scratchSlot, jogoId]
   );
 
   const handlePointerDown = useCallback(
@@ -1033,12 +1035,20 @@ function RaspadinhaPremiumContent() {
               )}
 
               {premioClaimed && (
-                <button
-                  onClick={() => setShowWin(false)}
-                  className="w-full py-3.5 sm:py-4 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all"
-                >
-                  Fechar
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setProvaModalOpen(true)}
+                    className="w-full py-3 bg-surface-container-low text-primary font-semibold rounded-2xl border border-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Eye className="h-4 w-4" /> Ver Prova de Jogo
+                  </button>
+                  <button
+                    onClick={() => setShowWin(false)}
+                    className="w-full py-3.5 sm:py-4 bg-primary text-primary-foreground font-bold rounded-2xl active:scale-[0.98] transition-all"
+                  >
+                    Fechar
+                  </button>
+                </div>
               )}
             </motion.div>
           </motion.div>
@@ -1151,6 +1161,13 @@ function RaspadinhaPremiumContent() {
         userEmail={userOriginalData.email}
         onConfirmWithOwnData={handlePlayerConfirmOwnData}
         onConfirmWithNewData={handlePlayerConfirmNewData}
+      />
+
+      {/* Modal de Prova de Jogo */}
+      <ProvaJogoModal
+        open={provaModalOpen}
+        onOpenChange={setProvaModalOpen}
+        participacaoId={participacaoId || undefined}
       />
 
     </div>

@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
     }
 
     const valorTotal = jogo.tipo === 'euromilhoes'
-      ? (data.numerosSelecionados?.length || 1) * jogo.preco
+      ? ((data.dadosParticipacao?.numeros as number[] | undefined)?.length || data.numerosSelecionados?.length || 1) * jogo.preco
       : jogo.preco * data.quantidade;
 
     if (data.metodoPagamento === 'saldo') {

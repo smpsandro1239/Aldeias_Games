@@ -22,6 +22,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Receipt,
+  Shield,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -33,6 +34,7 @@ import { GameList } from "@/components/games/game-list";
 import { AldeiaWizardModal } from "@/components/modals/aldeia-wizard-modal";
 import { LeaderboardList } from "@/components/leaderboard/leaderboard-list";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
+import { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
 
 interface ClienteDashboardProps {
   token: string;
@@ -120,6 +122,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   // Modal de detalhes da participação
   const [detalhesParticipacaoOpen, setDetalhesParticipacaoOpen] = useState(false);
   const [participacaoDetalhes, setParticipacaoDetalhes] = useState<any>(null);
+  const [provaModalOpen, setProvaModalOpen] = useState(false);
+  const [provaParticipacaoId, setProvaParticipacaoId] = useState<string | null>(null);
 
   // Paginação e busca
   const [searchQuery, setSearchQuery] = useState("");
@@ -596,23 +600,37 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
                                {participacao.resultadoRaspe || "Sem prémio"}
                              </Badge>
                            )}
-                           {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
-                             <Button variant="outline" size="sm" className="text-xs">
-                               Prémios
-                             </Button>
-                           )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="shrink-0"
-                              title="Ver detalhes da participação"
-                              onClick={() => {
-                                setParticipacaoDetalhes(participacao);
-                                setDetalhesParticipacaoOpen(true);
-                              }}
-                            >
-                             <Eye className="h-4 w-4" />
-                           </Button>
+                            {participacao.jogo?.sorteado && participacao.jogo?.premioId && (
+                              <Button variant="outline" size="sm" className="text-xs">
+                                Prémios
+                              </Button>
+                            )}
+                            {participacao.jogo?.tipo !== "poio_da_vaca" && (participacao.hashRaspe || participacao.hashParticipacao) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 text-primary"
+                                title="Ver Prova de Jogo"
+                                onClick={() => {
+                                  setProvaParticipacaoId(participacao.id);
+                                  setProvaModalOpen(true);
+                                }}
+                              >
+                                <Shield className="h-4 w-4" />
+                              </Button>
+                            )}
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="shrink-0"
+                               title="Ver detalhes da participação"
+                               onClick={() => {
+                                 setParticipacaoDetalhes(participacao);
+                                 setDetalhesParticipacaoOpen(true);
+                               }}
+                             >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                          </div>
                        </div>
                      </CardContent>
@@ -860,6 +878,13 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
         open={detalhesParticipacaoOpen}
         onOpenChange={setDetalhesParticipacaoOpen}
         participacao={participacaoDetalhes}
+      />
+
+      {/* Modal de Prova de Jogo */}
+      <ProvaJogoModal
+        open={provaModalOpen}
+        onOpenChange={setProvaModalOpen}
+        participacaoId={provaParticipacaoId || undefined}
       />
 
     </div>

@@ -62,7 +62,7 @@ const navItems = {
   default: [
     { icon: Compass, label: "INÍCIO", path: "/" },
     { icon: Gamepad2, label: "JOGOS", path: "/jogos" },
-    { icon: Shield, label: "VERIFICAR", path: "/verificar-raspadinha" },
+    { icon: Shield, label: "VERIFICAR", path: "/verificar" },
     { icon: Ticket, label: "PRÉMIOS", path: "/premios" },
     { icon: User, label: "PERFIL", path: "/perfil" },
     { icon: House, label: "SAIR", path: "/" },

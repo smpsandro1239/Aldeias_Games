@@ -16,12 +16,14 @@ import {
   Shuffle,
   Euro,
   LayoutGrid,
-  X
+  X,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
+import { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
 import { useGamePage } from "@/hooks/useGamePage";
 import { GameDetailLayout } from "@/components/game-detail-layout";
 import { GamePaymentDialog } from "@/components/game-payment-dialog";
@@ -88,6 +90,7 @@ export default function RifaPage() {
   const [numeroSorte, setNumeroSorte] = useState<string>("");
   const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
   const [numerosJogados, setNumerosJogados] = useState<number[]>([]);
+  const [provaModalOpen, setProvaModalOpen] = useState(false);
 
   const randomOptions = [1, 2, 3, 5, 10, 20];
 
@@ -365,12 +368,21 @@ export default function RifaPage() {
             </div>
           </div>
         </div>
-        <Button
-          onClick={() => { setParticipacaoConfirmada(false); setNumerosSelecionados([]); fetchNumerosOcupados(); }}
-          className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-xl"
-        >
-          Participar Novamente
-        </Button>
+        <div className="space-y-3">
+          <Button
+            onClick={() => setProvaModalOpen(true)}
+            variant="outline"
+            className="w-full py-4 border-primary/30 text-primary font-semibold rounded-xl"
+          >
+            <Eye className="w-4 h-4 mr-2" /> Ver Prova de Jogo
+          </Button>
+          <Button
+            onClick={() => { setParticipacaoConfirmada(false); setNumerosSelecionados([]); fetchNumerosOcupados(); }}
+            className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-xl"
+          >
+            Participar Novamente
+          </Button>
+        </div>
       </GameDetailLayout>
     );
   }
@@ -590,6 +602,12 @@ export default function RifaPage() {
         userEmail={userOriginalData.email}
         onConfirmWithOwnData={handlePlayerConfirmOwnData}
         onConfirmWithNewData={handlePlayerConfirmNewData}
+      />
+
+      <ProvaJogoModal
+        open={provaModalOpen}
+        onOpenChange={setProvaModalOpen}
+        participacaoId={participacaoCriada?.id}
       />
     </GameDetailLayout>
   );

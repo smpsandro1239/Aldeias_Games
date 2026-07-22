@@ -14,11 +14,13 @@ import {
   X,
   Hash,
   Shuffle,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
+import { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
 import { apiRequest } from "@/lib/api-client";
 import { useGamePage } from "@/hooks/useGamePage";
 import { GameDetailLayout } from "@/components/game-detail-layout";
@@ -76,6 +78,7 @@ export default function EuromilhoesPage() {
   const [numerosSelecionados, setNumerosSelecionados] = useState<number[]>([]);
   const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
   const [submetendo, setSubmetendo] = useState(false);
+  const [provaModalOpen, setProvaModalOpen] = useState(false);
 
   useEffect(() => {
     if (grelha) {
@@ -267,10 +270,19 @@ export default function EuromilhoesPage() {
             </div>
           </div>
         </div>
-        <Button onClick={() => { setParticipacaoConfirmada(false); setNumerosSelecionados([]); fetchData(); }}
-          className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-xl">
-          Participar Novamente
-        </Button>
+        <div className="space-y-3">
+          <Button
+            onClick={() => setProvaModalOpen(true)}
+            variant="outline"
+            className="w-full py-4 border-primary/30 text-primary font-semibold rounded-xl"
+          >
+            <Eye className="w-4 h-4 mr-2" /> Ver Prova de Jogo
+          </Button>
+          <Button onClick={() => { setParticipacaoConfirmada(false); setNumerosSelecionados([]); fetchData(); }}
+            className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-xl">
+            Participar Novamente
+          </Button>
+        </div>
       </GameDetailLayout>
     );
   }
@@ -479,6 +491,12 @@ export default function EuromilhoesPage() {
         userEmail={userOriginalData.email}
         onConfirmWithOwnData={handlePlayerConfirmOwnData}
         onConfirmWithNewData={handlePlayerConfirmNewData}
+      />
+
+      <ProvaJogoModal
+        open={provaModalOpen}
+        onOpenChange={setProvaModalOpen}
+        participacaoId={participacaoCriada?.id}
       />
     </GameDetailLayout>
   );

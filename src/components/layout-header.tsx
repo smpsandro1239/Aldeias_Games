@@ -30,7 +30,7 @@ const NAV_ITEMS = {
     { icon: Gamepad2, label: "Jogos", path: "/admindashboard?tab=jogos" },
     { icon: Banknote, label: "Cofre", path: "/admindashboard/cofre" },
     { icon: Users, label: "Equipa", path: "/admindashboard?tab=users" },
-    { icon: BarChart3, label: "Verificar", path: "/verificar-hash" },
+    { icon: BarChart3, label: "Verificar", path: "/verificar" },
   ],
   vendedor: [
     { icon: LayoutDashboard, label: "Vendas", path: "/vendedordashboard" },
@@ -38,7 +38,7 @@ const NAV_ITEMS = {
     { icon: Banknote, label: "Caixa", path: "/vendedordashboard?tab=cofre" },
     { icon: TrendingUp, label: "Histórico", path: "/vendedordashboard?tab=historico" },
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },
-    { icon: BarChart3, label: "Verificar", path: "/verificar-hash" },
+    { icon: BarChart3, label: "Verificar", path: "/verificar" },
   ],
   user: [
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },

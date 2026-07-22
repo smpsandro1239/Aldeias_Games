@@ -81,7 +81,8 @@ export async function GET(request: NextRequest) {
         valor: valorAposta(a),
         metodoPagamento: 'dinheiro', // POS mostly uses cash initially
         createdAt: a.createdAt.toISOString(),
-        jogo: { nome: a.jogo.nome }
+        jogo: { nome: a.jogo.nome },
+        tipo: 'aposta' as const,
     }));
 
     const historicoPart = partHoje.map((p: Prisma.ParticipacaoGetPayload<{ include: { jogo: { select: { nome: true } } } }>) => ({
@@ -89,7 +90,8 @@ export async function GET(request: NextRequest) {
         valor: p.valorPago,
         metodoPagamento: p.metodoPagamento,
         createdAt: p.createdAt.toISOString(),
-        jogo: { nome: p.jogo.nome }
+        jogo: { nome: p.jogo.nome },
+        tipo: 'participacao' as const,
     }));
 
     const ultimasVendas = [...historicoApostas, ...historicoPart]
