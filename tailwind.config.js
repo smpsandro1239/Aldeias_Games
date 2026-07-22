@@ -50,6 +50,10 @@ module.exports = {
         'primary-container': 'hsl(var(--primary-container))',
         'secondary-container': 'hsl(var(--secondary-container))',
         'tertiary-container': 'hsl(var(--tertiary-container))',
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
       },
       fontFamily: {
         serif: ['Noto Serif', 'Georgia', 'serif'],

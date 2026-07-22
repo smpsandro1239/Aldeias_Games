@@ -27,7 +27,11 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: Prisma.AldeiaWhereInput = {
       ativo: true,
-      verificado: true,
+    }
+
+    // Non-admins only see verified aldeias
+    if (!user || user.role !== 'super_admin') {
+      where.verificado = true
     }
 
     if (search) {
