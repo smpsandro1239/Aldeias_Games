@@ -238,17 +238,18 @@ export default function RifaPage() {
       });
       if (response.ok) {
         const data = await response.json();
+        const p = data.participacao || data.data;
         const novos = numerosSelecionados.filter((n) => !numerosOcupados.includes(n));
         if (novos.length > 0) {
           setNumerosOcupados((prev) => [...new Set([...prev, ...novos])]);
           setNumerosJogados((prev) => [...new Set([...prev, ...novos])]);
         }
-        setNumeroSorte(data.data?.numero || numerosSelecionados[0].toString().padStart(5, "0"));
-        setParticipacaoConfirmada(true);
+        setNumeroSorte(p?.numero || numerosSelecionados[0].toString().padStart(5, "0"));
         setPaymentModalOpen(false);
-        setParticipacaoCriada(data.data);
-        setConfirmacaoModalOpen(true);
+        setParticipacaoCriada(p);
         await fetchNumerosOcupados();
+        await fetchJogo();
+        setParticipacaoConfirmada(true);
 
         if (participante.notificacao === "whatsapp" && participante.telefone) {
           const tel = participante.telefone.replace(/\D/g, "");
@@ -411,7 +412,9 @@ export default function RifaPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <p className="text-secondary text-sm font-semibold tracking-widest uppercase mb-1">Grande Prémio</p>
-            <h3 className="text-2xl font-headline font-bold text-on-surface">{jogo?.premio?.nome || "Prémio"}</h3>
+            <h3 className="text-2xl font-headline font-bold text-on-surface">
+              {jogo?.premios && jogo.premios.length > 0 ? jogo.premios[0].nome : jogo?.premio?.nome || "Prémio"}
+            </h3>
           </div>
           <div className="bg-primary-container text-on-primary-container px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg">
             <CreditCard className="w-5 h-5 font-bold" />
