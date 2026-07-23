@@ -159,13 +159,13 @@ const AdminEuromilhoesPage = () => {
       panelName="Euromilhões"
     >
       <LayoutHeader>
-        <AdminEuromilhoes token="" />
+        <AdminEuromilhoes />
       </LayoutHeader>
     </RoleGuard>
   );
 };
 
-function AdminEuromilhoes({ token }: { token: string }) {
+function AdminEuromilhoes() {
   const [grelhas, setGrelhas] = useState<GrelhaWithVencedor[]>([]);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,12 +179,8 @@ function AdminEuromilhoes({ token }: { token: string }) {
   const fetchData = useCallback(async () => {
     try {
       const [grelhasRes, jogosRes] = await Promise.all([
-        apiRequest("/api/euromilhoes/grelhas", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        apiRequest("/api/jogos?tipo=euromilhoes", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        apiRequest("/api/euromilhoes/grelhas"),
+        apiRequest("/api/jogos?tipo=euromilhoes"),
       ]);
 
       if (grelhasRes.ok) {
@@ -200,7 +196,7 @@ function AdminEuromilhoes({ token }: { token: string }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -225,7 +221,6 @@ function AdminEuromilhoes({ token }: { token: string }) {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -249,7 +244,6 @@ function AdminEuromilhoes({ token }: { token: string }) {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -276,7 +270,6 @@ function AdminEuromilhoes({ token }: { token: string }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           jogoId: formJogoId,

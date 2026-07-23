@@ -289,3 +289,23 @@ Pages:
   - Poio da Vaca: sem config extra
 - Nome do jogo: `cfg.nome || "${eventoNome} - ${tipo}"` (tipo com underscores substituídos por espaços)
 - Modal faz reset de `jogosConfigs` ao fechar e ao submeter com sucesso
+
+### Auth Migration — httpOnly Cookies (Limpeza de Token)
+- **PROBLEMA**: Muitos componentes ainda usavam `Authorization: Bearer ${token}` onde `token` era sempre `undefined` (httpOnly cookies)
+- **CAUSA**: Migração para httpOnly cookies não removeu todas as referências ao token JWT no client
+- **CORREÇÃO**: Removido `token` de todas as props e interfaces — 13 ficheiros alterados:
+  - `use-admin-dashboard-data.ts` — removido `token` prop e `[token]` dependency de `getApi`
+  - `notification-bell.tsx` — removido `token` prop, usa `apiRequest()` sem Authorization header
+  - `dashboard-header.tsx` — removido `token` prop
+  - `dashboard-tab-content.tsx` — removido `token` prop
+  - `dashboard-modals-layer.tsx` — removido `token` prop
+  - `AdminDashboard.tsx` — removido `token` de todas as chamadas
+  - `SuperAdminDashboard.tsx` — removido `token` de todas as chamadas
+  - `VencedoresTab.tsx` — removido `token` prop
+  - `vencedor-detail-modal.tsx` — hooks `useUserData`, `useAldeiaData`, `useHistoricoParticipacoes` usam `apiRequest()` sem token
+  - `resultados-externos-modal.tsx` — removido `token` prop
+  - `verificar-hash-modal.tsx` — usa `apiRequest()` sem token
+  - `create-jogo-modal.tsx` — removido `token` prop (não era usado)
+- **`getApi` fix**: Removido `next: { revalidate }` (opção server-side que causa `TypeError: Failed to fetch` no client) e `[token]` dependency
+- **REGRA**: Nunca usar `Authorization: Bearer ${token}` em componentes client — `apiRequest()` envia cookies automaticamente (same-origin)
+- **NOTA**: Ainda existem ~26 referências `Bearer` em ficheiros auxiliares (superadmin-cofre, admin-cofre, vault-pin-modal, wallet-card, profile-modal, premio-modal, analytics-dashboard, configuracoes, setup-wizard, euromilhoes admin) que precisam de migração futura

@@ -59,12 +59,11 @@ interface ProfileModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: User | null;
-  token: string;
   onUpdate: (data: { nome?: string; telefone?: string; notificacoesEmail?: boolean; aldeiaId?: string; aldeiasPermitidas?: Array<{ id: string; nome: string }> }) => Promise<void>;
 }
 
 // Hook customizado para gerenciar aldeias permitidas
-function useAldeiasPermitidas(user: User, token: string, onUpdate: ProfileModalProps['onUpdate']) {
+function useAldeiasPermitidas(user: User, onUpdate: ProfileModalProps['onUpdate']) {
   const [aldeias, setAldeias] = useState<Aldeia[]>([]);
   const [selectedAldeia, setSelectedAldeia] = useState("");
   const [loading, setLoading] = useState(false);
@@ -145,11 +144,9 @@ function useAldeiasPermitidas(user: User, token: string, onUpdate: ProfileModalP
 
 function AldeiasPermitidasSection({
   user,
-  token,
   onUpdate
 }: {
   user: User;
-  token: string;
   onUpdate: ProfileModalProps['onUpdate'];
 }) {
   const {
@@ -162,7 +159,7 @@ function AldeiasPermitidasSection({
     permittedAldeias,
     handleAddAldeia,
     handleRemoveAldeia,
-  } = useAldeiasPermitidas(user, token, onUpdate);
+  } = useAldeiasPermitidas(user, onUpdate);
 
   return (
     <div className="space-y-3">
@@ -255,7 +252,7 @@ function AldeiasPermitidasSection({
   );
 }
 
-export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: ProfileModalProps) {
+export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     telefone: "",
@@ -318,8 +315,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
       const res = await apiRequest("/api/users/password", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           passwordAtual: passwordData.atual,
@@ -342,7 +338,7 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
     } finally {
       setPasswordLoading(false);
     }
-  }, [passwordData, token]);
+  }, [passwordData]);
 
   if (!user) return null;
 
@@ -424,7 +420,6 @@ export function ProfileModal({ open, onOpenChange, user, token, onUpdate }: Prof
               </p>
               <AldeiasPermitidasSection
                 user={user}
-                token={token}
                 onUpdate={onUpdate}
               />
             </div>

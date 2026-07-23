@@ -39,7 +39,6 @@ import {
 import { StatCard } from "@/components/ui/StatCard";
 
 interface DashboardAnalyticsProps {
-  token: string;
   aldeiaId?: string;
 }
 
@@ -58,17 +57,15 @@ interface StatsData {
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f97316", "#eab308"];
 
-export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps) {
+export function DashboardAnalytics({ aldeiaId }: DashboardAnalyticsProps) {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
 
   useEffect(() => {
-    if (token) {
-      fetchStats();
-    }
-  }, [token, aldeiaId]);
+    fetchStats();
+  }, [aldeiaId]);
 
   const fetchStats = async (inicio?: string, fim?: string) => {
     setLoading(true);
@@ -78,9 +75,7 @@ export function DashboardAnalytics({ token, aldeiaId }: DashboardAnalyticsProps)
       if (inicio) params.set('dataInicio', inicio);
       if (fim) params.set('dataFim', fim);
       
-      const res = await fetch(`/api/dashboard/stats?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`/api/dashboard/stats?${params.toString()}`);
       if (res.ok) {
         const json = await res.json();
         setStats(json.data);

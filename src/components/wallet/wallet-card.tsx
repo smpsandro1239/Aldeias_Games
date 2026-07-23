@@ -23,11 +23,9 @@ interface Transaction {
   createdAt: string;
 }
 
-interface WalletCardProps {
-  token: string;
-}
+interface WalletCardProps {}
 
-export function WalletCard({ token }: WalletCardProps) {
+export function WalletCard({}: WalletCardProps) {
   const [data, setData] = useState<{ 
     saldo: number; 
     transacoes: Transaction[]; 
@@ -39,9 +37,7 @@ export function WalletCard({ token }: WalletCardProps) {
   const fetchWallet = async () => {
     setLoading(true);
     try {
-      const res = await apiRequest("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiRequest("/api/wallet");
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -55,7 +51,7 @@ export function WalletCard({ token }: WalletCardProps) {
 
   useEffect(() => {
     fetchWallet();
-  }, [token]);
+  }, []);
 
   if (loading && !data) {
     return (

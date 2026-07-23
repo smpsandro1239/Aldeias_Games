@@ -32,7 +32,6 @@ interface SetupWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete: () => void;
-  token: string;
   aldeiaId?: string;
 }
 
@@ -85,7 +84,7 @@ const TIPOS_JOGO = [
   { id: "raspadinha", label: "Raspadinha", desc: "Cartões instantâneos" },
 ];
 
-export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }: SetupWizardProps) {
+export function SetupWizard({ open, onOpenChange, onComplete, aldeiaId }: SetupWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   
@@ -156,7 +155,6 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(aldeiaData),
       });
@@ -173,7 +171,6 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...eventoData,
@@ -194,7 +191,6 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...jogoData,
@@ -214,7 +210,6 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           nome: jogoData.premioNome,
@@ -230,7 +225,6 @@ export function SetupWizard({ open, onOpenChange, onComplete, token, aldeiaId }:
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               ...v,

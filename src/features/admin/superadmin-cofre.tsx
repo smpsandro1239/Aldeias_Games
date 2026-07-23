@@ -52,8 +52,6 @@ export function SuperAdminCofre() {
   const [search, setSearch] = useState("");
   const [confirmDepId, setConfirmDepId] = useState<string | null>(null);
 
-  const getToken = useCallback(() => "", []);
-
   const fetchData = useCallback(async () => {
     try {
       const res = await apiRequest("/api/superadmin/cofre");
@@ -78,8 +76,7 @@ export function SuperAdminCofre() {
       const res = await apiRequest(`/api/cofre/pedido-deposito/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ acao: "confirmar" })
       });

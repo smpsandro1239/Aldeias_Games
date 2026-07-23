@@ -63,7 +63,6 @@ interface PremioModalProps {
   premio?: Premio | null;
   aldeiaId: string;
   jogoId?: string;
-  token: string;
   onSave?: (premio: Premio) => void;
   onDelete?: (id: string) => void;
 }
@@ -112,7 +111,6 @@ export function PremioModal({
   premio,
   aldeiaId,
   jogoId,
-  token,
   onSave,
   onDelete
 }: PremioModalProps) {
@@ -198,8 +196,7 @@ export function PremioModal({
       const res = await apiRequest(url, {
         method,
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(premioData),
       });
@@ -218,7 +215,7 @@ export function PremioModal({
     } finally {
       setSaving(false);
     }
-  }, [formData, validateForm, premio?.id, token, onSave, onOpenChange, aldeiaId, jogoId]);
+  }, [formData, validateForm, premio?.id, onSave, onOpenChange, aldeiaId, jogoId]);
 
   const handleDelete = useCallback(async () => {
     if (!premio?.id) return;
@@ -228,9 +225,6 @@ export function PremioModal({
     try {
       const res = await apiRequest(`/api/premios/${premio.id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (res.ok) {
@@ -247,7 +241,7 @@ export function PremioModal({
     } finally {
       setDeleting(false);
     }
-  }, [premio?.id, token, onDelete, onOpenChange]);
+  }, [premio?.id, onDelete, onOpenChange]);
 
   return (
     <>

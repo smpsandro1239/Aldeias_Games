@@ -88,7 +88,6 @@ export function AdminCofre() {
   const [rejectLevId, setRejectLevId] = useState<string | null>(null);
   const [rejectLevMotivo, setRejectLevMotivo] = useState("");
 
-  const getToken = useCallback(() => "", []);
   const getAldeiaId = useCallback(() => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -137,8 +136,7 @@ export function AdminCofre() {
       const res = await apiRequest(`/api/cofre/pedido-deposito/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ acao: "confirmar" })
       });
@@ -160,8 +158,7 @@ export function AdminCofre() {
       const res = await apiRequest(`/api/cofre/pedido-deposito/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ acao: "rejeitar", observacoes: motivo })
       });
@@ -237,8 +234,7 @@ export function AdminCofre() {
       const res = await apiRequest("/api/cofre/levantamento", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           valor,
@@ -272,8 +268,7 @@ export function AdminCofre() {
       const res = await apiRequest(`/api/cofre/levantamento/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ acao: "confirmar" })
       });
@@ -294,8 +289,7 @@ export function AdminCofre() {
       const res = await apiRequest(`/api/cofre/levantamento/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ acao: "rejeitar", observacoes: motivo })
       });

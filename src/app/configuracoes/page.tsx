@@ -88,10 +88,7 @@ export default function ConfiguracoesPage() {
 
   const fetchAldeia = async (aldeiaId: string) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/aldeias/${aldeiaId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const response = await fetch(`/api/aldeias/${aldeiaId}`);
       if (!response.ok) {
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
@@ -175,12 +172,10 @@ export default function ConfiguracoesPage() {
     
     setSaving(true);
     try {
-      const token = localStorage.getItem("token");
       const response = await fetch(`/api/aldeias/${aldeia.id}`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           permitirStripe: formData.permitirStripe,

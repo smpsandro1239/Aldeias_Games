@@ -45,24 +45,17 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       setIsSuperAdmin(user.role === "super_admin");
 
-      const token = localStorage.getItem("token");
-      if (token) {
-        apiRequest("/api/users/vault-pin", {
-          headers: { Authorization: `Bearer ${token}` },
+      apiRequest("/api/users/vault-pin")
+        .then((res) => {
+          if (!res.ok) throw new Error("Erro");
+          return res.json();
         })
-          .then((res) => {
-            if (!res.ok) throw new Error("Erro");
-            return res.json();
-          })
-          .then((d) => {
-            setPinEnabled(d.data?.vaultPinEnabled ?? false);
-            if (!d.data?.vaultPinEnabled) setMode("setup");
-          })
-          .catch(() => setPinEnabled(false))
-          .finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
+        .then((d) => {
+          setPinEnabled(d.data?.vaultPinEnabled ?? false);
+          if (!d.data?.vaultPinEnabled) setMode("setup");
+        })
+        .catch(() => setPinEnabled(false))
+        .finally(() => setLoading(false));
     }
   }, [open]);
 
@@ -81,12 +74,10 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
     }
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
       const res = await apiRequest("/api/users/vault-pin", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ action: "setup", pin, confirmPin, password }),
       });
@@ -115,12 +106,10 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
     }
     setVerifying(true);
     try {
-      const token = localStorage.getItem("token");
       const res = await apiRequest("/api/users/vault-pin", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ action: "verify", pin }),
       });

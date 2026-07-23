@@ -363,7 +363,7 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           <p className="text-muted-foreground mt-2 text-sm md:text-base">Participa nos jogos e tenta a tua sorte</p>
         </div>
         <div className="md:col-span-1">
-          <WalletCard token={token} />
+           <WalletCard />
         </div>
       </div>
 
