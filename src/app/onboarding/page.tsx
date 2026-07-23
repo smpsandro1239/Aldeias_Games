@@ -2,14 +2,22 @@
 
 import type { User } from '@/hooks/use-auth';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
+
+function getDashboardPath(role?: string) {
+  switch (role) {
+    case 'super_admin': return '/superadmindashboard';
+    case 'aldeia_admin': return '/admindashboard';
+    case 'vendedor': return '/vendedordashboard';
+    default: return '/clientedashboard';
+  }
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -20,13 +28,15 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // If user already completed onboarding, redirect to dashboard
     if (user?.onboardingCompleted) {
-      const role = user.role;
-      if (role === 'super_admin') router.push('/admin');
-      else if (role === 'aldeia_admin') router.push('/aldeia/dashboard');
-      else if (role === 'vendedor') router.push('/vendedor/dashboard');
-      else router.push('/jogador/dashboard');
+      router.replace(getDashboardPath(user.role));
+    }
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!user && typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      if (!stored) router.replace('/');
     }
   }, [user, router]);
 
@@ -36,20 +46,13 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      // Update user with onboarding info
       const updateData: Partial<User> = {
         nome: nome.trim(),
-        telefone: telefone.trim() || null,
+        telefone: telefone.trim() || undefined,
         onboardingCompleted: true,
       };
       await updateUser(updateData);
-
-      // Redirect to appropriate dashboard based on role
-      const role = user?.role;
-      if (role === 'super_admin') router.push('/admin');
-      else if (role === 'aldeia_admin') router.push('/aldeia/dashboard');
-      else if (role === 'vendedor') router.push('/vendedor/dashboard');
-      else router.push('/jogador/dashboard');
+      router.replace(getDashboardPath(user?.role));
     } catch (err) {
       console.error('Onboarding error:', err);
       setError('Erro ao salvar informações. Por favor, tente novamente.');
@@ -58,20 +61,30 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleSkip = async () => {
+    try {
+      await updateUser({ onboardingCompleted: true } as Partial<User>);
+    } catch {}
+    router.replace(getDashboardPath(user?.role));
+  };
+
   if (!user) {
-    router.push('/');
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-muted-foreground">A carregar...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="pb-6">
           <CardTitle className="text-2xl font-bold text-center">
             Bem-vindo à Aldeias Games!
           </CardTitle>
           <CardDescription className="text-center text-muted-foreground">
-            Vamos completar seu perfil para começar.
+            Vamos completar o teu perfil para começar.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -82,7 +95,7 @@ export default function OnboardingPage() {
                 id="nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                placeholder="Seu nome completo"
+                placeholder="O teu nome completo"
                 required
                 disabled={isLoading}
               />
@@ -100,7 +113,7 @@ export default function OnboardingPage() {
             </div>
 
             {error && (
-              <div className="rounded-md bg-red-50 p-4 text-sm text-red-600">
+              <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -110,21 +123,13 @@ export default function OnboardingPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Salvando...' : 'Continuar'}
+              {isLoading ? 'A guardar...' : 'Continuar'}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
               <button
                 type="button"
-                onClick={() => {
-                  // Skip onboarding
-                  updateUser({ onboardingCompleted: true });
-                  const role = user?.role;
-                  if (role === 'super_admin') router.push('/admin');
-                  else if (role === 'aldeia_admin') router.push('/aldeia/dashboard');
-                  else if (role === 'vendedor') router.push('/vendedor/dashboard');
-                  else router.push('/jogador/dashboard');
-                }}
+                onClick={handleSkip}
                 className="underline hover:text-foreground/80"
               >
                 Pular por agora

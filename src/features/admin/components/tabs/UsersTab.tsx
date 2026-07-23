@@ -12,6 +12,7 @@ import {
   KeyRound,
   Percent
 } from "lucide-react";
+import { toast } from "sonner";
 import { User } from "../types";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -66,7 +67,6 @@ export function UsersTab({
   }, [userSearch]);
 
   const handleResetPin = async (userId: string, userName: string) => {
-    if (!confirm(`Repor o PIN do cofre de ${userName}? O utilizador terá de configurar um novo PIN.`)) return;
     setResettingPinUserId(userId);
     try {
       const res = await fetch("/api/users/vault-pin", {
@@ -76,13 +76,13 @@ export function UsersTab({
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Erro ao repor PIN");
+        toast.error(data.error || "Erro ao repor PIN");
         return;
       }
-      alert(data.message || "PIN reposto com sucesso");
-      window.location.reload();
+      toast.success(data.message || `PIN de ${userName} reposto com sucesso`);
+      fetchUsers(userPage, userSearch);
     } catch {
-      alert("Erro ao repor PIN");
+      toast.error("Erro ao repor PIN");
     } finally {
       setResettingPinUserId(null);
     }
@@ -98,12 +98,13 @@ export function UsersTab({
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Erro ao alterar comissões");
+        toast.error(data.error || "Erro ao alterar comissões");
         return;
       }
-      window.location.reload();
+      toast.success(current ? "Comissões desligadas" : "Comissões ligadas");
+      fetchUsers(userPage, userSearch);
     } catch {
-      alert("Erro ao alterar comissões");
+      toast.error("Erro ao alterar comissões");
     } finally {
       setTogglingComissaoUserId(null);
     }

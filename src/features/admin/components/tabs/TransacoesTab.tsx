@@ -54,7 +54,7 @@ export function TransacoesTab({ transacoes }: TransacoesTabProps) {
           </Label>
           <Input
             id="transacaoSearch"
-            placeholder="Pesquisar por tipo, descrição, usuário ou método..."
+            placeholder="Pesquisar por tipo, descrição, utilizador ou método..."
             value={transacaoSearch}
             onChange={(e) => {
               setTransacaoSearch(e.target.value);

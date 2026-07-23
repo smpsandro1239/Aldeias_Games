@@ -75,9 +75,10 @@ export function BottomNav({ role, currentPath }: BottomNavProps) {
   
   const items = role ? (navItems[role as keyof typeof navItems] || navItems.default) : navItems.default;
 
-  const handleNavClick = (path: string, label: string) => {
+  const handleNavClick = async (path: string, label: string) => {
     if (label === "SAIR") {
-      localStorage.clear();
+      try { await fetch("/api/auth/logout", { method: "POST" }); } catch {}
+      localStorage.removeItem("user");
       router.push("/");
     } else {
       router.push(path);

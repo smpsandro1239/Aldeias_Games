@@ -203,7 +203,14 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
   };
 
   const proceedToJogo = (jogo: Jogo) => {
-    router.push(`/jogos`);
+    const tipoRoute: Record<string, string> = {
+      rifa: "/jogos/rifa",
+      raspadinha: "/jogos/raspadinha-premium",
+      euromilhoes: "/jogos/euromilhoes",
+      poio_da_vaca: "/jogos/poio-da-vaca",
+    };
+    const route = tipoRoute[jogo.tipo] || "/jogos";
+    router.push(`${route}?jogoId=${jogo.id}`);
   };
 
   // Filtros e paginação
@@ -363,10 +370,10 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {[
-          { icon: Ticket, label: "Participações", value: participacoes.length, color: "secondary" },
-          { icon: CreditCard, label: "Total Investido", value: formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0)), color: "primary" },
-          { icon: Trophy, label: "Prémios Ganhos", value: formatCurrency(walletStats?.historicoPremios?.total || 0), color: "tertiary" },
-          { icon: Gift, label: "Cashback", value: formatCurrency(walletStats?.transacoes?.filter((t: any) => t.tipo === 'cashback').reduce((acc: number, t: any) => acc + t.valor, 0) || 0), color: "green-500" },
+          { icon: Ticket, label: "Participações", value: participacoes.length, bgClass: "bg-secondary/20", textClass: "text-secondary" },
+          { icon: CreditCard, label: "Total Investido", value: formatCurrency(participacoes.reduce((sum, p) => sum + p.valorPago, 0)), bgClass: "bg-primary/20", textClass: "text-primary" },
+          { icon: Trophy, label: "Prémios Ganhos", value: formatCurrency(walletStats?.historicoPremios?.total || 0), bgClass: "bg-amber-500/20", textClass: "text-amber-500" },
+          { icon: Gift, label: "Cashback", value: formatCurrency(walletStats?.transacoes?.filter((t: any) => t.tipo === 'cashback').reduce((acc: number, t: any) => acc + t.valor, 0) || 0), bgClass: "bg-green-500/20", textClass: "text-green-500" },
         ].map((stat, i) => (
           <Card
             key={i}
@@ -374,8 +381,8 @@ export function ClienteDashboard({ token }: ClienteDashboardProps) {
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground truncate">{stat.label}</CardTitle>
-              <div className={`p-1.5 md:p-2 rounded-lg bg-${stat.color}/20 shrink-0`}>
-                <stat.icon className={`h-3 w-3 md:h-4 md:w-4 text-${stat.color}`} />
+              <div className={`p-1.5 md:p-2 rounded-lg ${stat.bgClass} shrink-0`}>
+                <stat.icon className={`h-3 w-3 md:h-4 md:w-4 ${stat.textClass}`} />
               </div>
             </CardHeader>
             <CardContent>
