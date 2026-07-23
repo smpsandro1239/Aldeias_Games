@@ -247,3 +247,45 @@ Pages:
   - `levantamento_confirmado` — quando levantamento é aprovado (notifica criador + todos os vendedores da aldeia)
   - `levantamento_rejeitado` — quando levantamento é rejeitado (notifica criador)
 - Antes usava `tipo: 'sistema'` para tudo — agora cada estado tem o seu tipo para filtragem e UI
+
+### Jogos Page — Agrupamento por Aldeia → Evento → Jogos
+- `/jogos/page.tsx` — reescrita com agrupamento hierárquico accordion
+- Fluxo: `GET /api/jogos?ativos=true` → agrupa por `evento.aldeia.id` → dentro de cada aldeia, agrupa por `evento.id`
+- UI: Aldeia (chevron expand/collapse) → Evento (chevron expand/collapse) → Lista de Jogos (cards clicáveis)
+- Aldeias são expandidas por padrão no primeiro load; eventos começam colapsados
+- Cada jogo card mostra: ícone por tipo, nome, tipo, preço, stock disponível
+- Click num jogo navega para a rota correta: `/jogos/{tipo}?id={jogo.id}`
+- `GAME_ROUTES` mapping: `raspadinha` → `/jogos/raspadinha-premium`, `rifa` → `/jogos/rifa`, `euromilhoes` → `/jogos/euromilhoes`, `poio_da_vaca` → `/jogos/poio-da-vaca`
+- Game analytics tracking via `useGameAnalytics` hook em cada click
+- Componentes usados: `LayoutHeader` (wrapper), ícones lucide-react (MapPin, Calendar, ChevronDown/Right)
+
+### API /api/jogos/[id] — Configuração Segura
+- **ANTES**: Endpoint retornava jogo SEM `configuracao` (stripped para segurança)
+- **AGORA**: Retorna `configuracao` parsed com campos seguros — `odds` e `probabilidadeVitoria` são removidos
+- Campos mantidos: `dataSorteio`, `horaSorteio`, `localSorteio`, `numeroInicial`, `numeroFinal`, `numeroBlocos`, `permitirStripe`, `valorPremios`, `premios`, etc.
+- Inclui `evento.aldeia` (id, nome, slug) para o frontend mostrar o nome da aldeia
+- Inclui `premios` com `valorDinheiroAlternative` para rifa mostrar prémios configurados
+- **IMPORTANTE**: Este endpoint é usado pelas páginas de jogo (rifa, raspadinha, etc.) para mostrar dados do jogo ao utilizador
+
+### Rifa — Fluxo de Confirmação (Corrigido)
+- **Bug corrigido**: Após criar participação, `jogo` não era re-fetched → stats (vendidos, angariado, participações) mostravam 0
+- **Correção**: `fetchJogo()` é chamado ANTES de `setParticipacaoConfirmada(true)` para garantir dados atualizados
+- **Bug corrigido**: API POST `/api/participacoes` retorna `{ participacao: {...} }` mas o frontend lia `data.data`
+- **Correção**: Mapeamento corrigido para `data.participacao || data.data` (fallback para compatibilidade)
+- **Bug corrigido**: "Grande Prémio" lia `jogo.premio.nome` (singular) mas API retorna `premios` (array)
+- **Correção**: Usa `jogo.premios[0].nome` como fallback para `jogo.premio.nome`
+- **Bug corrigido**: "Ver Prova de Jogo" não funcionava porque `participacaoCriada` era `undefined` (mapping bug)
+- **Correção**: Com mapeamento correto, `participacaoCriada.id` agora é válido e modal `ProvaJogoModal` abre corretamente
+
+### Event Creation — Configuração de Jogos Inline
+- `src/components/modals/create-evento-modal.tsx` — formulário de config por jogo selecionado
+- Quando um tipo de jogo é selecionado, aparecem campos: Nome, Preço (€), Stock Inicial, Nº Final (só rifa)
+- `jogosConfigs` state armazena config por tipo: `{ rifa: { nome, preco, stockInicial, numeroFinal } }`
+- Configs são passadas via `submitData.jogosConfigs` para `handleSaveEvento`
+- `src/features/admin/hooks/use-admin-crud-handlers.tsx` — `handleSaveEvento` lê `jogosConfigs` e usa nos defaults:
+  - Rifa: `numeroFinal` do config, `preco` e `stockInicial` do config
+  - Raspadinha: defaults (`premios: []`, `probabilidadeVitoria: 0.3`)
+  - Euromilhões: defaults (`numeros: 5`, `estrelas: 2`)
+  - Poio da Vaca: sem config extra
+- Nome do jogo: `cfg.nome || "${eventoNome} - ${tipo}"` (tipo com underscores substituídos por espaços)
+- Modal faz reset de `jogosConfigs` ao fechar e ao submeter com sucesso

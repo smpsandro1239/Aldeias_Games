@@ -68,7 +68,7 @@ export default function AdminDashboard({
     setFiltroEventoId,
     setEventoModalOpen,
     fetchData,
-  } = useAdminDashboardData({ aldeiaId, userRole, token, aldeia });
+  } = useAdminDashboardData({ aldeiaId, userRole, aldeia });
 
   const [jogoModalOpen, setJogoModalOpen] = useState(false);
   const [aldeiaModalOpen, setAldeiaModalOpen] = useState(false);
@@ -157,7 +157,6 @@ export default function AdminDashboard({
       <DashboardHeader
         userRole={userRole}
         aldeia={aldeia}
-        token={token}
         onOpenEventoModal={() => { setSelectedEvento(null); setEventoModalOpen(true); }}
         onOpenAldeiaModal={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}
         onProcessRecurring={handleProcessRecurringEvents}
@@ -177,7 +176,6 @@ export default function AdminDashboard({
 
         <DashboardTabContent
           activeTab={activeTab}
-          token={token}
           aldeiaId={aldeiaId}
           userRole={userRole}
           stats={stats}
@@ -217,7 +215,6 @@ export default function AdminDashboard({
       </Tabs>
 
       <DashboardModalsLayer
-        token={token}
         userRole={userRole}
         aldeiaId={aldeiaId}
         aldeia={aldeia}

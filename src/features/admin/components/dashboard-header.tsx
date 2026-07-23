@@ -7,7 +7,6 @@ import { NotificationBell } from "@/components/notification-bell";
 interface DashboardHeaderProps {
   userRole: string;
   aldeia?: { nome: string };
-  token: string;
   onOpenEventoModal: () => void;
   onOpenAldeiaModal: () => void;
   onProcessRecurring: () => void;
@@ -17,7 +16,6 @@ interface DashboardHeaderProps {
 export function DashboardHeader({
   userRole,
   aldeia,
-  token,
   onOpenEventoModal,
   onOpenAldeiaModal,
   onProcessRecurring,
@@ -41,7 +39,7 @@ export function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-3">
-        <NotificationBell token={token} />
+        <NotificationBell />
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:w-auto">
           {userRole === "super_admin" && (
             <Button variant="outline" onClick={onOpenAldeiaModal}>

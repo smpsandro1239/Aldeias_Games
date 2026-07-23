@@ -18,7 +18,7 @@ interface Notificacao {
   createdAt: string;
 }
 
-export function NotificationBell({ token }: { token: string }) {
+export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [naoLidas, setNaoLidas] = useState(0);
@@ -26,9 +26,7 @@ export function NotificationBell({ token }: { token: string }) {
 
   const fetchNotificacoes = useCallback(async () => {
     try {
-      const res = await apiRequest("/api/notificacoes?limit=50", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiRequest("/api/notificacoes?limit=50");
       if (res.ok) {
         const data = await res.json();
         setNotificacoes(data.data || []);
@@ -37,7 +35,7 @@ export function NotificationBell({ token }: { token: string }) {
     } catch {
       // Silently fail on polling errors
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchNotificacoes();
@@ -51,7 +49,6 @@ export function NotificationBell({ token }: { token: string }) {
     try {
       const res = await apiRequest(`/api/notificacoes/${id}`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         setNotificacoes(prev =>
@@ -68,7 +65,6 @@ export function NotificationBell({ token }: { token: string }) {
     try {
       const res = await apiRequest("/api/notificacoes", {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
@@ -83,7 +79,6 @@ export function NotificationBell({ token }: { token: string }) {
     try {
       const res = await apiRequest(`/api/notificacoes/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const removida = notificacoes.find(n => n.id === id);

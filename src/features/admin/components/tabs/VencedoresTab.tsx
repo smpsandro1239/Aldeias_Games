@@ -20,7 +20,6 @@ interface VencedoresTabProps {
   setSelectedPremio: (vencedor: Vencedor | null) => void;
   setConvertPrizeOpen: (open: boolean) => void;
   setConfirmEntregaOpen: (open: boolean) => void;
-  token: string;
 }
 
 export function VencedoresTab({
@@ -28,7 +27,6 @@ export function VencedoresTab({
   setSelectedPremio,
   setConvertPrizeOpen,
   setConfirmEntregaOpen,
-  token,
 }: VencedoresTabProps) {
   const [vencedorSearch, setVencedorSearch] = useState("");
   const [vencedorPage, setVencedorPage] = useState(1);
@@ -180,7 +178,6 @@ export function VencedoresTab({
         open={detailOpen}
         onOpenChange={setDetailOpen}
         vencedor={selectedVencedor}
-        token={token}
         onConvertPrize={(v) => {
           setSelectedPremio(v);
           setConvertPrizeOpen(true);

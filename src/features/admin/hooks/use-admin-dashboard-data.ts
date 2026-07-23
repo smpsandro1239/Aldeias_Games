@@ -18,7 +18,6 @@ import type {
 interface UseAdminDashboardDataProps {
   aldeiaId?: string;
   userRole?: string;
-  token?: string;
   aldeia?: {
     id: string;
     nome: string;
@@ -60,7 +59,6 @@ export interface UseAdminDashboardDataReturn {
 export function useAdminDashboardData({
   aldeiaId,
   userRole = "aldeia_admin",
-  token,
   aldeia,
 }: UseAdminDashboardDataProps): UseAdminDashboardDataReturn {
   const [loading, setLoading] = useState(true);
@@ -91,11 +89,9 @@ export function useAdminDashboardData({
   const [selectedEventoIdParaJogo, setSelectedEventoIdParaJogo] = useState("");
   const [filtroEventoId, setFiltroEventoId] = useState<string | null>(null);
 
-  const getApi = useCallback(async (url: string, revalidate: number = 30) => {
+  const getApi = useCallback(async (url: string) => {
     try {
-      const res = await apiRequest(url, {
-        next: { revalidate },
-      });
+      const res = await apiRequest(url);
       if (res.ok) {
         const json = await res.json();
         return json.data ?? json;
@@ -105,7 +101,7 @@ export function useAdminDashboardData({
       console.error("Erro na requisição:", url, error);
       return null;
     }
-  }, [token]);
+  }, []);
 
   const fetchPedidosPendentes = useCallback(async () => {
     try {
@@ -140,11 +136,11 @@ export function useAdminDashboardData({
       const q = aldeiaId ? `?aldeiaId=${aldeiaId}` : "";
 
       const [st, ev, jg, us, vencedoresData] = await Promise.all([
-        getApi(`/api/dashboard/stats${q}`, 20),
-        getApi(`/api/eventos${q}`, 30),
-        getApi(`/api/jogos${q}`, 30),
-        getApi(`/api/users${q}`, 40),
-        getApi(`/api/participacoes${q}${q ? '&' : '?'}ganhador=true`, 30),
+        getApi(`/api/dashboard/stats${q}`),
+        getApi(`/api/eventos${q}`),
+        getApi(`/api/jogos${q}`),
+        getApi(`/api/users${q}`),
+        getApi(`/api/participacoes${q}${q ? '&' : '?'}ganhador=true`),
       ]);
 
       setStats(st || null);
@@ -155,9 +151,9 @@ export function useAdminDashboardData({
 
       if (userRole === "super_admin") {
         const [al, tr, lg] = await Promise.all([
-          getApi(`/api/aldeias`, 60),
-          getApi(`/api/admin/transacoes`, 40),
-          getApi(`/api/admin/logs`, 60),
+          getApi(`/api/aldeias`),
+          getApi(`/api/admin/transacoes`),
+          getApi(`/api/admin/logs`),
         ]);
         setAldeias(al?.aldeias ?? al ?? []);
         setTransacoes(tr || []);
@@ -165,7 +161,7 @@ export function useAdminDashboardData({
       }
 
       if (userRole === "aldeia_admin") {
-        const vs = await getApi(`/api/admin/vendedores-stats`, 60);
+        const vs = await getApi(`/api/admin/vendedores-stats`);
         setVendedoresStats(vs || []);
       }
 

@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Copy, Search, Award, User, Calendar, Hash } from "lucide-react";
 import { toast } from "sonner";
+import { apiRequest } from "@/lib/api-client";
 
 interface VerificarHashModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  token: string;
 }
 
 interface VerificacaoResult {
@@ -30,7 +30,7 @@ interface VerificacaoResult {
   mensagem: string;
 }
 
-export function VerificarHashModal({ open, onOpenChange, token }: VerificarHashModalProps) {
+export function VerificarHashModal({ open, onOpenChange }: VerificarHashModalProps) {
   const [hash, setHash] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<VerificacaoResult | null>(null);
@@ -43,11 +43,10 @@ export function VerificarHashModal({ open, onOpenChange, token }: VerificarHashM
 
     setLoading(true);
     try {
-      const res = await fetch("/api/participacoes/verificar", {
+      const res = await apiRequest("/api/participacoes/verificar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ hash: hash.trim() }),
       });

@@ -41,7 +41,6 @@ const AuditoriaTab = lazy(() =>
 
 interface DashboardTabContentProps {
   activeTab: string;
-  token: string;
   aldeiaId?: string;
   userRole: string;
   stats: Stats | null;
@@ -81,7 +80,6 @@ interface DashboardTabContentProps {
 
 export function DashboardTabContent({
   activeTab,
-  token,
   aldeiaId,
   userRole,
   stats,
@@ -135,7 +133,7 @@ export function DashboardTabContent({
 
       <TabsContent value="analytics">
         <Suspense fallback={<div className="flex items-center justify-center p-8 text-muted-foreground">A carregar analytics...</div>}>
-          <DashboardAnalytics token={token} aldeiaId={aldeiaId} />
+          <DashboardAnalytics aldeiaId={aldeiaId} />
         </Suspense>
       </TabsContent>
 
@@ -195,7 +193,6 @@ export function DashboardTabContent({
           setSelectedPremio={setSelectedPremio}
           setConvertPrizeOpen={setConvertPrizeOpen}
           setConfirmEntregaOpen={setConfirmEntregaOpen}
-          token={token}
         />
       </TabsContent>
 

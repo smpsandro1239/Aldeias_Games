@@ -135,7 +135,6 @@ interface CreateJogoModalProps {
   eventoId?: string;
   initialData?: JogoData;
   userRole?: string;
-  token?: string;
   aldeiaId?: string;
   metodosPagamentoDefault?: string[];
 }
@@ -604,7 +603,6 @@ export function CreateJogoModal({
   eventoId: propEventoId,
   initialData,
   userRole,
-  token,
   aldeiaId,
   metodosPagamentoDefault
 }: CreateJogoModalProps) {

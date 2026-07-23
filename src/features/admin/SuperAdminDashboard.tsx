@@ -70,7 +70,7 @@ export default function SuperAdminDashboard({
     eventoModalOpen, setActiveTab, setPaymentMethodsDefault,
     setSelectedEventoIdParaJogo, setFiltroEventoId,
     setEventoModalOpen, fetchData,
-  } = useAdminDashboardData({ aldeiaId, userRole, token, aldeia });
+  } = useAdminDashboardData({ aldeiaId, userRole, aldeia });
 
   const [jogoModalOpen, setJogoModalOpen] = useState(false);
   const [aldeiaModalOpen, setAldeiaModalOpen] = useState(false);
@@ -130,7 +130,7 @@ export default function SuperAdminDashboard({
             <p className="text-sm text-muted-foreground">Gestão de todas as aldeias</p>
           </div>
           <div className="flex items-center gap-2">
-            <NotificationBell token={token} />
+            <NotificationBell />
             <Button size="sm" onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
               <Plus className="h-4 w-4 mr-1" /> Aldeia
             </Button>
@@ -350,7 +350,6 @@ export default function SuperAdminDashboard({
               <TabsContent value="vencedores">
                 <VencedoresTab vencedores={vencedores} setSelectedPremio={setSelectedPremio}
                   setConvertPrizeOpen={setConvertPrizeOpen} setConfirmEntregaOpen={setConfirmEntregaOpen}
-                  token={token}
                 />
               </TabsContent>
               <TabsContent value="users">
@@ -394,7 +393,7 @@ export default function SuperAdminDashboard({
 
       {/* ===== MODALS ===== */}
       <DashboardModalsLayer
-        token={token} userRole={userRole} aldeiaId={aldeiaId} aldeia={aldeia}
+        userRole={userRole} aldeiaId={aldeiaId} aldeia={aldeia}
         aldeias={aldeias} paymentMethodsDefault={paymentMethodsDefault}
         selectedEvento={selectedEvento} selectedJogo={selectedJogo}
         selectedAldeia={selectedAldeia} selectedUser={selectedUser}

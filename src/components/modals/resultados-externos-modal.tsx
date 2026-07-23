@@ -46,23 +46,19 @@ interface SubmitResult {
 interface ResultadosExternosModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  token: string;
 }
 
-// Hook customizado para buscar jogos externos
-function useJogosExternos(open: boolean, token: string) {
+function useJogosExternos(open: boolean) {
   const [jogos, setJogos] = useState<JogoExterno[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!open || !token) return;
+    if (!open) return;
 
     const fetchJogos = async () => {
       setLoading(true);
       try {
-        const res = await apiRequest("/api/sorteios/externo", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiRequest("/api/sorteios/externo");
         if (res.ok) {
           const json = await res.json();
           setJogos(json.data || []);
@@ -75,13 +71,11 @@ function useJogosExternos(open: boolean, token: string) {
     };
 
     fetchJogos();
-  }, [open, token]);
+  }, [open]);
 
   const refetch = useCallback(async () => {
     try {
-      const res = await apiRequest("/api/sorteios/externo", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiRequest("/api/sorteios/externo");
       if (res.ok) {
         const json = await res.json();
         setJogos(json.data || []);
@@ -89,7 +83,7 @@ function useJogosExternos(open: boolean, token: string) {
     } catch (error) {
       console.error("Erro ao recarregar jogos externos:", error);
     }
-  }, [token]);
+  }, []);
 
   return { jogos, loading, refetch };
 }
@@ -97,14 +91,13 @@ function useJogosExternos(open: boolean, token: string) {
 export function ResultadosExternosModal({
   open,
   onOpenChange,
-  token,
 }: ResultadosExternosModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [tipoLoteria, setTipoLoteria] = useState<LotteryType>(LOTTERY_TYPES.EUROMILHOES);
   const [resultados, setResultados] = useState("");
   const [resultadoSubmit, setResultadoSubmit] = useState<SubmitResult | null>(null);
 
-  const { jogos, loading, refetch } = useJogosExternos(open, token);
+  const { jogos, loading, refetch } = useJogosExternos(open);
 
   const jogosNaoSorteados = useMemo(() => jogos.filter((j) => !j.sorteado), [jogos]);
   const jogosSorteados = useMemo(() => jogos.filter((j) => j.sorteado), [jogos]);
@@ -122,7 +115,6 @@ export function ResultadosExternosModal({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           tipoLoteria,
@@ -154,7 +146,7 @@ export function ResultadosExternosModal({
     } finally {
       setSubmitting(false);
     }
-  }, [resultados, tipoLoteria, token, refetch]);
+  }, [resultados, tipoLoteria, refetch]);
 
   const handleTipoLoteriaChange = useCallback((value: string) => {
     setTipoLoteria(value as LotteryType);

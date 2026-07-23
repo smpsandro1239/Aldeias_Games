@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";
+import { apiRequest } from "@/lib/api-client";
 import {
   User,
   Trophy,
@@ -97,13 +98,11 @@ interface VencedorDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vencedor: Vencedor | null;
-  token: string;
   onConvertPrize: (vencedor: Vencedor) => void;
   onEntregaPremio: (vencedor: Vencedor) => void;
 }
 
-// Hook customizado para dados do usuário
-function useUserData(userId: string | undefined, token: string, active: boolean) {
+function useUserData(userId: string | undefined, active: boolean) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -113,9 +112,7 @@ function useUserData(userId: string | undefined, token: string, active: boolean)
     const fetchUserData = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiRequest(`/api/users/${userId}`);
         if (res.ok) {
           const data = await res.json();
           setUserData(data.data || null);
@@ -128,13 +125,12 @@ function useUserData(userId: string | undefined, token: string, active: boolean)
     };
 
     fetchUserData();
-  }, [userId, token, active]);
+  }, [userId, active]);
 
   return { userData, loading: loading };
 }
 
-// Hook customizado para dados da aldeia
-function useAldeiaData(aldeiaId: string | undefined, token: string) {
+function useAldeiaData(aldeiaId: string | undefined) {
   const [aldeiaData, setAldeiaData] = useState<AldeiaData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -147,9 +143,7 @@ function useAldeiaData(aldeiaId: string | undefined, token: string) {
     const fetchAldeiaData = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/aldeias/${aldeiaId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiRequest(`/api/aldeias/${aldeiaId}`);
         if (res.ok) {
           const data = await res.json();
           setAldeiaData(data.data || null);
@@ -162,13 +156,12 @@ function useAldeiaData(aldeiaId: string | undefined, token: string) {
     };
 
     fetchAldeiaData();
-  }, [aldeiaId, token]);
+  }, [aldeiaId]);
 
   return { aldeiaData, loading: loading };
 }
 
-// Hook customizado para histórico de participações
-function useHistoricoParticipacoes(userId: string | undefined, token: string, active: boolean) {
+function useHistoricoParticipacoes(userId: string | undefined, active: boolean) {
   const [participacoes, setParticipacoes] = useState<Participacao[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -178,9 +171,7 @@ function useHistoricoParticipacoes(userId: string | undefined, token: string, ac
     const fetchHistorico = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/participacoes?userId=${userId}&page=1&limit=50`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiRequest(`/api/participacoes?userId=${userId}&page=1&limit=50`);
         if (res.ok) {
           const data = await res.json();
           setParticipacoes(data.data || []);
@@ -194,7 +185,7 @@ function useHistoricoParticipacoes(userId: string | undefined, token: string, ac
     };
 
     fetchHistorico();
-  }, [userId, token, active, participacoes.length]);
+  }, [userId, active, participacoes.length]);
 
   return { participacoes, loading };
 }
@@ -203,7 +194,6 @@ export function VencedorDetailModal({
   open,
   onOpenChange,
   vencedor,
-  token,
   onConvertPrize,
   onEntregaPremio,
 }: VencedorDetailModalProps) {
@@ -212,11 +202,10 @@ export function VencedorDetailModal({
   const [hashVerificado, setHashVerificado] = useState(false);
 
   const userId = vencedor?.user?.id || vencedor?.dadosVencedor?.userId;
-  const { userData, loading: loadingUser } = useUserData(userId, token, open && (activeTab === "perfil" || activeTab === "estatisticas"));
-  const { aldeiaData, loading: loadingAldeia } = useAldeiaData(userData?.aldeiaId, token);
+  const { userData, loading: loadingUser } = useUserData(userId, open && (activeTab === "perfil" || activeTab === "estatisticas"));
+  const { aldeiaData, loading: loadingAldeia } = useAldeiaData(userData?.aldeiaId);
   const { participacoes, loading: loadingHistorico } = useHistoricoParticipacoes(
     userId,
-    token,
     open && (activeTab === "historico" || activeTab === "estatisticas")
   );
 

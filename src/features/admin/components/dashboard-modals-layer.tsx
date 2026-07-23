@@ -28,7 +28,6 @@ import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
 
 interface DashboardModalsLayerProps {
-  token: string;
   userRole: string;
   aldeiaId?: string;
   aldeia?: { nome: string; id: string; slug: string; tipoOrganizacao: string; logoUrl?: string; metodosPagamentoDefault?: string };
@@ -84,7 +83,6 @@ interface DashboardModalsLayerProps {
 }
 
 export function DashboardModalsLayer({
-  token,
   userRole,
   aldeiaId,
   aldeia,
@@ -176,7 +174,6 @@ export function DashboardModalsLayer({
         eventoId={selectedEventoIdParaJogo}
         initialData={selectedJogo ?? undefined}
         userRole={userRole}
-        token={token}
         aldeiaId={aldeiaId}
         metodosPagamentoDefault={paymentMethodsDefault}
       />
@@ -239,13 +236,11 @@ export function DashboardModalsLayer({
       <ResultadosExternosModal
         open={resultadosExternosOpen}
         onOpenChange={setResultadosExternosOpen}
-        token={token}
       />
 
       <VerificarHashModal
         open={verificarHashOpen}
         onOpenChange={setVerificarHashOpen}
-        token={token}
       />
 
       <QRCodeGenerator
