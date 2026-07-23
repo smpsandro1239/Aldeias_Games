@@ -83,7 +83,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const nonce = (await headers()).get("x-nonce") || undefined;
-  await ensureSeeded();
+  try {
+    await ensureSeeded();
+  } catch (e) {
+    console.error("[layout] ensureSeeded failed — rendering without seed:", e);
+  }
 
   return (
     <html lang="pt-PT" suppressHydrationWarning nonce={nonce}>

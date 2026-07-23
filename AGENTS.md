@@ -308,4 +308,5 @@ Pages:
   - `create-jogo-modal.tsx` — removido `token` prop (não era usado)
 - **`getApi` fix**: Removido `next: { revalidate }` (opção server-side que causa `TypeError: Failed to fetch` no client) e `[token]` dependency
 - **REGRA**: Nunca usar `Authorization: Bearer ${token}` em componentes client — `apiRequest()` envia cookies automaticamente (same-origin)
-- **NOTA**: Ainda existem ~26 referências `Bearer` em ficheiros auxiliares (superadmin-cofre, admin-cofre, vault-pin-modal, wallet-card, profile-modal, premio-modal, analytics-dashboard, configuracoes, setup-wizard, euromilhoes admin) que precisam de migração futura
+- **MIGRAÇÃO COMPLETA**: Todos os 23 ficheiros client migrados — zero referências `Bearer` restantes em `.tsx`
+- Ficheiros migrados: use-admin-dashboard-data, notification-bell, dashboard-header, dashboard-tab-content, dashboard-modals-layer, AdminDashboard, SuperAdminDashboard, VencedoresTab, vencedor-detail-modal, resultados-externos-modal, verificar-hash-modal, create-jogo-modal, superadmin-cofre, admin-cofre, vault-pin-modal, wallet-card, profile-modal, premio-modal, analytics-dashboard, configuracoes, setup-wizard, euromilhoes admin, cliente-dashboard
