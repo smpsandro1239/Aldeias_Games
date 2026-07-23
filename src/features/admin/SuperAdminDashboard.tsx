@@ -360,12 +360,16 @@ export default function SuperAdminDashboard({
               </TabsContent>
               <TabsContent value="aldeias">
                 <Suspense fallback={<div className="p-8 text-center text-muted-foreground">A carregar...</div>}>
-                  <AldeiasTab aldeias={aldeias} eventos={eventos}
+                  <AldeiasTab aldeias={aldeias} eventos={eventos} jogos={jogos}
                     setSelectedAldeia={setSelectedAldeia}
                     setAldeiaModalOpen={setAldeiaModalOpen}
                     setSelectedEvento={setSelectedEvento}
                     setEventoModalOpen={setEventoModalOpen}
                     setEventoModalAldeiaId={setEventoModalAldeiaId}
+                    setSelectedJogo={handleSetSelectedJogo}
+                    setJogoModalOpen={setJogoModalOpen}
+                    setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
+                    onToggleJogoEstado={handleToggleJogoEstado}
                     requestDelete={requestDelete}
                   />
                 </Suspense>

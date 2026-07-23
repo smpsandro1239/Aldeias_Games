@@ -17,6 +17,7 @@ export { TransacoesTab } from "./tabs/TransacoesTab";
 export { AuditoriaTab } from "./tabs/AuditoriaTab";
 export { ComissoesTab } from "./tabs/ComissoesTab";
 export { VerificarTab } from "./tabs/VerificarTab";
+export { MinhaAldeiaTab } from "./tabs/MinhaAldeiaTab";
 
 // Tipos
 export type {

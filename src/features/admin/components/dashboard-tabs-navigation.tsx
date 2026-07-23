@@ -45,12 +45,15 @@ export function DashboardTabsNavigation({
           </TabsTrigger>
           <TabsTrigger value="eventos" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
             <Calendar className="h-4 w-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Eventos</span>
+            <span className="hidden sm:inline">{userRole === "aldeia_admin" ? "Minha Aldeia" : "Eventos"}</span>
+            <span className="sm:hidden">{userRole === "aldeia_admin" ? "Aldeia" : "Eventos"}</span>
           </TabsTrigger>
-          <TabsTrigger value="jogos" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
-            <Gamepad2 className="h-4 w-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Jogos</span>
-          </TabsTrigger>
+          {userRole !== "aldeia_admin" && (
+            <TabsTrigger value="jogos" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
+              <Gamepad2 className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Jogos</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="vencedores" className="flex-shrink-0 text-sm md:text-base px-3 md:px-4 py-2">
             <Trophy className="h-4 w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Vencedores</span>

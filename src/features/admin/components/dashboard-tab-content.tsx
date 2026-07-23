@@ -11,6 +11,7 @@ import {
   UsersTab,
   ComissoesTab,
   VerificarTab,
+  MinhaAldeiaTab,
 } from ".";
 
 import type {
@@ -139,15 +140,32 @@ export function DashboardTabContent({
       </TabsContent>
 
       <TabsContent value="eventos">
-        <EventosTab
-          eventos={eventos}
-          setSelectedEvento={setSelectedEvento}
-          setEventoModalOpen={setEventoModalOpen}
-          setJogoModalOpen={setJogoModalOpen}
-          requestDelete={requestDelete}
-          getEstadoBadge={getEstadoBadge}
-          onVerJogos={handleVerJogos}
-        />
+        {userRole === "aldeia_admin" ? (
+          <MinhaAldeiaTab
+            aldeias={aldeias}
+            eventos={eventos}
+            jogos={jogos}
+            setSelectedAldeia={setSelectedAldeia}
+            setAldeiaModalOpen={setAldeiaModalOpen}
+            setSelectedEvento={setSelectedEvento}
+            setEventoModalOpen={setEventoModalOpen}
+            setSelectedJogo={setSelectedJogo}
+            setJogoModalOpen={setJogoModalOpen}
+            setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
+            onToggleJogoEstado={handleToggleJogoEstado}
+            requestDelete={requestDelete}
+          />
+        ) : (
+          <EventosTab
+            eventos={eventos}
+            setSelectedEvento={setSelectedEvento}
+            setEventoModalOpen={setEventoModalOpen}
+            setJogoModalOpen={setJogoModalOpen}
+            requestDelete={requestDelete}
+            getEstadoBadge={getEstadoBadge}
+            onVerJogos={handleVerJogos}
+          />
+        )}
       </TabsContent>
 
       <TabsContent value="jogos">
@@ -210,10 +228,15 @@ export function DashboardTabContent({
             <AldeiasTab
               aldeias={aldeias}
               eventos={eventos}
+              jogos={jogos}
               setSelectedAldeia={setSelectedAldeia}
               setAldeiaModalOpen={setAldeiaModalOpen}
               setSelectedEvento={setSelectedEvento}
               setEventoModalOpen={setEventoModalOpen}
+              setSelectedJogo={setSelectedJogo}
+              setJogoModalOpen={setJogoModalOpen}
+              setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
+              onToggleJogoEstado={handleToggleJogoEstado}
               requestDelete={requestDelete}
             />
           </Suspense>
