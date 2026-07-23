@@ -23,7 +23,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { valor, descricao, referencias } = validation.data;
+    const { valor, descricao, referencias, aldeiaId: bodyAldeiaId } = validation.data;
+
+    const aldeiaId = bodyAldeiaId || user.aldeiaId;
+    if (!aldeiaId) {
+      return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });
+    }
 
     const isAdmin = user.role === 'aldeia_admin' || user.role === 'super_admin';
 
@@ -37,14 +42,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!user.aldeiaId) {
-      return NextResponse.json({ error: 'Utilizador sem aldeia associada' }, { status: 400 });
-    }
-
     const pedido = await prisma.pedidoDepositoCofre.create({
       data: {
         vendedorId: user.id,
-        aldeiaId: user.aldeiaId,
+        aldeiaId,
         valor,
         descricao: descricao || `Depósito de ${valor}€`,
         referencias: referencias ? JSON.stringify(referencias) : null,
@@ -55,9 +56,9 @@ export async function POST(request: NextRequest) {
 
     if (isAdmin) {
       const vault = await prisma.vault.upsert({
-        where: { aldeiaId: user.aldeiaId },
+        where: { aldeiaId },
         update: { saldo: { increment: valor } },
-        create: { aldeiaId: user.aldeiaId!, saldo: valor },
+        create: { aldeiaId, saldo: valor },
       });
 
       await prisma.vaultTransaction.create({
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || undefined;
     logAudit({
       userId: user.id,
-      aldeiaId: user.aldeiaId ?? undefined,
+      aldeiaId,
       action: isAdmin ? 'deposito.cofre_direto' : 'deposito.criado',
       resource: 'pedido-deposito',
       resourceId: pedido.id,
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
       // Notify admins of this aldeia (only for vendedor deposits)
       const admins = await prisma.user.findMany({
         where: {
-          aldeiaId: user.aldeiaId,
+          aldeiaId,
           role: 'aldeia_admin',
           deletedAt: null,
         },

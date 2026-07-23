@@ -339,6 +339,7 @@ export const criarDepositoSchema = z.object({
   valor: z.number().positive('Valor deve ser positivo').max(100000, 'Valor excede limite máximo'),
   descricao: z.string().max(500).optional(),
   referencias: z.record(z.string()).optional(),
+  aldeiaId: z.string().optional(),
 });
 
 export const criarLevantamentoSchema = z.object({

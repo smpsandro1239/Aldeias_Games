@@ -1,6 +1,7 @@
 "use client";
 import { apiRequest } from '@/lib/api-client';
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,20 +89,13 @@ export function AdminCofre() {
   const [rejectLevId, setRejectLevId] = useState<string | null>(null);
   const [rejectLevMotivo, setRejectLevMotivo] = useState("");
 
-  const getAldeiaId = useCallback(() => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      return user.aldeiaId || undefined;
-    } catch {
-      return undefined;
-    }
-  }, []);
+  const searchParams = useSearchParams();
+  const aldeiaId = searchParams.get("aldeiaId") || undefined;
 
   const fetchData = useCallback(async () => {
-    const aldeiaId = getAldeiaId();
     try {
       const [depRes, vaultRes, levRes] = await Promise.all([
-        apiRequest("/api/cofre/pedido-deposito"),
+        apiRequest(`/api/cofre/pedido-deposito${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`),
         apiRequest(`/api/cofre/historico?page=${vaultTransacoesPage}&limit=${vaultTransacoesLimit}${aldeiaId ? `&aldeiaId=${aldeiaId}` : ''}`),
         apiRequest(`/api/cofre/levantamento${aldeiaId ? `?aldeiaId=${aldeiaId}` : ''}`),
       ]);
@@ -127,7 +121,7 @@ export function AdminCofre() {
     } finally {
       setLoading(false);
     }
-  }, [vaultTransacoesPage, vaultTransacoesLimit]);
+  }, [vaultTransacoesPage, vaultTransacoesLimit, aldeiaId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -194,6 +188,7 @@ export function AdminCofre() {
         body: JSON.stringify({
           valor,
           descricao: descricaoDeposito.trim(),
+          aldeiaId: aldeiaId || undefined,
         })
       });
 
@@ -241,6 +236,7 @@ export function AdminCofre() {
           descricao: levDescricao.trim(),
           destino: levDestino.trim(),
           observacoes: levObservacoes.trim() || undefined,
+          aldeiaId: aldeiaId || undefined,
         })
       });
 
@@ -324,7 +320,7 @@ export function AdminCofre() {
     <div className="space-y-6 p-4 md:p-6">
       <div className="relative bg-gradient-to-r from-green-500/10 via-green-500/5 to-emerald-500/10 rounded-3xl p-6 border border-green-500/10">
         <div className="flex items-center gap-4 mb-2">
-          <button onClick={() => window.location.href = "/admindashboard"} className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center hover:bg-green-500/30 transition-colors">
+          <button onClick={() => window.location.href = aldeiaId ? `/admindashboard?aldeiaId=${aldeiaId}` : "/admindashboard"} className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center hover:bg-green-500/30 transition-colors">
             <ArrowLeft className="w-6 h-6 text-green-600" />
           </button>
           <div>
@@ -391,6 +387,36 @@ export function AdminCofre() {
         </Card>
       </div>
 
+      <div>
+        <h2 className="font-serif text-lg font-semibold text-accent mb-3">Ações Rápidas</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <QuickAction
+            icon={<Send className="w-5 h-5" />}
+            label="Depositar no Cofre"
+            onClick={() => setDepositoModalOpen(true)}
+            color="emerald"
+          />
+          <QuickAction
+            icon={<ArrowUpFromLine className="w-5 h-5" />}
+            label="Solicitar Levantamento"
+            onClick={() => setLevantamentoModalOpen(true)}
+            color="violet"
+          />
+          <QuickAction
+            icon={<Scale className="w-5 h-5" />}
+            label="Reconciliação"
+            onClick={() => window.location.href = aldeiaId ? `/admindashboard/cofre/reconciliacao?aldeiaId=${aldeiaId}` : '/admindashboard/cofre/reconciliacao'}
+            color="blue"
+          />
+          <QuickAction
+            icon={<History className="w-5 h-5" />}
+            label="Movimentos"
+            onClick={() => setActiveTab("historico")}
+            color="orange"
+          />
+        </div>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center justify-between">
           <TabsList>
@@ -411,7 +437,7 @@ export function AdminCofre() {
               <Send className="w-4 h-4 mr-2" />
               Depositar no Cofre
             </Button>
-            <Button variant="outline" size="sm" onClick={() => window.location.href = '/admindashboard/cofre/reconciliacao'}>
+            <Button variant="outline" size="sm" onClick={() => window.location.href = aldeiaId ? `/admindashboard/cofre/reconciliacao?aldeiaId=${aldeiaId}` : '/admindashboard/cofre/reconciliacao'}>
               <Scale className="w-4 h-4 mr-2" />
               Reconciliação
             </Button>
@@ -967,5 +993,30 @@ export function AdminCofre() {
       </DialogContent>
     </Dialog>
     </>
+  );
+}
+
+function QuickAction({
+  icon, label, onClick, color,
+}: {
+  icon: React.ReactNode; label: string; onClick: () => void;
+  color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
+}) {
+  const colorMap = {
+    emerald: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400",
+    blue: "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400",
+    violet: "bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 dark:text-violet-400",
+    amber: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400",
+    pink: "bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400",
+    orange: "bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 dark:text-orange-400",
+  };
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-2 p-4 rounded-xl ${colorMap[color]} transition-all hover:scale-[1.02] active:scale-[0.98]`}
+    >
+      {icon}
+      <span className="text-xs font-medium text-center">{label}</span>
+    </button>
   );
 }
