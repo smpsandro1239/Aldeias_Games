@@ -79,6 +79,8 @@ interface DashboardModalsLayerProps {
   executeDelete: () => Promise<void>;
   executeToggleJogoEstado: () => Promise<void>;
   fetchData: () => Promise<void>;
+  eventoModalAldeiaId?: string;
+  setEventoModalAldeiaId?: (id: string) => void;
 }
 
 export function DashboardModalsLayer({
@@ -133,14 +135,19 @@ export function DashboardModalsLayer({
   executeDelete,
   executeToggleJogoEstado,
   fetchData,
+  eventoModalAldeiaId,
+  setEventoModalAldeiaId,
 }: DashboardModalsLayerProps) {
   return (
     <>
       <CreateEventoModal
         open={eventoModalOpen}
-        onOpenChange={setEventoModalOpen}
+        onOpenChange={(open) => {
+          setEventoModalOpen(open);
+          if (!open) setEventoModalAldeiaId?.("");
+        }}
         onSubmit={handleSaveEvento}
-        aldeiaId={aldeiaId || ""}
+        aldeiaId={eventoModalAldeiaId || aldeiaId || ""}
         initialData={selectedEvento ? {
           id: selectedEvento.id,
           nome: selectedEvento.nome,

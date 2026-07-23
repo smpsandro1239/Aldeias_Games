@@ -1,37 +1,78 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Plus,
   Edit,
   Trash2,
-  Building2
+  Building2,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Gamepad2,
+  Clock,
+  Euro,
 } from "lucide-react";
-import { Aldeia } from "../types";
+import { Aldeia, Evento, EstadoEvento } from "../types";
 
 interface AldeiasTabProps {
   aldeias: Aldeia[];
+  eventos: Evento[];
   setSelectedAldeia: (aldeia: Aldeia | null) => void;
   setAldeiaModalOpen: (open: boolean) => void;
+  setSelectedEvento: (evento: Evento | null) => void;
+  setEventoModalOpen: (open: boolean) => void;
+  setEventoModalAldeiaId?: (id: string) => void;
   requestDelete: (type: string, id: string) => void;
+}
+
+function getEstadoBadge(estado: EstadoEvento) {
+  const config: Record<EstadoEvento, { label: string; className: string }> = {
+    rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
+    ativo: { label: "Ativo", className: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" },
+    pausado: { label: "Pausado", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" },
+    finalizado: { label: "Finalizado", className: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" },
+    cancelado: { label: "Cancelado", className: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" },
+  };
+  const c = config[estado] || config.rascunho;
+  return <Badge className={c.className}>{c.label}</Badge>;
+}
+
+function formatDate(d: Date | string) {
+  return new Date(d).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export function AldeiasTab({
   aldeias,
+  eventos,
   setSelectedAldeia,
   setAldeiaModalOpen,
+  setSelectedEvento,
+  setEventoModalOpen,
+  setEventoModalAldeiaId,
   requestDelete,
 }: AldeiasTabProps) {
   const [aldeiaSearch, setAldeiaSearch] = useState("");
-  const [aldeiaPage, setAldeiaPage] = useState(1);
+  const [expandedAldeias, setExpandedAldeias] = useState<Set<string>>(new Set());
+
+  const eventosByAldeia = useMemo(() => {
+    const map: Record<string, Evento[]> = {};
+    for (const ev of eventos) {
+      const key = ev.aldeiaId;
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    }
+    return map;
+  }, [eventos]);
 
   const filteredAldeias = useMemo(() => {
     const searchLower = aldeiaSearch.toLowerCase();
-    return aldeias.filter(al => {
+    return aldeias.filter((al) => {
       if (!searchLower) return true;
       return (
         al.nome?.toLowerCase().includes(searchLower) ||
@@ -41,9 +82,24 @@ export function AldeiasTab({
     });
   }, [aldeias, aldeiaSearch]);
 
+  const toggleExpand = (id: string) => {
+    setExpandedAldeias((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleNovoEvento = (aldeiaId: string) => {
+    setSelectedEvento(null);
+    setEventoModalAldeiaId?.(aldeiaId);
+    setEventoModalOpen(true);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Gestão de Aldeias/Organizações</h2>
         <Button
           onClick={() => {
@@ -51,13 +107,11 @@ export function AldeiasTab({
             setAldeiaModalOpen(true);
           }}
           size="sm"
-          className="bg-primary"
         >
           <Plus className="h-4 w-4 mr-1" /> Nova Aldeia
         </Button>
       </div>
 
-      {/* Filtros */}
       <div className="flex gap-2">
         <div className="flex-1 max-w-md">
           <Label htmlFor="aldeiaSearch" className="sr-only">
@@ -67,15 +121,11 @@ export function AldeiasTab({
             id="aldeiaSearch"
             placeholder="Pesquisar por nome, tipo ou email..."
             value={aldeiaSearch}
-            onChange={(e) => {
-              setAldeiaSearch(e.target.value);
-              setAldeiaPage(1);
-            }}
+            onChange={(e) => setAldeiaSearch(e.target.value)}
           />
         </div>
       </div>
 
-      {/* Lista */}
       {filteredAldeias.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16">
@@ -92,31 +142,61 @@ export function AldeiasTab({
           </CardContent>
         </Card>
       ) : (
-          <div className="grid gap-4">
-            {filteredAldeias
-              .slice((aldeiaPage - 1) * 10, aldeiaPage * 10)
-              .map((al) => (
-                <Card key={al.id} className="hover:bg-accent/5 transition-colors cursor-pointer">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div
-                      className="flex-1"
-                      onClick={() => {
-                        setSelectedAldeia(al);
-                        setAldeiaModalOpen(true);
-                      }}
-                    >
-                      <h3 className="font-semibold">{al.nome}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {al.tipoOrganizacao} • {al.email}
-                      </p>
+        <div className="space-y-3">
+          {filteredAldeias.map((al) => {
+            const evs = eventosByAldeia[al.id] || [];
+            const isExpanded = expandedAldeias.has(al.id);
+            const ativos = evs.filter((e) => e.estado === "ativo").length;
+
+            return (
+              <Card key={al.id} className="overflow-hidden">
+                {/* Aldeia header — clickable to expand */}
+                <CardContent className="p-0">
+                  <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors"
+                    onClick={() => toggleExpand(al.id)}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      )}
+                      <Building2 className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="min-w-0">
+                        <h3 className="font-semibold truncate">{al.nome}</h3>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {al.tipoOrganizacao}
+                          {al.email ? ` • ${al.email}` : ""}
+                          {" • "}
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {evs.length} evento{evs.length !== 1 ? "s" : ""}
+                            {ativos > 0 && (
+                              <span className="text-green-600 dark:text-green-400">({ativos} ativo{ativos !== 1 ? "s" : ""})</span>
+                            )}
+                          </span>
+                        </p>
+                      </div>
                     </div>
                     <div
-                      className="flex flex-wrap gap-2 items-center"
+                      className="flex items-center gap-1 flex-shrink-0"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-8 w-8"
+                        title="Novo evento"
+                        onClick={() => handleNovoEvento(al.id)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Editar aldeia"
                         onClick={() => {
                           setSelectedAldeia(al);
                           setAldeiaModalOpen(true);
@@ -127,42 +207,76 @@ export function AldeiasTab({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive"
+                        className="h-8 w-8 text-destructive"
+                        title="Eliminar aldeia"
                         onClick={() => requestDelete("aldeia", al.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-      )}
+                  </div>
 
-      {/* Paginação */}
-      {filteredAldeias.length > 10 && (
-        <div className="flex items-center justify-between pt-4 border-t">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {(aldeiaPage - 1) * 10 + 1} a {Math.min(aldeiaPage * 10, filteredAldeias.length)} de {filteredAldeias.length}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={aldeiaPage === 1}
-              onClick={() => setAldeiaPage(aldeiaPage - 1)}
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={aldeiaPage * 10 >= filteredAldeias.length}
-              onClick={() => setAldeiaPage(aldeiaPage + 1)}
-            >
-              Próxima
-            </Button>
-          </div>
+                  {/* Expanded: event list */}
+                  {isExpanded && (
+                    <div className="border-t bg-muted/30">
+                      {evs.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 px-4">
+                          <Calendar className="h-8 w-8 text-muted-foreground/50 mb-2" />
+                          <p className="text-sm text-muted-foreground mb-3">Sem eventos nesta organização.</p>
+                          <Button size="sm" onClick={() => handleNovoEvento(al.id)}>
+                            <Plus className="h-4 w-4 mr-1" /> Criar Primeiro Evento
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="divide-y">
+                          {evs
+                            .sort((a, b) => new Date(b.dataInicio).getTime() - new Date(a.dataInicio).getTime())
+                            .map((ev) => (
+                              <div
+                                key={ev.id}
+                                className="flex items-center justify-between px-4 py-3 hover:bg-accent/30 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  setSelectedEvento(ev);
+                                  setEventoModalOpen(true);
+                                }}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="font-medium truncate">{ev.nome}</p>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                      <span className="inline-flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {formatDate(ev.dataInicio)} — {formatDate(ev.dataFim)}
+                                      </span>
+                                      {ev.totalAngariado > 0 && (
+                                        <span className="inline-flex items-center gap-1">
+                                          <Euro className="h-3 w-3" />
+                                          {ev.totalAngariado.toLocaleString("pt-PT")}€
+                                        </span>
+                                      )}
+                                      {ev.totalParticipacoes > 0 && (
+                                        <span className="inline-flex items-center gap-1">
+                                          <Gamepad2 className="h-3 w-3" />
+                                          {ev.totalParticipacoes}
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  {getEstadoBadge(ev.estado)}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

@@ -209,8 +209,11 @@ export function DashboardTabContent({
           <Suspense fallback={<div>A carregar...</div>}>
             <AldeiasTab
               aldeias={aldeias}
+              eventos={eventos}
               setSelectedAldeia={setSelectedAldeia}
               setAldeiaModalOpen={setAldeiaModalOpen}
+              setSelectedEvento={setSelectedEvento}
+              setEventoModalOpen={setEventoModalOpen}
               requestDelete={requestDelete}
             />
           </Suspense>

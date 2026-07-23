@@ -87,6 +87,7 @@ export default function SuperAdminDashboard({
   const [selectedAldeia, setSelectedAldeia] = useState<AldeiaData | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [selectedPremio, setSelectedPremio] = useState<Vencedor | null>(null);
+  const [eventoModalAldeiaId, setEventoModalAldeiaId] = useState("");
   const [convertValor, setConvertValor] = useState("25");
   const [qrCodeData, setQrCodeData] = useState<{ jogoId?: string; eventoId?: string; aldeiaSlug?: string; type: "jogo" | "evento" | "aldeia" } | null>(null);
   const [testJogo, setTestJogo] = useState<Jogo | null>(null);
@@ -359,8 +360,13 @@ export default function SuperAdminDashboard({
               </TabsContent>
               <TabsContent value="aldeias">
                 <Suspense fallback={<div className="p-8 text-center text-muted-foreground">A carregar...</div>}>
-                  <AldeiasTab aldeias={aldeias} setSelectedAldeia={setSelectedAldeia}
-                    setAldeiaModalOpen={setAldeiaModalOpen} requestDelete={requestDelete}
+                  <AldeiasTab aldeias={aldeias} eventos={eventos}
+                    setSelectedAldeia={setSelectedAldeia}
+                    setAldeiaModalOpen={setAldeiaModalOpen}
+                    setSelectedEvento={setSelectedEvento}
+                    setEventoModalOpen={setEventoModalOpen}
+                    setEventoModalAldeiaId={setEventoModalAldeiaId}
+                    requestDelete={requestDelete}
                   />
                 </Suspense>
               </TabsContent>
@@ -405,11 +411,12 @@ export default function SuperAdminDashboard({
         setTestJogoOpen={setTestJogoOpen} setConvertPrizeOpen={setConvertPrizeOpen}
         setConfirmEntregaOpen={setConfirmEntregaOpen} setDeleteData={setDeleteData}
         setToggleJogoData={setToggleJogoData} setSelectedPremio={setSelectedPremio}
-        setConvertValor={setConvertValor} handleSaveEvento={handleSaveEvento}
+        setConvertValor={setConvertValor}         handleSaveEvento={handleSaveEvento}
         handleSaveJogo={handleSaveJogo} handleSaveAldeia={handleSaveAldeia}
         handleSaveUser={handleSaveUser} handleConvertPrize={handleConvertPrize}
         executeDelete={executeDelete} executeToggleJogoEstado={executeToggleJogoEstado}
         fetchData={fetchData} setQrCodeData={setQrCodeData}
+        eventoModalAldeiaId={eventoModalAldeiaId} setEventoModalAldeiaId={setEventoModalAldeiaId}
       />
     </div>
   );
