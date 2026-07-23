@@ -73,7 +73,10 @@ export default function ConfiguracoesPage() {
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
-      if (userData.aldeiaId) {
+      if (userData.role === "super_admin") {
+        setError("super_admin");
+        setLoading(false);
+      } else if (userData.aldeiaId) {
         fetchAldeia(userData.aldeiaId);
       } else {
         setLoading(false);
@@ -220,6 +223,24 @@ export default function ConfiguracoesPage() {
   }
 
   if (error) {
+    if (error === "super_admin") {
+      return (
+        <LayoutHeader>
+          <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+            <div className="text-center space-y-4">
+              <Building2 className="h-12 w-12 text-muted-foreground mx-auto" />
+              <h2 className="text-lg font-semibold">Configurações de Aldeia</h2>
+              <p className="text-muted-foreground max-w-sm">
+                Como super admin, deve configurar cada aldeia individualmente a partir do painel de administração.
+              </p>
+              <Button onClick={() => router.push('/superadmindashboard')} variant="outline">
+                Ir para o Painel
+              </Button>
+            </div>
+          </div>
+        </LayoutHeader>
+      );
+    }
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center space-y-4">

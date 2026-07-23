@@ -96,6 +96,7 @@ export function CreateEventoModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [jogosSelecionados, setJogosSelecionados] = useState<string[]>([]);
+  const [jogosConfigs, setJogosConfigs] = useState<Record<string, any>>({});
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<'semanal' | 'quinzenal' | 'mensal'>('semanal');
   const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number>(1); // Segunda-feira
@@ -132,6 +133,7 @@ export function CreateEventoModal({
         estado: EVENT_STATES.RASCUNHO,
       });
       setJogosSelecionados([]);
+      setJogosConfigs({});
       setIsRecurring(false);
       setRecurrenceFrequency('semanal');
       setRecurrenceDayOfWeek(1);
@@ -219,6 +221,7 @@ export function CreateEventoModal({
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
         jogosSelecionados: jogosSelecionados,
+        jogosConfigs,
         isRecurring,
         recurrenceFrequency: isRecurring ? recurrenceFrequency : undefined,
         recurrenceDayOfWeek: isRecurring ? recurrenceDayOfWeek : undefined,
@@ -245,6 +248,7 @@ export function CreateEventoModal({
           estado: EVENT_STATES.RASCUNHO,
         });
         setJogosSelecionados([]);
+        setJogosConfigs({});
       }
       onOpenChange(false);
       setErrors({});
@@ -377,7 +381,7 @@ export function CreateEventoModal({
             {/* Seleção de Jogos */}
             <div className="grid gap-2">
               <Label>Criar Jogos para este Evento</Label>
-              <p className="text-xs text-muted-foreground mb-2">Selecione os tipos de jogos que deseja criar automaticamente</p>
+              <p className="text-xs text-muted-foreground mb-2">Selecione os tipos de jogos e configure cada um</p>
               <div className="grid grid-cols-2 gap-2">
                 {GAME_TYPES.map((jogo) => {
                   const Icon = jogo.icon;
@@ -403,6 +407,77 @@ export function CreateEventoModal({
                   );
                 })}
               </div>
+
+              {/* Configuração por jogo selecionado */}
+              {jogosSelecionados.length > 0 && (
+                <div className="space-y-3 mt-3">
+                  {jogosSelecionados.map((tipoId) => {
+                    const jogoType = GAME_TYPES.find(g => g.id === tipoId);
+                    if (!jogoType) return null;
+                    const Icon = jogoType.icon;
+                    return (
+                      <div key={tipoId} className="p-3 rounded-xl border border-outline-variant/20 bg-surface-container-low/50 space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Icon className="h-4 w-4 text-primary" />
+                          Configuração: {jogoType.nome}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="grid gap-1">
+                            <Label htmlFor={`jogo-nome-${tipoId}`} className="text-xs">Nome</Label>
+                            <Input
+                              id={`jogo-nome-${tipoId}`}
+                              placeholder={`${formData.nome} - ${jogoType.nome}`}
+                              value={(jogosConfigs[tipoId] as any)?.nome || ""}
+                              onChange={(e) => setJogosConfigs(prev => ({ ...prev, [tipoId]: { ...prev[tipoId], nome: e.target.value } }))}
+                              className="h-8 text-xs"
+                            />
+                          </div>
+                          <div className="grid gap-1">
+                            <Label htmlFor={`jogo-preco-${tipoId}`} className="text-xs">Preço (€)</Label>
+                            <Input
+                              id={`jogo-preco-${tipoId}`}
+                              type="number"
+                              min="0"
+                              step="0.50"
+                              placeholder={tipoId === "rifa" ? "2" : "3"}
+                              value={(jogosConfigs[tipoId] as any)?.preco || ""}
+                              onChange={(e) => setJogosConfigs(prev => ({ ...prev, [tipoId]: { ...prev[tipoId], preco: e.target.value } }))}
+                              className="h-8 text-xs"
+                            />
+                          </div>
+                          <div className="grid gap-1">
+                            <Label htmlFor={`jogo-stock-${tipoId}`} className="text-xs">Stock Inicial</Label>
+                            <Input
+                              id={`jogo-stock-${tipoId}`}
+                              type="number"
+                              min="1"
+                              placeholder="100"
+                              value={(jogosConfigs[tipoId] as any)?.stockInicial || ""}
+                              onChange={(e) => setJogosConfigs(prev => ({ ...prev, [tipoId]: { ...prev[tipoId], stockInicial: e.target.value } }))}
+                              className="h-8 text-xs"
+                            />
+                          </div>
+                          {tipoId === "rifa" && (
+                            <div className="grid gap-1">
+                              <Label htmlFor={`jogo-numfim-${tipoId}`} className="text-xs">Nº Final</Label>
+                              <Input
+                                id={`jogo-numfim-${tipoId}`}
+                                type="number"
+                                min="1"
+                                placeholder="100"
+                                value={(jogosConfigs[tipoId] as any)?.numeroFinal || ""}
+                                onChange={(e) => setJogosConfigs(prev => ({ ...prev, [tipoId]: { ...prev[tipoId], numeroFinal: e.target.value } }))}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {jogosSelecionados.length > 0 && (
                 <p className="text-xs text-primary" aria-live="polite">
                   {jogosSelecionados.length} jogo(s) será(ão) criado(s) automaticamente

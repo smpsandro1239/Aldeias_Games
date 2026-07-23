@@ -89,8 +89,10 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
   const handleSaveEvento = useCallback(async (data: any) => {
     const isEditing = !!data.id;
     const jogosSelecionados = data.jogosSelecionados || [];
+    const jogosConfigs = data.jogosConfigs || {};
     const eventoData = { ...data };
     delete eventoData.jogosSelecionados;
+    delete eventoData.jogosConfigs;
 
     const url = isEditing ? `/api/eventos/${data.id}` : `/api/eventos`;
     const method = isEditing ? "PUT" : "POST";
@@ -123,21 +125,28 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
             const jogosParaRemover = jogosExistentes.filter((j: any) => !jogosSelecionados.includes(j.tipo));
 
             for (const tipoJogo of jogosParaCriar) {
+              const cfg = jogosConfigs[tipoJogo] || {};
               const defaultConfig: Record<string, unknown> = {};
               if (tipoJogo === "rifa") {
                 defaultConfig.numeroInicial = 1;
-                defaultConfig.numeroFinal = 100;
+                defaultConfig.numeroFinal = cfg.numeroFinal ? parseInt(cfg.numeroFinal) : 100;
                 defaultConfig.dataSorteio = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
                 defaultConfig.horaSorteio = "15:00";
                 defaultConfig.localSorteio = "Sede da Aldeia";
+              } else if (tipoJogo === "raspadinha") {
+                defaultConfig.premios = [];
+                defaultConfig.probabilidadeVitoria = 0.3;
+              } else if (tipoJogo === "euromilhoes") {
+                defaultConfig.numeros = 5;
+                defaultConfig.estrelas = 2;
               }
 
               const jogoData = {
-                nome: `${data.nome} - ${tipoJogo}`,
+                nome: cfg.nome || `${data.nome} - ${tipoJogo.replace(/_/g, " ")}`,
                 tipo: tipoJogo,
                 configuracao: JSON.stringify(defaultConfig),
-                preco: tipoJogo === "rifa" ? 2 : 3,
-                stockInicial: 100,
+                preco: cfg.preco ? parseFloat(cfg.preco) : (tipoJogo === "rifa" ? 2 : 3),
+                stockInicial: cfg.stockInicial ? parseInt(cfg.stockInicial) : 100,
                 eventoId,
                 aldeiaId: data.aldeiaId,
                 estado: "aberto",

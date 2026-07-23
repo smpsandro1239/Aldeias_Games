@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus,
   Edit,
@@ -19,6 +20,11 @@ import {
   Euro,
   Power,
   PowerOff,
+  Eye,
+  TrendingUp,
+  Users,
+  Trophy,
+  Target,
 } from "lucide-react";
 import { Aldeia, Evento, Jogo, EstadoEvento } from "../types";
 
@@ -82,6 +88,9 @@ export function AldeiasTab({
   const [aldeiaSearch, setAldeiaSearch] = useState("");
   const [expandedAldeias, setExpandedAldeias] = useState<Set<string>>(new Set());
   const [expandedEventos, setExpandedEventos] = useState<Set<string>>(new Set());
+  const [jogoDetailOpen, setJogoDetailOpen] = useState(false);
+  const [jogoDetail, setJogoDetail] = useState<any>(null);
+  const [jogoDetailLoading, setJogoDetailLoading] = useState(false);
 
   const eventosByAldeia = useMemo(() => {
     const map: Record<string, Evento[]> = {};
@@ -142,6 +151,24 @@ export function AldeiasTab({
     setSelectedEventoIdParaJogo(eventoId);
     setJogoModalOpen(true);
   };
+
+  const handleVerJogo = useCallback(async (jogo: Jogo) => {
+    setJogoDetailLoading(true);
+    setJogoDetailOpen(true);
+    try {
+      const res = await fetch(`/api/jogos/${jogo.id}/detail`);
+      if (res.ok) {
+        const data = await res.json();
+        setJogoDetail(data);
+      } else {
+        setJogoDetail({ jogo, error: true });
+      }
+    } catch {
+      setJogoDetail({ jogo, error: true });
+    } finally {
+      setJogoDetailLoading(false);
+    }
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -296,7 +323,8 @@ export function AldeiasTab({
                                             {evJogos.map((jg) => (
                                               <div
                                                 key={jg.id}
-                                                className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-accent/50 transition-colors"
+                                                className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
+                                                onClick={() => handleVerJogo(jg)}
                                               >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                   <Gamepad2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
@@ -307,6 +335,9 @@ export function AldeiasTab({
                                                   </span>
                                                 </div>
                                                 <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                  <Badge variant={jg.estado === "aberto" ? "default" : "secondary"} className="text-[10px]">
+                                                    {jg.estado === "aberto" ? "Aberto" : "Fechado"}
+                                                  </Badge>
                                                   {onToggleJogoEstado && (
                                                     <Button
                                                       variant="ghost"
@@ -348,6 +379,130 @@ export function AldeiasTab({
           })}
         </div>
       )}
+
+      {/* Game Detail Dialog */}
+      <Dialog open={jogoDetailOpen} onOpenChange={setJogoDetailOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Detalhes do Jogo
+            </DialogTitle>
+          </DialogHeader>
+          {jogoDetailLoading ? (
+            <div className="py-8 text-center text-muted-foreground">A carregar...</div>
+          ) : jogoDetail && !jogoDetail.error ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Gamepad2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{jogoDetail.nome}</h3>
+                  <div className="flex items-center gap-2">
+                    {getJogoTipoBadge(jogoDetail.tipo)}
+                    <Badge variant={jogoDetail.estado === "aberto" ? "default" : "secondary"}>
+                      {jogoDetail.estado === "aberto" ? "Aberto" : "Fechado"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                    <Euro className="h-3 w-3" /> Preço
+                  </div>
+                  <p className="font-semibold">{(jogoDetail.preco || 0).toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                    <Target className="h-3 w-3" /> Stock
+                  </div>
+                  <p className="font-semibold">{jogoDetail.stockAtual ?? jogoDetail.stockInicial ?? "—"}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                    <TrendingUp className="h-3 w-3" /> Total Angariado
+                  </div>
+                  <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    {(jogoDetail.totalAngariado || 0).toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                    <Users className="h-3 w-3" /> Participações
+                  </div>
+                  <p className="font-semibold">{jogoDetail.totalParticipacoes || 0}</p>
+                </div>
+              </div>
+
+              {jogoDetail.totalParticipacoes > 0 && (
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="flex items-center gap-1.5 text-xs text-primary mb-1">
+                    <TrendingUp className="h-3 w-3" /> Rentabilidade
+                  </div>
+                  <p className="text-sm">
+                    Receita: {(jogoDetail.totalAngariado || 0).toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}
+                    {jogoDetail.stockInicial > 0 && (
+                      <span className="text-muted-foreground ml-2">
+                        ({Math.round(((jogoDetail.totalParticipacoes || 0) / jogoDetail.stockInicial) * 100)}% vendido)
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {jogoDetail.configuracao && (() => {
+                try {
+                  const config = JSON.parse(jogoDetail.configuracao);
+                  if (config.premios && config.premios.length > 0) {
+                    return (
+                      <div>
+                        <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                          <Trophy className="h-3.5 w-3.5" /> Prémios
+                        </h4>
+                        <div className="space-y-1">
+                          {config.premios.map((p: any, i: number) => (
+                            <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-outline-variant/10 last:border-0">
+                              <span>{p.nome || `Prémio ${i + 1}`}</span>
+                              {p.valor && <span className="font-medium">{p.valor.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                } catch { return null; }
+              })()}
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setJogoDetailOpen(false);
+                    setSelectedJogo(jogoDetail);
+                    setJogoModalOpen(true);
+                  }}
+                >
+                  <Edit className="h-3.5 w-3.5 mr-1" /> Editar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setJogoDetailOpen(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">Erro ao carregar detalhes.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

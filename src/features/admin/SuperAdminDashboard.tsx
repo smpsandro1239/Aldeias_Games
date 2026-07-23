@@ -290,31 +290,31 @@ export default function SuperAdminDashboard({
           <h2 className="font-serif text-lg font-semibold text-accent mb-3">Gestão Detalhada</h2>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="flex overflow-x-auto gap-1 bg-surface-container-low p-1 rounded-xl">
-              <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <TrendingUp className="h-4 w-4" /> Geral
               </TabsTrigger>
-              <TabsTrigger value="eventos" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="eventos" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <Calendar className="h-4 w-4" /> Eventos
               </TabsTrigger>
-              <TabsTrigger value="jogos" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="jogos" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <Gamepad2 className="h-4 w-4" /> Jogos
               </TabsTrigger>
-              <TabsTrigger value="vencedores" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="vencedores" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <Trophy className="h-4 w-4" /> Prémios
               </TabsTrigger>
-              <TabsTrigger value="aldeias" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="aldeias" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <Building2 className="h-4 w-4" /> Aldeias
               </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="users" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <Users className="h-4 w-4" /> Users
               </TabsTrigger>
-              <TabsTrigger value="transacoes" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="transacoes" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <CreditCard className="h-4 w-4" /> Transações
               </TabsTrigger>
-              <TabsTrigger value="verificar" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="verificar" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <Hash className="h-4 w-4" /> Verificar
               </TabsTrigger>
-              <TabsTrigger value="auditoria" className="flex items-center gap-1.5 text-sm px-3 py-2">
+              <TabsTrigger value="auditoria" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
                 <Shield className="h-4 w-4" /> Auditoria
               </TabsTrigger>
             </TabsList>
