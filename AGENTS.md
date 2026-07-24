@@ -310,3 +310,25 @@ Pages:
 - **REGRA**: Nunca usar `Authorization: Bearer ${token}` em componentes client — `apiRequest()` envia cookies automaticamente (same-origin)
 - **MIGRAÇÃO COMPLETA**: Todos os 23 ficheiros client migrados — zero referências `Bearer` restantes em `.tsx`
 - Ficheiros migrados: use-admin-dashboard-data, notification-bell, dashboard-header, dashboard-tab-content, dashboard-modals-layer, AdminDashboard, SuperAdminDashboard, VencedoresTab, vencedor-detail-modal, resultados-externos-modal, verificar-hash-modal, create-jogo-modal, superadmin-cofre, admin-cofre, vault-pin-modal, wallet-card, profile-modal, premio-modal, analytics-dashboard, configuracoes, setup-wizard, euromilhoes admin, cliente-dashboard
+
+### Números Jogados — Consulta Unificada
+- `/numeros-jogados` — página unificada para todos os roles consultar números jogados
+- `GET /api/numeros-jogados` — API com filtering role-based:
+  - `super_admin`: vê todos os números de todas as aldeias
+  - `aldeia_admin`: vê números dos jogos da sua aldeia
+  - `vendedor`: vê números que ele vendeu + os seus próprios
+  - `user`: vê os seus próprios números
+- Filtros: jogoTipo, aldeiaId (super_admin only), estadoPagamento, ganhador, search (hash/nome/email/telefone)
+- Paginação: page, limit (default 20)
+- Dados retornados: participação completa com jogo.evento.aldeia, vendedor info, user info, numerosVendidos
+- Frontend: `src/app/numeros-jogados/NumerosJogadosClient.tsx` — filtros, cards com números, hash toggle, paginação
+- Page: `src/app/numeros-jogados/page.tsx` — LayoutHeader + BottomNav wrapper (sem RoleGuard — acessível a todos os autenticados)
+- Nav links adicionados em: layout-header.tsx NAV_ITEMS (todos os roles), BottomNav (user only), AdminDashboard QuickActions, SuperAdminDashboard QuickActions
+
+### Navigation Unification (Desktop + Mobile)
+- Desktop nav (lines 131-163 in layout-header.tsx) was hardcoded per role — NOW uses shared `NAV_ITEMS` constant
+- Both desktop nav and mobile hamburger menu use `roleNavItems` computed from `NAV_ITEMS`
+- Adding a new nav item only requires editing `NAV_ITEMS` — it propagates to both menus
+
+### Prova de Jogo — z-index fix
+- `prova-jogo-modal.tsx` DialogContent bumped to `z-[60]` (from z-50) to render above confirmation overlays
