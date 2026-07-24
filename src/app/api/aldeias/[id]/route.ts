@@ -29,6 +29,7 @@ const updateAldeiaSchema = z.object({
   numeroAlvara: z.string().optional(),
   documentosVerificados: z.boolean().optional(),
   ativo: z.boolean().optional(),
+  verificado: z.boolean().optional(),
 })
 
 export async function GET(request: NextRequest, context: { params: Promise<{id: string}> }) {
@@ -154,6 +155,36 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
 
     const updateData = result.data
 
+    // Only super_admin can change verificado
+    if (updateData.verificado !== undefined && !isSuperAdmin) {
+      return NextResponse.json(
+        { error: 'Apenas super admin pode alterar verificação' },
+        { status: 403 }
+      )
+    }
+
+    // Sensitive fields (IBAN, nomeTitularConta) require special handling
+    const sensitiveFields = ['iban', 'nomeTitularConta']
+    const hasSensitiveChanges = sensitiveFields.some(f => updateData[f as keyof typeof updateData] !== undefined)
+
+    if (hasSensitiveChanges && !isSuperAdmin) {
+      // Check if there are other admins who need to approve
+      const otherAdmins = aldeia.admins.filter((admin: any) => admin.id !== user.userId)
+      if (otherAdmins.length > 0) {
+        // There are other admins — this change needs approval from one of them
+        // For now, store as pending (simplified: reject and tell user to contact another admin)
+        return NextResponse.json(
+          { error: 'Alteração de dados sensíveis (IBAN/titular) requer aprovação de outro administrador da aldeia' },
+          { status: 403 }
+        )
+      }
+      // Only this admin — requires super_admin approval
+      return NextResponse.json(
+        { error: 'Alteração de dados sensíveis requer aprovação do super administrador' },
+        { status: 403 }
+      )
+    }
+
     // Prepare data for Prisma update
     const prismaUpdateData: Prisma.AldeiaUpdateInput = { ...updateData }
 
@@ -188,6 +219,22 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
     })
 
     // Log the update
+    const metadata: Record<string, unknown> = {
+      nome: updatedAldeia.nome,
+      updatedFields: Object.keys(updateData)
+    }
+    // Add audit trail for sensitive fields
+    if (updateData.iban !== undefined) {
+      metadata.ibanAlterado = true
+      metadata.ibanAnterior = aldeia.iban ? '****' + aldeia.iban.slice(-4) : null
+      metadata.ibanNovo = updateData.iban ? '****' + updateData.iban.slice(-4) : null
+    }
+    if (updateData.nomeTitularConta !== undefined) {
+      metadata.titularAlterado = true
+      metadata.titularAnterior = aldeia.nomeTitularConta
+      metadata.titularNovo = updateData.nomeTitularConta
+    }
+
     await prisma.auditLog.create({
       data: {
         userId: user.userId,
@@ -195,10 +242,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
         action: 'UPDATE_ALDEIA',
         resource: 'Aldeia',
         resourceId: id,
-        metadata: {
-          nome: updatedAldeia.nome,
-          updatedFields: Object.keys(updateData)
-        }
+        metadata: metadata
       }
     })
 

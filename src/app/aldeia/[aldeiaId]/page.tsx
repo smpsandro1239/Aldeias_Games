@@ -20,7 +20,8 @@ import { CreateEventoModal } from "@/components/modals/create-evento-modal"
 import {
   ArrowLeft, Users, Calendar, Settings, Gamepad2,
   MapPin, Loader2, CheckCircle2, XCircle,
-  UserPlus, Trash2, Crown, ChevronDown, ChevronRight, Edit, Eye, Plus, PartyPopper
+  UserPlus, Trash2, Crown, ChevronDown, ChevronRight, Edit, Eye, Plus, PartyPopper,
+  Power, PowerOff
 } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api-client"
@@ -37,8 +38,18 @@ interface AldeiaData {
   bannerUrl: string | null
   telefone: string | null
   email: string | null
+  morada: string | null
+  codigoPostal: string | null
+  localidade: string | null
+  responsavel: string | null
   iban: string | null
   nomeTitularConta: string | null
+  nomeEscola: string | null
+  codigoEscola: string | null
+  nivelEnsino: string | null
+  autorizacaoCM: boolean
+  numeroAlvara: string | null
+  documentosVerificados: boolean
   metodosPagamentoAceites: string | null
   nivel: number
   pontos: number
@@ -57,7 +68,6 @@ interface AldeiaData {
     nome: string
     dataInicio: string
     dataFim: string | null
-    ativo: boolean
     estado: string
     jogos: Array<{
       id: string
@@ -176,24 +186,42 @@ export default function AldeiaDetailPage() {
     setSaving(true)
     try {
       const payload: Record<string, unknown> = {}
-      if (editForm.nome !== aldeia?.nome) payload.nome = editForm.nome
-      if (editForm.descricao !== aldeia?.descricao) payload.descricao = editForm.descricao
-      if (editForm.telefone !== aldeia?.telefone) payload.telefone = editForm.telefone
-      if (editForm.email !== aldeia?.email) payload.email = editForm.email
+      const fields = [
+        'nome', 'descricao', 'telefone', 'email', 'morada', 'codigoPostal', 'localidade',
+        'responsavel', 'tipoOrganizacao', 'autorizacaoCM', 'numeroAlvara', 'documentosVerificados'
+      ]
+      for (const field of fields) {
+        if ((editForm as any)[field] !== (aldeia as any)?.[field]) {
+          payload[field] = (editForm as any)[field]
+        }
+      }
+      // IBAN and titular are sensitive — only include if changed
       if (editForm.iban !== aldeia?.iban) payload.iban = editForm.iban
       if (editForm.nomeTitularConta !== aldeia?.nomeTitularConta) payload.nomeTitularConta = editForm.nomeTitularConta
-      if (editForm.tipoOrganizacao !== aldeia?.tipoOrganizacao) payload.tipoOrganizacao = editForm.tipoOrganizacao
+      // School fields
+      if (editForm.nomeEscola !== aldeia?.nomeEscola) payload.nomeEscola = editForm.nomeEscola
+      if (editForm.codigoEscola !== aldeia?.codigoEscola) payload.codigoEscola = editForm.codigoEscola
+      if (editForm.nivelEnsino !== aldeia?.nivelEnsino) payload.nivelEnsino = editForm.nivelEnsino
+
+      if (Object.keys(payload).length === 0) {
+        toast.info("Nenhuma alteração detected")
+        setEditMode(false)
+        return
+      }
 
       const res = await apiRequest(`/api/aldeias/${aldeiaId}`, {
         method: "PATCH",
         body: JSON.stringify(payload),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro")
+      }
       toast.success("Aldeia atualizada com sucesso")
       setEditMode(false)
       fetchAldeia()
-    } catch {
-      toast.error("Erro ao guardar alterações")
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao guardar alterações")
     } finally {
       setSaving(false)
     }
@@ -338,6 +366,33 @@ export default function AldeiaDetailPage() {
       else next.add(eventoId)
       return next
     })
+  }
+
+  const toggleEventoEstado = async (eventoId: string, currentState: string) => {
+    if (!isAdmin) return
+    const newState = currentState === "ativo" ? "pausado" : "ativo"
+    try {
+      const res = await apiRequest(`/api/eventos/${eventoId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ estado: newState }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro")
+      }
+      setAldeia(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          eventos: prev.eventos?.map(e =>
+            e.id === eventoId ? { ...e, estado: newState } : e
+          )
+        }
+      })
+      toast.success(newState === "ativo" ? "Evento ativado" : "Evento pausado")
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao alterar estado do evento")
+    }
   }
 
   const getRoleBadge = (roleName: string) => {
@@ -609,13 +664,33 @@ export default function AldeiaDetailPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="hidden sm:flex items-center gap-2">
-                            {evento.ativo ? (
+                            {evento.estado === "ativo" ? (
                               <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">Ativo</Badge>
+                            ) : evento.estado === "pausado" ? (
+                              <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 text-xs">Pausado</Badge>
                             ) : (
-                              <Badge variant="secondary" className="text-xs">Inativo</Badge>
+                              <Badge variant="secondary" className="text-xs capitalize">{evento.estado}</Badge>
                             )}
                             <Badge variant="outline" className="text-xs">{evento.jogos.length} jogo(s)</Badge>
                           </div>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title={evento.estado === "ativo" ? "Pausar evento" : "Ativar evento"}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleEventoEstado(evento.id, evento.estado)
+                              }}
+                            >
+                              {evento.estado === "ativo" ? (
+                                <PowerOff className="h-3.5 w-3.5 text-yellow-500" />
+                              ) : (
+                                <Power className="h-3.5 w-3.5 text-green-500" />
+                              )}
+                            </Button>
+                          )}
                           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                         </div>
                       </div>
@@ -724,77 +799,218 @@ export default function AldeiaDetailPage() {
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>Nome</Label>
-                      <Input
-                        value={editForm.nome || ""}
-                        onChange={e => setEditForm(prev => ({ ...prev, nome: e.target.value }))}
-                        disabled={!editMode}
-                      />
-                    </div>
-                    <div>
-                      <Label>Tipo de Organização</Label>
-                      <Select
-                        value={editForm.tipoOrganizacao || "aldeia"}
-                        onValueChange={val => setEditForm(prev => ({ ...prev, tipoOrganizacao: val }))}
-                        disabled={!editMode}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="aldeia">Aldeia</SelectItem>
-                          <SelectItem value="escola">Escola</SelectItem>
-                          <SelectItem value="associacao_pais">Associação de Pais</SelectItem>
-                          <SelectItem value="clube">Clube</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                <CardContent className="space-y-6">
+                  {/* Informações Básicas */}
                   <div>
-                    <Label>Descrição</Label>
-                    <Textarea
-                      value={editForm.descricao || ""}
-                      onChange={e => setEditForm(prev => ({ ...prev, descricao: e.target.value }))}
-                      disabled={!editMode}
-                      rows={3}
-                    />
+                    <p className="text-sm font-medium text-muted-foreground mb-3">Informações Básicas</p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Nome</Label>
+                        <Input
+                          value={editForm.nome || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, nome: e.target.value }))}
+                          disabled={!editMode}
+                        />
+                      </div>
+                      <div>
+                        <Label>Tipo de Organização</Label>
+                        <Select
+                          value={editForm.tipoOrganizacao || "aldeia"}
+                          onValueChange={val => setEditForm(prev => ({ ...prev, tipoOrganizacao: val }))}
+                          disabled={!editMode}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="aldeia">Aldeia</SelectItem>
+                            <SelectItem value="escola">Escola</SelectItem>
+                            <SelectItem value="associacao_pais">Associação de Pais</SelectItem>
+                            <SelectItem value="clube">Clube</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <Label>Descrição</Label>
+                      <Textarea
+                        value={editForm.descricao || ""}
+                        onChange={e => setEditForm(prev => ({ ...prev, descricao: e.target.value }))}
+                        disabled={!editMode}
+                        rows={3}
+                      />
+                    </div>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>Telefone</Label>
+
+                  {/* Contactos */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-3">Contactos</p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Telefone</Label>
+                        <Input
+                          value={editForm.telefone || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, telefone: e.target.value }))}
+                          disabled={!editMode}
+                        />
+                      </div>
+                      <div>
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={editForm.email || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                          disabled={!editMode}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <Label>Morada</Label>
                       <Input
-                        value={editForm.telefone || ""}
-                        onChange={e => setEditForm(prev => ({ ...prev, telefone: e.target.value }))}
+                        value={editForm.morada || ""}
+                        onChange={e => setEditForm(prev => ({ ...prev, morada: e.target.value }))}
                         disabled={!editMode}
                       />
                     </div>
+                    <div className="grid gap-4 md:grid-cols-2 mt-3">
+                      <div>
+                        <Label>Código Postal</Label>
+                        <Input
+                          value={editForm.codigoPostal || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, codigoPostal: e.target.value }))}
+                          disabled={!editMode}
+                          placeholder="0000-000"
+                        />
+                      </div>
+                      <div>
+                        <Label>Localidade</Label>
+                        <Input
+                          value={editForm.localidade || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, localidade: e.target.value }))}
+                          disabled={!editMode}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Responsável */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-3">Responsável</p>
                     <div>
-                      <Label>Email</Label>
+                      <Label>Nome do Responsável</Label>
                       <Input
-                        value={editForm.email || ""}
-                        onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                        value={editForm.responsavel || ""}
+                        onChange={e => setEditForm(prev => ({ ...prev, responsavel: e.target.value }))}
                         disabled={!editMode}
                       />
                     </div>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>IBAN</Label>
-                      <Input
-                        value={editForm.iban || ""}
-                        onChange={e => setEditForm(prev => ({ ...prev, iban: e.target.value }))}
-                        disabled={!editMode}
-                      />
+
+                  {/* Dados Bancários — SENSÍVEIS */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-3">
+                      Dados Bancários
+                      {!isSuperAdmin && <span className="text-xs text-orange-500 ml-2">(requer aprovação de outro admin)</span>}
+                    </p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>IBAN</Label>
+                        <Input
+                          value={editForm.iban || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, iban: e.target.value }))}
+                          disabled={!editMode}
+                          placeholder="PT50 0000 0000 0000 0000 0000 0"
+                        />
+                      </div>
+                      <div>
+                        <Label>Titular da Conta</Label>
+                        <Input
+                          value={editForm.nomeTitularConta || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, nomeTitularConta: e.target.value }))}
+                          disabled={!editMode}
+                        />
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Escola (condicional) */}
+                  {editForm.tipoOrganizacao === "escola" && (
                     <div>
-                      <Label>Titular da Conta</Label>
-                      <Input
-                        value={editForm.nomeTitularConta || ""}
-                        onChange={e => setEditForm(prev => ({ ...prev, nomeTitularConta: e.target.value }))}
-                        disabled={!editMode}
-                      />
+                      <p className="text-sm font-medium text-muted-foreground mb-3">Dados da Escola</p>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label>Nome da Escola</Label>
+                          <Input
+                            value={editForm.nomeEscola || ""}
+                            onChange={e => setEditForm(prev => ({ ...prev, nomeEscola: e.target.value }))}
+                            disabled={!editMode}
+                          />
+                        </div>
+                        <div>
+                          <Label>Código da Escola</Label>
+                          <Input
+                            value={editForm.codigoEscola || ""}
+                            onChange={e => setEditForm(prev => ({ ...prev, codigoEscola: e.target.value }))}
+                            disabled={!editMode}
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <Label>Nível de Ensino</Label>
+                        <Select
+                          value={editForm.nivelEnsino || ""}
+                          onValueChange={val => setEditForm(prev => ({ ...prev, nivelEnsino: val }))}
+                          disabled={!editMode}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pre_escolar">Pré-Escolar</SelectItem>
+                            <SelectItem value="primeiro_ciclo">1.º Ciclo</SelectItem>
+                            <SelectItem value="segundo_ciclo">2.º Ciclo</SelectItem>
+                            <SelectItem value="terceiro_ciclo">3.º Ciclo</SelectItem>
+                            <SelectItem value="secundario">Secundário</SelectItem>
+                            <SelectItem value="superior">Superior</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Conformidade Legal */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-3">Conformidade Legal</p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Nº Alvará</Label>
+                        <Input
+                          value={editForm.numeroAlvara || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, numeroAlvara: e.target.value }))}
+                          disabled={!editMode}
+                        />
+                      </div>
+                      <div className="flex items-center gap-3 pt-6">
+                        <Switch
+                          checked={editForm.autorizacaoCM || false}
+                          onCheckedChange={val => setEditForm(prev => ({ ...prev, autorizacaoCM: val }))}
+                          disabled={!editMode}
+                        />
+                        <div>
+                          <Label>Autorização Câmara Municipal</Label>
+                          <p className="text-xs text-muted-foreground">Autorização obtida</p>
+                        </div>
+                      </div>
+                    </div>
+                    {isSuperAdmin && (
+                      <div className="flex items-center gap-3 mt-3">
+                        <Switch
+                          checked={editForm.documentosVerificados || false}
+                          onCheckedChange={val => setEditForm(prev => ({ ...prev, documentosVerificados: val }))}
+                          disabled={!editMode}
+                        />
+                        <div>
+                          <Label>Documentos Verificados</Label>
+                          <p className="text-xs text-muted-foreground">Documentação validada pela equipa</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

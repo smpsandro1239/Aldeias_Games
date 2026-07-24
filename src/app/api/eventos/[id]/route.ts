@@ -108,6 +108,55 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 }
 
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    const user = await getFullUserFromRequest(request);
+
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    if (denied) return denied;
+
+    const evento = await prisma.evento.findUnique({ where: { id } });
+    if (!evento) {
+      return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
+    }
+
+    if (user.role === 'aldeia_admin' && user.aldeiaId !== evento.aldeiaId) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { estado } = body;
+
+    if (!estado || !['rascunho', 'ativo', 'pausado', 'finalizado', 'cancelado'].includes(estado)) {
+      return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
+    }
+
+    const updated = await prisma.evento.update({
+      where: { id },
+      data: { estado }
+    });
+
+    try {
+      await logAudit(
+        user.id,
+        'update',
+        'evento',
+        id,
+        { campo: 'estado', old: evento.estado, new: estado },
+        request.headers.get('x-forwarded-for') || 'unknown',
+        request.headers.get('user-agent') || 'unknown'
+      );
+    } catch {}
+
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Erro ao atualizar evento:', error);
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+  }
+}
+
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
