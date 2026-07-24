@@ -6,7 +6,7 @@ import { useAdminDashboardData } from "./hooks/use-admin-dashboard-data";
 import useAdminCrudHandlers from "./hooks/use-admin-crud-handlers";
 
 import { Tabs } from "@/components/ui/tabs";
-import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins } from "lucide-react";
+import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins, Ticket } from "lucide-react";
 
 import {
   DashboardLoadingSkeleton,
@@ -177,6 +177,12 @@ export default function AdminDashboard({
               label="Novo Evento"
               onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}
               color="blue"
+            />
+            <QuickAction
+              icon={<Ticket className="h-5 w-5" />}
+              label="Números"
+              onClick={() => router.push("/numeros-jogados")}
+              color="violet"
             />
             <QuickAction
               icon={<Wallet className="h-5 w-5" />}

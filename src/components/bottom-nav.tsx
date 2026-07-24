@@ -32,7 +32,7 @@ const navItems = {
   user: [
     { icon: LayoutDashboard, label: "INÍCIO", path: "/clientedashboard" },
     { icon: Gamepad2, label: "JOGOS", path: "/jogos" },
-    { icon: Ticket, label: "PARTICIPAÇÕES", path: "/participacoes" },
+    { icon: Ticket, label: "NÚMEROS", path: "/numeros-jogados" },
     { icon: User, label: "PERFIL", path: "/perfil" },
     { icon: House, label: "SAIR", path: "/" },
   ],

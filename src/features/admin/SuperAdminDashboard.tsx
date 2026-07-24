@@ -14,7 +14,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import {
   Plus, Building2, Calendar, Wallet, Globe, RotateCcw,
   DollarSign, Users, Gamepad2, Trophy, CreditCard,
-  Shield, TrendingUp, ArrowRight, BarChart3, Hash,
+  Shield, TrendingUp, ArrowRight, BarChart3, Hash, Ticket,
 } from "lucide-react";
 
 import {
@@ -188,6 +188,12 @@ export default function SuperAdminDashboard({
               label="Cofre Global"
               onClick={() => router.push("/superadmindashboard/cofre")}
               color="emerald"
+            />
+            <QuickAction
+              icon={<Ticket className="h-5 w-5" />}
+              label="Números"
+              onClick={() => router.push("/numeros-jogados")}
+              color="pink"
             />
             <QuickAction
               icon={<BarChart3 className="h-5 w-5" />}

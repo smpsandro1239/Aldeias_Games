@@ -21,6 +21,7 @@ const NAV_ITEMS = {
     { icon: Compass, label: "Painel", path: "/superadmindashboard" },
     { icon: Building2, label: "Aldeias", path: "/superadmindashboard?tab=aldeias" },
     { icon: BarChart3, label: "Stats", path: "/superadmindashboard?tab=analytics" },
+    { icon: Ticket, label: "Números", path: "/numeros-jogados" },
     { icon: Settings, label: "Config", path: "/configuracoes" },
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },
   ],
@@ -28,12 +29,14 @@ const NAV_ITEMS = {
     { icon: Compass, label: "Dashboard", path: "/admindashboard" },
     { icon: Calendar, label: "Eventos", path: "/admindashboard?tab=eventos" },
     { icon: Gamepad2, label: "Jogos", path: "/admindashboard?tab=jogos" },
+    { icon: Ticket, label: "Números", path: "/numeros-jogados" },
     { icon: Banknote, label: "Cofre", path: "/admindashboard/cofre" },
     { icon: Users, label: "Equipa", path: "/admindashboard?tab=users" },
     { icon: Scan, label: "Verificar", path: "/verificar" },
   ],
   vendedor: [
     { icon: LayoutDashboard, label: "Vendas", path: "/vendedordashboard" },
+    { icon: Ticket, label: "Números", path: "/numeros-jogados" },
     { icon: Wallet, label: "Pedidos", path: "/vendedordashboard/pedidos" },
     { icon: Banknote, label: "Caixa", path: "/vendedordashboard?tab=cofre" },
     { icon: TrendingUp, label: "Histórico", path: "/vendedordashboard?tab=historico" },
@@ -42,7 +45,7 @@ const NAV_ITEMS = {
   ],
   user: [
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },
-    { icon: Ticket, label: "Participações", path: "/participacoes" },
+    { icon: Ticket, label: "Números", path: "/numeros-jogados" },
     { icon: User, label: "Perfil", path: "/perfil" },
   ],
 } as const;
