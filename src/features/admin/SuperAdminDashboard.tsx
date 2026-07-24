@@ -146,24 +146,28 @@ export default function SuperAdminDashboard({
             value={stats?.totalAngariado ? formatCurrency(stats.totalAngariado) : "0,00 €"}
             icon={<DollarSign className="h-5 w-5" />}
             color="emerald"
+            onClick={() => setActiveTab("financeiro")}
           />
           <StatCard
             title="Participações"
             value={stats?.totalParticipacoes?.toLocaleString("pt-PT") || "0"}
             icon={<Users className="h-5 w-5" />}
             color="blue"
+            onClick={() => setActiveTab("numeros")}
           />
           <StatCard
             title="Aldeias"
             value={aldeias.length.toString()}
             icon={<Building2 className="h-5 w-5" />}
             color="violet"
+            onClick={() => setActiveTab("aldeias")}
           />
           <StatCard
             title="Jogos Ativos"
             value={stats?.jogosAtivos?.toString() || "0"}
             icon={<Gamepad2 className="h-5 w-5" />}
             color="amber"
+            onClick={() => setActiveTab("jogos")}
           />
         </div>
 
@@ -434,10 +438,11 @@ export default function SuperAdminDashboard({
 /* ===== Local sub-components ===== */
 
 function StatCard({
-  title, value, icon, color,
+  title, value, icon, color, onClick,
 }: {
   title: string; value: string; icon: React.ReactNode;
   color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
+  onClick?: () => void;
 }) {
   const colorMap = {
     emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -456,7 +461,10 @@ function StatCard({
     orange: "border-l-orange-500",
   };
   return (
-    <Card className={`bg-card border-l-4 ${borderMap[color]} shadow-sm hover:shadow-md transition-shadow`}>
+    <Card
+      className={`bg-card border-l-4 ${borderMap[color]} shadow-sm hover:shadow-md transition-shadow ${onClick ? "cursor-pointer hover:scale-[1.02] active:scale-[0.98]" : ""}`}
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>

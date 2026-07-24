@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 const addMemberSchema = z.object({
   email: z.string().email('Email inválido'),
-  role: z.enum(['SUPER_ADMIN', 'ALDEIA_ADMIN', 'GESTOR', 'COLABORADOR', 'MODERADOR', 'VIEWER', 'MEMBRO']).default('MEMBRO'),
+  role: z.enum(['ALDEIA_ADMIN', 'MODERADOR', 'COLABORADOR', 'MEMBRO']).default('MEMBRO'),
 })
 
 export async function POST(request: NextRequest, context: { params: Promise<{id: string}> }) {

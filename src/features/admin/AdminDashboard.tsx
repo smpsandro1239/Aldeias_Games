@@ -165,7 +165,7 @@ export default function AdminDashboard({
         onOpenResultadosExternos={() => setResultadosExternosOpen(true)}
       />
 
-      <DashboardStatCards stats={stats} />
+      <DashboardStatCards stats={stats} onNavigate={setActiveTab} />
 
       {/* ===== QUICK ACTIONS (aldeia_admin) ===== */}
       {userRole === "aldeia_admin" && (

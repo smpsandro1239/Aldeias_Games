@@ -16,6 +16,7 @@ interface StatCardProps {
     positive?: boolean;
   };
   subtext?: string;
+  onClick?: () => void;
 }
 
 const variantStyles = {
@@ -44,9 +45,18 @@ export function StatCard({
   className,
   trend,
   subtext,
+  onClick,
 }: StatCardProps) {
   return (
-    <Card className={cn("shadow-md border-2 transition-all hover:shadow-lg", variantStyles[variant], className)}>
+    <Card
+      className={cn(
+        "shadow-md border-2 transition-all hover:shadow-lg",
+        onClick && "cursor-pointer hover:scale-[1.02] active:scale-[0.98]",
+        variantStyles[variant],
+        className
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">

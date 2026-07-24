@@ -71,13 +71,10 @@ interface AldeiaData {
 }
 
 const ALL_ROLES = [
-  { value: "MEMBRO", label: "Membro", color: "bg-secondary text-secondary-foreground" },
-  { value: "VIEWER", label: "Viewer", color: "bg-secondary text-secondary-foreground" },
-  { value: "COLABORADOR", label: "Colaborador", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
-  { value: "MODERADOR", label: "Moderador", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
-  { value: "GESTOR", label: "Gestor", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
-  { value: "ALDEIA_ADMIN", label: "Admin Aldeia", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
-  { value: "SUPER_ADMIN", label: "Super Admin", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
+  { value: "MEMBRO", label: "Utilizador", color: "bg-secondary text-secondary-foreground" },
+  { value: "COLABORADOR", label: "Vendedor", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
+  { value: "MODERADOR", label: "Admin Aldeia", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+  { value: "ALDEIA_ADMIN", label: "Super Admin", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
 ]
 
 const GAME_TYPES = [
@@ -423,28 +420,40 @@ export default function AldeiaDetailPage() {
 
           <TabsContent value="overview">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-              <Card className="border-primary/20">
+              <Card
+                className="border-primary/20 cursor-pointer hover:bg-primary/5 hover:border-primary/40 transition-all"
+                onClick={() => setActiveTab("members")}
+              >
                 <CardContent className="pt-6 text-center">
                   <Users className="h-8 w-8 mx-auto text-primary mb-2" />
                   <p className="text-3xl font-bold">{aldeia._count.userAldeiaRoles}</p>
                   <p className="text-sm text-muted-foreground">Membros</p>
                 </CardContent>
               </Card>
-              <Card className="border-primary/20">
+              <Card
+                className="border-primary/20 cursor-pointer hover:bg-primary/5 hover:border-primary/40 transition-all"
+                onClick={() => setActiveTab("events")}
+              >
                 <CardContent className="pt-6 text-center">
                   <Calendar className="h-8 w-8 mx-auto text-primary mb-2" />
                   <p className="text-3xl font-bold">{aldeia._count.eventos}</p>
                   <p className="text-sm text-muted-foreground">Eventos</p>
                 </CardContent>
               </Card>
-              <Card className="border-primary/20">
+              <Card
+                className="border-primary/20 cursor-pointer hover:bg-primary/5 hover:border-primary/40 transition-all"
+                onClick={() => setActiveTab("events")}
+              >
                 <CardContent className="pt-6 text-center">
                   <Gamepad2 className="h-8 w-8 mx-auto text-primary mb-2" />
                   <p className="text-3xl font-bold">{aldeia._count.jogos}</p>
                   <p className="text-sm text-muted-foreground">Jogos</p>
                 </CardContent>
               </Card>
-              <Card className="border-primary/20">
+              <Card
+                className="border-primary/20 cursor-pointer hover:bg-primary/5 hover:border-primary/40 transition-all"
+                onClick={() => router.push("/premios")}
+              >
                 <CardContent className="pt-6 text-center">
                   <PartyPopper className="h-8 w-8 mx-auto text-primary mb-2" />
                   <p className="text-3xl font-bold">{aldeia._count.premios}</p>

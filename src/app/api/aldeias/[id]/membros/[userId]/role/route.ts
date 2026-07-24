@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 // Validation schema for role update
 const roleUpdateSchema = z.object({
-  role: z.enum(['SUPER_ADMIN', 'ALDEIA_ADMIN', 'GESTOR', 'COLABORADOR', 'MODERADOR', 'VIEWER', 'MEMBRO'])
+  role: z.enum(['ALDEIA_ADMIN', 'MODERADOR', 'COLABORADOR', 'MEMBRO'])
 })
 
 export async function POST(request: NextRequest, context: { params: Promise<{id: string; userId: string}> }) {

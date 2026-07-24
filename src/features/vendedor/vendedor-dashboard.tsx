@@ -249,6 +249,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
             subtitle={formatCurrency(stats?.valorHoje || 0)}
             icon={<ShoppingCart className="h-5 w-5" />}
             color="blue"
+            onClick={() => setActiveTab("vendas")}
           />
           <StatCard
             title="Vendas Totais"
@@ -256,6 +257,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
             subtitle={formatCurrency(stats?.valorTotal || 0)}
             icon={<TrendingUp className="h-5 w-5" />}
             color="emerald"
+            onClick={() => setActiveTab("historico")}
           />
           <StatCard
             title="Comissão Total"
@@ -263,6 +265,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
             subtitle="Ganho acumulado"
             icon={<DollarSign className="h-5 w-5" />}
             color="violet"
+            onClick={() => setActiveTab("historico")}
           />
           <StatCard
             title="Saldo a Entregar"
@@ -270,6 +273,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
             subtitle="Dinheiro vivo retido"
             icon={<Banknote className="h-5 w-5" />}
             color="amber"
+            onClick={() => setActiveTab("cofre")}
           />
         </div>
 
@@ -728,10 +732,11 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
 /* ===== Local sub-components (same pattern as SuperAdminDashboard) ===== */
 
 function StatCard({
-  title, value, subtitle, icon, color,
+  title, value, subtitle, icon, color, onClick,
 }: {
   title: string; value: string; subtitle?: string; icon: React.ReactNode;
   color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
+  onClick?: () => void;
 }) {
   const colorMap = {
     emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -750,7 +755,10 @@ function StatCard({
     orange: "border-l-orange-500",
   };
   return (
-    <Card className={`bg-card border-l-4 ${borderMap[color]} shadow-sm hover:shadow-md transition-shadow`}>
+    <Card
+      className={`bg-card border-l-4 ${borderMap[color]} shadow-sm hover:shadow-md transition-shadow ${onClick ? "cursor-pointer hover:scale-[1.02] active:scale-[0.98]" : ""}`}
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
