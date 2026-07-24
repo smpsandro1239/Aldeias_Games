@@ -87,6 +87,10 @@ model User {
   depositosConfirmados  PedidoDepositoCofre[] @relation("DepositoConfirmadoPor")
   depositosRejeitados   PedidoDepositoCofre[] @relation("DepositoRejeitadoPor")
 
+  // Pending aldeia changes
+  pendingChangesRequested PendingAldeiaChange[] @relation("PendingChangeRequestedBy")
+  pendingChangesDecided   PendingAldeiaChange[] @relation("PendingChangeDecidedBy")
+
   @@index([email])
   @@index([role])
   @@index([aldeiaId])
@@ -294,11 +298,34 @@ model Aldeia {
   auditLogs               AuditLog[]
   vault                   Vault?
   pedidosDepositoCofre    PedidoDepositoCofre[]
+  pendingChanges          PendingAldeiaChange[]
 
   @@index([slug])
   @@index([tipoOrganizacao])
   @@index([verificado])
   @@map("aldeias")
+}
+
+model PendingAldeiaChange {
+  id          String   @id @default(cuid())
+  aldeiaId    String
+  aldeia      Aldeia   @relation(fields: [aldeiaId], references: [id])
+  requestedById String
+  requestedBy User     @relation("PendingChangeRequestedBy", fields: [requestedById], references: [id])
+  campo       String
+  valorAntes  String?
+  valorDepois String
+  estado      String   @default("pendente")
+  decidedById String?
+  decidedBy   User?    @relation("PendingChangeDecidedBy", fields: [decidedById], references: [id])
+  decidedAt   DateTime?
+  observacoes String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([aldeiaId])
+  @@index([estado])
+  @@map("pending_aldeia_changes")
 }
 
 model Evento {

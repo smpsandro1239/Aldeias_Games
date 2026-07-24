@@ -9,6 +9,7 @@ const updateAldeiaSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
   descricao: z.string().optional(),
   logoUrl: z.string().url('URL inválida para logo').optional(),
+  bannerUrl: z.string().url('URL inválida para banner').optional().or(z.literal('')),
   tipoOrganizacao: z.enum(['aldeia', 'escola', 'associacao_pais', 'clube']).optional(),
   permitirStripe: z.boolean().optional(),
   permitirMBWay: z.boolean().optional(),
@@ -168,21 +169,87 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
     const hasSensitiveChanges = sensitiveFields.some(f => updateData[f as keyof typeof updateData] !== undefined)
 
     if (hasSensitiveChanges && !isSuperAdmin) {
-      // Check if there are other admins who need to approve
-      const otherAdmins = aldeia.admins.filter((admin: any) => admin.id !== user.userId)
-      if (otherAdmins.length > 0) {
-        // There are other admins — this change needs approval from one of them
-        // For now, store as pending (simplified: reject and tell user to contact another admin)
-        return NextResponse.json(
-          { error: 'Alteração de dados sensíveis (IBAN/titular) requer aprovação de outro administrador da aldeia' },
-          { status: 403 }
-        )
+      // Extract only sensitive field changes and create pending requests
+      const pendingRequests: Promise<any>[] = []
+      const notifications: Promise<any>[] = []
+
+      for (const campo of sensitiveFields) {
+        const newVal = updateData[campo as keyof typeof updateData]
+        if (newVal !== undefined) {
+          const oldVal = (aldeia as any)[campo] || null
+
+          // Check for existing pending change on same field
+          const existingPending = await prisma.pendingAldeiaChange.findFirst({
+            where: { aldeiaId: id, campo, estado: 'pendente' },
+          })
+
+          if (!existingPending) {
+            pendingRequests.push(
+              prisma.pendingAldeiaChange.create({
+                data: {
+                  aldeiaId: id,
+                  requestedById: user.userId,
+                  campo,
+                  valorAntes: oldVal,
+                  valorDepois: newVal as string,
+                },
+              })
+            )
+
+            // Notify other admins
+            const otherAdmins = aldeia.admins.filter((admin: any) => admin.id !== user.userId)
+            for (const admin of otherAdmins) {
+              notifications.push(
+                prisma.notificacao.create({
+                  data: {
+                    userId: admin.id,
+                    tipo: 'sistema' as const,
+                    titulo: 'Alteração de dados sensíveis pendente',
+                    mensagem: `Alteração de ${campo === 'iban' ? 'IBAN' : 'titular da conta'} na aldeia "${aldeia.nome}" aguarda a sua aprovação.`,
+                    lida: false,
+                  },
+                })
+              )
+            }
+
+            // Notify super admins
+            const superAdmins = await prisma.user.findMany({
+              where: { role: 'super_admin' },
+              select: { id: true },
+            })
+            for (const sa of superAdmins) {
+              notifications.push(
+                prisma.notificacao.create({
+                  data: {
+                    userId: sa.id,
+                    tipo: 'sistema' as const,
+                    titulo: 'Alteração de dados sensíveis pendente',
+                    mensagem: `Alteração de ${campo === 'iban' ? 'IBAN' : 'titular da conta'} na aldeia "${aldeia.nome}" aguarda aprovação.`,
+                    lida: false,
+                  },
+                })
+              )
+            }
+
+            // Remove from updateData so it's not applied directly
+            delete updateData[campo as keyof typeof updateData]
+          } else {
+            // Remove from updateData — already pending
+            delete updateData[campo as keyof typeof updateData]
+          }
+        }
       }
-      // Only this admin — requires super_admin approval
-      return NextResponse.json(
-        { error: 'Alteração de dados sensíveis requer aprovação do super administrador' },
-        { status: 403 }
-      )
+
+      await Promise.all([...pendingRequests, ...notifications])
+
+      // If no other fields to update, return success with pending info
+      if (Object.keys(updateData).length === 0) {
+        return NextResponse.json({
+          success: true,
+          pendingSensitiveChanges: true,
+          message: 'Alterações sensíveis ficam pendentes de aprovação de outro administrador.',
+        })
+      }
     }
 
     // Prepare data for Prisma update

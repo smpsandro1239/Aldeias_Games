@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Users, Building2, ChevronRight, Loader2, CheckCircle2, Calendar, Gamepad2, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { AldeiaCreationWizard } from "@/components/modals/aldeia-creation-wizard"
 
 interface Aldeia {
   id: string
@@ -37,6 +38,9 @@ export default function AldeiasPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [aldeias, setAldeias] = useState<Aldeia[]>([])
   const [isLoadingAldeias, setIsLoadingAldeias] = useState(true)
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [newAldeiaId, setNewAldeiaId] = useState("")
+  const [newAldeiaNome, setNewAldeiaNome] = useState("")
   const router = useRouter()
 
   const fetchAldeias = useCallback(async () => {
@@ -91,7 +95,10 @@ export default function AldeiasPage() {
       const aldeia = await response.json()
       toast.success("Aldeia criada com sucesso!")
       setIsCreateModalOpen(false)
-      router.push(`/aldeia/${aldeia.id}`)
+      setNewAldeiaId(aldeia.id)
+      setNewAldeiaNome(aldeia.nome)
+      setWizardOpen(true)
+      fetchAldeias()
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar aldeia")
     } finally {
@@ -229,6 +236,13 @@ export default function AldeiasPage() {
             onOpenChange={setIsCreateModalOpen}
             onSubmit={handleSubmitAldeia}
             loading={isLoading}
+          />
+
+          <AldeiaCreationWizard
+            open={wizardOpen}
+            onOpenChange={setWizardOpen}
+            aldeiaId={newAldeiaId}
+            aldeiaNome={newAldeiaNome}
           />
         </div>
         <BottomNav />

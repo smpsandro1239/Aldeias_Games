@@ -115,6 +115,9 @@ export default function AldeiaDetailPage() {
 
   const [expandedEventos, setExpandedEventos] = useState<Set<string>>(new Set())
 
+  const [pendingChanges, setPendingChanges] = useState<any[]>([])
+  const [loadingPending, setLoadingPending] = useState(false)
+
   const [showCreateEvento, setShowCreateEvento] = useState(false)
   const [creatingEvento, setCreatingEvento] = useState(false)
 
@@ -140,6 +143,7 @@ export default function AldeiaDetailPage() {
       const data = await res.json()
       setAldeia(data)
       setEditForm(data)
+      if (isAdmin) fetchPendingChanges()
     } catch (err) {
       console.error("Erro ao buscar aldeia:", err)
       toast.error("Erro ao carregar dados da aldeia")
@@ -147,6 +151,36 @@ export default function AldeiaDetailPage() {
       setLoading(false)
     }
   }, [aldeiaId])
+
+  const fetchPendingChanges = async () => {
+    setLoadingPending(true)
+    try {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}/pending-changes`)
+      if (res.ok) {
+        const data = await res.json()
+        setPendingChanges(data)
+      }
+    } catch {}
+    setLoadingPending(false)
+  }
+
+  const decidePendingChange = async (changeId: string, acao: 'aprovar' | 'rejeitar') => {
+    try {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}/pending-changes/${changeId}`, {
+        method: "POST",
+        body: JSON.stringify({ acao }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro")
+      }
+      toast.success(acao === "aprovar" ? "Alteração aprovada e aplicada" : "Alteração rejeitada")
+      fetchPendingChanges()
+      fetchAldeia()
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao processar")
+    }
+  }
 
   useEffect(() => {
     fetchAldeia()
@@ -188,7 +222,8 @@ export default function AldeiaDetailPage() {
       const payload: Record<string, unknown> = {}
       const fields = [
         'nome', 'descricao', 'telefone', 'email', 'morada', 'codigoPostal', 'localidade',
-        'responsavel', 'tipoOrganizacao', 'autorizacaoCM', 'numeroAlvara', 'documentosVerificados'
+        'responsavel', 'tipoOrganizacao', 'autorizacaoCM', 'numeroAlvara', 'documentosVerificados',
+        'logoUrl', 'bannerUrl'
       ]
       for (const field of fields) {
         if ((editForm as any)[field] !== (aldeia as any)?.[field]) {
@@ -217,7 +252,12 @@ export default function AldeiaDetailPage() {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || "Erro")
       }
-      toast.success("Aldeia atualizada com sucesso")
+      const result = await res.json().catch(() => ({}))
+      if (result.pendingSensitiveChanges) {
+        toast.info("Alterações sensíveis ficaram pendentes de aprovação de outro administrador.")
+      } else {
+        toast.success("Aldeia atualizada com sucesso")
+      }
       setEditMode(false)
       fetchAldeia()
     } catch (e: any) {
@@ -1012,6 +1052,78 @@ export default function AldeiaDetailPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Imagens */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-3">Imagens</p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>URL do Logo</Label>
+                        <Input
+                          value={editForm.logoUrl || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, logoUrl: e.target.value }))}
+                          disabled={!editMode}
+                          placeholder="https://..."
+                        />
+                        {editForm.logoUrl && (
+                          <img src={editForm.logoUrl} alt="Logo" className="mt-2 h-12 w-12 rounded-lg object-cover" />
+                        )}
+                      </div>
+                      <div>
+                        <Label>URL do Banner</Label>
+                        <Input
+                          value={(editForm as any).bannerUrl || ""}
+                          onChange={e => setEditForm(prev => ({ ...prev, bannerUrl: e.target.value }))}
+                          disabled={!editMode}
+                          placeholder="https://..."
+                        />
+                        {(editForm as any).bannerUrl && (
+                          <img src={(editForm as any).bannerUrl} alt="Banner" className="mt-2 h-12 w-full rounded-lg object-cover" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alterações Pendentes */}
+                  {pendingChanges.filter(c => c.estado === 'pendente').length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-orange-600 mb-3">
+                        Alterações Pendentes de Aprovação ({pendingChanges.filter(c => c.estado === 'pendente').length})
+                      </p>
+                      <div className="space-y-2">
+                        {pendingChanges.filter(c => c.estado === 'pendente').map(change => (
+                          <div key={change.id} className="flex items-center justify-between p-3 rounded-lg border border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-900/10">
+                            <div>
+                              <p className="text-sm font-medium">
+                                {change.campo === 'iban' ? 'IBAN' : 'Titular da Conta'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {change.valorAntes ? `De: ${change.valorAntes.slice(0, 10)}...` : 'Vazio'} → Para: {change.valorDepois?.slice(0, 10)}...
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Solicitado por: {change.requestedBy?.nome} em {new Date(change.createdAt).toLocaleDateString("pt-PT")}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              {isAdmin && change.requestedById !== user?.id && (
+                                <>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs text-green-600" onClick={() => decidePendingChange(change.id, 'aprovar')}>
+                                    Aprovar
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={() => decidePendingChange(change.id, 'rejeitar')}>
+                                    Rejeitar
+                                  </Button>
+                                </>
+                              )}
+                              {change.requestedById === user?.id && (
+                                <Badge variant="secondary" className="text-xs">Aguardando aprovação</Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
