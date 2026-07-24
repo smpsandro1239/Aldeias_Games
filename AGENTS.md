@@ -332,3 +332,13 @@ Pages:
 
 ### Prova de Jogo — z-index fix
 - `prova-jogo-modal.tsx` DialogContent bumped to `z-[60]` (from z-50) to render above confirmation overlays
+
+### Pending Changes — Sensitive Data Approval Workflow
+- **Model**: `PendingAldeiaChange` — tracks IBAN/titular changes requiring approval
+- **Global API**: `GET /api/pending-changes` — super_admin sees all, aldeia_admin sees own aldeia only
+- **Create API**: `POST /api/aldeias/[id]/pending-changes` — creates pending change, notifies other admins + super_admins, super_admin auto-approves
+- **Approve/Reject API**: `POST /api/aldeias/[id]/pending-changes/[changeId]` — `acao: 'aprovar' | 'rejeitar'`, notifies requester
+- **Page**: `/pending-changes` — list with estado filter, approve/reject buttons, action dialog with observacoes
+- **Navigation**: "Pedidos" link in NAV_ITEMS for super_admin and aldeia_admin; QuickAction "Pedidos Pendentes" in both dashboards
+- **Protection**: Super admin auto-approves; single admin can self-approve; multiple admins require cross-approval; self-approval blocked for non-super-admins
+- **Audit**: All changes logged with masked values (****XXXX)
