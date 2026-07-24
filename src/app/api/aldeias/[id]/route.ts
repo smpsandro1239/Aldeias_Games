@@ -82,9 +82,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
     // Check if aldeia is public/verificado or if user is a member
     const user = await getUserFromRequest(request)
     const isMember = user && aldeia.userAldeiaRoles.some((uar: any) => uar.userId === user.userId)
+    const isSuperAdmin = user && user.role === 'super_admin'
     const isPublic = aldeia.ativo && aldeia.verificado
 
-    if (!isPublic && !isMember) {
+    if (!isPublic && !isMember && !isSuperAdmin) {
       return NextResponse.json(
         { error: 'Aldeia não encontrada ou acesso negado' },
         { status: 404 }
