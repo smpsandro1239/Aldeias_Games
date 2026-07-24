@@ -81,7 +81,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
 
     // Check if aldeia is public/verificado or if user is a member
     const user = await getUserFromRequest(request)
-    const isMember = user && aldeia.userAldeiaRoles.some((role: any) => role.id === user.userId)
+    const isMember = user && aldeia.userAldeiaRoles.some((uar: any) => uar.userId === user.userId)
     const isPublic = aldeia.ativo && aldeia.verificado
 
     if (!isPublic && !isMember) {

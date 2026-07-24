@@ -94,7 +94,12 @@ export default function AldeiaDetailPage() {
 
   const fetchAldeia = useCallback(async () => {
     try {
-      const data = await apiRequest(`/api/aldeias/${aldeiaId}`)
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}`)
+      if (!res.ok) {
+        setAldeia(null)
+        return
+      }
+      const data = await res.json()
       setAldeia(data)
       setEditForm(data)
     } catch (err) {
