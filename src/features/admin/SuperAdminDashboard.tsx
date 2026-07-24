@@ -14,7 +14,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import {
   Plus, Building2, Calendar, Wallet, Globe, RotateCcw,
   DollarSign, Users, Gamepad2, Trophy, CreditCard,
-  Shield, TrendingUp, ArrowRight, BarChart3, Hash, Ticket,
+  Shield, TrendingUp, ArrowRight, BarChart3, Hash, Ticket, ClipboardList,
 } from "lucide-react";
 
 import {
@@ -222,6 +222,12 @@ export default function SuperAdminDashboard({
               label="Utilizadores"
               onClick={() => setActiveTab("users")}
               color="blue"
+            />
+            <QuickAction
+              icon={<ClipboardList className="h-5 w-5" />}
+              label="Pedidos Pendentes"
+              onClick={() => router.push("/pending-changes")}
+              color="amber"
             />
             <QuickAction
               icon={<Shield className="h-5 w-5" />}

@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import { LoaderScreen } from "@/components/loader-screen";
 import { UserMenuModal } from "@/components/user-menu-modal";
-import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon, Banknote, Scan } from "lucide-react";
+import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon, Banknote, Scan, ClipboardList } from "lucide-react";
 
 // Constants
 const ROLE_PATHS = {
@@ -24,6 +24,7 @@ const NAV_ITEMS = {
     { icon: Ticket, label: "Números", path: "/numeros-jogados" },
     { icon: Settings, label: "Config", path: "/configuracoes" },
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },
+    { icon: ClipboardList, label: "Pedidos", path: "/pending-changes" },
   ],
   aldeia_admin: [
     { icon: Compass, label: "Dashboard", path: "/admindashboard" },
@@ -32,6 +33,7 @@ const NAV_ITEMS = {
     { icon: Ticket, label: "Números", path: "/numeros-jogados" },
     { icon: Banknote, label: "Cofre", path: "/admindashboard/cofre" },
     { icon: Users, label: "Equipa", path: "/admindashboard?tab=users" },
+    { icon: ClipboardList, label: "Pedidos", path: "/pending-changes" },
     { icon: Scan, label: "Verificar", path: "/verificar" },
   ],
   vendedor: [

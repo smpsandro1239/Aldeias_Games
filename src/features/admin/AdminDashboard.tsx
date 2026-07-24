@@ -6,7 +6,7 @@ import { useAdminDashboardData } from "./hooks/use-admin-dashboard-data";
 import useAdminCrudHandlers from "./hooks/use-admin-crud-handlers";
 
 import { Tabs } from "@/components/ui/tabs";
-import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins, Ticket } from "lucide-react";
+import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins, Ticket, ClipboardList } from "lucide-react";
 
 import {
   DashboardLoadingSkeleton,
@@ -207,6 +207,12 @@ export default function AdminDashboard({
               label="Pedidos"
               onClick={() => router.push("/admindashboard/pedidos")}
               color="orange"
+            />
+            <QuickAction
+              icon={<ClipboardList className="h-5 w-5" />}
+              label="Pedidos Pendentes"
+              onClick={() => router.push("/pending-changes")}
+              color="amber"
             />
             <QuickAction
               icon={<Settings className="h-5 w-5" />}
