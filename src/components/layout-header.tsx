@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import { LoaderScreen } from "@/components/loader-screen";
 import { UserMenuModal } from "@/components/user-menu-modal";
-import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon, Banknote } from "lucide-react";
+import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon, Banknote, Scan } from "lucide-react";
 
 // Constants
 const ROLE_PATHS = {
@@ -30,7 +30,7 @@ const NAV_ITEMS = {
     { icon: Gamepad2, label: "Jogos", path: "/admindashboard?tab=jogos" },
     { icon: Banknote, label: "Cofre", path: "/admindashboard/cofre" },
     { icon: Users, label: "Equipa", path: "/admindashboard?tab=users" },
-    { icon: BarChart3, label: "Verificar", path: "/verificar" },
+    { icon: Scan, label: "Verificar", path: "/verificar" },
   ],
   vendedor: [
     { icon: LayoutDashboard, label: "Vendas", path: "/vendedordashboard" },
@@ -38,7 +38,7 @@ const NAV_ITEMS = {
     { icon: Banknote, label: "Caixa", path: "/vendedordashboard?tab=cofre" },
     { icon: TrendingUp, label: "Histórico", path: "/vendedordashboard?tab=historico" },
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },
-    { icon: BarChart3, label: "Verificar", path: "/verificar" },
+    { icon: Scan, label: "Verificar", path: "/verificar" },
   ],
   user: [
     { icon: Gamepad2, label: "Jogos", path: "/jogos" },

@@ -19,7 +19,8 @@ import {
   LayoutDashboard,
   Sparkles,
   House,
-  Shield
+  Shield,
+  Scan
 } from "lucide-react";
 
 interface BottomNavProps {
@@ -31,7 +32,7 @@ const navItems = {
   user: [
     { icon: LayoutDashboard, label: "INÍCIO", path: "/clientedashboard" },
     { icon: Gamepad2, label: "JOGOS", path: "/jogos" },
-    { icon: Ticket, label: "PRÉMIOS", path: "/premios" },
+    { icon: Ticket, label: "PARTICIPAÇÕES", path: "/participacoes" },
     { icon: User, label: "PERFIL", path: "/perfil" },
     { icon: House, label: "SAIR", path: "/" },
   ],
@@ -48,7 +49,7 @@ const navItems = {
     { icon: Calendar, label: "EVENTOS", path: "/admindashboard?tab=eventos" },
     { icon: Gamepad2, label: "JOGOS", path: "/admindashboard?tab=jogos" },
     { icon: Wallet, label: "COFRE", path: "/admindashboard/cofre" },
-    { icon: Users, label: "EQUIPA", path: "/admindashboard?tab=equipa" },
+    { icon: Users, label: "EQUIPA", path: "/admindashboard?tab=users" },
     { icon: House, label: "SAIR", path: "/" },
   ],
   super_admin: [

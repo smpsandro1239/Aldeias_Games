@@ -2,6 +2,7 @@
 
 import { apiRequest } from "@/lib/api-client";
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { LayoutHeader } from "@/components/layout-header";
@@ -43,6 +44,7 @@ import {
   Crown,
   Users,
   TrendingUp,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
@@ -137,6 +139,7 @@ function MiniNumberGrid({
 
 const AdminEuromilhoesPage = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -166,6 +169,7 @@ const AdminEuromilhoesPage = () => {
 };
 
 function AdminEuromilhoes() {
+  const router = useRouter();
   const [grelhas, setGrelhas] = useState<GrelhaWithVencedor[]>([]);
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -319,6 +323,14 @@ function AdminEuromilhoes() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+      {/* Back Button */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center gap-3 px-4 py-3 -mx-4 -mt-6 mb-0">
+        <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-low rounded-full transition-colors">
+          <ArrowLeft className="w-5 h-5 text-primary" />
+        </button>
+        <span className="font-serif font-bold text-lg text-accent">Euromilhões</span>
+      </div>
+
       {/* Header */}
       <div className="relative bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-indigo-500/10 rounded-3xl p-6 border border-purple-500/10">
         <div className="flex items-center justify-between">

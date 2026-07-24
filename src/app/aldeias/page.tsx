@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useCallback } from "react";
 import { AldeiaModal } from "@/components/modals/aldeia-modal";
 import { LayoutHeader } from "@/components/layout-header";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Users, Building2, ChevronRight, Loader2 } from "lucide-react";
@@ -102,6 +103,7 @@ export default function AldeiasPage() {
   };
 
   return (
+    <RoleGuard allowedRoles={["super_admin"]} redirectPath="/superadmindashboard" panelName="Aldeias">
     <LayoutHeader>
       <div className="min-h-screen bg-background py-8">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -188,5 +190,6 @@ export default function AldeiasPage() {
         />
       </div>
     </LayoutHeader>
+    </RoleGuard>
   );
 }

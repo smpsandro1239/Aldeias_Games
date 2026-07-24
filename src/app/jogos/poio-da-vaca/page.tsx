@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentSelector } from "@/components/payment";
 import { LayoutHeader } from "@/components/layout-header";
+import { BottomNav } from "@/components/bottom-nav";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
 import { useGamePage } from "@/hooks/useGamePage";
 
@@ -1036,6 +1037,7 @@ export default function PoioDaVacaPage() {
         </DialogContent>
       </Dialog>
       </div>
+      <BottomNav role={userRole || undefined} />
     </LayoutHeader>
   );
 }

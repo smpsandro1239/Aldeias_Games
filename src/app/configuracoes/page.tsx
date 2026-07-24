@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { LayoutHeader } from "@/components/layout-header";
 import { BottomNav } from "@/components/bottom-nav";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Aldeia {
   id: string;
@@ -36,7 +37,7 @@ interface MetodoPagamentoDefault {
 
 export default function ConfiguracoesPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const [aldeia, setAldeia] = useState<Aldeia | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,22 +70,21 @@ export default function ConfiguracoesPage() {
   });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-      if (userData.role === "super_admin") {
-        setError("super_admin");
-        setLoading(false);
-      } else if (userData.aldeiaId) {
-        fetchAldeia(userData.aldeiaId);
-      } else {
-        setLoading(false);
-      }
+    if (authLoading) return;
+    if (!authUser) {
+      setLoading(false);
+      return;
+    }
+    if (authUser.role === "super_admin") {
+      setError("super_admin");
+      setLoading(false);
+    } else if (authUser.aldeiaId) {
+      fetchAldeia(authUser.aldeiaId);
     } else {
+      setError("Sem aldeia associada");
       setLoading(false);
     }
-  }, []);
+  }, [authUser, authLoading]);
 
   const fetchAldeia = async (aldeiaId: string) => {
     try {
@@ -228,9 +228,15 @@ export default function ConfiguracoesPage() {
               <p className="text-muted-foreground max-w-sm">
                 Como super admin, deve configurar cada aldeia individualmente a partir do painel de administração.
               </p>
-              <Button onClick={() => router.push('/superadmindashboard')} variant="outline">
-                Ir para o Painel
-              </Button>
+              <div className="flex gap-3 justify-center">
+                <Button onClick={() => router.push('/superadmindashboard')} variant="outline">
+                  Ir para o Painel
+                </Button>
+                <Button onClick={() => router.push('/aldeias')}>
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Gerir Aldeias
+                </Button>
+              </div>
             </div>
           </div>
         </LayoutHeader>
@@ -718,7 +724,7 @@ export default function ConfiguracoesPage() {
         </Button>
       </main>
 
-      <BottomNav role={user?.role} />
+      <BottomNav role={authUser?.role} />
 
       <Dialog open={ajudaModalOpen} onOpenChange={setAjudaModalOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-surface-container border border-primary/10">

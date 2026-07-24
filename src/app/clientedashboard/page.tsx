@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { LayoutHeader } from "@/components/layout-header";
+import { BottomNav } from "@/components/bottom-nav";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { LoaderScreen } from "@/components/loader-screen";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,12 +19,8 @@ const ClienteDashboard = dynamic(
 );
 
 export default function ClienteDashboardPage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
-
-  const getToken = useCallback(() => {
-    return "";
-  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -37,8 +34,6 @@ export default function ClienteDashboardPage() {
     return <LoaderScreen message="Autenticando..." />;
   }
 
-  const token = getToken();
-
   return (
     <RoleGuard
       allowedRoles={ALLOWED_ROLES}
@@ -46,7 +41,8 @@ export default function ClienteDashboardPage() {
       panelName={PANEL_NAME}
     >
       <LayoutHeader>
-        <ClienteDashboard token={token} />
+        <ClienteDashboard />
+        <BottomNav role={user?.role || "user"} />
       </LayoutHeader>
     </RoleGuard>
   );

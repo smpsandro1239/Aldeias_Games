@@ -1,10 +1,12 @@
 "use client";
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useAdminDashboardData } from "./hooks/use-admin-dashboard-data";
 import useAdminCrudHandlers from "./hooks/use-admin-crud-handlers";
 
 import { Tabs } from "@/components/ui/tabs";
+import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins } from "lucide-react";
 
 import {
   DashboardLoadingSkeleton,
@@ -42,7 +44,7 @@ export default function AdminDashboard({
   userRole = "aldeia_admin",
   aldeia,
 }: AdminDashboardProps) {
-  const { token } = useAuth();
+  useAuth();
 
   const {
     loading,
@@ -165,6 +167,51 @@ export default function AdminDashboard({
 
       <DashboardStatCards stats={stats} />
 
+      {/* ===== QUICK ACTIONS (aldeia_admin) ===== */}
+      {userRole === "aldeia_admin" && (
+        <div>
+          <h2 className="font-serif text-lg font-semibold text-accent mb-3">Ações Rápidas</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <QuickAction
+              icon={<Calendar className="h-5 w-5" />}
+              label="Novo Evento"
+              onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}
+              color="blue"
+            />
+            <QuickAction
+              icon={<Wallet className="h-5 w-5" />}
+              label="Cofre"
+              onClick={() => router.push("/admindashboard/cofre")}
+              color="emerald"
+            />
+            <QuickAction
+              icon={<BarChart3 className="h-5 w-5" />}
+              label="Financeiro"
+              onClick={() => router.push("/admindashboard/financeiro")}
+              color="amber"
+            />
+            <QuickAction
+              icon={<Users className="h-5 w-5" />}
+              label="Utilizadores"
+              onClick={() => setActiveTab("users")}
+              color="blue"
+            />
+            <QuickAction
+              icon={<HandCoins className="h-5 w-5" />}
+              label="Pedidos"
+              onClick={() => router.push("/admindashboard/pedidos")}
+              color="orange"
+            />
+            <QuickAction
+              icon={<Settings className="h-5 w-5" />}
+              label="Configurações"
+              onClick={() => router.push("/configuracoes")}
+              color="violet"
+            />
+          </div>
+        </div>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-5">
         <DashboardTabsNavigation
           activeTab={activeTab}
@@ -267,5 +314,30 @@ export default function AdminDashboard({
         setQrCodeData={setQrCodeData}
       />
     </div>
+  );
+}
+
+function QuickAction({
+  icon, label, onClick, color,
+}: {
+  icon: React.ReactNode; label: string; onClick: () => void;
+  color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
+}) {
+  const colorMap = {
+    emerald: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400",
+    blue: "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400",
+    violet: "bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 dark:text-violet-400",
+    amber: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400",
+    pink: "bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400",
+    orange: "bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 dark:text-orange-400",
+  };
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-2 p-4 rounded-xl ${colorMap[color]} transition-all hover:scale-[1.02] active:scale-[0.98]`}
+    >
+      {icon}
+      <span className="text-xs font-medium text-center">{label}</span>
+    </button>
   );
 }

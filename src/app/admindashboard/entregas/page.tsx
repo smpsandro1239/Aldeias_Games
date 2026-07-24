@@ -19,7 +19,8 @@ import {
    History,
    Wallet,
    ChevronLeft,
-   ChevronRight
+   ChevronRight,
+   ArrowLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -162,6 +163,12 @@ const fetchEntregas = async () => {
     <RoleGuard allowedRoles={["super_admin", "aldeia_admin"]} redirectPath="/" panelName="AdminEntregas">
       <LayoutHeader>
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center gap-3 px-4 py-3 -mx-4 -mt-6 mb-0">
+            <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-low rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-primary" />
+            </button>
+            <span className="font-serif font-bold text-lg text-accent">Entregas de Saldo</span>
+          </div>
           {/* Stats */}
            <div className="grid grid-cols-2 gap-4">
              <Card className="bg-surface-container-low">

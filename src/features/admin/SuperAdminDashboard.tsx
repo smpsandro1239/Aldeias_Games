@@ -60,7 +60,7 @@ export default function SuperAdminDashboard({
   aldeia,
 }: SuperAdminDashboardProps) {
   const router = useRouter();
-  const { token } = useAuth();
+  useAuth();
 
   const {
     loading, stats, eventos, jogos, users, vencedores, aldeias,

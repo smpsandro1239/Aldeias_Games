@@ -228,7 +228,7 @@ export function ProvaJogoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-surface-container border-primary/20 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md bg-surface-container border-primary/20 max-h-[90vh] overflow-y-auto z-[60]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-center justify-center">
             {data?.ganhador ? (
