@@ -44,7 +44,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
           include: {
             user: {
               select: { id: true, nome: true, role: true }
-            }
+            },
+            role: true
           }
         },
         admins: {
@@ -52,6 +53,21 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
         },
         vendedores: {
           select: { id: true, nome: true }
+        },
+        eventos: {
+          include: {
+            jogos: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                preco: true,
+                ativo: true,
+                _count: { select: { participacoes: true } }
+              }
+            }
+          },
+          orderBy: { dataInicio: 'desc' }
         }
       }
     })

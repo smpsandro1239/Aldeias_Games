@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           _count: {
-            select: { userAldeiaRoles: true }
+            select: { userAldeiaRoles: true, eventos: true, jogos: true }
           }
         },
         skip,
@@ -63,7 +63,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       aldeias: aldeias.map((aldeia: any) => ({
         ...aldeia,
-        membrosAtivos: aldeia._count.userAldeiaRoles
+        membrosAtivos: aldeia._count.userAldeiaRoles,
+        totalEventos: aldeia._count.eventos,
+        totalJogos: aldeia._count.jogos
       })),
       pagination: {
         page,
