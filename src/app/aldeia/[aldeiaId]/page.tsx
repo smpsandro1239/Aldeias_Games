@@ -16,10 +16,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { CreateEventoModal } from "@/components/modals/create-evento-modal"
 import {
-  ArrowLeft, Shield, ShieldCheck, Users, Calendar, Settings, Gamepad2,
-  MapPin, Phone, Mail, CreditCard, Loader2, CheckCircle2, XCircle,
-  UserPlus, Trash2, Crown, ChevronDown, ChevronRight, Edit, Eye, EyeOff
+  ArrowLeft, Users, Calendar, Settings, Gamepad2,
+  MapPin, Loader2, CheckCircle2, XCircle,
+  UserPlus, Trash2, Crown, ChevronDown, ChevronRight, Edit, Eye, Plus, PartyPopper
 } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api-client"
@@ -57,6 +58,7 @@ interface AldeiaData {
     dataInicio: string
     dataFim: string | null
     ativo: boolean
+    estado: string
     jogos: Array<{
       id: string
       nome: string
@@ -67,6 +69,13 @@ interface AldeiaData {
     }>
   }>
 }
+
+const GAME_TYPES = [
+  { value: "rifa", label: "Rifa", icon: "🎫", defaultPreco: 2 },
+  { value: "raspadinha", label: "Raspadinha", icon: "🎰", defaultPreco: 3 },
+  { value: "euromilhoes", label: "Euromilhões", icon: "⭐", defaultPreco: 3 },
+  { value: "poio_da_vaca", label: "Poio da Vaca", icon: "🐄", defaultPreco: 2 },
+]
 
 export default function AldeiaDetailPage() {
   const params = useParams()
@@ -88,6 +97,18 @@ export default function AldeiaDetailPage() {
   const [addingMember, setAddingMember] = useState(false)
 
   const [expandedEventos, setExpandedEventos] = useState<Set<string>>(new Set())
+
+  const [showCreateEvento, setShowCreateEvento] = useState(false)
+  const [creatingEvento, setCreatingEvento] = useState(false)
+
+  const [showAddJogo, setShowAddJogo] = useState(false)
+  const [addJogoEventoId, setAddJogoEventoId] = useState<string | null>(null)
+  const [addJogoEventoNome, setAddJogoEventoNome] = useState("")
+  const [newJogoTipo, setNewJogoTipo] = useState("rifa")
+  const [newJogoNome, setNewJogoNome] = useState("")
+  const [newJogoPreco, setNewJogoPreco] = useState("2")
+  const [newJogoStock, setNewJogoStock] = useState("100")
+  const [addingJogo, setAddingJogo] = useState(false)
 
   const isSuperAdmin = user?.role === "super_admin"
   const isAdmin = isSuperAdmin || aldeia?.admins.some(a => a.id === user?.id)
@@ -117,10 +138,11 @@ export default function AldeiaDetailPage() {
   const toggleVerificado = async (verificado: boolean) => {
     if (!isSuperAdmin) return
     try {
-      await apiRequest(`/api/aldeias/${aldeiaId}`, {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}`, {
         method: "PATCH",
         body: JSON.stringify({ verificado }),
       })
+      if (!res.ok) throw new Error()
       setAldeia(prev => prev ? { ...prev, verificado } : prev)
       toast.success(verificado ? "Aldeia verificada" : "Verificação removida")
     } catch {
@@ -131,10 +153,11 @@ export default function AldeiaDetailPage() {
   const toggleAtivo = async (ativo: boolean) => {
     if (!isAdmin) return
     try {
-      await apiRequest(`/api/aldeias/${aldeiaId}`, {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}`, {
         method: "PATCH",
         body: JSON.stringify({ ativo }),
       })
+      if (!res.ok) throw new Error()
       setAldeia(prev => prev ? { ...prev, ativo } : prev)
       toast.success(ativo ? "Aldeia ativada" : "Aldeia desativada")
     } catch {
@@ -154,10 +177,11 @@ export default function AldeiaDetailPage() {
       if (editForm.nomeTitularConta !== aldeia?.nomeTitularConta) payload.nomeTitularConta = editForm.nomeTitularConta
       if (editForm.tipoOrganizacao !== aldeia?.tipoOrganizacao) payload.tipoOrganizacao = editForm.tipoOrganizacao
 
-      await apiRequest(`/api/aldeias/${aldeiaId}`, {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}`, {
         method: "PATCH",
         body: JSON.stringify(payload),
       })
+      if (!res.ok) throw new Error()
       toast.success("Aldeia atualizada com sucesso")
       setEditMode(false)
       fetchAldeia()
@@ -172,17 +196,21 @@ export default function AldeiaDetailPage() {
     if (!newMemberEmail.trim()) return
     setAddingMember(true)
     try {
-      await apiRequest(`/api/aldeias/${aldeiaId}/membros`, {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}/membros`, {
         method: "POST",
         body: JSON.stringify({ email: newMemberEmail, role: newMemberRole }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro")
+      }
       toast.success("Membro adicionado com sucesso")
       setShowAddMember(false)
       setNewMemberEmail("")
       setNewMemberRole("MEMBRO")
       fetchAldeia()
-    } catch {
-      toast.error("Erro ao adicionar membro")
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao adicionar membro")
     } finally {
       setAddingMember(false)
     }
@@ -191,9 +219,10 @@ export default function AldeiaDetailPage() {
   const removeMember = async (userId: string, nome: string) => {
     if (!confirm(`Remover ${nome} desta aldeia?`)) return
     try {
-      await apiRequest(`/api/aldeias/${aldeiaId}/membros/${userId}`, {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}/membros/${userId}`, {
         method: "DELETE",
       })
+      if (!res.ok) throw new Error()
       toast.success(`${nome} removido da aldeia`)
       fetchAldeia()
     } catch {
@@ -203,14 +232,95 @@ export default function AldeiaDetailPage() {
 
   const changeRole = async (userId: string, newRole: string) => {
     try {
-      await apiRequest(`/api/aldeias/${aldeiaId}/membros/${userId}/role`, {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}/membros/${userId}/role`, {
         method: "POST",
         body: JSON.stringify({ role: newRole }),
       })
+      if (!res.ok) throw new Error()
       toast.success("Função atualizada")
       fetchAldeia()
     } catch {
       toast.error("Erro ao alterar função")
+    }
+  }
+
+  const handleCreateEvento = async (data: any) => {
+    setCreatingEvento(true)
+    try {
+      const res = await apiRequest("/api/eventos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, aldeiaId }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro")
+      }
+      toast.success("Evento criado com sucesso!")
+      setShowCreateEvento(false)
+      fetchAldeia()
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao criar evento")
+    } finally {
+      setCreatingEvento(false)
+    }
+  }
+
+  const openAddJogo = (eventoId: string, eventoNome: string) => {
+    setAddJogoEventoId(eventoId)
+    setAddJogoEventoNome(eventoNome)
+    setNewJogoTipo("rifa")
+    setNewJogoNome(`${eventoNome} - Rifa`)
+    setNewJogoPreco("2")
+    setNewJogoStock("100")
+    setShowAddJogo(true)
+  }
+
+  const addJogo = async () => {
+    if (!addJogoEventoId || !newJogoNome.trim()) return
+    setAddingJogo(true)
+    try {
+      const gameType = GAME_TYPES.find(g => g.value === newJogoTipo)
+      const config: Record<string, unknown> = {}
+      if (newJogoTipo === "rifa") {
+        config.numeroInicial = 1
+        config.numeroFinal = parseInt(newJogoStock) || 100
+        config.dataSorteio = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]
+        config.horaSorteio = "15:00"
+        config.localSorteio = "Sede da Aldeia"
+      } else if (newJogoTipo === "raspadinha") {
+        config.premios = []
+        config.probabilidadeVitoria = 0.3
+      } else if (newJogoTipo === "euromilhoes") {
+        config.numeros = 5
+        config.estrelas = 2
+      }
+
+      const res = await apiRequest("/api/jogos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: newJogoNome,
+          tipo: newJogoTipo,
+          configuracao: JSON.stringify(config),
+          preco: parseFloat(newJogoPreco) || gameType?.defaultPreco || 2,
+          stockInicial: parseInt(newJogoStock) || 100,
+          eventoId: addJogoEventoId,
+          aldeiaId,
+          estado: "aberto",
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro")
+      }
+      toast.success("Jogo criado com sucesso!")
+      setShowAddJogo(false)
+      fetchAldeia()
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao criar jogo")
+    } finally {
+      setAddingJogo(false)
     }
   }
 
@@ -233,13 +343,8 @@ export default function AldeiaDetailPage() {
   }
 
   const getGameIcon = (tipo: string) => {
-    switch (tipo) {
-      case "rifa": return "🎫"
-      case "raspadinha": return "🎰"
-      case "euromilhoes": return "⭐"
-      case "poio_da_vaca": return "🐄"
-      default: return "🎮"
-    }
+    const game = GAME_TYPES.find(g => g.value === tipo)
+    return game?.icon || "🎮"
   }
 
   if (loading) return <LoaderScreen message="A carregar aldeia..." />
@@ -270,10 +375,10 @@ export default function AldeiaDetailPage() {
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-4">
             {aldeia.logoUrl ? (
-              <img src={aldeia.logoUrl} alt={aldeia.nome} className="h-16 w-16 rounded-xl object-cover" />
+              <img src={aldeia.logoUrl} alt={aldeia.nome} className="h-14 w-14 rounded-xl object-cover" />
             ) : (
-              <div className="h-16 w-16 bg-primary/10 flex items-center justify-center rounded-xl">
-                <MapPin className="h-8 w-8 text-primary" />
+              <div className="h-14 w-14 bg-primary/10 flex items-center justify-center rounded-xl">
+                <MapPin className="h-7 w-7 text-primary" />
               </div>
             )}
             <div>
@@ -289,96 +394,111 @@ export default function AldeiaDetailPage() {
                   </Badge>
                 )}
                 {!aldeia.ativo && <Badge variant="destructive">Inativa</Badge>}
-                <span className="text-sm text-muted-foreground">Nível {aldeia.nivel}</span>
               </div>
             </div>
           </div>
+          {isAdmin && (
+            <Button size="sm" onClick={() => setShowCreateEvento(true)}>
+              <Plus className="h-4 w-4 mr-2" /> Novo Evento
+            </Button>
+          )}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
-            <TabsTrigger value="overview"><Eye className="h-4 w-4 mr-2" /> Visão Geral</TabsTrigger>
-            <TabsTrigger value="members"><Users className="h-4 w-4 mr-2" /> Membros ({aldeia._count.userAldeiaRoles})</TabsTrigger>
-            <TabsTrigger value="events"><Calendar className="h-4 w-4 mr-2" /> Eventos ({aldeia._count.eventos})</TabsTrigger>
+            <TabsTrigger value="overview"><Eye className="h-4 w-4 mr-2" /> Geral</TabsTrigger>
+            <TabsTrigger value="members"><Users className="h-4 w-4 mr-2" /> Membros</TabsTrigger>
+            <TabsTrigger value="events"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="settings"><Settings className="h-4 w-4 mr-2" /> Configurações</TabsTrigger>
+              <TabsTrigger value="settings"><Settings className="h-4 w-4 mr-2" /> Config</TabsTrigger>
             )}
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Membros</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{aldeia._count.userAldeiaRoles}</p></CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+              <Card className="border-primary/20">
+                <CardContent className="pt-6 text-center">
+                  <Users className="h-8 w-8 mx-auto text-primary mb-2" />
+                  <p className="text-3xl font-bold">{aldeia._count.userAldeiaRoles}</p>
+                  <p className="text-sm text-muted-foreground">Membros</p>
+                </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Eventos</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{aldeia._count.eventos}</p></CardContent>
+              <Card className="border-primary/20">
+                <CardContent className="pt-6 text-center">
+                  <Calendar className="h-8 w-8 mx-auto text-primary mb-2" />
+                  <p className="text-3xl font-bold">{aldeia._count.eventos}</p>
+                  <p className="text-sm text-muted-foreground">Eventos</p>
+                </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Jogos</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{aldeia._count.jogos}</p></CardContent>
+              <Card className="border-primary/20">
+                <CardContent className="pt-6 text-center">
+                  <Gamepad2 className="h-8 w-8 mx-auto text-primary mb-2" />
+                  <p className="text-3xl font-bold">{aldeia._count.jogos}</p>
+                  <p className="text-sm text-muted-foreground">Jogos</p>
+                </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Prémios</CardTitle></CardHeader>
-                <CardContent><p className="text-3xl font-bold">{aldeia._count.premios}</p></CardContent>
+              <Card className="border-primary/20">
+                <CardContent className="pt-6 text-center">
+                  <PartyPopper className="h-8 w-8 mx-auto text-primary mb-2" />
+                  <p className="text-3xl font-bold">{aldeia._count.premios}</p>
+                  <p className="text-sm text-muted-foreground">Prémios</p>
+                </CardContent>
               </Card>
             </div>
 
-            {aldeia.descricao && (
-              <Card className="mt-6">
-                <CardHeader><CardTitle>Descrição</CardTitle></CardHeader>
-                <CardContent><p className="text-muted-foreground">{aldeia.descricao}</p></CardContent>
+            <div className="grid gap-6 md:grid-cols-2">
+              {aldeia.descricao && (
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Descrição</CardTitle></CardHeader>
+                  <CardContent><p className="text-muted-foreground">{aldeia.descricao}</p></CardContent>
+                </Card>
+              )}
+
+              <Card>
+                <CardHeader><CardTitle className="text-base">Admins</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {aldeia.admins.map(admin => (
+                      <Badge key={admin.id} className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                        <Crown className="h-3 w-3 mr-1" /> {admin.nome}
+                      </Badge>
+                    ))}
+                    {aldeia.admins.length === 0 && <p className="text-sm text-muted-foreground">Sem admins atribuídos</p>}
+                  </div>
+                </CardContent>
               </Card>
-            )}
+            </div>
 
             {isSuperAdmin && (
               <Card className="mt-6">
-                <CardHeader><CardTitle>Administração</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">Administração</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Verificar Aldeia</p>
                       <p className="text-sm text-muted-foreground">Aldeias verificadas são visíveis publicamente</p>
                     </div>
-                    <Switch
-                      checked={aldeia.verificado}
-                      onCheckedChange={toggleVerificado}
-                    />
+                    <Switch checked={aldeia.verificado} onCheckedChange={toggleVerificado} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Aldeia Ativa</p>
                       <p className="text-sm text-muted-foreground">Aldeias inativas ficam indisponíveis</p>
                     </div>
-                    <Switch
-                      checked={aldeia.ativo}
-                      onCheckedChange={toggleAtivo}
-                    />
+                    <Switch checked={aldeia.ativo} onCheckedChange={toggleAtivo} />
                   </div>
                 </CardContent>
               </Card>
             )}
-
-            <Card className="mt-6">
-              <CardHeader><CardTitle>Admins</CardTitle></CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {aldeia.admins.map(admin => (
-                    <Badge key={admin.id} className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                      <Crown className="h-3 w-3 mr-1" /> {admin.nome}
-                    </Badge>
-                  ))}
-                  {aldeia.admins.length === 0 && <p className="text-sm text-muted-foreground">Sem admins</p>}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="members">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Membros da Aldeia</CardTitle>
+                <div>
+                  <CardTitle className="text-base">Membros da Aldeia</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">{aldeia.userAldeiaRoles.length} membro(s)</p>
+                </div>
                 {isAdmin && (
                   <Button size="sm" onClick={() => setShowAddMember(true)}>
                     <UserPlus className="h-4 w-4 mr-2" /> Adicionar
@@ -386,27 +506,24 @@ export default function AldeiaDetailPage() {
                 )}
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {aldeia.userAldeiaRoles.map(membro => (
-                    <div key={membro.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div key={membro.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center">
-                          <span className="font-medium text-sm">{membro.user.nome.charAt(0).toUpperCase()}</span>
+                        <div className="h-9 w-9 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="font-medium text-sm text-primary">{membro.user.nome.charAt(0).toUpperCase()}</span>
                         </div>
                         <div>
-                          <p className="font-medium">{membro.user.nome}</p>
-                          <p className="text-xs text-muted-foreground">{membro.user.role}</p>
+                          <p className="font-medium text-sm">{membro.user.nome}</p>
+                          <p className="text-xs text-muted-foreground">{membro.user.role === "aldeia_admin" ? "Admin da Aldeia" : membro.user.role}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getRoleBadge(membro.role.name)}
                         {isAdmin && membro.userId !== user?.id && (
                           <>
-                            <Select
-                              value={membro.role.name}
-                              onValueChange={(val) => changeRole(membro.userId, val)}
-                            >
-                              <SelectTrigger className="w-[120px] h-8">
+                            <Select value={membro.role.name} onValueChange={(val) => changeRole(membro.userId, val)}>
+                              <SelectTrigger className="w-[110px] h-8 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -417,7 +534,7 @@ export default function AldeiaDetailPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-destructive"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
                               onClick={() => removeMember(membro.userId, membro.user.nome)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -428,7 +545,15 @@ export default function AldeiaDetailPage() {
                     </div>
                   ))}
                   {aldeia.userAldeiaRoles.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">Nenhum membro encontrado</p>
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                      <p className="text-muted-foreground">Nenhum membro encontrado</p>
+                      {isAdmin && (
+                        <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowAddMember(true)}>
+                          <UserPlus className="h-4 w-4 mr-2" /> Adicionar primeiro membro
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -437,73 +562,126 @@ export default function AldeiaDetailPage() {
 
           <TabsContent value="events">
             <div className="space-y-4">
+              {isAdmin && (
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => setShowCreateEvento(true)}>
+                    <Plus className="h-4 w-4 mr-2" /> Criar Evento
+                  </Button>
+                </div>
+              )}
               {aldeia.eventos && aldeia.eventos.length > 0 ? (
-                aldeia.eventos.map(evento => (
-                  <Card key={evento.id}>
-                    <CardHeader
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => toggleEvento(evento.id)}
-                    >
-                      <div className="flex items-center justify-between">
+                aldeia.eventos.map(evento => {
+                  const isExpanded = expandedEventos.has(evento.id)
+                  return (
+                    <Card key={evento.id} className="overflow-hidden">
+                      <div
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                        onClick={() => toggleEvento(evento.id)}
+                      >
                         <div className="flex items-center gap-3">
-                          {expandedEventos.has(evento.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Calendar className="h-5 w-5 text-primary" />
+                          </div>
                           <div>
-                            <CardTitle className="text-base">{evento.nome}</CardTitle>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="font-medium">{evento.nome}</p>
+                            <p className="text-xs text-muted-foreground">
                               {new Date(evento.dataInicio).toLocaleDateString("pt-PT")}
                               {evento.dataFim ? ` — ${new Date(evento.dataFim).toLocaleDateString("pt-PT")}` : ""}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {evento.ativo ? (
-                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Ativo</Badge>
-                          ) : (
-                            <Badge variant="secondary">Inativo</Badge>
-                          )}
-                          <Badge variant="outline">{evento.jogos.length} jogos</Badge>
+                        <div className="flex items-center gap-3">
+                          <div className="hidden sm:flex items-center gap-2">
+                            {evento.ativo ? (
+                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">Ativo</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">Inativo</Badge>
+                            )}
+                            <Badge variant="outline" className="text-xs">{evento.jogos.length} jogo(s)</Badge>
+                          </div>
+                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                         </div>
                       </div>
-                    </CardHeader>
-                    {expandedEventos.has(evento.id) && (
-                      <CardContent className="pt-0">
-                        <div className="space-y-2 mt-2">
-                          {evento.jogos.map(jogo => (
-                            <div
-                              key={jogo.id}
-                              className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-                              onClick={() => router.push(`/jogos/${jogo.tipo === "poio_da_vaca" ? "poio-da-vaca" : jogo.tipo === "raspadinha" ? "raspadinha-premium" : jogo.tipo}?jogoId=${jogo.id}`)}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className="text-xl">{getGameIcon(jogo.tipo)}</span>
-                                <div>
-                                  <p className="font-medium">{jogo.nome}</p>
-                                  <p className="text-xs text-muted-foreground">{jogo.tipo.replace(/_/g, " ")} · €{jogo.preco}</p>
+                      {isExpanded && (
+                        <div className="border-t px-4 pb-4 pt-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-sm font-medium text-muted-foreground">Jogos</p>
+                            {isAdmin && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  openAddJogo(evento.id, evento.nome)
+                                }}
+                              >
+                                <Plus className="h-3 w-3 mr-1" /> Adicionar Jogo
+                              </Button>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            {evento.jogos.map(jogo => (
+                              <div
+                                key={jogo.id}
+                                className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/30 transition-colors cursor-pointer"
+                                onClick={() => router.push(`/jogos/${jogo.tipo === "poio_da_vaca" ? "poio-da-vaca" : jogo.tipo === "raspadinha" ? "raspadinha-premium" : jogo.tipo}?jogoId=${jogo.id}`)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="text-lg">{getGameIcon(jogo.tipo)}</span>
+                                  <div>
+                                    <p className="font-medium text-sm">{jogo.nome}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {jogo.tipo.replace(/_/g, " ")} · €{jogo.preco.toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{jogo._count.participacoes} vendas</Badge>
+                                  {jogo.ativo ? (
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4 text-muted-foreground" />
+                                  )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline">{jogo._count.participacoes} participações</Badge>
-                                {jogo.ativo ? (
-                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                ) : (
-                                  <XCircle className="h-4 w-4 text-muted-foreground" />
+                            ))}
+                            {evento.jogos.length === 0 && (
+                              <div className="text-center py-8">
+                                <Gamepad2 className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                                <p className="text-sm text-muted-foreground">Sem jogos neste evento</p>
+                                {isAdmin && (
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    className="mt-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      openAddJogo(evento.id, evento.nome)
+                                    }}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" /> Adicionar jogo
+                                  </Button>
                                 )}
                               </div>
-                            </div>
-                          ))}
-                          {evento.jogos.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">Sem jogos neste evento</p>
-                          )}
+                            )}
+                          </div>
                         </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                ))
+                      )}
+                    </Card>
+                  )
+                })
               ) : (
                 <Card>
-                  <CardContent className="py-12 text-center">
-                    <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Nenhum evento encontrado</p>
+                  <CardContent className="py-16 text-center">
+                    <Calendar className="h-14 w-14 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground mb-1">Nenhum evento encontrado</p>
+                    <p className="text-sm text-muted-foreground/70 mb-4">Crie o primeiro evento para esta aldeia</p>
+                    {isAdmin && (
+                      <Button size="sm" onClick={() => setShowCreateEvento(true)}>
+                        <Plus className="h-4 w-4 mr-2" /> Criar Evento
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -514,7 +692,7 @@ export default function AldeiaDetailPage() {
             <TabsContent value="settings">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Editar Aldeia</CardTitle>
+                  <CardTitle className="text-base">Editar Aldeia</CardTitle>
                   {!editMode ? (
                     <Button variant="outline" size="sm" onClick={() => { setEditMode(true); setEditForm(aldeia) }}>
                       <Edit className="h-4 w-4 mr-2" /> Editar
@@ -620,6 +798,7 @@ export default function AldeiaDetailPage() {
                 value={newMemberEmail}
                 onChange={e => setNewMemberEmail(e.target.value)}
                 placeholder="email@exemplo.com"
+                onKeyDown={e => e.key === "Enter" && addMember()}
               />
             </div>
             <div>
@@ -642,6 +821,76 @@ export default function AldeiaDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showAddJogo} onOpenChange={setShowAddJogo}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Jogo</DialogTitle>
+            <p className="text-sm text-muted-foreground">{addJogoEventoNome}</p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Tipo de Jogo</Label>
+              <Select value={newJogoTipo} onValueChange={(val) => {
+                setNewJogoTipo(val)
+                const game = GAME_TYPES.find(g => g.value === val)
+                setNewJogoPreco(String(game?.defaultPreco || 2))
+                setNewJogoNome(`${addJogoEventoNome} - ${game?.label || val}`)
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {GAME_TYPES.map(g => (
+                    <SelectItem key={g.value} value={g.value}>{g.icon} {g.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Nome do Jogo</Label>
+              <Input
+                value={newJogoNome}
+                onChange={e => setNewJogoNome(e.target.value)}
+                placeholder="Nome do jogo"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Preço (€)</Label>
+                <Input
+                  type="number"
+                  step="0.50"
+                  min="0.50"
+                  value={newJogoPreco}
+                  onChange={e => setNewJogoPreco(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Stock Inicial</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={newJogoStock}
+                  onChange={e => setNewJogoStock(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddJogo(false)}>Cancelar</Button>
+            <Button onClick={addJogo} disabled={addingJogo || !newJogoNome.trim()}>
+              {addingJogo && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar Jogo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <CreateEventoModal
+        open={showCreateEvento}
+        onOpenChange={setShowCreateEvento}
+        onSubmit={handleCreateEvento}
+        aldeiaId={aldeiaId}
+      />
 
       <BottomNav />
     </LayoutHeader>
