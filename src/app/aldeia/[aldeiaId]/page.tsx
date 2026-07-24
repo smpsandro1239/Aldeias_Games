@@ -17,6 +17,8 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { CreateEventoModal } from "@/components/modals/create-evento-modal"
+import { CreateJogoModal } from "@/components/modals/create-jogo-modal"
+import type { JogoData } from "@/components/modals/create-jogo-modal"
 import {
   ArrowLeft, Users, Calendar, Settings, Gamepad2,
   MapPin, Loader2, CheckCircle2, XCircle,
@@ -124,11 +126,6 @@ export default function AldeiaDetailPage() {
   const [showAddJogo, setShowAddJogo] = useState(false)
   const [addJogoEventoId, setAddJogoEventoId] = useState<string | null>(null)
   const [addJogoEventoNome, setAddJogoEventoNome] = useState("")
-  const [newJogoTipo, setNewJogoTipo] = useState("rifa")
-  const [newJogoNome, setNewJogoNome] = useState("")
-  const [newJogoPreco, setNewJogoPreco] = useState("2")
-  const [newJogoStock, setNewJogoStock] = useState("100")
-  const [addingJogo, setAddingJogo] = useState(false)
 
   const isSuperAdmin = user?.role === "super_admin"
   const isAdmin = isSuperAdmin || aldeia?.admins.some(a => a.id === user?.id)
@@ -351,51 +348,28 @@ export default function AldeiaDetailPage() {
     setShowAddJogo(true)
   }
 
-  const addJogo = async () => {
-    if (!addJogoEventoId || !newJogoNome.trim()) return
-    setAddingJogo(true)
+  const handleSaveJogo = async (data: JogoData) => {
+    if (!addJogoEventoId) return
     try {
-      const gameType = GAME_TYPES.find(g => g.value === newJogoTipo)
-      const config: Record<string, unknown> = {}
-      if (newJogoTipo === "rifa") {
-        config.numeroInicial = 1
-        config.numeroFinal = parseInt(newJogoStock) || 100
-        config.dataSorteio = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]
-        config.horaSorteio = "15:00"
-        config.localSorteio = "Sede da Aldeia"
-      } else if (newJogoTipo === "raspadinha") {
-        config.premios = []
-        config.probabilidadeVitoria = 0.3
-      } else if (newJogoTipo === "euromilhoes") {
-        config.numeros = 5
-        config.estrelas = 2
-      }
-
       const res = await apiRequest("/api/jogos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nome: newJogoNome,
-          tipo: newJogoTipo,
-          configuracao: JSON.stringify(config),
-          preco: parseFloat(newJogoPreco) || gameType?.defaultPreco || 2,
-          stockInicial: parseInt(newJogoStock) || 100,
+          ...data,
           eventoId: addJogoEventoId,
           aldeiaId,
-          estado: "aberto",
         }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || "Erro")
+        throw new Error(err.error || err.details?.map((d: any) => d.message).join(", ") || "Erro ao criar jogo")
       }
       toast.success("Jogo criado com sucesso!")
       setShowAddJogo(false)
       fetchAldeia()
     } catch (e: any) {
       toast.error(e.message || "Erro ao criar jogo")
-    } finally {
-      setAddingJogo(false)
+      throw e
     }
   }
 
@@ -1168,68 +1142,12 @@ export default function AldeiaDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showAddJogo} onOpenChange={setShowAddJogo}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Jogo</DialogTitle>
-            <p className="text-sm text-muted-foreground">{addJogoEventoNome}</p>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Tipo de Jogo</Label>
-              <Select value={newJogoTipo} onValueChange={(val) => {
-                setNewJogoTipo(val)
-                const game = GAME_TYPES.find(g => g.value === val)
-                setNewJogoPreco(String(game?.defaultPreco || 2))
-                setNewJogoNome(`${addJogoEventoNome} - ${game?.label || val}`)
-              }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {GAME_TYPES.map(g => (
-                    <SelectItem key={g.value} value={g.value}>{g.icon} {g.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Nome do Jogo</Label>
-              <Input
-                value={newJogoNome}
-                onChange={e => setNewJogoNome(e.target.value)}
-                placeholder="Nome do jogo"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Preço (€)</Label>
-                <Input
-                  type="number"
-                  step="0.50"
-                  min="0.50"
-                  value={newJogoPreco}
-                  onChange={e => setNewJogoPreco(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>Stock Inicial</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={newJogoStock}
-                  onChange={e => setNewJogoStock(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddJogo(false)}>Cancelar</Button>
-            <Button onClick={addJogo} disabled={addingJogo || !newJogoNome.trim()}>
-              {addingJogo && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Criar Jogo
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateJogoModal
+        open={showAddJogo}
+        onOpenChange={setShowAddJogo}
+        onSubmit={handleSaveJogo}
+        eventoId={addJogoEventoId || undefined}
+      />
 
       <CreateEventoModal
         open={showCreateEvento}
