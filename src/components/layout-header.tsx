@@ -19,7 +19,7 @@ const ROLE_PATHS = {
 const NAV_ITEMS = {
   super_admin: [
     { icon: Compass, label: "Painel", path: "/superadmindashboard" },
-    { icon: Building2, label: "Aldeias", path: "/superadmindashboard?tab=aldeias" },
+    { icon: Building2, label: "Aldeias", path: "/aldeias" },
     { icon: BarChart3, label: "Stats", path: "/superadmindashboard?tab=analytics" },
     { icon: Ticket, label: "Números", path: "/numeros-jogados" },
     { icon: Settings, label: "Config", path: "/configuracoes" },

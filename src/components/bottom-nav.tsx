@@ -54,7 +54,7 @@ const navItems = {
   ],
   super_admin: [
     { icon: LayoutDashboard, label: "PAINEL", path: "/superadmindashboard" },
-    { icon: Building2, label: "ALDEIAS", path: "/superadmindashboard?tab=aldeias" },
+    { icon: Building2, label: "ALDEIAS", path: "/aldeias" },
     { icon: BarChart3, label: "STATS", path: "/superadmindashboard?tab=analytics" },
     { icon: Gamepad2, label: "JOGOS", path: "/jogos" },
     { icon: Settings, label: "CONFIG", path: "/configuracoes" },
