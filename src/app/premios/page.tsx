@@ -3,7 +3,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutHeader } from "@/components/layout-header";
-import { Gift, Trophy, Star, Clock, Award, Wallet, User, Heart, Home } from "lucide-react";
+import { BottomNav } from "@/components/bottom-nav";
+import {
+  Gift, Trophy, Star, Clock, Award, Wallet, User, Heart, Home,
+  Eye, CheckCircle2, XCircle, Hash, MapPin, Calendar, Gamepad2,
+  Loader2, ChevronRight, AlertCircle
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
 
 interface User {
   id: string;
@@ -14,35 +23,34 @@ interface User {
   saldo?: number;
 }
 
-interface Premio {
-  id: string;
-  nome: string;
-  descricao: string;
-  data: string;
-  tipo: "raspadinha" | "poio_vaca" | "rifa" | "euromilhoes";
-  valor?: number;
-  premioEntregue?: boolean;
-  jogoNome?: string;
-}
-
-interface HistoricoItem {
+interface PremioData {
   id: string;
   jogoNome: string;
-  tipo: string;
+  jogoTipo: string;
+  aldeiaNome: string;
+  valorPago: number;
+  premioNome: string;
+  premioValor: number;
+  ganhador: boolean;
+  premioEntregue: boolean;
+  resultadoRaspe: string | null;
+  hash: string | null;
   data: string;
-  resultado?: string;
-  valor?: number;
+  nomeCliente: string | null;
+  vendedorNome: string | null;
+  numerosSelecionados: number[] | null;
+  grid: any[] | null;
 }
 
 export default function PremiosPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [premios, setPremios] = useState<Premio[]>([]);
+  const [premios, setPremios] = useState<PremioData[]>([]);
   const [loading, setLoading] = useState(true);
   const [saldo, setSaldo] = useState(0);
-  const [historico, setHistorico] = useState<HistoricoItem[]>([]);
-  const [numerosJogados, setNumerosJogados] = useState<{jogo: string; numeros: number[]}[]>([]);
+  const [selectedPremio, setSelectedPremio] = useState<PremioData | null>(null);
+  const [provaModalOpen, setProvaModalOpen] = useState(false);
+  const [provaId, setProvaId] = useState<string | undefined>();
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -52,8 +60,6 @@ export default function PremiosPage() {
     fetchPremios();
     fetchSaldo();
   }, []);
-
-
 
   const fetchSaldo = async () => {
     try {
@@ -69,138 +75,109 @@ export default function PremiosPage() {
     }
   };
 
-   const fetchPremios = async () => {
-     try {
-       // Fetch all participations with pagination
-       const allParticipacoes: any[] = [];
-       let page = 1;
-       let hasMore = true;
-       while (hasMore) {
-         const res = await fetch(`/api/participacoes?page=${page}&limit=50`);
-         if (res.ok) {
-           const data = await res.json();
-           allParticipacoes.push(...(data.data || []));
-           hasMore = data.pagination?.hasNext || false;
-           page++;
-         } else {
-           hasMore = false;
-         }
-       }
+  const fetchPremios = async () => {
+    try {
+      const allParticipacoes: any[] = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const res = await fetch(`/api/participacoes?page=${page}&limit=50`);
+        if (res.ok) {
+          const data = await res.json();
+          allParticipacoes.push(...(data.data || []));
+          hasMore = data.pagination?.hasNext || false;
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
 
-       // Process winning prizes
-       const premiosList: Premio[] = allParticipacoes
-         .filter((p: any) => p.ganhador)
-         .map((p: any) => {
-           let valor = 0;
-           try {
-             const dados = typeof p.dadosParticipacao === 'string'
-               ? JSON.parse(p.dadosParticipacao)
-               : p.dadosParticipacao;
-             if (dados?.winningPrize?.valorDinheiroAlternative) {
-               valor = dados.winningPrize.valorDinheiroAlternative;
-             }
-           } catch {}
+      const premiosList: PremioData[] = allParticipacoes
+        .filter((p: any) => p.ganhador)
+        .map((p: any) => {
+          let premioNome = "Prémio";
+          let premioValor = 0;
+          let grid: any[] | null = null;
+          let numerosSelecionados: number[] | null = null;
 
-           return {
-             id: p.id,
-             nome: p.resultadoRaspe || "Prémio",
-             descricao: p.jogo?.nome || "Jogo",
-             data: p.createdAt,
-             tipo: p.jogo?.tipo || "raspadinha",
-             valor,
-             premioEntregue: p.premioEntregue || false,
-             jogoNome: p.jogo?.nome,
-           };
-         });
+          try {
+            const dados = typeof p.dadosParticipacao === 'string'
+              ? JSON.parse(p.dadosParticipacao)
+              : p.dadosParticipacao;
 
-       setPremios(premiosList);
+            if (dados?.winningPrize) {
+              premioNome = dados.winningPrize.nome || dados.winningPrize.name || premioNome;
+              premioValor = dados.winningPrize.valorDinheiroAlternative || dados.winningPrize.valor || 0;
+            } else if (p.resultadoRaspe && p.resultadoRaspe !== 'sem_premio') {
+              premioNome = p.resultadoRaspe;
+              // Try to find the prize value from the grid
+              if (dados?.grid && Array.isArray(dados.grid)) {
+                const found = dados.grid.find((g: any) => g.nome === p.resultadoRaspe);
+                if (found) premioValor = found.valorDinheiroAlternative || found.valor || 0;
+              }
+            }
 
-       // Process history (all participations)
-       const historicoList: HistoricoItem[] = allParticipacoes
-         .map((p: any) => {
-           let numeros: number[] = [];
-           try {
-             const dados = typeof p.dadosParticipacao === 'string'
-               ? JSON.parse(p.dadosParticipacao)
-               : p.dadosParticipacao;
-             numeros = dados?.numeros || [];
-           } catch {}
-           return {
-             id: p.id,
-             jogoNome: p.jogo?.nome || "Jogo",
-             tipo: p.jogo?.tipo || "jogo",
-             data: p.createdAt,
-             resultado: p.resultadoRaspe || (numeros.length > 0 ? numeros.join(", ") : "-"),
-             valor: p.ganhador ? p.valorPago : 0,
-           };
-         });
-       setHistorico(historicoList);
+            grid = dados?.grid || null;
+            numerosSelecionados = dados?.numeros || null;
+          } catch {}
 
-       // Process numbers played
-       const numerosMap: {[key: string]: number[]} = {};
-       allParticipacoes.forEach((p: any) => {
-         try {
-           const dados = typeof p.dadosParticipacao === 'string'
-             ? JSON.parse(p.dadosParticipacao)
-             : p.dadosParticipacao;
-           if (dados?.numeros && dados.numeros.length > 0) {
-             const jogoNome = p.jogo?.nome || "Jogo";
-             if (!numerosMap[jogoNome]) {
-               numerosMap[jogoNome] = [];
-             }
-             numerosMap[jogoNome].push(...dados.numeros);
-           }
-         } catch {}
-       });
-       const numerosList = Object.entries(numerosMap).map(([jogo, numeros]) => ({
-         jogo,
-         numeros: [...new Set(numeros)].sort((a, b) => a - b)
-       }));
-       setNumerosJogados(numerosList);
+          return {
+            id: p.id,
+            jogoNome: p.jogo?.nome || "Jogo",
+            jogoTipo: p.jogo?.tipo || "raspadinha",
+            aldeiaNome: p.jogo?.evento?.aldeia?.nome || "Aldeia",
+            valorPago: p.valorPago || 0,
+            premioNome,
+            premioValor,
+            ganhador: p.ganhador,
+            premioEntregue: p.premioEntregue || false,
+            resultadoRaspe: p.resultadoRaspe,
+            hash: p.hashParticipacao || p.hashRaspe || null,
+            data: p.createdAt,
+            nomeCliente: p.nomeCliente || null,
+            vendedorNome: null,
+            numerosSelecionados,
+            grid,
+          };
+        });
 
-     } catch (error) {
-       console.error("Erro ao carregar dados:", error);
-     } finally {
-       setLoading(false);
-     }
-   };
-
-
-
-  const getTipoIcon = (tipo: Premio["tipo"]) => {
-    switch (tipo) {
-      case "raspadinha":
-        return <Gift className="w-5 h-5" />;
-      case "poio_vaca":
-        return <Trophy className="w-5 h-5" />;
-      case "rifa":
-        return <Star className="w-5 h-5" />;
-      case "euromilhoes":
-        return <Award className="w-5 h-5" />;
-      default:
-        return <Gift className="w-5 h-5" />;
+      setPremios(premiosList);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getTipoLabel = (tipo: Premio["tipo"]) => {
+  const getTipoIcon = (tipo: string) => {
     switch (tipo) {
-      case "raspadinha":
-        return "Raspadinha";
-      case "poio_vaca":
-        return "Poio da Vaca";
-      case "rifa":
-        return "Rifa";
-      case "euromilhoes":
-        return "Euromilhões";
-      default:
-        return "Prémio";
+      case "raspadinha": return <Gift className="w-5 h-5" />;
+      case "poio_da_vaca": return <Trophy className="w-5 h-5" />;
+      case "rifa": return <Star className="w-5 h-5" />;
+      case "euromilhoes": return <Award className="w-5 h-5" />;
+      default: return <Gift className="w-5 h-5" />;
     }
+  };
+
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo) {
+      case "raspadinha": return "Raspadinha";
+      case "poio_da_vaca": return "Poio da Vaca";
+      case "rifa": return "Rifa";
+      case "euromilhoes": return "Euromilhões";
+      default: return tipo;
+    }
+  };
+
+  const openProvaModal = (premio: PremioData) => {
+    setProvaId(premio.id);
+    setProvaModalOpen(true);
   };
 
   return (
     <LayoutHeader>
-      <main className="px-4 py-6 max-w-md mx-auto space-y-6">
-        {/* Saldo Card - Always visible for logged users */}
+      <main className="px-4 py-6 max-w-md mx-auto space-y-6 pb-24">
+        {/* Saldo Card */}
         {user && (
           <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-4 border border-primary/20">
             <div className="flex items-center gap-3">
@@ -215,64 +192,75 @@ export default function PremiosPage() {
 
         {/* Prémios */}
         <div>
-            <h2 className="font-serif text-lg text-accent mb-4">A Tuas Vitórias</h2>
+          <h2 className="font-serif text-lg text-accent mb-4">Os Teus Prémios</h2>
 
-            {loading ? (
-              <div className="text-center py-12 text-muted-foreground">A carregar os teus prémios...</div>
-            ) : premios.length > 0 ? (
-              <div className="space-y-3">
-                {premios.map((premio) => (
-                  <div
-                    key={premio.id}
-                    className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10 flex items-center gap-4"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-                      {getTipoIcon(premio.tipo)}
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              A carregar os teus prémios...
+            </div>
+          ) : premios.length > 0 ? (
+            <div className="space-y-3">
+              {premios.map((premio) => (
+                <Card
+                  key={premio.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => openProvaModal(premio)}
+                >
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                      {getTipoIcon(premio.jogoTipo)}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-serif text-accent font-bold">{premio.nome}</h3>
-                        {premio.valor && (
-                          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                            +{premio.valor}€
-                          </span>
-                        )}
-                        {premio.premioEntregue && (
-                          <span className="text-xs bg-primary/20 text-green-400 px-2 py-0.5 rounded-full">
-                            Recebido
-                          </span>
+                        <h3 className="font-serif text-accent font-bold truncate">{premio.premioNome}</h3>
+                        {premio.premioValor > 0 && (
+                          <Badge className="bg-green-500/20 text-green-700 shrink-0">
+                            +{premio.premioValor.toFixed(2)}€
+                          </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">{premio.jogoNome || premio.descricao}</p>
+                      <p className="text-sm text-muted-foreground truncate">{premio.jogoNome}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-xs text-muted-foreground/60 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {new Date(premio.data).toLocaleDateString("pt-PT")}
                         </span>
                         <span className="text-xs bg-surface-container-low text-muted-foreground px-2 py-0.5 rounded-full">
-                          {getTipoLabel(premio.tipo)}
+                          {getTipoLabel(premio.jogoTipo)}
                         </span>
+                        {premio.premioEntregue ? (
+                          <Badge className="bg-green-500/20 text-green-700 text-xs">
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> Entregue
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-yellow-500/20 text-yellow-700 text-xs">
+                            <AlertCircle className="h-3 w-3 mr-1" /> Pendente
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Heart className="w-16 h-16 text-primary/30 mx-auto mb-4" />
-                <p className="text-muted-foreground">Ainda não ganhaste nenhum prémio</p>
-                <p className="text-sm text-muted-foreground/60 mt-1">A sorte ainda não te sorriu. Participa e tenta a tua sorte!</p>
-                 <button
-                   onClick={() => router.push("/jogos")}
-                   className="mt-4 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl w-full sm:w-auto"
-                 >
-                  Participar Agora
-                </button>
-              </div>
-            )}
-           </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Heart className="w-16 h-16 text-primary/30 mx-auto mb-4" />
+              <p className="text-muted-foreground">Ainda não ganhaste nenhum prémio</p>
+              <p className="text-sm text-muted-foreground/60 mt-1">A sorte ainda não te sorriu. Participa e tenta a tua sorte!</p>
+              <button
+                onClick={() => router.push("/jogos")}
+                className="mt-4 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl w-full sm:w-auto"
+              >
+                Participar Agora
+              </button>
+            </div>
+          )}
+        </div>
 
-         <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+        <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
           <h3 className="font-serif text-accent font-bold mb-3">Como Ganhar Prémios?</h3>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
@@ -290,6 +278,14 @@ export default function PremiosPage() {
           </ul>
         </div>
       </main>
+
+      <ProvaJogoModal
+        open={provaModalOpen}
+        onOpenChange={setProvaModalOpen}
+        participacaoId={provaId}
+      />
+
+      <BottomNav />
     </LayoutHeader>
   );
 }

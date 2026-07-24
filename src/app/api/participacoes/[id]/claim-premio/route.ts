@@ -162,19 +162,10 @@ export async function POST(
     const prizeAmount = (winningPrize.valorDinheiroAlternative as number) || 0;
 
     if (participacao.premioEntregue) {
-      const currentUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { saldo: true },
-      });
-
-      return NextResponse.json({
-        success: true,
-        alreadyClaimed: true,
-        creditedAmount: prizeAmount,
-        newSaldo: currentUser?.saldo || 0,
-        prizeName: winningPrize.nome,
-        claimType,
-      });
+      return NextResponse.json(
+        { error: 'Este prémio já foi reclamado e entregue.', alreadyClaimed: true },
+        { status: 400 }
+      );
     }
 
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';

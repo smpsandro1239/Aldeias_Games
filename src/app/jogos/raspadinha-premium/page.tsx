@@ -543,7 +543,7 @@ function RaspadinhaPremiumContent() {
     return <RaspadinhaLoading />;
   }
 
-  if (participacaoConfirmada) {
+   if (participacaoConfirmada) {
     return (
       <div className="min-h-screen bg-background text-foreground font-body pb-32">
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
@@ -560,18 +560,32 @@ function RaspadinhaPremiumContent() {
           </div>
           <h2 className="font-serif text-2xl text-accent font-bold">Raspadinha Registada!</h2>
           <p className="text-muted-foreground mt-2">Boa sorte!</p>
-          <button
-            onClick={() => {
-              setParticipacaoConfirmada(false);
-              handleJogar();
-            }}
-            className="mt-6 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
-          >
-            Tentar Novamente
-          </button>
+          <div className="flex flex-col gap-3 mt-6">
+            <Button
+              onClick={() => setProvaModalOpen(true)}
+              variant="outline"
+              className="w-full py-4 border-primary/30 text-primary font-semibold rounded-xl"
+            >
+              <Eye className="w-4 h-4 mr-2" /> Ver Prova de Jogo
+            </Button>
+            <button
+              onClick={() => {
+                setParticipacaoConfirmada(false);
+                handleJogar();
+              }}
+              className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
+            >
+              Tentar Novamente
+            </button>
+          </div>
         </main>
-      <BottomNav role={userRole || undefined} />
+        <BottomNav role={userRole || undefined} />
 
+        <ProvaJogoModal
+          open={provaModalOpen}
+          onOpenChange={setProvaModalOpen}
+          participacaoId={participacaoCriada?.id}
+        />
       </div>
     );
   }

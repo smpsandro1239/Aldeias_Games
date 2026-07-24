@@ -384,6 +384,12 @@ export default function RifaPage() {
             Participar Novamente
           </Button>
         </div>
+
+        <ProvaJogoModal
+          open={provaModalOpen}
+          onOpenChange={setProvaModalOpen}
+          participacaoId={participacaoCriada?.id}
+        />
       </GameDetailLayout>
     );
   }
