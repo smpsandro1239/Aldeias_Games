@@ -70,6 +70,16 @@ interface AldeiaData {
   }>
 }
 
+const ALL_ROLES = [
+  { value: "MEMBRO", label: "Membro", color: "bg-secondary text-secondary-foreground" },
+  { value: "VIEWER", label: "Viewer", color: "bg-secondary text-secondary-foreground" },
+  { value: "COLABORADOR", label: "Colaborador", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+  { value: "MODERADOR", label: "Moderador", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+  { value: "GESTOR", label: "Gestor", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
+  { value: "ALDEIA_ADMIN", label: "Admin Aldeia", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
+  { value: "SUPER_ADMIN", label: "Super Admin", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
+]
+
 const GAME_TYPES = [
   { value: "rifa", label: "Rifa", icon: "🎫", defaultPreco: 2 },
   { value: "raspadinha", label: "Raspadinha", icon: "🎰", defaultPreco: 3 },
@@ -334,12 +344,9 @@ export default function AldeiaDetailPage() {
   }
 
   const getRoleBadge = (roleName: string) => {
-    switch (roleName) {
-      case "ADMIN": return <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">Admin</Badge>
-      case "MODERADOR": return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Moderador</Badge>
-      case "VENDEDOR": return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Vendedor</Badge>
-      default: return <Badge variant="secondary">Membro</Badge>
-    }
+    const role = ALL_ROLES.find(r => r.value === roleName)
+    if (role) return <Badge className={role.color}>{role.label}</Badge>
+    return <Badge variant="secondary">{roleName}</Badge>
   }
 
   const getGameIcon = (tipo: string) => {
@@ -523,12 +530,13 @@ export default function AldeiaDetailPage() {
                         {isAdmin && membro.userId !== user?.id && (
                           <>
                             <Select value={membro.role.name} onValueChange={(val) => changeRole(membro.userId, val)}>
-                              <SelectTrigger className="w-[110px] h-8 text-xs">
+                              <SelectTrigger className="w-[130px] h-8 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="MEMBRO">Membro</SelectItem>
-                                <SelectItem value="MODERADOR">Moderador</SelectItem>
+                                {ALL_ROLES.map(r => (
+                                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                             <Button
@@ -806,8 +814,9 @@ export default function AldeiaDetailPage() {
               <Select value={newMemberRole} onValueChange={setNewMemberRole}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MEMBRO">Membro</SelectItem>
-                  <SelectItem value="MODERADOR">Moderador</SelectItem>
+                  {ALL_ROLES.map(r => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
