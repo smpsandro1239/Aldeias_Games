@@ -16,6 +16,7 @@ import {
   DollarSign, Users, Gamepad2, Trophy, CreditCard,
   Shield, TrendingUp, ArrowRight, BarChart3, Hash, Ticket, ClipboardList,
 } from "lucide-react";
+import { usePendingChangesCount } from "@/hooks/use-pending-changes-count";
 
 import {
   DashboardLoadingSkeleton, DashboardModalsLayer,
@@ -61,6 +62,7 @@ export default function SuperAdminDashboard({
 }: SuperAdminDashboardProps) {
   const router = useRouter();
   useAuth();
+  const pendingCount = usePendingChangesCount();
 
   const {
     loading, stats, eventos, jogos, users, vencedores, aldeias,
@@ -228,6 +230,7 @@ export default function SuperAdminDashboard({
               label="Pedidos Pendentes"
               onClick={() => router.push("/pending-changes")}
               color="amber"
+              badge={pendingCount}
             />
             <QuickAction
               icon={<Shield className="h-5 w-5" />}
@@ -487,10 +490,11 @@ function StatCard({
 }
 
 function QuickAction({
-  icon, label, onClick, color,
+  icon, label, onClick, color, badge,
 }: {
   icon: React.ReactNode; label: string; onClick: () => void;
   color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
+  badge?: number;
 }) {
   const colorMap = {
     emerald: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400",
@@ -503,8 +507,13 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-4 rounded-xl ${colorMap[color]} transition-all hover:scale-[1.02] active:scale-[0.98]`}
+      className={`relative flex flex-col items-center gap-2 p-4 rounded-xl ${colorMap[color]} transition-all hover:scale-[1.02] active:scale-[0.98]`}
     >
+      {badge && badge > 0 && (
+        <span className="absolute top-2 right-2 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
       {icon}
       <span className="text-xs font-medium text-center">{label}</span>
     </button>

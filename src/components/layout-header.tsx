@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
+import { usePendingChangesCount } from "@/hooks/use-pending-changes-count";
 import { LoaderScreen } from "@/components/loader-screen";
 import { UserMenuModal } from "@/components/user-menu-modal";
 import { User, Gamepad2, House, Compass, Wallet, LogOut, Menu, X, BarChart3, Settings, Calendar, Ticket, TrendingUp, LayoutDashboard, Building2, Users, Sun, Moon, Banknote, Scan, ClipboardList } from "lucide-react";
@@ -66,6 +67,7 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const pendingCount = usePendingChangesCount();
 
   // Todos os hooks devem ser chamados sempre na mesma ordem, antes de qualquer condição
   useEffect(() => {
@@ -140,11 +142,16 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
                   <button
                     key={item.label}
                     onClick={() => handleNavClick(item.path)}
-                    className={`font-label text-xs font-bold tracking-widest uppercase transition-colors ${
+                    className={`font-label text-xs font-bold tracking-widest uppercase transition-colors relative ${
                       isActive ? 'text-primary' : 'text-muted-foreground hover:text-secondary'
                     }`}
                   >
                     {item.label}
+                    {item.path === "/pending-changes" && pendingCount > 0 && (
+                      <span className="absolute -top-2 -right-3 min-w-[16px] h-4 flex items-center justify-center px-1 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none">
+                        {pendingCount > 99 ? "99+" : pendingCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -194,7 +201,7 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
                   <button
                     key={item.label}
                     onClick={() => handleNavClick(item.path)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors relative ${
                       isActive
                         ? 'bg-primary/20 text-primary'
                         : 'text-muted-foreground hover:bg-surface-container-low'
@@ -202,6 +209,11 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
                   >
                     <Icon className="h-5 w-5" />
                     <span className="font-medium">{item.label}</span>
+                    {item.path === "/pending-changes" && pendingCount > 0 && (
+                      <span className="ml-auto min-w-[20px] h-5 flex items-center justify-center px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                        {pendingCount > 99 ? "99+" : pendingCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
