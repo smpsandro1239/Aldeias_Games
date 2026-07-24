@@ -130,33 +130,22 @@ export function LayoutHeader({ children }: LayoutHeaderProps) {
 
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center gap-6">
-              {isAuthenticated && user?.role === 'super_admin' && (
-                <>
-                  <button onClick={() => router.push("/superadmindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Painel</button>
-                  <button onClick={() => router.push("/superadmindashboard?tab=aldeias")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Aldeias</button>
-                  <button onClick={() => router.push("/configuracoes")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Config</button>
-                </>
-              )}
-              {isAuthenticated && user?.role === 'aldeia_admin' && (
-                <>
-                  <button onClick={() => router.push("/admindashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Dashboard</button>
-                  <button onClick={() => router.push("/admindashboard?tab=eventos")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Eventos</button>
-                  <button onClick={() => router.push("/admindashboard/cofre")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Cofre</button>
-                </>
-              )}
-              {isAuthenticated && user?.role === 'vendedor' && (
-                <>
-                  <button onClick={() => router.push("/vendedordashboard")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Vendas</button>
-                  <button onClick={() => router.push("/vendedordashboard?tab=cofre")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Caixa</button>
-                </>
-              )}
-              {isAuthenticated && user?.role === 'user' && (
-                <>
-                  <button onClick={() => router.push("/participacoes")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Participações</button>
-                  <button onClick={() => router.push("/perfil")} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Perfil</button>
-                </>
-              )}
-               <button onClick={() => router.push('/jogos')} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Jogos</button>
+              {roleNavItems.map((item) => {
+                const Icon = item.icon;
+                const basePath = item.path.split('?')[0];
+                const isActive = isAuthenticated && pathname === basePath;
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => handleNavClick(item.path)}
+                    className={`font-label text-xs font-bold tracking-widest uppercase transition-colors ${
+                      isActive ? 'text-primary' : 'text-muted-foreground hover:text-secondary'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
               {!isAuthenticated && (
                  <button onClick={() => router.push('/')} className="font-label text-xs font-bold tracking-widest uppercase text-muted-foreground hover:text-secondary transition-colors">Início</button>
               )}
