@@ -366,9 +366,13 @@ function useJogoForm(initialData?: JogoData, eventoId?: string) {
   }, [state.raspadinhaPremios, setRaspadinhaPremios]);
 
   const adicionarPremioRifa = useCallback(() => {
+    const count = state.rifaPremios.length;
+    const lastPremio = state.rifaPremios[count - 1];
+    const nextValor = lastPremio ? Math.round((lastPremio.valorDinheiroAlternative || 0) / 2) : 0;
+    const nextNome = `${count + 1}º Prémio`;
     setRifaPremios([
       ...state.rifaPremios,
-      { id: Date.now().toString(), nome: "", valorDinheiroAlternative: 0, percentagem: 0 }
+      { id: Date.now().toString(), nome: nextNome, valorDinheiroAlternative: nextValor, percentagem: 0 }
     ]);
   }, [state.rifaPremios, setRifaPremios]);
 
