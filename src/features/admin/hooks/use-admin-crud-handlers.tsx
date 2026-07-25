@@ -110,7 +110,13 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
         const evento = await res.json();
         const eventoId = evento.data?.id || evento.id;
 
-        if (jogosSelecionados.length > 0 && eventoId) {
+        if (!isEditing && jogosSelecionados.length > 0 && eventoId) {
+          toast.success(`Evento criado! Configure os ${jogosSelecionados.length} jogo(s).`);
+          setTimeout(() => { fetchData(); }, 500);
+          return { eventoId, jogosSelecionados };
+        }
+
+        if (isEditing && jogosSelecionados.length > 0 && eventoId) {
           try {
             const jogosRes = await apiRequest(`/api/jogos?eventoId=${eventoId}`, {});
 
@@ -176,9 +182,7 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
               }
             }
 
-            const mensagem = isEditing
-              ? `${jogosParaCriar.length} jogo(s) adicionado(s) e ${jogosParaRemover.length} jogo(s) removido(s)`
-              : `${jogosSelecionados.length} jogo(s) criado(s)`;
+            const mensagem = `${jogosParaCriar.length} jogo(s) adicionado(s) e ${jogosParaRemover.length} jogo(s) removido(s)`;
 
             if (jogosParaCriar.length > 0 || jogosParaRemover.length > 0) {
               toast.success(mensagem);

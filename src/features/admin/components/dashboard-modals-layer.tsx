@@ -70,7 +70,7 @@ interface DashboardModalsLayerProps {
   setSelectedAldeia: (aldeia: AldeiaData | null) => void;
   setSelectedPremio: (premio: Vencedor | null) => void;
   setConvertValor: (valor: string) => void;
-  handleSaveEvento: (data: any) => Promise<void>;
+  handleSaveEvento: (data: any) => Promise<{ eventoId?: string; jogosSelecionados?: string[] } | void>;
   handleSaveJogo: (data: any) => Promise<void>;
   handleSaveAldeia: (data: any) => Promise<void>;
   handleSaveUser: (data: any) => Promise<void>;
@@ -165,6 +165,7 @@ export function DashboardModalsLayer({
             : "08:00",
         } : undefined}
         aldeias={userRole === "super_admin" ? aldeias : undefined}
+        onSubmitJogo={handleSaveJogo}
       />
 
       <CreateJogoModal

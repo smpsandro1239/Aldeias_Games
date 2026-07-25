@@ -328,7 +328,15 @@ export default function AldeiaDetailPage() {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || "Erro")
       }
+      const evento = await res.json()
+      const eventoId = evento.data?.id || evento.id
+      const jogosSelecionados = data.jogosSelecionados || []
       toast.success("Evento criado com sucesso!")
+      if (jogosSelecionados.length > 0 && eventoId) {
+        setShowCreateEvento(false)
+        fetchAldeia()
+        return { eventoId, jogosSelecionados }
+      }
       setShowCreateEvento(false)
       fetchAldeia()
     } catch (e: any) {
@@ -1154,6 +1162,7 @@ export default function AldeiaDetailPage() {
         onOpenChange={setShowCreateEvento}
         onSubmit={handleCreateEvento}
         aldeiaId={aldeiaId}
+        onSubmitJogo={handleSaveJogo}
       />
 
       <BottomNav />
