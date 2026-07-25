@@ -125,7 +125,6 @@ export default function AldeiaDetailPage() {
 
   const [showAddJogo, setShowAddJogo] = useState(false)
   const [addJogoEventoId, setAddJogoEventoId] = useState<string | null>(null)
-  const [addJogoEventoNome, setAddJogoEventoNome] = useState("")
 
   const isSuperAdmin = user?.role === "super_admin"
   const isAdmin = isSuperAdmin || aldeia?.admins.some(a => a.id === user?.id)
@@ -346,13 +345,8 @@ export default function AldeiaDetailPage() {
     }
   }
 
-  const openAddJogo = (eventoId: string, eventoNome: string) => {
+  const openAddJogo = (eventoId: string, _eventoNome: string) => {
     setAddJogoEventoId(eventoId)
-    setAddJogoEventoNome(eventoNome)
-    setNewJogoTipo("rifa")
-    setNewJogoNome(`${eventoNome} - Rifa`)
-    setNewJogoPreco("2")
-    setNewJogoStock("100")
     setShowAddJogo(true)
   }
 
