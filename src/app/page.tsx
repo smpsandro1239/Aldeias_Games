@@ -215,7 +215,7 @@ export default function Home() {
 
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
-        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 text-foreground">
           <DialogHeader className="p-4 sm:p-8 pb-3 sm:pb-4">
             <DialogTitle className="font-serif text-xl sm:text-2xl text-center">Entrar</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground text-xs sm:text-sm">
@@ -401,7 +401,7 @@ export default function Home() {
 
       {/* Register Modal */}
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
-        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
+        <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 text-foreground">
           <DialogHeader className="p-4 sm:p-8 pb-3 sm:pb-4">
             <DialogTitle className="font-serif text-xl sm:text-2xl text-center">Criar Conta</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground text-xs sm:text-sm">
