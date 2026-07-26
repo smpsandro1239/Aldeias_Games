@@ -436,7 +436,7 @@ function RaspadinhaPremiumContent() {
         });
       }
     },
-    [slots, scratchSlot, jogoId]
+    [slots, jogoId]
   );
 
   const handlePointerDown = useCallback(
