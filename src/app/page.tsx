@@ -216,18 +216,18 @@ export default function Home() {
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
-          <DialogHeader className="p-5 sm:p-8 pb-4">
-            <DialogTitle className="font-serif text-2xl text-center">Entrar</DialogTitle>
-            <DialogDescription className="text-center text-muted-foreground">
+          <DialogHeader className="p-4 sm:p-8 pb-3 sm:pb-4">
+            <DialogTitle className="font-serif text-xl sm:text-2xl text-center">Entrar</DialogTitle>
+            <DialogDescription className="text-center text-muted-foreground text-xs sm:text-sm">
               Acede à tua conta para jogar e ganhar prémio
             </DialogDescription>
           </DialogHeader>
           {/* Login Form */}
-          <form onSubmit={requiresTwoFactor ? handleTotpSubmit : handleLogin} className="px-5 sm:px-8 pb-6 sm:pb-8 space-y-5 sm:space-y-6">
-            <div className="space-y-4">
+          <form onSubmit={requiresTwoFactor ? handleTotpSubmit : handleLogin} className="px-4 sm:px-8 pb-5 sm:pb-8 space-y-4 sm:space-y-6">
+            <div className="space-y-3">
               {!requiresTwoFactor && (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
                     <Input
                       id="email"
@@ -236,10 +236,10 @@ export default function Home() {
                       value={formState.login.email}
                       onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'email', value: e.target.value })}
                       required
-                      className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                      className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
                     <Input
                       id="password"
@@ -248,10 +248,9 @@ export default function Home() {
                       value={formState.login.password}
                       onChange={(e) => dispatchForm({ type: 'UPDATE_LOGIN', field: 'password', value: e.target.value })}
                       required
-                      className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                      className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                     />
-                    {/* Esqueci-me da password link */}
-                    <div className="text-right mt-1">
+                    <div className="text-right mt-0.5">
                       <a href="/forgot-password" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
                         Esqueci-me da password
                       </a>
@@ -261,7 +260,7 @@ export default function Home() {
               )}
 
               {requiresTwoFactor && (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="totpCode" className="text-xs font-bold uppercase tracking-widest ml-1">Código 2FA</Label>
                   <Input
                     id="totpCode"
@@ -274,7 +273,7 @@ export default function Home() {
                     onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
                     required
                     autoFocus
-                    className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-center text-lg tracking-[0.5em]"
+                    className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-center text-lg tracking-[0.5em]"
                   />
                   <p className="text-[10px] text-muted-foreground text-center">
                     Introduza o código de 6 dígitos da sua aplicação autenticadora
@@ -283,18 +282,18 @@ export default function Home() {
               )}
             </div>
 
-            <DialogFooter className="mt-6 flex-col gap-4">
+            <DialogFooter className="mt-4 sm:mt-6 flex-col gap-3 sm:gap-4">
               <div className="flex gap-2 w-full">
                 {requiresTwoFactor ? (
-                  <Button type="button" variant="outline" onClick={() => { setRequiresTwoFactor(false); setTotpCode(""); }} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
+                  <Button type="button" variant="outline" onClick={() => { setRequiresTwoFactor(false); setTotpCode(""); }} className="flex-1 bg-transparent border-outline-variant/20 text-foreground h-10 sm:h-11 text-sm">
                     Voltar
                   </Button>
                 ) : (
-                  <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
+                  <Button type="button" variant="outline" onClick={() => setLoginModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground h-10 sm:h-11 text-sm">
                     Cancelar
                   </Button>
                 )}
-                <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold" disabled={isLoggingIn}>
+                <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold h-10 sm:h-11 text-sm" disabled={isLoggingIn}>
                   <Zap className="h-4 w-4 mr-2" />
                   {isLoggingIn ? 'Entrando...' : requiresTwoFactor ? 'Verificar Código' : 'Entrar'}
                 </Button>
@@ -304,60 +303,42 @@ export default function Home() {
             {/* Divider */}
             {!requiresTwoFactor && (
               <>
-                <div className="flex items-center my-6">
+                <div className="flex items-center my-3 sm:my-6">
                   <div className="w-1 bg-outline-variant/20 flex-1"></div>
                   <span className="px-3 text-[10px] text-muted-foreground">ou continue com</span>
                   <div className="w-1 bg-outline-variant/20 flex-1"></div>
                 </div>
 
             {/* Social Login Buttons */}
-            <div className="pt-4 space-y-3">
-              {/* Google Login Button */}
-              <div className="pt-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-3"
-                  onClick={() => {
-                    window.location.href = "/api/auth/google";
-                  }}
-                  disabled={isLoggingIn}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
-                    <span className="text-xs font-medium">{isLoggingIn ? 'Entrando...' : 'Continuar com o Google'}</span>
-                  </span>
-                </Button>
-                <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                  ou usa o teu e-mail e palavra-passe
-                </p>
-              </div>
-
-              {/* Apple Login Button */}
-              <div className="pt-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-3"
-                  onClick={() => {
-                    window.location.href = "/api/auth/apple";
-                  }}
-                  disabled={isLoggingIn}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                    </svg>
-                    <span className="text-xs font-medium">{isLoggingIn ? 'Entrando...' : 'Continuar com a Apple'}</span>
-                  </span>
-                </Button>
-                <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                  ou usa o teu e-mail e palavra-passe
-                </p>
-              </div>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center gap-3 h-10 sm:h-11 text-sm"
+                onClick={() => { window.location.href = "/api/auth/google"; }}
+                disabled={isLoggingIn}
+              >
+                <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                <span className="font-medium">{isLoggingIn ? 'Entrando...' : 'Continuar com o Google'}</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-center gap-3 h-10 sm:h-11 text-sm"
+                onClick={() => { window.location.href = "/api/auth/apple"; }}
+                disabled={isLoggingIn}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                </svg>
+                <span className="font-medium">{isLoggingIn ? 'Entrando...' : 'Continuar com a Apple'}</span>
+              </Button>
+              <p className="text-[10px] text-muted-foreground text-center">
+                ou usa o teu e-mail e palavra-passe
+              </p>
             </div>
             </>
             )}
@@ -421,16 +402,16 @@ export default function Home() {
       {/* Register Modal */}
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
-          <DialogHeader className="p-5 sm:p-8 pb-4">
-            <DialogTitle className="font-serif text-2xl text-center">Criar Conta</DialogTitle>
-            <DialogDescription className="text-center text-muted-foreground">
+          <DialogHeader className="p-4 sm:p-8 pb-3 sm:pb-4">
+            <DialogTitle className="font-serif text-xl sm:text-2xl text-center">Criar Conta</DialogTitle>
+            <DialogDescription className="text-center text-muted-foreground text-xs sm:text-sm">
               Regista-te para participar nos jogos e campanhas
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleRegister} className="px-5 sm:px-8 pb-6 sm:pb-8">
-            <div className="space-y-4">
-              <div className="space-y-2">
+          <form onSubmit={handleRegister} className="px-4 sm:px-8 pb-5 sm:pb-8">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
                 <Label htmlFor="nome" className="text-xs font-bold uppercase tracking-widest ml-1">Nome</Label>
                 <Input
                   id="nome"
@@ -438,10 +419,10 @@ export default function Home() {
                   value={formState.register.nome}
                   onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'nome', value: e.target.value })}
                   required
-                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                  className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="register-email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
                 <Input
                   id="register-email"
@@ -450,10 +431,10 @@ export default function Home() {
                   value={formState.register.email}
                   onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'email', value: e.target.value })}
                   required
-                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                  className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="register-password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
                 <Input
                   id="register-password"
@@ -463,10 +444,10 @@ export default function Home() {
                   onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'password', value: e.target.value })}
                   required
                   minLength={8}
-                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                  className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="telefone" className="text-xs font-bold uppercase tracking-widest ml-1">Telefone</Label>
                 <Input
                   id="telefone"
@@ -474,16 +455,16 @@ export default function Home() {
                   placeholder="+351 9XX XXX XXX"
                   value={formState.register.telefone}
                   onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'telefone', value: e.target.value })}
-                  className="bg-background border-none rounded-xl py-4 px-6 focus:ring-2 focus:ring-secondary/50 text-foreground"
+                  className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
               </div>
             </div>
 
-            <DialogFooter className="mt-6 gap-2">
-              <Button type="button" variant="outline" onClick={() => setRegisterModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground">
+            <DialogFooter className="mt-4 sm:mt-6 gap-2">
+              <Button type="button" variant="outline" onClick={() => setRegisterModalOpen(false)} className="flex-1 bg-transparent border-outline-variant/20 text-foreground h-10 sm:h-11 text-sm">
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold">
+              <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-bold h-10 sm:h-11 text-sm">
                 <Rocket className="h-4 w-4 mr-2" />
                 Registar
               </Button>
