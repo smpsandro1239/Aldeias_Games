@@ -42,7 +42,7 @@ export interface JogoBase {
 
 export function useGamePage<T extends JogoBase = JogoBase>() {
   const searchParams = useSearchParams();
-  const jogoId = searchParams.get("id");
+  const jogoId = searchParams.get("id") || searchParams.get("jogoId");
 
   const [jogo, setJogo] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);

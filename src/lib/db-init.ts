@@ -6,10 +6,15 @@ let seeded = false;
 export async function ensureSeeded(): Promise<{ seeded: boolean; counts?: Record<string, number> }> {
   if (seeded) return { seeded: true };
 
-  const permCount = await prisma.permission.count();
-  if (permCount > 0) {
-    seeded = true;
-    return { seeded: true };
+  try {
+    const permCount = await prisma.permission.count();
+    if (permCount > 0) {
+      seeded = true;
+      return { seeded: true };
+    }
+  } catch (e) {
+    console.error('[db-init] permission count failed (tables may not exist):', e);
+    return { seeded: false };
   }
 
   console.log('[db-init] Database empty — running seed...');

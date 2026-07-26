@@ -216,14 +216,14 @@ export default function Home() {
       {/* Login Modal */}
       <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
-          <DialogHeader className="p-8 pb-4">
+          <DialogHeader className="p-5 sm:p-8 pb-4">
             <DialogTitle className="font-serif text-2xl text-center">Entrar</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
               Acede à tua conta para jogar e ganhar prémio
             </DialogDescription>
           </DialogHeader>
           {/* Login Form */}
-          <form onSubmit={requiresTwoFactor ? handleTotpSubmit : handleLogin} className="px-8 pb-8 space-y-6">
+          <form onSubmit={requiresTwoFactor ? handleTotpSubmit : handleLogin} className="px-5 sm:px-8 pb-6 sm:pb-8 space-y-5 sm:space-y-6">
             <div className="space-y-4">
               {!requiresTwoFactor && (
                 <>
@@ -421,14 +421,14 @@ export default function Home() {
       {/* Register Modal */}
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
         <DialogContent className="sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 overflow-hidden text-foreground">
-          <DialogHeader className="p-8 pb-4">
+          <DialogHeader className="p-5 sm:p-8 pb-4">
             <DialogTitle className="font-serif text-2xl text-center">Criar Conta</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
               Regista-te para participar nos jogos e campanhas
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleRegister} className="px-8 pb-8">
+          <form onSubmit={handleRegister} className="px-5 sm:px-8 pb-6 sm:pb-8">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="nome" className="text-xs font-bold uppercase tracking-widest ml-1">Nome</Label>

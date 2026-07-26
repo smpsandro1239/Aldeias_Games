@@ -47,7 +47,7 @@ export function useGameJogo({ tipo, requireId = false }: UseGameJogoOptions) {
 
     try {
       const url = new URL(window.location.href);
-      const jogoId = url.searchParams.get("id");
+      const jogoId = url.searchParams.get("id") || url.searchParams.get("jogoId");
 
       let apiUrl = `/api/jogos?ativos=true&tipo=${tipo}`;
       if (jogoId || requireId) {
