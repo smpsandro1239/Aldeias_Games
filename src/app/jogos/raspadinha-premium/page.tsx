@@ -1,7 +1,7 @@
 "use client";
 import { apiRequest } from '@/lib/api-client';
 
-import { useState, useRef, useCallback, useEffect, Suspense } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -117,6 +117,41 @@ function RaspadinhaPremiumContent() {
   const SLOT_SIZE = 120;
   const CELL_SIZE = 6;
   const initializedRef = useRef(false);
+
+  const slotSummary = useMemo(() => {
+    if (gamePhase !== "all_revealed" || slots.length === 0) return null;
+
+    const counts = new Map<string, { nome: string; valor: number; count: number; ids: number[] }>();
+    slots.forEach((s) => {
+      if (!s.prize) return;
+      const key = s.prize.id || s.prize.nome || "unknown";
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count++;
+        existing.ids.push(s.id);
+      } else {
+        counts.set(key, {
+          nome: s.prize.nome,
+          valor: s.prize.valorDinheiroAlternative || 0,
+          count: 1,
+          ids: [s.id],
+        });
+      }
+    });
+
+    const items = Array.from(counts.values()).sort((a, b) => b.count - a.count || b.valor - a.valor);
+
+    const winningPrizes = items.filter((i) => i.valor > 0);
+    const closestPrize = winningPrizes.reduce(
+      (best, curr) => (curr.count > (best?.count ?? 0) ? curr : best),
+      null as typeof items[0] | null
+    );
+
+    const hasWon = items.some((i) => i.count >= 3 && i.valor > 0);
+    const remaining = closestPrize ? 3 - closestPrize.count : 3;
+
+    return { items, closestPrize, hasWon, remaining };
+  }, [slots, gamePhase]);
 
   useEffect(() => {
     if (jogoId) {
@@ -726,6 +761,60 @@ function RaspadinhaPremiumContent() {
                 </motion.div>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {gamePhase === "all_revealed" && slotSummary && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-surface-container-low/60 backdrop-blur-xl rounded-3xl p-5 space-y-3 border border-outline-variant/10"
+          >
+            {slotSummary.hasWon ? (
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <h3 className="font-serif text-lg font-bold text-accent">Ganhaste!</h3>
+              </div>
+            ) : slotSummary.closestPrize && slotSummary.remaining <= 2 ? (
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-serif text-lg font-bold text-accent">
+                  Por pouco! {slotSummary.remaining === 1 ? `Faltou só 1` : `Faltaram ${slotSummary.remaining}`} para ganhares {slotSummary.closestPrize.valor}€
+                </h3>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🍀</span>
+                <h3 className="font-serif text-lg font-bold text-accent">Resumo da Raspadinha</h3>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2">
+              {slotSummary.items.map((item, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center justify-between p-2.5 rounded-xl ${
+                    item.count >= 3 && item.valor > 0
+                      ? "bg-yellow-500/10 ring-1 ring-yellow-500/30"
+                      : "bg-surface-container-highest/40"
+                  }`}
+                >
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {item.nome || "Nada"}
+                  </span>
+                  <span className={`text-sm font-bold ${item.count >= 3 && item.valor > 0 ? "text-yellow-500" : "text-foreground"}`}>
+                    {item.count}x{item.valor > 0 ? ` ${item.valor}€` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {!slotSummary.hasWon && (
+              <p className="text-xs text-muted-foreground text-center pt-1">
+                Tenta novamente, a próxima pode ser a boa!
+              </p>
+            )}
           </motion.div>
         )}
 
