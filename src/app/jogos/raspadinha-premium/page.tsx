@@ -85,7 +85,6 @@ function RaspadinhaPremiumContent() {
     paymentModalOpen, setPaymentModalOpen,
     confirmacaoModalOpen, setConfirmacaoModalOpen,
     participacaoCriada, setParticipacaoCriada,
-    participacaoConfirmada, setParticipacaoConfirmada,
     playerDataConfirmOpen, setPlayerDataConfirmOpen,
     playerDataModified, setPlayerDataModified,
     refreshBalance,
@@ -187,8 +186,6 @@ function RaspadinhaPremiumContent() {
             valorPago: jogo.preco,
             hashRaspe: participacao.hashRaspe || participacao.hashParticipacao
           });
-          setConfirmacaoModalOpen(true);
-
           setPaymentModalOpen(false);
           setShowPurchaseAnimation(true);
           setTimeout(() => {
@@ -549,53 +546,6 @@ function RaspadinhaPremiumContent() {
 
   if (loading) {
     return <RaspadinhaLoading />;
-  }
-
-   if (participacaoConfirmada) {
-    return (
-      <div className="min-h-screen bg-background text-foreground font-body pb-32">
-        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-primary/10 flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-surface-container-low rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-primary" />
-            </button>
-            <h1 className="font-serif text-xl tracking-wide text-accent font-bold italic">Confirmação</h1>
-          </div>
-        </header>
-        <main className="px-4 pt-6 text-center">
-          <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-10 h-10 text-primary" />
-          </div>
-          <h2 className="font-serif text-2xl text-accent font-bold">Raspadinha Registada!</h2>
-          <p className="text-muted-foreground mt-2">Boa sorte!</p>
-          <div className="flex flex-col gap-3 mt-6">
-            <Button
-              onClick={() => setProvaModalOpen(true)}
-              variant="outline"
-              className="w-full py-4 border-primary/30 text-primary font-semibold rounded-xl"
-            >
-              <Eye className="w-4 h-4 mr-2" /> Ver Prova de Jogo
-            </Button>
-            <button
-              onClick={() => {
-                setParticipacaoConfirmada(false);
-                handleJogar();
-              }}
-              className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl"
-            >
-              Tentar Novamente
-            </button>
-          </div>
-        </main>
-        <BottomNav role={userRole || undefined} />
-
-        <ProvaJogoModal
-          open={provaModalOpen}
-          onOpenChange={setProvaModalOpen}
-          participacaoId={participacaoCriada?.id}
-        />
-      </div>
-    );
   }
 
   const titulo = jogo?.configuracao?.titulo || jogo?.nome || "RASPADINHA PREMIUM";
