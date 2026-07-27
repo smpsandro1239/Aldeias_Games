@@ -790,21 +790,21 @@ function RaspadinhaPremiumContent() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1.5">
               {slotSummary.items.map((item, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-between p-2.5 rounded-xl ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl ${
                     item.count >= 3 && item.valor > 0
                       ? "bg-yellow-500/10 ring-1 ring-yellow-500/30"
                       : "bg-surface-container-highest/40"
                   }`}
                 >
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {item.nome || "Nada"}
+                  <span className={`text-sm font-medium ${item.valor > 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                    {item.valor > 0 ? `${item.valor}€` : item.nome || "Nada"}
                   </span>
-                  <span className={`text-sm font-bold ${item.count >= 3 && item.valor > 0 ? "text-yellow-500" : "text-foreground"}`}>
-                    {item.count}x{item.valor > 0 ? ` ${item.valor}€` : ""}
+                  <span className={`text-sm font-bold ${item.count >= 3 && item.valor > 0 ? "text-yellow-500" : "text-muted-foreground"}`}>
+                    {item.count}x
                   </span>
                 </div>
               ))}
