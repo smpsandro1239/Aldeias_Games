@@ -511,6 +511,14 @@ function RaspadinhaPremiumContent() {
     });
   }, [slots]);
 
+  const handleJogar = () => {
+    if (isNonRegularUser && !playerDataModified) {
+      setPlayerDataConfirmOpen(true);
+    } else {
+      setPaymentModalOpen(true);
+    }
+  };
+
   const handleComprarNova = () => {
     setGamePhase("not_paid");
     setSlots([]);
