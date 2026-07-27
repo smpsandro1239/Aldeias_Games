@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useScratchSound } from "@/hooks/useScratchSound";
-import { ArrowLeft, Star, Sparkles, Gem, Trophy, Lock, Loader2, Ticket, HelpCircle, Info, Calculator, Eye } from "lucide-react";
+import { ArrowLeft, Star, Sparkles, Trophy, Lock, Loader2, Ticket, HelpCircle, Info, Calculator, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
@@ -583,6 +583,29 @@ function RaspadinhaPremiumContent() {
     return <RaspadinhaLoading />;
   }
 
+  const premiosDisplay = useMemo(() => {
+    // Prefer configuracao.premios (what the outcome algorithm uses)
+    const configPremios = jogo?.configuracao?.premios as Array<{ nome: string; valorDinheiroAlternative?: number; percentagem?: number }> | undefined;
+    if (configPremios && configPremios.length > 0) {
+      return configPremios.map((p, i) => ({
+        id: `config-${i}`,
+        nome: p.nome,
+        valorDinheiroAlternative: p.valorDinheiroAlternative ?? null,
+        percentagem: p.percentagem ?? null,
+      }));
+    }
+    // Fallback to Premio table
+    if (jogo?.premios && jogo.premios.length > 0) {
+      return jogo.premios.map((p) => ({
+        id: p.id,
+        nome: p.nome,
+        valorDinheiroAlternative: p.valorDinheiroAlternative ?? null,
+        percentagem: null,
+      }));
+    }
+    return [];
+  }, [jogo]);
+
   const titulo = jogo?.configuracao?.titulo || jogo?.nome || "RASPADINHA PREMIUM";
   const subtitulo = jogo?.configuracao?.subtitulo || "Raspe com o dedo para revelar o seu prémio!";
   const organizacao = jogo?.configuracao?.organizacao || jogo?.evento?.aldeia?.nome || "Aldeias Games";
@@ -927,7 +950,7 @@ function RaspadinhaPremiumContent() {
             Prémios
           </h3>
           <div className="space-y-2">
-            {jogo?.premios?.map((premio, i) => (
+            {premiosDisplay.map((premio, i) => (
               <div
                 key={premio.id || i}
                 className="flex items-center justify-between p-3 bg-surface-container-highest/40 rounded-xl"
@@ -938,35 +961,20 @@ function RaspadinhaPremiumContent() {
                     {premio.nome}
                   </span>
                 </div>
-                <span className="font-bold text-secondary">
-                  {premio.valorDinheiroAlternative ? `${premio.valorDinheiroAlternative}€` : "-"}
-                </span>
+                <div className="flex items-center gap-2">
+                  {premio.percentagem != null && (
+                    <span className="text-xs text-muted-foreground">{premio.percentagem}%</span>
+                  )}
+                  <span className="font-bold text-secondary">
+                    {premio.valorDinheiroAlternative ? `${premio.valorDinheiroAlternative}€` : "-"}
+                  </span>
+                </div>
               </div>
             ))}
-            {!jogo?.premios?.length && (
-              <>
-                <div className="flex items-center justify-between p-3 bg-surface-container-highest/40 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Trophy className="text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">3x Troféu de Ouro</span>
-                  </div>
-                  <span className="font-bold text-secondary">5.000€</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-surface-container-highest/40 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Star className="text-accent" />
-                    <span className="text-sm font-medium text-muted-foreground">3x Estrela d'Aldeia</span>
-                  </div>
-                  <span className="font-bold text-secondary">100€</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-surface-container-highest/40 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Gem className="text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">3x Cristal</span>
-                  </div>
-                  <span className="font-bold text-secondary">10€</span>
-                </div>
-              </>
+            {premiosDisplay.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-2">
+                Sem prémios configurados
+              </p>
             )}
           </div>
         </motion.section>
@@ -1153,14 +1161,14 @@ function RaspadinhaPremiumContent() {
               </p>
             </div>
 
-            {(jogo?.premios || jogo?.configuracao?.premios) && (
+            {(jogo?.configuracao?.premios || jogo?.premios) && (
               <div className="bg-surface-container-high rounded-xl p-4 space-y-3">
                 <h3 className="font-semibold text-primary flex items-center gap-2">
                   <Trophy className="w-4 h-4" />
                   Prémios e Probabilidades
                 </h3>
                 <div className="space-y-2">
-                  {(jogo?.premios || jogo?.configuracao?.premios || []).map((premio: any, index: number) => (
+                  {(jogo?.configuracao?.premios || jogo?.premios || []).map((premio: any, index: number) => (
                     <div key={index} className="flex justify-between items-center py-2 border-b border-outline-variant/10 last:border-0">
                       <div>
                         <p className="font-medium text-sm">{premio.nome}</p>
@@ -1176,7 +1184,7 @@ function RaspadinhaPremiumContent() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground/60 mt-2 pt-2 border-t border-outline-variant/10">
-                  Soma das percentagens: {(jogo?.premios || jogo?.configuracao?.premios || []).reduce((acc: number, p: any) => acc + (p.percentagem || 0), 0)}%
+                  Soma das percentagens: {(jogo?.configuracao?.premios || jogo?.premios || []).reduce((acc: number, p: any) => acc + (p.percentagem || 0), 0)}%
                 </p>
               </div>
             )}
