@@ -22,7 +22,7 @@ interface RaspadinhaOutcome {
   roll: number;
 }
 
-function determineRaspadinhaOutcome(config: RaspadinhaConfig, forceLoss = false): RaspadinhaOutcome {
+export function determineRaspadinhaOutcome(config: RaspadinhaConfig, forceLoss = false): RaspadinhaOutcome {
   const premios = config.premios || [];
   const rollInt = crypto.randomInt(0, 10000);
   const roll = rollInt / 10000;
@@ -43,7 +43,7 @@ function determineRaspadinhaOutcome(config: RaspadinhaConfig, forceLoss = false)
   return { hasWin: false, winningPrize: null, roll };
 }
 
-function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: RaspadinhaConfig): RaspadinhaPremio[] {
+export function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: RaspadinhaConfig): RaspadinhaPremio[] {
   const premios = config.premios || [];
   const grid: RaspadinhaPremio[] = [];
 

@@ -6,21 +6,15 @@ import { sanitizeObject } from '@/lib/sanitization';
 import Stripe from 'stripe';
 import crypto from 'crypto';
 
-interface RaspadinhaPremio {
-  nome: string;
-  valor?: number;
-  percentagem?: number;
-  valorDinheiroAlternative?: number;
-}
+// Reuse the shared raspadinha logic (determines outcome + builds grid)
+import { determineRaspadinhaOutcome, buildGridFromOutcome } from '@/app/api/participacoes/_lib/raspadinha';
 
+// Minimal types needed for the shared functions
 interface RaspadinhaConfig {
-  premios: RaspadinhaPremio[];
+  premios: Array<{ nome: string; percentagem?: number; valorDinheiroAlternative?: number }>;
+  maxGanhadores?: number;
+  maxPremioTotal?: number;
   [key: string]: unknown;
-}
-
-interface RaspadinhaOutcome {
-  hasWin: boolean;
-  winningPrize: RaspadinhaPremio | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -74,7 +68,8 @@ export async function POST(request: NextRequest) {
             const seed = crypto.randomBytes(16).toString('hex');
             const uniqueSalt = crypto.randomBytes(16).toString('hex');
             let resultadoRaspe = null, hashParticipacao = null;
-            let grid: RaspadinhaPremio[] | null = null;
+            let grid: Array<{ nome: string; valorDinheiroAlternative?: number }> | null = null;
+            let dadosExtra: Record<string, unknown> = {};
 
             if (jogo.tipo === 'raspadinha') {
               const config: RaspadinhaConfig = typeof jogo.configuracao === 'string' ? JSON.parse(jogo.configuracao) : jogo.configuracao as RaspadinhaConfig;
@@ -82,6 +77,8 @@ export async function POST(request: NextRequest) {
               grid = buildGridFromOutcome(outcome, config);
               resultadoRaspe = outcome.hasWin ? (outcome.winningPrize?.nome || 'sem_premio') : 'sem_premio';
               hashParticipacao = generateHash(seed, resultadoRaspe, uniqueSalt, timestamp);
+              // Store hasWin/winningPrize for claim-premio to re-evaluate
+              dadosExtra = { hasWin: outcome.hasWin, winningPrize: outcome.winningPrize, roll: outcome.roll };
             } else if (jogo.tipo === 'rifa') {
               const num = Array.isArray(numerosArray) ? numerosArray[i] : null;
               resultadoRaspe = num ? num.toString() : null;
@@ -95,7 +92,8 @@ export async function POST(request: NextRequest) {
                 resultadoRaspe, hashParticipacao,
                 dadosParticipacao: JSON.stringify(sanitizeObject({
                   stripeSessionId: session.id, stripePaymentIntent: session.payment_intent, stripeEventId: event.id,
-                  index: i, grid, numeros: jogo.tipo !== 'raspadinha' ? [numerosArray[i]] : undefined
+                  index: i, grid, numeros: jogo.tipo !== 'raspadinha' ? [numerosArray[i]] : undefined,
+                  ...dadosExtra
                 })),
               },
             });
@@ -153,33 +151,4 @@ export async function POST(request: NextRequest) {
 function generateHash(seed: string, resultado: string, salt: string, timestamp?: string): string {
   const data = `${seed}:${resultado}:${salt}${timestamp ? `:${timestamp}` : ''}`;
   return crypto.createHash('sha256').update(data).digest('hex');
-}
-
-function determineRaspadinhaOutcome(config: RaspadinhaConfig): RaspadinhaOutcome {
-  const premios = config.premios || [];
-  const rollInt = crypto.randomInt(0, 10000);
-  let cumulativeBp = 0;
-  for (const premio of premios) {
-    cumulativeBp += Math.round((premio.percentagem || 0) * 100);
-    if (rollInt < cumulativeBp) return { hasWin: true, winningPrize: premio };
-  }
-  return { hasWin: false, winningPrize: null };
-}
-
-function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: RaspadinhaConfig): RaspadinhaPremio[] {
-  const premios = config.premios || [];
-  const grid: RaspadinhaPremio[] = [];
-  if (outcome.hasWin && outcome.winningPrize) {
-    for (let i = 0; i < 3; i++) grid.push({ ...outcome.winningPrize });
-    const fillerPool = premios.filter((p) => p.nome !== outcome.winningPrize!.nome).length > 0
-      ? premios.filter((p) => p.nome !== outcome.winningPrize!.nome) : premios;
-    for (let i = 0; i < 6; i++) grid.push({ ...fillerPool[crypto.randomInt(0, fillerPool.length)] });
-  } else {
-    for (let i = 0; i < 9; i++) grid.push({ ...premios[crypto.randomInt(0, premios.length)] });
-  }
-  for (let i = grid.length - 1; i > 0; i--) {
-    const j = crypto.randomInt(0, i + 1);
-    [grid[i], grid[j]] = [grid[j], grid[i]];
-  }
-  return grid;
 }
