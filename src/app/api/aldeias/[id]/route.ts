@@ -247,6 +247,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
         })
       }
     }
+    }
 
     // Prepare data for Prisma update
     const prismaUpdateData: Prisma.AldeiaUpdateInput = { ...updateData }
