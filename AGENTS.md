@@ -351,3 +351,42 @@ Pages:
 - **Navigation**: "Pedidos" link in NAV_ITEMS for super_admin and aldeia_admin; QuickAction "Pedidos Pendentes" in both dashboards
 - **Protection**: Super admin auto-approves; single admin can self-approve; multiple admins require cross-approval; self-approval blocked for non-super-admins
 - **Audit**: All changes logged with masked values (****XXXX)
+
+### Testing
+- Framework: **Vitest** (v4.1.10) com `jsdom` environment, globals habilitados
+- Config: `vitest.config.ts` — setup file em `src/__tests__/setup.ts`, path alias `@/*`
+- Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
+- **310 testes** em **19 ficheiros** (unit + integration + API + lib)
+
+#### Ficheiros de teste
+| Ficheiro | Testes | Descrição |
+|----------|--------|-----------|
+| `unit/webhook-idempotency.test.ts` | 11 | `claimWebhookEvent`/`completeWebhookEvent` — fluxo idempotente, duplicatas, erros |
+| `unit/rbac.test.ts` | 10 | `requirePermission`, `requireAnyOfPermissions`, `hasRole` (legacy) |
+| `unit/auth-security.test.ts` | 11 | Password hashing (bcrypt), JWT tokens, role checking |
+| `unit/raspadinha-critical.test.ts` | 11 | `determineRaspadinhaOutcome`, `buildGridFromOutcome`, forceLoss, probabilidades |
+| `unit/cofre-operations.test.ts` | 8 | Vault balance, vault transactions, cashbox operations, integridade financeira |
+| `unit/raspadinha.test.ts` | 25 | Raspadinha handler completo (prepareData, grid, probabilidades) |
+| `unit/game-handlers.test.ts` | 30 | Registry de handlers, raspadinha, rifa, poio da vaca, euromilhões |
+| `unit/game-logic.test.ts` | 15 | Rentabilidade, hash de verificação, validações de negócio |
+| `integration/game-lifecycle.test.ts` | 25 | Ciclo completo de jogos, stock, sorteio, hash, permissões |
+| `api/business-logic.test.ts` | 10 | Stock race conditions, cashback, vendas externas |
+| `lib/rate-limit.test.ts` | 4 | Rate limiting com Prisma |
+| `lib/validations.test.ts` | 8 | Telefone PT, password, email |
+| `lib/utils.test.ts` | 9 | formatCurrency, generateSlug, truncateText |
+| `lib/i18n.test.ts` | 7 | Traduções PT/EN/ES |
+| `lib/financial-validations.test.ts` | 20 | Schemas de depósito, levantamento, password |
+| `validations.test.ts` | 10 | login, register, password, evento, jogo schemas |
+| `utils.test.ts` | 10 | formatCurrency, formatDate, generateSlug, etc. |
+| `middleware.test.ts` | 10 | Proxy, auth, CSRF, page role protection |
+
+#### Tipos de teste
+- **Unit**: Funções puras, handlers de jogo, RBAC, auth, webhooks
+- **Integration**: Ciclos completos de jogo (criar → jogar → sortear → vencedor)
+- **API**: Business logic isolada (stock, cashback, vendas externas)
+
+#### Convenções
+- Todos os testes usam `// @vitest-environment node` ou `jsdom` conforme o contexto
+- Mocks via `vi.mock()` para Prisma e dependências externas
+- Testes de probabilidades usam iterações (1000x) com margens alargadas
+- Ficheiros de teste em `src/__tests__/unit/`, `src/__tests__/integration/`, `src/__tests__/api/`, `src/__tests__/lib/`
