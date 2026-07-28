@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getUserFromRequest } from '@/lib/auth'
+import { requirePermission } from '@/lib/rbac/checkPermission'
 import { z } from 'zod'
 
 // Validation schema for updating an aldeia
@@ -121,7 +122,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
       )
     }
 
-    // Check if user is admin of this aldeia
+    // Check if user is admin of this aldeia or super_admin
+    const denied = await requirePermission(user.userId, 'MANAGE_ALDEIA', id)
+    if (denied) return denied
+
+    // Fetch aldeia for ownership checks and sensitive field handling
     const aldeia = await prisma.aldeia.findUnique({
       where: { id },
       include: { admins: { select: { id: true } } }
@@ -131,16 +136,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
       return NextResponse.json(
         { error: 'Aldeia não encontrada' },
         { status: 404 }
-      )
-    }
-
-    const isAdmin = aldeia.admins.some((admin: any) => admin.id === user.userId)
-    const isSuperAdmin = user.role === 'super_admin'
-
-    if (!isAdmin && !isSuperAdmin) {
-      return NextResponse.json(
-        { error: 'Não autorizado para editar esta aldeia' },
-        { status: 403 }
       )
     }
 
@@ -157,18 +152,19 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
     const updateData = result.data
 
     // Only super_admin can change verificado
-    if (updateData.verificado !== undefined && !isSuperAdmin) {
-      return NextResponse.json(
-        { error: 'Apenas super admin pode alterar verificação' },
-        { status: 403 }
-      )
+    if (updateData.verificado !== undefined) {
+      const deniedVerificado = await requirePermission(user.userId, 'MANAGE_USERS')
+      if (deniedVerificado) return deniedVerificado
     }
 
     // Sensitive fields (IBAN, nomeTitularConta) require special handling
     const sensitiveFields = ['iban', 'nomeTitularConta']
     const hasSensitiveChanges = sensitiveFields.some(f => updateData[f as keyof typeof updateData] !== undefined)
 
-    if (hasSensitiveChanges && !isSuperAdmin) {
+    if (hasSensitiveChanges) {
+      const isSuperAdminCheck = await requirePermission(user.userId, 'MANAGE_USERS')
+      // If not super_admin, create pending request instead of direct edit
+      if (isSuperAdminCheck) {
       // Extract only sensitive field changes and create pending requests
       const pendingRequests: Promise<any>[] = []
       const notifications: Promise<any>[] = []
