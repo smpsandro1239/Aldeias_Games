@@ -1,211 +1,40 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  Trophy,
-  Star,
-  Check,
-  Phone,
-  Mail,
-  User,
-  Euro,
-  Ticket,
-  Info,
-  X,
-  Hash,
-  Shuffle,
-  Eye,
-} from "lucide-react";
+import { Trophy, Star, Hash, Euro, Info, Phone, Mail, User, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
-import { ProvaJogoModal } from "@/components/modals/prova-jogo-modal";
-import { apiRequest } from "@/lib/api-client";
 import { useGamePage } from "@/hooks/useGamePage";
 import { GameDetailLayout } from "@/components/game-detail-layout";
 import { GamePaymentDialog } from "@/components/game-payment-dialog";
-
-interface JogoEuromilhoes {
-  id: string;
-  nome: string;
-  tipo: string;
-  preco: number;
-  stockInicial: number;
-  stockAtual: number;
-  totalAngariado: number;
-  totalParticipacoes: number;
-  configuracao?: unknown;
-  evento?: { nome: string; aldeia?: { nome: string } };
-  premios?: Array<{ id: string; nome: string; descricao?: string }>;
-}
-
-interface Grelha {
-  id: string;
-  numero: number;
-  estado: string;
-  numerosOcupados: string;
-  premioDescricao?: string;
-  premioValor?: number;
-  dataSorteio?: string;
-  sorteioData?: string;
-  bloqueioData?: string;
-  createdAt: string;
-}
-
-const MAX_NUMEROS = 50;
-const TOTAL_NUMEROS = 50;
-const randomOptions = [1, 2, 3, 4, 5];
+import { useEuromilhoesGame } from "./use-euromilhoes-game";
+import { EuromilhoesNumberGrid } from "./euromilhoes-number-grid";
+import { EuromilhoesConfirmationView } from "./euromilhoes-confirmation-view";
+import type { JogoEuromilhoes } from "./euromilhoes-types";
+import { TOTAL_NUMEROS } from "./euromilhoes-types";
 
 export default function EuromilhoesPage() {
+  const gamePage = useGamePage<JogoEuromilhoes>();
   const {
-    jogo, setJogo, loading, setLoading, jogoId,
-    userRole, isNonRegularUser,
-    participante, setParticipante, userOriginalData,
+    jogo, loading, userRole,
+    participante, setParticipante,
     paymentModalOpen, setPaymentModalOpen,
     confirmacaoModalOpen, setConfirmacaoModalOpen,
-    participacaoCriada, setParticipacaoCriada,
-    participacaoConfirmada, setParticipacaoConfirmada,
+    participacaoCriada,
+    participacaoConfirmada,
     playerDataConfirmOpen, setPlayerDataConfirmOpen,
-    playerDataModified, setPlayerDataModified,
-    refreshBalance,
     handlePlayerConfirmOwnData,
     handlePlayerConfirmNewData,
-    processarPagamento: baseProcessarPagamento,
-  } = useGamePage<JogoEuromilhoes>();
+  } = gamePage;
 
-  const [grelha, setGrelha] = useState<Grelha | null>(null);
-  const [numerosSelecionados, setNumerosSelecionados] = useState<number[]>([]);
-  const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
-  const [submetendo, setSubmetendo] = useState(false);
-  const [provaModalOpen, setProvaModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (grelha) {
-      try {
-        const ocupados = JSON.parse(grelha.numerosOcupados || "[]");
-        setNumerosOcupados(ocupados.map(Number));
-      } catch { setNumerosOcupados([]); }
-    }
-  }, [grelha]);
-
-  const fetchData = useCallback(async () => {
-    if (!jogoId) { setLoading(false); return; }
-    try {
-      const res = await fetch(`/api/jogos/${jogoId}`);
-      if (res.ok) {
-        const data = await res.json();
-        const jogoData = data.data;
-        if (jogoData) {
-          setJogo(jogoData as JogoEuromilhoes);
-          const grelhasRes = await fetch(`/api/euromilhoes/grelhas?jogoId=${jogoData.id}`);
-          const grelhasData = await grelhasRes.json();
-          if (grelhasData.success && grelhasData.data) {
-            const allGrelhas: Grelha[] = grelhasData.data;
-            const open = allGrelhas.find((g) => g.estado === "aberta");
-            setGrelha(open || allGrelhas[0] || null);
-          }
-          try {
-            const ocupRes = await fetch(`/api/jogos/${jogoData.id}/numeros-ocupados`);
-            if (ocupRes.ok) {
-              const ocupData = await ocupRes.json();
-              if (ocupData.numerosOcupados) setNumerosOcupados(ocupData.numerosOcupados.map(Number));
-            }
-          } catch {}
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar jogo:", error);
-      toast.error("Erro ao carregar o jogo");
-    } finally { setLoading(false); }
-  }, [jogoId, setJogo, setLoading]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const toggleNumero = useCallback((num: number) => {
-    if (numerosOcupados.includes(num)) { toast.warning("Número já adquirido."); return; }
-    if (numerosSelecionados.includes(num)) {
-      setNumerosSelecionados((prev) => prev.filter((n) => n !== num));
-    } else if (numerosSelecionados.length < MAX_NUMEROS) {
-      setNumerosSelecionados((prev) => [...prev, num].sort((a, b) => a - b));
-    } else {
-      toast.warning(`Máximo de ${MAX_NUMEROS} números.`);
-    }
-  }, [numerosSelecionados, numerosOcupados]);
-
-  const selectRandomNumbers = useCallback((count: number) => {
-    const available = Array.from({ length: TOTAL_NUMEROS }, (_, i) => i + 1).filter(
-      (n) => !numerosSelecionados.includes(n) && !numerosOcupados.includes(n)
-    );
-    if (available.length === 0) { toast.warning("Sem números disponíveis"); return; }
-    const shuffled = available.sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, Math.min(count, MAX_NUMEROS - numerosSelecionados.length));
-    setNumerosSelecionados([...numerosSelecionados, ...selected]);
-  }, [numerosSelecionados, numerosOcupados]);
-
-  const handleParticipar = () => {
-    if (!participante.nome.trim()) { toast.error("Insira o seu nome."); return; }
-    if (!participante.telefone.trim() && !participante.email.trim()) { toast.error("Insira telefone ou email."); return; }
-    if (numerosSelecionados.length < 1) { toast.error("Selecione pelo menos 1 número."); return; }
-    if (isNonRegularUser && !playerDataModified) {
-      setPlayerDataConfirmOpen(true);
-    } else {
-      setPaymentModalOpen(true);
-    }
-  };
-
-  const criarParticipacao = async (metodo: string) => {
-    if (!jogo) return;
-    setSubmetendo(true);
-    const payload: Record<string, unknown> = {
-      jogoId: jogo.id,
-      dadosParticipacao: { numeros: numerosSelecionados },
-      quantidade: 1,
-      metodoPagamento: metodo,
-      dadosCliente: { nome: participante.nome, telefone: participante.telefone || undefined, email: participante.email || undefined },
-    };
-    if (grelha) payload.grelhaId = grelha.id;
-
-    try {
-      const response = await apiRequest("/api/participacoes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setNumerosOcupados((prev) => [...new Set([...prev, ...numerosSelecionados])]);
-        setParticipacaoCriada(data.participacao || data.data || data);
-        setConfirmacaoModalOpen(true);
-        setPaymentModalOpen(false);
-        setParticipacaoConfirmada(true);
-        toast.success("Participação confirmada!");
-        refreshBalance();
-        try {
-          const grelhasRes = await fetch(`/api/euromilhoes/grelhas?jogoId=${jogo.id}`);
-          const grelhasData = await grelhasRes.json();
-          if (grelhasData.success && grelhasData.data) {
-            const open = grelhasData.data.find((g: Grelha) => g.estado === "aberta");
-            if (open) setGrelha(open);
-          }
-        } catch {}
-      } else {
-        const err = await response.json().catch(() => null);
-        toast.error(err?.error || "Erro ao participar.");
-      }
-    } catch (error) {
-      console.error("Erro ao participar:", error);
-      toast.error("Erro ao processar participação.");
-    } finally { setSubmetendo(false); }
-  };
-
-  const processarPagamento = async (metodo: "dinheiro" | "saldo" | "mbway" | "stripe" | "transferencia") => {
-    if (!jogo) return;
-    if (metodo === "mbway" && !participante.telefone) { toast.error("Telefone obrigatório para MBWay."); return; }
-    await criarParticipacao(metodo);
-  };
-
-  const totalPago = (jogo?.preco || 0) * numerosSelecionados.length;
+  const {
+    grelha, numerosSelecionados, setNumerosSelecionados,
+    numerosOcupados, submetendo,
+    provaModalOpen, setProvaModalOpen,
+    toggleNumero, selectRandomNumbers,
+    handleParticipar, processarPagamento,
+    handlePlayAgain, totalPago,
+  } = useEuromilhoesGame(gamePage);
 
   if (loading) {
     return <GameDetailLayout title="Euromilhões" loading><></></GameDetailLayout>;
@@ -213,83 +42,17 @@ export default function EuromilhoesPage() {
 
   if (participacaoConfirmada) {
     return (
-      <GameDetailLayout title="Confirmação" userRole={userRole}>
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="w-10 h-10 text-primary" />
-          </div>
-          <h2 className="font-serif text-2xl text-accent font-bold">Participação Confirmada!</h2>
-          <p className="text-muted-foreground mt-2">Obrigado pela sua participação no Euromilhões</p>
-        </div>
-        <div className="bg-surface-container rounded-3xl overflow-hidden mb-6">
-          <div className="p-6 md:p-8 space-y-6">
-            <div className="text-center border-b border-outline-variant/15 pb-6">
-              <p className="text-sm text-secondary font-semibold tracking-widest uppercase mb-2">Os Teus Números</p>
-              <div className="flex flex-wrap justify-center gap-2 mt-4">
-                {numerosSelecionados.map((num) => (
-                  <span key={num} className="bg-primary text-primary-foreground w-12 h-12 rounded-xl text-xl font-bold flex items-center justify-center">{num}</span>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-surface-container-high rounded-xl p-4 text-center">
-                <p className="text-[10px] text-on-surface/50 uppercase">Total Pago</p>
-                <p className="text-xl font-bold text-green-400">{totalPago.toFixed(2)}€</p>
-              </div>
-              <div className="bg-surface-container-high rounded-xl p-4 text-center">
-                <p className="text-[10px] text-on-surface/50 uppercase">Números</p>
-                <p className="text-xl font-bold text-primary">{numerosSelecionados.length}</p>
-              </div>
-            </div>
-            {grelha && (
-              <div className="bg-surface-container-high rounded-xl p-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-on-surface/60">Grelha nº:</span>
-                  <span className="text-lg font-bold text-primary">{grelha.numero}</span>
-                </div>
-                {grelha.premioDescricao && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-on-surface/60">Prémio:</span>
-                    <span className="text-sm font-bold text-green-400">{grelha.premioDescricao}</span>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="bg-surface-container-high rounded-xl p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-on-surface/60">Participações:</span>
-                <span className="text-lg font-bold text-primary">{jogo?.totalParticipacoes || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-on-surface/60">Total angariado:</span>
-                <span className="text-lg font-bold text-green-400">{jogo?.totalAngariado?.toFixed(2) || "0.00"}€</span>
-              </div>
-            </div>
-            <div className="bg-surface-container-highest/50 rounded-2xl p-4 text-center">
-              <p className="text-xs text-on-surface/40">Guarde os seus números. O sorteio será realizado na data indicada.</p>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-3">
-          <Button
-            onClick={() => setProvaModalOpen(true)}
-            variant="outline"
-            className="w-full py-4 border-primary/30 text-primary font-semibold rounded-xl"
-          >
-            <Eye className="w-4 h-4 mr-2" /> Ver Prova de Jogo
-          </Button>
-          <Button onClick={() => { setParticipacaoConfirmada(false); setNumerosSelecionados([]); fetchData(); }}
-            className="w-full py-6 bg-primary text-primary-foreground font-bold rounded-xl">
-            Participar Novamente
-          </Button>
-        </div>
-
-        <ProvaJogoModal
-          open={provaModalOpen}
-          onOpenChange={setProvaModalOpen}
-          participacaoId={participacaoCriada?.id}
-        />
-      </GameDetailLayout>
+      <EuromilhoesConfirmationView
+        numerosSelecionados={numerosSelecionados}
+        jogo={jogo}
+        grelha={grelha}
+        totalPago={totalPago}
+        setProvaModalOpen={setProvaModalOpen}
+        handlePlayAgain={handlePlayAgain}
+        participacaoCriada={participacaoCriada}
+        userRole={userRole}
+        provaModalOpen={provaModalOpen}
+      />
     );
   }
 
@@ -302,7 +65,6 @@ export default function EuromilhoesPage() {
         </div>
       ) : undefined}>
 
-      {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-container to-[#2d1a0f] p-1">
         <div className="bg-surface-container-highest/90 backdrop-blur-md rounded-[1.9rem] p-6 md:p-8">
           <div className="mb-4 inline-block bg-secondary-container/10 border border-secondary-container/20 px-3 py-1 rounded-full">
@@ -316,7 +78,6 @@ export default function EuromilhoesPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="bg-surface-container rounded-2xl p-6">
         <div className="flex justify-between items-center mb-4">
           <div>
@@ -348,7 +109,6 @@ export default function EuromilhoesPage() {
         </div>
       </div>
 
-      {/* Sorteio info */}
       {grelha?.sorteioData && (
         <div className="bg-surface-container rounded-2xl p-4 flex items-start gap-3">
           <Info className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
@@ -364,72 +124,14 @@ export default function EuromilhoesPage() {
         </div>
       )}
 
-      {/* Number grid */}
-      <div className="bg-surface-container rounded-3xl p-6 space-y-4">
-        <div className="flex items-center gap-3 border-b border-outline-variant/15 pb-4">
-          <Hash className="w-5 h-5 text-secondary" />
-          <h4 className="text-xl font-headline font-bold">Escolha os seus números</h4>
-        </div>
-        <div className="bg-surface-container-high rounded-xl p-3">
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-surface-container-highest border border-outline-variant" /><span className="text-muted-foreground">Disponível</span></div>
-            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-secondary" /><span className="text-muted-foreground">Selecionado</span></div>
-            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-900/40 border-2 border-red-800/60" /><span className="text-muted-foreground">Indisponível</span></div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center">
-            <p className="text-sm font-medium text-muted-foreground">{numerosSelecionados.length}/{MAX_NUMEROS} selecionados</p>
-            <div className="flex items-center gap-1">
-              {numerosSelecionados.length > 0 && (
-                <button onClick={() => setNumerosSelecionados([])} className="px-3 py-1 rounded-lg text-xs font-medium bg-destructive/20 text-red-400 hover:bg-destructive/30 flex items-center gap-1">
-                  <X className="w-3 h-3" /> Limpar
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Aleatório:</span>
-            {randomOptions.map((count) => (
-              <button key={count} onClick={() => selectRandomNumbers(count)} disabled={numerosSelecionados.length >= MAX_NUMEROS}
-                className="px-2 py-1 rounded-lg text-xs font-medium bg-primary/20 text-primary hover:bg-primary/30 disabled:opacity-50 flex items-center gap-1">
-                <Shuffle className="w-3 h-3" /> {count}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-10 gap-2">
-          {Array.from({ length: TOTAL_NUMEROS }, (_, i) => i + 1).map((num) => {
-            const sel = numerosSelecionados.includes(num);
-            const ocup = numerosOcupados.includes(num);
-            return (
-              <button key={num} onClick={() => toggleNumero(num)} disabled={ocup}
-                className={`aspect-square rounded-xl text-sm font-bold transition-all ${
-                  sel ? "bg-secondary text-primary-foreground scale-110 shadow-lg shadow-secondary/30 ring-2 ring-secondary ring-offset-2 ring-offset-background"
-                  : ocup ? "bg-red-900/30 text-red-400/60 cursor-not-allowed border border-red-800/40"
-                  : "bg-surface-container-highest text-on-surface hover:bg-muted/50 hover:scale-105 active:scale-95"
-                }`}>
-                {num}
-              </button>
-            );
-          })}
-        </div>
-        {numerosSelecionados.length > 0 && (
-          <div className="bg-secondary-container/10 border border-secondary-container/20 rounded-xl p-4">
-            <p className="text-xs text-secondary mb-3 font-medium">Números selecionados:</p>
-            <div className="flex flex-wrap gap-2">
-              {numerosSelecionados.map((num) => (
-                <span key={num} onClick={() => toggleNumero(num)}
-                  className="bg-secondary text-primary-foreground w-10 h-10 rounded-xl text-sm font-bold flex items-center justify-center cursor-pointer hover:opacity-80">
-                  {num}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      <EuromilhoesNumberGrid
+        numerosSelecionados={numerosSelecionados}
+        setNumerosSelecionados={setNumerosSelecionados}
+        numerosOcupados={numerosOcupados}
+        toggleNumero={toggleNumero}
+        selectRandomNumbers={selectRandomNumbers}
+      />
 
-      {/* Customer form */}
       <div className="bg-surface-container rounded-3xl p-6 space-y-5">
         <div className="flex items-center gap-3 border-b border-outline-variant/15 pb-4">
           <User className="w-5 h-5 text-secondary" />
@@ -439,7 +141,7 @@ export default function EuromilhoesPage() {
           <label className="text-xs text-muted-foreground uppercase tracking-wider">Nome Completo *</label>
           <div className="flex items-center gap-3 bg-surface-container-high rounded-xl px-4 py-3">
             <User className="w-5 h-5 text-primary" />
-            <input type="text" value={participante.nome} onChange={(e) => setParticipante((p) => ({ ...p, nome: e.target.value }))}
+            <input type="text" value={participante.nome} onChange={(e) => setParticipante((p: any) => ({ ...p, nome: e.target.value }))}
               className="flex-1 bg-transparent outline-none text-foreground" placeholder="O seu nome" />
           </div>
         </div>
@@ -448,7 +150,7 @@ export default function EuromilhoesPage() {
             <label className="text-xs text-muted-foreground uppercase tracking-wider">Telemóvel *</label>
             <div className="flex items-center gap-3 bg-surface-container-high rounded-xl px-4 py-3">
               <Phone className="w-5 h-5 text-primary" />
-              <input type="tel" value={participante.telefone} onChange={(e) => setParticipante((p) => ({ ...p, telefone: e.target.value }))}
+              <input type="tel" value={participante.telefone} onChange={(e) => setParticipante((p: any) => ({ ...p, telefone: e.target.value }))}
                 className="flex-1 bg-transparent outline-none text-foreground" placeholder="+351 000 000 000" />
             </div>
           </div>
@@ -456,7 +158,7 @@ export default function EuromilhoesPage() {
             <label className="text-xs text-muted-foreground uppercase tracking-wider">Email (opcional)</label>
             <div className="flex items-center gap-3 bg-surface-container-high rounded-xl px-4 py-3">
               <Mail className="w-5 h-5 text-primary" />
-              <input type="email" value={participante.email} onChange={(e) => setParticipante((p) => ({ ...p, email: e.target.value }))}
+              <input type="email" value={participante.email} onChange={(e) => setParticipante((p: any) => ({ ...p, email: e.target.value }))}
                 className="flex-1 bg-transparent outline-none text-foreground" placeholder="email@exemplo.com" />
             </div>
           </div>
@@ -492,17 +194,11 @@ export default function EuromilhoesPage() {
       <PlayerDataConfirmModal
         open={playerDataConfirmOpen}
         onOpenChange={setPlayerDataConfirmOpen}
-        userName={userOriginalData.nome}
-        userPhone={userOriginalData.telefone}
-        userEmail={userOriginalData.email}
+        userName={gamePage.userOriginalData.nome}
+        userPhone={gamePage.userOriginalData.telefone}
+        userEmail={gamePage.userOriginalData.email}
         onConfirmWithOwnData={handlePlayerConfirmOwnData}
         onConfirmWithNewData={handlePlayerConfirmNewData}
-      />
-
-      <ProvaJogoModal
-        open={provaModalOpen}
-        onOpenChange={setProvaModalOpen}
-        participacaoId={participacaoCriada?.id}
       />
     </GameDetailLayout>
   );
