@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/notification-bell";
 
+import { StatCard } from "@/components/dashboard/stat-card";
+import { QuickAction } from "@/components/dashboard/quick-action";
 import {
   Plus, Building2, Calendar, Wallet, Globe, RotateCcw,
   DollarSign, Users, Gamepad2, Trophy, CreditCard,
@@ -441,81 +443,5 @@ export default function SuperAdminDashboard({
         eventoModalAldeiaId={eventoModalAldeiaId} setEventoModalAldeiaId={setEventoModalAldeiaId}
       />
     </div>
-  );
-}
-
-/* ===== Local sub-components ===== */
-
-function StatCard({
-  title, value, icon, color, onClick,
-}: {
-  title: string; value: string; icon: React.ReactNode;
-  color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
-  onClick?: () => void;
-}) {
-  const colorMap = {
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    violet: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    pink: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
-    orange: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-  };
-  const borderMap = {
-    emerald: "border-l-emerald-500",
-    blue: "border-l-blue-500",
-    violet: "border-l-violet-500",
-    amber: "border-l-amber-500",
-    pink: "border-l-pink-500",
-    orange: "border-l-orange-500",
-  };
-  return (
-    <Card
-      className={`bg-card border-l-4 ${borderMap[color]} shadow-sm hover:shadow-md transition-shadow ${onClick ? "cursor-pointer hover:scale-[1.02] active:scale-[0.98]" : ""}`}
-      onClick={onClick}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">{title}</p>
-            <p className="text-xl md:text-2xl font-black text-foreground">{value}</p>
-          </div>
-          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${colorMap[color]}`}>
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function QuickAction({
-  icon, label, onClick, color, badge,
-}: {
-  icon: React.ReactNode; label: string; onClick: () => void;
-  color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
-  badge?: number;
-}) {
-  const colorMap = {
-    emerald: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400",
-    blue: "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400",
-    violet: "bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 dark:text-violet-400",
-    amber: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400",
-    pink: "bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400",
-    orange: "bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 dark:text-orange-400",
-  };
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex flex-col items-center gap-2 p-4 rounded-xl ${colorMap[color]} transition-all hover:scale-[1.02] active:scale-[0.98]`}
-    >
-      {badge && badge > 0 && (
-        <span className="absolute top-2 right-2 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-          {badge > 99 ? "99+" : badge}
-        </span>
-      )}
-      {icon}
-      <span className="text-xs font-medium text-center">{label}</span>
-    </button>
   );
 }

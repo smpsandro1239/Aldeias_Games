@@ -18,6 +18,7 @@ import {
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { generateCSV, downloadCSV, formatDateISO } from "@/lib/export-utils";
+import { QuickAction } from "@/components/dashboard/quick-action";
 import { Pagination } from "@/components/ui/pagination";
 
 interface DepositoData {
@@ -993,30 +994,5 @@ export function AdminCofre() {
       </DialogContent>
     </Dialog>
     </>
-  );
-}
-
-function QuickAction({
-  icon, label, onClick, color,
-}: {
-  icon: React.ReactNode; label: string; onClick: () => void;
-  color: "emerald" | "blue" | "violet" | "amber" | "pink" | "orange";
-}) {
-  const colorMap = {
-    emerald: "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400",
-    blue: "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400",
-    violet: "bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 dark:text-violet-400",
-    amber: "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400",
-    pink: "bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 dark:text-pink-400",
-    orange: "bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 dark:text-orange-400",
-  };
-  return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-4 rounded-xl ${colorMap[color]} transition-all hover:scale-[1.02] active:scale-[0.98]`}
-    >
-      {icon}
-      <span className="text-xs font-medium text-center">{label}</span>
-    </button>
   );
 }
