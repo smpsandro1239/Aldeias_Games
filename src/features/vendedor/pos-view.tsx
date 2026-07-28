@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  ShoppingCart, 
-  User as UserIcon, 
+import {
+  ShoppingCart,
+  User as UserIcon,
   Smartphone,
-  CreditCard, 
+  CreditCard,
   Banknote,
   Minus,
   Plus,
@@ -20,32 +19,23 @@ import {
   WifiOff,
   Check,
   X,
-  Receipt,
   Loader2,
   AlertCircle,
   Ticket,
   Hash
 } from "lucide-react";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-
-interface PendingSale {
-  id: string;
-  jogoId: string;
-  quantidade: number;
-  metodoPagamento: string;
-  dadosCliente?: { nome: string; telefone?: string; email?: string };
-  timestamp: number;
-}
+import { useOfflineSales } from "./use-offline-sales";
+import { ReceiptView } from "./receipt-view";
+import { SuccessScreen } from "./success-screen";
 
 interface POSViewProps {
   jogos: any[];
   onSell: (data: any) => Promise<any>;
   loading?: boolean;
 }
-
-const OFFLINE_SALES_KEY = "aldeias_offline_sales";
 
 export function POSView({ jogos, onSell, loading }: POSViewProps) {
   const [selectedJogo, setSelectedJogo] = useState<any>(null);
@@ -55,65 +45,12 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
   const [numeroInput, setNumeroInput] = useState("");
   const [cliente, setCliente] = useState({ nome: "", telefone: "", email: "" });
   const [metodo, setMetodo] = useState<any>("dinheiro");
-  const [isOnline, setIsOnline] = useState(true);
-  const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastSale, setLastSale] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState(false);
 
-  useEffect(() => {
-    setIsOnline(navigator.onLine);
-    const saved = localStorage.getItem(OFFLINE_SALES_KEY);
-    if (saved) {
-      try {
-        setPendingSales(JSON.parse(saved));
-      } catch (e) {
-        console.error("Erro ao carregar vendas offline:", e);
-      }
-    }
-
-    const handleOnline = () => {
-      setIsOnline(true);
-      syncOfflineSales();
-    };
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  const saveOfflineSale = (sale: PendingSale) => {
-    const updated = [...pendingSales, sale];
-    setPendingSales(updated);
-    localStorage.setItem(OFFLINE_SALES_KEY, JSON.stringify(updated));
-  };
-
-  const syncOfflineSales = async () => {
-    if (!isOnline || pendingSales.length === 0) return;
-
-    for (const sale of pendingSales) {
-      try {
-        await onSell({
-          jogoId: sale.jogoId,
-          quantidade: sale.quantidade,
-          metodoPagamento: sale.metodoPagamento,
-          dadosCliente: sale.dadosCliente,
-        });
-      } catch (error) {
-        console.error("Erro ao sincronizar venda:", error);
-      }
-    }
-
-    setPendingSales([]);
-    localStorage.removeItem(OFFLINE_SALES_KEY);
-    toast.success(`${pendingSales.length} venda(s) sincronizada(s)`);
-  };
+  const { isOnline, pendingSales, saveOfflineSale, syncOfflineSales } = useOfflineSales(onSell);
 
   const handleFinish = async () => {
     if (!selectedJogo) return;
@@ -129,7 +66,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
     };
 
     if (!isOnline) {
-      const offlineSale: PendingSale = {
+      const offlineSale = {
         id: `offline_${Date.now()}`,
         ...saleData,
         timestamp: Date.now(),
@@ -143,9 +80,8 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
 
     try {
       const result = await onSell(saleData);
-      
+
       if (result?.success !== false) {
-        // Success confetti
         confetti({
           particleCount: 80,
           spread: 70,
@@ -160,15 +96,14 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
           timestamp: new Date().toISOString(),
         });
 
-        // Show receipt after short delay
         setTimeout(() => {
           setShowReceipt(true);
         }, 1500);
       } else {
         toast.error(result?.error || "Erro ao registar venda");
       }
-    } catch (error) {
-      const offlineSale: PendingSale = {
+    } catch {
+      const offlineSale = {
         id: `offline_${Date.now()}`,
         ...saleData,
         timestamp: Date.now(),
@@ -176,7 +111,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
       saveOfflineSale(offlineSale);
       toast.warning("Erro ao registar. Venda guardada offline.");
     }
-    
+
     setProcessing(false);
   };
 
@@ -189,134 +124,38 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
     setCliente({ nome: "", telefone: "", email: "" });
     setSaleSuccess(false);
     setLastSale(null);
+    setShowReceipt(false);
   };
 
   const total = selectedJogo ? selectedJogo.preco * quantidade : 0;
 
-  // Success Screen
   if (saleSuccess && !showReceipt) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md mx-auto"
-      >
-        <div className="bg-gradient-to-b from-surface-container to-surface-container-low rounded-3xl p-8 text-center border border-green-500/30 relative overflow-hidden">
-          {/* Glow */}
-          <div className="absolute inset-0 bg-primary/5" />
-          
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", damping: 10 }}
-            className="relative"
-          >
-            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check className="w-10 h-10 text-primary" />
-            </div>
-            
-            <h2 className="text-2xl font-bold text-foreground mb-2 font-serif italic">
-              Venda Concluída!
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              {formatCurrency(total)} • {quantidade}x {selectedJogo?.nome}
-            </p>
-            
-            <div className="flex flex-col gap-3">
-              <Button
-                onClick={() => setShowReceipt(true)}
-                className="w-full bg-primary hover:bg-primary text-foreground font-bold"
-              >
-                <Receipt className="w-4 h-4 mr-2" />
-                Ver Recibo
-              </Button>
-              <Button
-                onClick={resetForm}
-                variant="outline"
-                className="w-full border-primary/30 text-primary hover:bg-primary/10"
-              >
-                Nova Venda
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
+      <SuccessScreen
+        total={total}
+        quantidade={quantidade}
+        jogoNome={selectedJogo?.nome || ""}
+        onViewReceipt={() => setShowReceipt(true)}
+        onNewSale={resetForm}
+      />
     );
   }
 
-  // Receipt Modal
   if (showReceipt && lastSale) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-        onClick={resetForm}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-foreground rounded-2xl p-6 max-w-sm w-full text-primary-foreground shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="text-center mb-6 pb-4 border-b border-gray-200">
-            <h3 className="font-bold text-lg">Aldeias Games</h3>
-            <p className="text-xs text-gray-500">Comprovativo de Venda</p>
-          </div>
-
-          {/* Details */}
-          <div className="space-y-3 mb-6">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Produto:</span>
-              <span className="font-medium">{selectedJogo?.nome}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Quantidade:</span>
-              <span className="font-medium">{lastSale.quantidade}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Cliente:</span>
-              <span className="font-medium">{lastSale.dadosCliente?.nome || "Não identificado"}</span>
-            </div>
-            {lastSale.dadosCliente?.telefone && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Telefone:</span>
-                <span className="font-medium">{lastSale.dadosCliente.telefone}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Pagamento:</span>
-              <span className="font-medium capitalize">{lastSale.metodoPagamento}</span>
-            </div>
-            <div className="border-t pt-3 flex justify-between">
-              <span className="font-bold text-lg">Total:</span>
-              <span className="font-bold text-lg text-primary">{formatCurrency(lastSale.total)}</span>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center text-xs text-muted-foreground mb-4">
-            {formatDateTime(lastSale.timestamp)}
-          </div>
-
-          <Button
-            onClick={resetForm}
-            className="w-full bg-primary hover:bg-primary/90 text-foreground font-bold"
-          >
-            Nova Venda
-          </Button>
-        </motion.div>
-      </motion.div>
+      <ReceiptView
+        lastSale={lastSale}
+        jogoNome={selectedJogo?.nome || ""}
+        onNewSale={resetForm}
+      />
     );
   }
 
   return (
     <div className="max-w-md mx-auto space-y-4">
-      {/* Status Online/Offline */}
       <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${
-        isOnline 
-          ? "bg-primary/10 text-green-400" 
+        isOnline
+          ? "bg-primary/10 text-green-400"
           : "bg-orange-500/10 text-orange-400"
       }`}>
         {isOnline ? (
@@ -328,9 +167,9 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
           {isOnline ? "Online" : `Offline (${pendingSales.length} venda(s) pendente(s))`}
         </span>
         {!isOnline && pendingSales.length > 0 && (
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="outline"
             className="border-current text-current hover:bg-current/10"
             onClick={syncOfflineSales}
           >
@@ -339,12 +178,11 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
         )}
       </div>
 
-      {/* Progresso */}
       <div className="flex justify-between items-center px-2">
         <div className="flex gap-1">
           {[1, 2, 3].map((s) => (
-            <motion.div 
-              key={s} 
+            <motion.div
+              key={s}
               className={`h-1.5 w-8 rounded-full ${step >= s ? "bg-primary" : "bg-surface-container-low"}`}
               animate={{ backgroundColor: step >= s ? "hsl(var(--primary))" : "hsl(var(--surface-container-low))" }}
             />
@@ -355,7 +193,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
         </span>
       </div>
 
-      {/* Step 1: Select Game */}
       {step === 1 && (
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -366,7 +203,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             <Ticket className="h-5 w-5 text-primary" />
             Selecionar Jogo
           </h3>
-          
+
           {jogos.length === 0 ? (
             <div className="bg-surface-container rounded-2xl p-8 text-center border border-outline-variant/10">
               <AlertCircle className="h-12 w-12 text-primary mx-auto mb-4" />
@@ -379,8 +216,8 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
                   key={jogo.id}
                   whileTap={{ scale: 0.95 }}
                   className={`p-4 rounded-2xl text-left border-2 transition-all ${
-                    selectedJogo?.id === jogo.id 
-                      ? "border-primary bg-primary/10" 
+                    selectedJogo?.id === jogo.id
+                      ? "border-primary bg-primary/10"
                       : "border-outline-variant/20 bg-surface-container hover:border-primary/30"
                   }`}
                   onClick={() => setSelectedJogo(jogo)}
@@ -398,8 +235,8 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             </div>
           )}
 
-          <Button 
-            className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground" 
+          <Button
+            className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={!selectedJogo}
             onClick={() => setStep(2)}
           >
@@ -409,7 +246,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
         </motion.div>
       )}
 
-      {/* Step 2: Quantity & Payment */}
       {step === 2 && selectedJogo && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -431,7 +267,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             </div>
           </div>
 
-          {/* Quantity */}
           <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Quantidade</p>
             <div className="flex items-center justify-between">
@@ -453,7 +288,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             </div>
           </div>
 
-          {/* Payment Method */}
           <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Pagamento</p>
             <div className="grid grid-cols-3 gap-2">
@@ -478,7 +312,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             </div>
           </div>
 
-          {/* Total */}
           <div className="bg-surface-container rounded-2xl p-4 border border-outline-variant/10">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Total:</span>
@@ -489,18 +322,17 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
           </div>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1 border-primary/30 text-primary"
               onClick={() => setStep(1)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            <Button 
+            <Button
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
               onClick={() => {
-                // Show number selection for rifa or euromilhoes
                 if (selectedJogo?.tipo === 'rifa' || selectedJogo?.tipo === 'euromilhoes') {
                   setStep(2.5);
                 } else {
@@ -515,7 +347,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
         </motion.div>
       )}
 
-      {/* Step 2.5: Number Selection for Rifa or Euromilhões */}
       {step === 2.5 && selectedJogo && selectedJogo.tipo === 'euromilhoes' && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -531,7 +362,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
               Selecione até 5 números (1–50)
             </p>
-            
+
             <div className="grid grid-cols-10 gap-1.5 mb-4">
               {Array.from({ length: 50 }, (_, i) => i + 1).map(num => {
                 const isSelected = numerosSelecionados.includes(num);
@@ -579,15 +410,15 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
           </div>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1 border-primary/30 text-primary"
               onClick={() => setStep(2)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            <Button 
+            <Button
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
               onClick={() => {
                 if (numerosSelecionados.length > 0 && numerosSelecionados.length <= 5) {
@@ -604,7 +435,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
         </motion.div>
       )}
 
-      {/* Step 2.5: Number Selection for Rifa */}
       {step === 2.5 && selectedJogo && selectedJogo.tipo === 'rifa' && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -620,10 +450,9 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
               {selectedJogo.tipo === 'rifa' ? 'Número da Rifa' : 'Número'}
             </p>
-            
-            {/* Manual input */}
+
             <div className="flex gap-2 mb-4">
-              <Input 
+              <Input
                 type="number"
                 placeholder="Número (1-100)"
                 value={numeroInput}
@@ -632,7 +461,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
                 min={1}
                 max={100}
               />
-              <Button 
+              <Button
                 onClick={() => {
                   const num = parseInt(numeroInput);
                   if (num >= 1 && num <= 100 && !numerosSelecionados.includes(num)) {
@@ -647,7 +476,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
               </Button>
             </div>
 
-            {/* Selected numbers */}
             {numerosSelecionados.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {numerosSelecionados.map(num => (
@@ -668,15 +496,15 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
           </div>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1 border-primary/30 text-primary"
               onClick={() => setStep(2)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            <Button 
+            <Button
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
               onClick={() => {
                 if (numerosSelecionados.length === quantidade) {
@@ -693,7 +521,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
         </motion.div>
       )}
 
-      {/* Step 3: Customer Data */}
       {step === 3 && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -711,7 +538,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
                 <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
                   Nome Completo *
                 </label>
-                <Input 
+                <Input
                   placeholder="Ex: João Silva"
                   value={cliente.nome}
                   onChange={e => setCliente({...cliente, nome: e.target.value})}
@@ -722,7 +549,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
                 <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
                   Telemóvel
                 </label>
-                <Input 
+                <Input
                   placeholder="912 345 678"
                   value={cliente.telefone}
                   onChange={e => setCliente({...cliente, telefone: e.target.value})}
@@ -733,7 +560,7 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
                 <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
                   E-mail (opcional)
                 </label>
-                <Input 
+                <Input
                   type="email"
                   placeholder="exemplo@email.com"
                   value={cliente.email}
@@ -744,7 +571,6 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
             </div>
           </div>
 
-          {/* Summary */}
           <div className="bg-surface-container-low rounded-2xl p-4">
             <div className="flex justify-between items-center mb-4">
               <span className="text-muted-foreground">Resumo:</span>
@@ -758,15 +584,15 @@ export function POSView({ jogos, onSell, loading }: POSViewProps) {
           </div>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1 border-primary/30 text-primary"
               onClick={() => setStep(2)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
-            <Button 
+            <Button
               className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12"
               disabled={!cliente.nome || processing}
               onClick={handleFinish}
