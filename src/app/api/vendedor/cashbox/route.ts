@@ -9,11 +9,8 @@ export async function GET(request: NextRequest) {
     const user = await getFullUserFromRequest(request);
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    const isPrivileged = user.role === 'super_admin' || user.role === 'aldeia_admin';
-    if (!isPrivileged) {
-      const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
-      if (denied) return denied;
-    }
+    const denied = await requireAnyOfPermissions(user.id, ['EXECUTE_VENDA', 'MANAGE_ALDEIA']);
+    if (denied) return denied;
 
     const { page, limit } = getPaginationFromRequest(request);
     const { skip, take } = createPagination(page, limit);

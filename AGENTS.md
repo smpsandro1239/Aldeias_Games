@@ -54,6 +54,15 @@ Turbopack does not work on Windows. Use instead:
 npx next build --webpack
 ```
 
+### Webhook Idempotency (Stripe + MBWay)
+- `WebhookEvent` model in Prisma schema with unique constraint on `(provider, eventId)`
+- `src/lib/webhook-helpers.ts` exports `claimWebhookEvent()` and `completeWebhookEvent()`
+- **Stripe webhook** (`/api/stripe/webhook`): Claims `event.id` atomically before processing, returns 200 + `"duplicate"` if already seen
+- **MBWay webhook** (`/api/mbway/webhook`): Claims `transactionId` atomically before processing
+- Both mark events as `completed` or `failed` after processing
+- Flow: `claimWebhookEvent(provider, eventId)` → returns `true` if first time → process → `completeWebhookEvent(provider, eventId, "completed")`
+- Unique constraint violation (`P2002`) = duplicate event → skip
+
 ### Super Admin Cofre (Visão Global)
 - `GET /api/superadmin/cofre` — consolidated data across all villages (vault balances, pending deposits, recent movements)
 - `/superadmindashboard/cofre` — Super Admin page with global overview, per-village cards, pending deposits tab, global movements feed

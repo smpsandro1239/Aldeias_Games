@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
-import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
+import { requireAnyOfPermissions, requirePermission } from '@/lib/rbac/checkPermission';
 import crypto from 'crypto';
 
 function verifyQRData(qrData: string, pedidoId: string, expectedPassword: string) {
@@ -50,9 +50,8 @@ export async function PUT(request: NextRequest) {
 
     // AÇÃO: AUTORIZAR (Admin)
     if (acao === 'autorizar') {
-      if (user.role !== 'aldeia_admin') {
-        return NextResponse.json({ error: 'Apenas admin pode autorizar' }, { status: 403 });
-      }
+      const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+      if (denied) return denied;
 
       if (pedido.autorizado) {
         return NextResponse.json({ error: 'Já autorizado' }, { status: 400 });
@@ -73,9 +72,8 @@ export async function PUT(request: NextRequest) {
 
     // AÇÃO: REJEITAR (Admin)
     if (acao === 'rejeitar') {
-      if (user.role !== 'aldeia_admin') {
-        return NextResponse.json({ error: 'Apenas admin pode rejeitar' }, { status: 403 });
-      }
+      const denied2 = await requirePermission(user.id, 'MANAGE_ALDEIA');
+      if (denied2) return denied2;
 
       await prisma.pedidoCarregamento.update({
         where: { id: pedidoId },
