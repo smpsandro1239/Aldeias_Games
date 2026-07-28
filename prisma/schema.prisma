@@ -1222,4 +1222,20 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String   // "stripe", "mbway"
+  eventId    String   // external event ID (e.g. Stripe event.id)
+  tipo       String?  // "participacao", "carregamento_saldo"
+  status     String   @default("received") // "received", "processing", "completed", "failed"
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([provider, eventId])
+  @@index([provider])
+  @@index([createdAt])
+  @@map("webhook_events")
+}
+
 

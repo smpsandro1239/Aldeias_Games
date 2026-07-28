@@ -25,9 +25,10 @@ import {
   Percent,
   Trophy
 } from "lucide-react";
-import { useEffect, useMemo, useReducer, useCallback } from "react";
+import { useEffect, useMemo, useReducer, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { TransparencyModal } from "./transparency-modal";
+import { apiRequest } from "@/lib/api-client";
 
 // Constants for game types to avoid magic strings
 const GAME_TYPES = {
@@ -227,7 +228,7 @@ function jogoFormReducer(state: ReturnType<typeof getInitialState>, action: Acti
 }
 
 // Hook customizado para gerenciar estado do jogo
-function useJogoForm(initialData?: JogoData, eventoId?: string) {
+function useJogoForm(initialData?: JogoData, eventoId?: string, effectiveEventoId?: string, needsAldeiaSelection?: boolean) {
   const [state, dispatch] = useReducer(jogoFormReducer, getInitialState(initialData));
 
   const updateFormData = useCallback((updates: Partial<JogoFormData>) => {
@@ -391,6 +392,11 @@ function useJogoForm(initialData?: JogoData, eventoId?: string) {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (needsAldeiaSelection && !effectiveEventoId) {
+      toast.error("Selecione uma aldeia e um evento");
+      return;
+    }
+
     // Validação específica: soma das percentagens raspadinha <= 100%
     if (state.formData.tipo === GAME_TYPES.RASPADINHA && state.raspadinhaPremios.length > 0) {
       const totalPercentagem = state.raspadinhaPremios.reduce((sum, p) => sum + (p.percentagem || 0), 0);
@@ -423,10 +429,10 @@ function useJogoForm(initialData?: JogoData, eventoId?: string) {
       }
     }
 
-    const jogoData = buildJogoData(state.formData, state.raspadinhaPremios, state.rifaPremios, eventoId || "");
+    const jogoData = buildJogoData(state.formData, state.raspadinhaPremios, state.rifaPremios, eventoId || effectiveEventoId || "");
     setSubmittedData(jogoData);
     setShowTransparency(true);
-  }, [state.formData, state.raspadinhaPremios, state.rifaPremios, setSubmittedData, setShowTransparency, eventoId]);
+  }, [state.formData, state.raspadinhaPremios, state.rifaPremios, setSubmittedData, setShowTransparency, eventoId, effectiveEventoId]);
 
   return {
     ...state,
@@ -610,6 +616,17 @@ export function CreateJogoModal({
   aldeiaId,
   metodosPagamentoDefault
 }: CreateJogoModalProps) {
+  // Aldeia/Evento cascading dropdowns (only for super_admin without eventoId)
+  const [aldeiasList, setAldeiasList] = useState<Array<{ id: string; nome: string }>>([]);
+  const [eventosList, setEventosList] = useState<Array<{ id: string; nome: string }>>([]);
+  const [selectedAldeiaId, setSelectedAldeiaId] = useState("");
+  const [selectedEventoIdLocal, setSelectedEventoIdLocal] = useState("");
+  const [loadingAldeias, setLoadingAldeias] = useState(false);
+  const [loadingEventos, setLoadingEventos] = useState(false);
+
+  const needsAldeiaSelection = userRole === "super_admin" && !propEventoId && !initialData;
+  const effectiveEventoId = propEventoId || selectedEventoIdLocal;
+
   const {
     formData,
     raspadinhaPremios,
@@ -637,7 +654,40 @@ export function CreateJogoModal({
     removerPremioRaspadinha,
     removerPremioRifa,
     handleSubmit,
-  } = useJogoForm(initialData, propEventoId);
+  } = useJogoForm(initialData, propEventoId, effectiveEventoId, needsAldeiaSelection);
+
+  // Fetch aldeias when modal opens for super_admin without eventoId
+  useEffect(() => {
+    if (!open || !needsAldeiaSelection) return;
+    setLoadingAldeias(true);
+    apiRequest("/api/aldeias")
+      .then((res) => res.json())
+      .then((data) => {
+        const aldeias = (data.data || data || []).map((a: { id: string; nome: string }) => ({ id: a.id, nome: a.nome }));
+        setAldeiasList(aldeias);
+      })
+      .catch(() => toast.error("Erro ao carregar aldeias"))
+      .finally(() => setLoadingAldeias(false));
+  }, [open, needsAldeiaSelection]);
+
+  // Fetch eventos when aldeia is selected
+  useEffect(() => {
+    if (!selectedAldeiaId || !needsAldeiaSelection) {
+      setEventosList([]);
+      setSelectedEventoIdLocal("");
+      return;
+    }
+    setLoadingEventos(true);
+    apiRequest(`/api/eventos?aldeiaId=${selectedAldeiaId}&limit=100`)
+      .then((res) => res.json())
+      .then((data) => {
+        const eventos = (data.data || data || []).map((e: { id: string; nome: string }) => ({ id: e.id, nome: e.nome }));
+        setEventosList(eventos);
+        setSelectedEventoIdLocal("");
+      })
+      .catch(() => toast.error("Erro ao carregar eventos"))
+      .finally(() => setLoadingEventos(false));
+  }, [selectedAldeiaId, needsAldeiaSelection]);
 
   const handleConfirmCreate = useCallback(async () => {
     if (!submittedData) return;
@@ -660,6 +710,10 @@ export function CreateJogoModal({
   useEffect(() => {
     if (!open) {
       resetForm();
+      setSelectedAldeiaId("");
+      setSelectedEventoIdLocal("");
+      setAldeiasList([]);
+      setEventosList([]);
     }
   }, [open, resetForm]);
 
@@ -795,6 +849,49 @@ export function CreateJogoModal({
                   </SelectContent>
                 </Select>
               </div>
+
+              {needsAldeiaSelection && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Aldeia *</Label>
+                    <Select
+                      value={selectedAldeiaId}
+                      onValueChange={(value) => {
+                        setSelectedAldeiaId(value);
+                        setSelectedEventoIdLocal("");
+                      }}
+                      disabled={loadingAldeias}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={loadingAldeias ? "A carregar..." : "Selecionar aldeia"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {aldeiasList.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Evento *</Label>
+                    <Select
+                      value={selectedEventoIdLocal}
+                      onValueChange={setSelectedEventoIdLocal}
+                      disabled={!selectedAldeiaId || loadingEventos}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={loadingEventos ? "A carregar..." : selectedAldeiaId ? "Selecionar evento" : "Primeiro selecione a aldeia"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {eventosList.map((e) => (
+                          <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
 
               <div className="grid gap-2">
                 <Label htmlFor="nome">Nome do Jogo *</Label>
