@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     });
 
     const [transacoes, total] = await Promise.all([
-      prisma.vaultTransacao.findMany({
+      prisma.vaultTransaction.findMany({
         where: { vault: { aldeiaId } },
         include: {
           criadoPor: { select: { id: true, nome: true, email: true } },
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         skip,
         take,
       }),
-      prisma.vaultTransacao.count({ where: { vault: { aldeiaId } } }),
+      prisma.vaultTransaction.count({ where: { vault: { aldeiaId } } }),
     ]);
 
     return NextResponse.json({

@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const monthLabel = d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' });
 
-      const vaultTx = (vault?.transacoes || []).filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => {
+      const vaultTx = (vault?.transacoes || []).filter((tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => {
         const txDate = new Date(tx.dataCriacao);
         return txDate.getMonth() === d.getMonth() &&
                txDate.getFullYear() === d.getFullYear() &&
@@ -81,12 +81,12 @@ export async function GET(request: NextRequest) {
       });
 
       const depositosMes = vaultTx
-        .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'deposito')
-        .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
+        .filter((tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => tx.tipo === 'deposito')
+        .reduce((sum: number, tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
       const levantamentosMes = vaultTx
-        .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento')
-        .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
+        .filter((tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento')
+        .reduce((sum: number, tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
       months.push({
         month: monthLabel,
@@ -105,20 +105,20 @@ export async function GET(request: NextRequest) {
     };
 
     const totalDepositosConfirmados = depositos
-      .filter((d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => d.estado === 'confirmado')
-      .reduce((sum: number, d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => sum + d.valor, 0);
+      .filter((d: { valor: number; estado: any; createdAt: Date; confirmadoAt: Date | null }) => d.estado === 'confirmado')
+      .reduce((sum: number, d: { valor: number; estado: any; createdAt: Date; confirmadoAt: Date | null }) => sum + d.valor, 0);
 
     const totalDepositosPendentes = depositos
-      .filter((d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => d.estado === 'pendente')
-      .reduce((sum: number, d: { valor: number; estado: Prisma.DepositoEstado; createdAt: Date; confirmadoAt: Date | null }) => sum + d.valor, 0);
+      .filter((d: { valor: number; estado: any; createdAt: Date; confirmadoAt: Date | null }) => d.estado === 'pendente')
+      .reduce((sum: number, d: { valor: number; estado: any; createdAt: Date; confirmadoAt: Date | null }) => sum + d.valor, 0);
 
     const totalLevantamentosConfirmados = (vault?.transacoes || [])
-      .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento' && tx.estado === 'confirmado')
-      .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
+      .filter((tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento' && tx.estado === 'confirmado')
+      .reduce((sum: number, tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
     const totalLevantamentosPendentes = (vault?.transacoes || [])
-      .filter((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento' && tx.estado === 'pendente')
-      .reduce((sum: number, tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
+      .filter((tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => tx.tipo === 'levantamento' && tx.estado === 'pendente')
+      .reduce((sum: number, tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => sum + tx.valor, 0);
 
     const distribuicaoDinheiro = {
       cofre: vault?.saldo || 0,
@@ -134,18 +134,18 @@ export async function GET(request: NextRequest) {
         role: cb.user.role,
         saldo: cb.saldo,
         totalRecebido: cb.transacoes
-          .filter((t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => t.tipo === 'RECEBIDO_DO_JOGADOR')
-          .reduce((sum: number, t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => sum + t.valor, 0),
+          .filter((t: { tipo: any; valor: number; createdAt: Date }) => t.tipo === 'RECEBIDO_DO_JOGADOR')
+          .reduce((sum: number, t: { tipo: any; valor: number; createdAt: Date }) => sum + t.valor, 0),
         totalDepositado: cb.transacoes
-          .filter((t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => t.tipo === 'DEPOSITADO_NO_COFRE')
-          .reduce((sum: number, t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => sum + t.valor, 0),
+          .filter((t: { tipo: any; valor: number; createdAt: Date }) => t.tipo === 'DEPOSITADO_NO_COFRE')
+          .reduce((sum: number, t: { tipo: any; valor: number; createdAt: Date }) => sum + t.valor, 0),
         totalLevantado: cb.transacoes
-          .filter((t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => t.tipo === 'LEVANTAMENTO_COFRE')
-          .reduce((sum: number, t: { tipo: Prisma.CashboxTipo; valor: number; createdAt: Date }) => sum + t.valor, 0),
+          .filter((t: { tipo: any; valor: number; createdAt: Date }) => t.tipo === 'LEVANTAMENTO_COFRE')
+          .reduce((sum: number, t: { tipo: any; valor: number; createdAt: Date }) => sum + t.valor, 0),
       }))
       .sort((a: { saldo: number }, b: { saldo: number }) => b.saldo - a.saldo);
 
-    const ultimasTransacoes = (vault?.transacoes || []).slice(0, 20).map((tx: { tipo: Prisma.VaultTipo; valor: number; estado: Prisma.VaultEstado; dataCriacao: Date; descricao: string }) => ({
+    const ultimasTransacoes = (vault?.transacoes || []).slice(0, 20).map((tx: { tipo: any; valor: number; estado: any; dataCriacao: Date; descricao: string }) => ({
       tipo: tx.tipo,
       valor: tx.valor,
       descricao: tx.descricao,

@@ -81,11 +81,11 @@ export async function GET(request: NextRequest) {
     const vendedoresData = vendedores.map((v: Prisma.UserGetPayload<{ include: { cashbox: { include: { transacoes: { orderBy: { createdAt: 'desc' } } } } } }>) => {
       const transacoes = v.cashbox?.transacoes || [];
       const totalRecebido = transacoes
-        .filter((t: Prisma.VendedorCashboxTransaction) => t.tipo === 'RECEBIDO_DO_JOGADOR')
-        .reduce((sum: number, t: Prisma.VendedorCashboxTransaction) => sum + t.valor, 0);
+        .filter((t: any) => t.tipo === 'RECEBIDO_DO_JOGADOR')
+        .reduce((sum: number, t: any) => sum + t.valor, 0);
       const totalDepositado = transacoes
-        .filter((t: Prisma.VendedorCashboxTransaction) => t.tipo === 'DEPOSITADO_NO_COFRE')
-        .reduce((sum: number, t: Prisma.VendedorCashboxTransaction) => sum + t.valor, 0);
+        .filter((t: any) => t.tipo === 'DEPOSITADO_NO_COFRE')
+        .reduce((sum: number, t: any) => sum + t.valor, 0);
       const saldoEsperado = totalRecebido - totalDepositado;
       const saldoReal = v.cashbox?.saldo ?? 0;
 
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     // Vault data
     const vaultData = vault ? {
       saldo: vault.saldo,
-      totalDepositos: vault.transacoes.reduce((sum: number, t: Prisma.VaultTransaction) => sum + t.valor, 0),
+      totalDepositos: vault.transacoes.reduce((sum: number, t: any) => sum + t.valor, 0),
       numDepositos: vault.transacoes.length,
     } : null;
 
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
       id: a.id,
       nome: a.nome,
       saldoCofre: a.vault?.saldo ?? 0,
-      totalDepositado: a.vault?.transacoes.reduce((sum: number, t: Prisma.VaultTransaction) => sum + t.valor, 0) ?? 0,
+      totalDepositado: a.vault?.transacoes.reduce((sum: number, t: any) => sum + t.valor, 0) ?? 0,
       numVendedores: a._count.users,
     })) ?? [];
 
