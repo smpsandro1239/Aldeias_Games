@@ -23,7 +23,7 @@ import type {
   Aldeia,
   Vencedor,
 } from "./types";
-import type { JogoData } from "@/components/modals/create-jogo-modal";
+import type { JogoData } from "@/components/modals/create-jogo-types";
 import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
 

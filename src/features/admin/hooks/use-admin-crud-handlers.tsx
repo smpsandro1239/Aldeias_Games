@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/api-client";
 import { toast } from "sonner";
 import { logJogoToggle } from "@/lib/audit";
 import { Badge } from "@/components/ui/badge";
-import type { JogoData } from "@/components/modals/create-jogo-modal";
+import type { JogoData } from "@/components/modals/create-jogo-types";
 import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
 import type { Jogo, Aldeia, User } from "../components/types";

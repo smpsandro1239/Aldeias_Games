@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { CreateEventoModal } from "@/components/modals/create-evento-modal"
 import { CreateJogoModal } from "@/components/modals/create-jogo-modal"
-import type { JogoData } from "@/components/modals/create-jogo-modal"
+import type { JogoData } from "@/components/modals/create-jogo-types"
 import {
   ArrowLeft, Users, Calendar, Settings, Gamepad2,
   MapPin, Loader2, CheckCircle2, XCircle,
