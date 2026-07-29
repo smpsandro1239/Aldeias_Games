@@ -23,12 +23,12 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npx --yes prisma@6.19.3 generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Push Database Schema
-        run: npx prisma db push --skip-generate
+        run: npx --yes prisma@6.19.3 db push --skip-generate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
