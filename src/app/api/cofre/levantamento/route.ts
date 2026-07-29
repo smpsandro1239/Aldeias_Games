@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
       tipo: 'levantamento',
     };
 
-    if (estado) where.estado = estado;
+    if (estado) where.estado = estado as any;
 
     const levantamentos = await prisma.vaultTransaction.findMany({
       where,

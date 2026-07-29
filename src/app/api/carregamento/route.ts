@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (estado) {
-      where = { ...where, estado };
+      where = { ...where, estado: estado as any };
     }
 
     const pedidos = await prisma.pedidoCarregamento.findMany({

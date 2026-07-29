@@ -109,11 +109,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (tipo) {
-      where.tipo = tipo;
+      where.tipo = tipo as any;
     }
 
     if (estado) {
-      where.estado = estado;
+      where.estado = estado as any;
     }
 
     if (ativos === 'true') {

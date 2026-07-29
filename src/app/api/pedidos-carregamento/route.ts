@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    if (estado) where.estado = estado;
+    if (estado) where.estado = estado as any;
     if (aldeiaId) where.aldeiaId = aldeiaId;
 
     const { skip, take } = createPagination(page, limit);

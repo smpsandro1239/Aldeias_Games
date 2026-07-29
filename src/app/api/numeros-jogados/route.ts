@@ -25,13 +25,13 @@ export async function GET(request: NextRequest) {
     // Build jogo relation filter
     const jogoFilters: Record<string, unknown>[] = [];
     if (jogoId) jogoFilters.push({ id: jogoId });
-    if (jogoTipo) jogoFilters.push({ tipo: jogoTipo });
+    if (jogoTipo) jogoFilters.push({ tipo: jogoTipo as any });
     if (eventoId) jogoFilters.push({ evento: { id: eventoId } });
     if (aldeiaIdParam) jogoFilters.push({ evento: { aldeiaId: aldeiaIdParam } });
 
     const where: Record<string, unknown> = {};
 
-    if (estadoPagamento) where.estadoPagamento = estadoPagamento;
+    if (estadoPagamento) where.estadoPagamento = estadoPagamento as any;
     if (ganhador === 'true') where.ganhador = true;
     if (ganhador === 'false') where.ganhador = false;
 

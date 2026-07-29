@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (tipoOrganizacao) {
-      where.tipoOrganizacao = tipoOrganizacao
+      where.tipoOrganizacao = tipoOrganizacao as any
     }
 
     // If user is logged in, we could show their aldeias too, but for now stick to public

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const where: Prisma.PedidoCarregamentoWhereInput = {};
 
     if (estado && estado !== 'todos') {
-      where.estado = estado;
+      where.estado = estado as any;
     }
 
     if (user.role === 'aldeia_admin' && user.aldeiaId) {

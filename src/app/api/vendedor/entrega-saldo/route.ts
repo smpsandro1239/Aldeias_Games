@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     };
 
     if (estado) {
-      where.estado = estado;
+      where.estado = estado as any;
     }
 
     const entregas = await prisma.entregaSaldo.findMany({

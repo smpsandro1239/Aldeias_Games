@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    if (estado) where.estado = estado;
+    if (estado) where.estado = estado as any;
 
     const pedidos = await prisma.pedidoDepositoCofre.findMany({
       where,
