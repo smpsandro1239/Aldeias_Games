@@ -51,7 +51,8 @@ interface PedidoCarregamento {
 }
 
 export default function AdminPedidosPage() {
-   const { user, isAuthenticated, isLoading } = useAuth();
+    const router = useRouter();
+    const { user, isAuthenticated, isLoading } = useAuth();
    const [loading, setLoading] = useState(true);
    const [pedidos, setPedidos] = useState<PedidoCarregamento[]>([]);
    const [filter, setFilter] = useState<string>("todos");
