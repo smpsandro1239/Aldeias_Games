@@ -68,7 +68,7 @@ interface DashboardModalsLayerProps {
   setConfirmEntregaOpen: (open: boolean) => void;
   setDeleteData: (data: { type: string; id: string } | null) => void;
   setToggleJogoData: (data: { jogo: Jogo; novoEstado: "aberto" | "fechado" } | null) => void;
-  setSelectedAldeia: (aldeia: AldeiaData | null) => void;
+  setSelectedAldeia: (aldeia: Aldeia | null) => void;
   setSelectedPremio: (premio: Vencedor | null) => void;
   setConvertValor: (valor: string) => void;
   handleSaveEvento: (data: any) => Promise<{ eventoId?: string; jogosSelecionados?: string[] } | void>;
