@@ -14,7 +14,7 @@ export async function PUT(
 
     const { id } = await params;
 
-    const notificacao = await prisma.notificacao.findUnique({
+    const notificacao = await any.findUnique({
       where: { id },
     });
 
@@ -26,7 +26,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    const updated = await prisma.notificacao.update({
+    const updated = await any.update({
       where: { id },
       data: { lida: true },
     });
@@ -50,7 +50,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const notificacao = await prisma.notificacao.findUnique({
+    const notificacao = await any.findUnique({
       where: { id },
     });
 
@@ -62,7 +62,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    await prisma.notificacao.delete({ where: { id } });
+    await any.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

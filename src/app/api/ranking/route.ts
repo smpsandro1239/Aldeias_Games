@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         take: 100,
       });
 
-      const vendasData = await prisma.transacao.groupBy({
+      const vendasData = await any.groupBy({
         by: ['userId'],
         where: {
           userId: { in: vendedores.map((v: any) => v.id) },
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         take: 100,
       });
 
-      const participacoesData = await prisma.participacao.groupBy({
+      const participacoesData = await any.groupBy({
         by: ['userId'],
         where: {
           userId: { in: jogadores.map((j: any) => j.id) },
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         take: 100,
       });
 
-      const premiosData = await prisma.participacao.groupBy({
+      const premiosData = await any.groupBy({
         by: ['userId'],
         where: {
           userId: { in: jogadores.map((j: any) => j.id) },

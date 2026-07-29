@@ -68,7 +68,7 @@ export async function GET(
     })
 
     // Get recent events (last 3)
-    const recentEvents = await prisma.evento.findMany({
+    const recentEvents = await any.findMany({
       where: { aldeiaId: aldeiaId },
       orderBy: { createdAt: 'desc' },
       take: 3,
@@ -86,7 +86,7 @@ export async function GET(
     })
 
     // Get recent games (last 3)
-    const recentJogos = await prisma.jogo.findMany({
+    const recentJogos = await any.findMany({
       where: { aldeiaId: aldeiaId },
       orderBy: { createdAt: 'desc' },
       take: 3,

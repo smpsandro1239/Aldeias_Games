@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar participação
-    const participacao = await prisma.participacao.findUnique({
+    const participacao = await any.findUnique({
       where: { id: participacaoId },
       include: {
         user: true,
@@ -85,14 +85,14 @@ export async function POST(request: NextRequest) {
         },
       }),
       // 2. Marcar prémio como entregue
-      prisma.participacao.update({
+      any.update({
         where: { id: participacaoId },
         data: {
           premioEntregue: true,
         },
       }),
       // 3. Registar transação
-      prisma.transacao.create({
+      any.create({
         data: {
           valor: valor,
           tipo: 'premio_dinheiro',

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (denied) return denied;
 
     // Calcular total angariado (soma de pedidos de carregamento confirmados)
-    const pedidosConfirmados = await prisma.pedidoCarregamento.findMany({
+    const pedidosConfirmados = await any.findMany({
       where: {
         vendedorId: user.id,
         estado: 'confirmado'
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const totalAngariado = pedidosConfirmados.reduce((acc: number, p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => acc + p.valor, 0);
 
     // Obter entregas
-    const entregas = await prisma.entregaSaldo.findMany({
+    const entregas = await any.findMany({
       where: { vendedorId: user.id },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -34,12 +34,12 @@ export async function GET(request: NextRequest) {
     });
 
     const totalEntregue = entregas
-      .filter((e: Prisma.EntregaSaldo) => e.estado === 'concluido')
-      .reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0);
+      .filter((e: any) => e.estado === 'concluido')
+      .reduce((acc: number, e: any) => acc + e.valor, 0);
 
     const totalSolicitado = entregas
-      .filter((e: Prisma.EntregaSaldo) => e.estado === 'solicitado')
-      .reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0);
+      .filter((e: any) => e.estado === 'solicitado')
+      .reduce((acc: number, e: any) => acc + e.valor, 0);
 
     const saldoAEntregar = totalAngariado - totalEntregue;
 

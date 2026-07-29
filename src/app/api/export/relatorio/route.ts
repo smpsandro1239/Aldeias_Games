@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     switch (tipo) {
       case 'vendas': {
-        const vendas = await prisma.transacao.findMany({
+        const vendas = await any.findMany({
           where: {
             tipo: { in: ['venda', 'pagamento'] as const },
             ...(dataInicio && dataFim ? {
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         break;
       }
       case 'jogos': {
-        const jogos = await prisma.jogo.findMany({
+        const jogos = await any.findMany({
           where: { aldeiaId: user.aldeiaId },
           include: { evento: { select: { nome: true } } },
           orderBy: { createdAt: 'desc' },

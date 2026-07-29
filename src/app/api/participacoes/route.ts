@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       }
     } else if (user.role === 'aldeia_admin') {
       // Admin vê participações dos jogos da sua aldeia
-      const jogos = await prisma.jogo.findMany({
+      const jogos = await any.findMany({
         where: {
           evento: {
             aldeiaId: user.aldeiaId as string,
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [participacoes, total] = await Promise.all([
-      prisma.participacao.findMany({
+      any.findMany({
         where,
         select: {
           id: true,
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.participacao.count({ where }),
+      any.count({ where }),
     ]);
 
     return NextResponse.json(
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
     }
     const data = validation.data;
 
-    const jogo = await prisma.jogo.findUnique({
+    const jogo = await any.findUnique({
       where: { id: data.jogoId },
       include: { evento: true },
     });
@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
           if ((user as any).telefone) orConditions.push({ telefoneCliente: (user as any).telefone });
         }
         if (orConditions.length > 0) {
-          const count = await prisma.participacao.count({
+          const count = await any.count({
             where: {
               jogoId: data.jogoId,
               estadoPagamento: { in: ["concluido", "pendente"] },
@@ -353,7 +353,7 @@ export async function POST(request: NextRequest) {
             select: { id: true },
           });
           if (admins.length > 0) {
-            await prisma.notificacao.createMany({
+            await any.createMany({
               data: admins.map((admin: (typeof admins)[number]) => ({
                 userId: admin.id,
                 tipo: 'sistema' as const,

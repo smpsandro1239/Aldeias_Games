@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [eventos, total] = await Promise.all([
-      prisma.evento.findMany({
+      any.findMany({
         where,
         include: {
           aldeia: {
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         orderBy: { dataInicio: 'desc' },
       }),
-      prisma.evento.count({ where }),
+      any.count({ where }),
     ]);
 
     return NextResponse.json(
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     // Gerar slug único
     let slug = generateSlug(data.nome);
-    const existingSlug = await prisma.evento.findUnique({
+    const existingSlug = await any.findUnique({
       where: { slug },
     });
 
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar evento
-    const evento = await prisma.evento.create({
+    const evento = await any.create({
       data: {
         nome: data.nome,
         slug,

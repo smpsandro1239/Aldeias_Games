@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
     // Verificar tentativas recentes (anti-fraude)
-    const recentAttempts = await prisma.pedidoCarregamento.count({
+    const recentAttempts = await any.count({
       where: {
         userId: user.id,
         createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) }, // últimos 15 min
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       }, { status: 429 });
     }
 
-    const pedido = await prisma.pedidoCarregamento.create({
+    const pedido = await any.create({
       data: {
         userId: user.id,
         aldeiaId,
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     // Update QR with correct ID after creation
     const qrData = generateQRData(pedido.id, user.id, valor, passwordOneTime);
-    await prisma.pedidoCarregamento.update({
+    await any.update({
       where: { id: pedido.id },
       data: { qrCodeData: qrData }
     });
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
       where = { ...where, estado: estado as any };
     }
 
-    const pedidos = await prisma.pedidoCarregamento.findMany({
+    const pedidos = await any.findMany({
       where,
       include: {
         user: { select: { id: true, nome: true, email: true, telefone: true } },

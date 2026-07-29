@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ID da participação é obrigatório' }, { status: 400 });
     }
 
-    const participacao = await prisma.participacao.findUnique({
+    const participacao = await any.findUnique({
       where: { id: participacaoId },
       include: { jogo: true },
     });
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     await prisma.$transaction([
-      prisma.participacao.update({
+      any.update({
         where: { id: participacaoId },
         data: {
           estadoPagamento: 'reembolsado',
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
           })),
         },
       }),
-      prisma.jogo.update({
+      any.update({
         where: { id: participacao.jogoId },
         data: {
           stockAtual: { increment: 1 },

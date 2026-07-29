@@ -45,29 +45,29 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch their comissões settings
-    const comissoesConfig = await prisma.comissao.findMany({
+    const comissoesConfig = await any.findMany({
         where: { vendedorId: { in: vendedores.map((v) => v.id) } }
     });
 
     // Fetch their apostas (physical POS)
-    const apostas = await prisma.aposta.findMany({
+    const apostas = await any.findMany({
         where: { vendedorId: { in: vendedores.map((v) => v.id) }, pago: true },
         include: { jogo: { select: { preco: true } } }
     });
 
     // Fetch their participacoes (digital POS)
-    const participacoes = await prisma.participacao.findMany({
+    const participacoes = await any.findMany({
         where: { vendedorId: { in: vendedores.map((v) => v.id) }, estadoPagamento: 'concluido' }
     });
     
     // Fetch transacoes (cashouts already made to them)
-    const payouts = await prisma.transacao.findMany({
+    const payouts = await any.findMany({
         where: { userId: { in: vendedores.map((v) => v.id) }, tipo: 'comissao' }
     });
 
     // Aggregate data
     const statsResult = vendedores.map((v) => {
-        const config = comissoesConfig.find((c: Prisma.Comissao) => c.vendedorId === v.id);
+        const config = comissoesConfig.find((c: any) => c.vendedorId === v.id);
         const percentual = config?.percentual || 5; // Default 5%
         
         const sellerApostas = apostas.filter((a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { preco: true } } } }>) => a.vendedorId === v.id);
@@ -77,16 +77,16 @@ export async function GET(request: NextRequest) {
             return acc + (numCount * (a.jogo.preco || 0));
         }, 0);
 
-        const sellerParticipacoes = participacoes.filter((p: Prisma.Participacao) => p.vendedorId === v.id);
-        const volumeParticipacoes = sellerParticipacoes.reduce((acc: number, p: Prisma.Participacao) => acc + (p.valorPago || 0), 0);
+        const sellerParticipacoes = participacoes.filter((p: any) => p.vendedorId === v.id);
+        const volumeParticipacoes = sellerParticipacoes.reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
 
         const volumeTotal = volumeApostas + volumeParticipacoes;
         const totalVendas = sellerApostas.length + sellerParticipacoes.length;
         
         const comissaoGanhas = (volumeTotal * percentual) / 100;
         
-        const sellerPayouts = payouts.filter((p: Prisma.Transacao) => p.userId === v.id);
-        const jaPago = sellerPayouts.reduce((acc: number, p: Prisma.Transacao) => acc + p.valor, 0);
+        const sellerPayouts = payouts.filter((p: any) => p.userId === v.id);
+        const jaPago = sellerPayouts.reduce((acc: number, p: any) => acc + p.valor, 0);
 
         return {
             ...v,

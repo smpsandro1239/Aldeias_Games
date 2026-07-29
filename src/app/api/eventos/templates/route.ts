@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       proximaData = next;
     }
 
-    const evento = await prisma.evento.create({
+    const evento = await any.create({
       data: {
         nome,
         slug,
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const aldeiaId = searchParams.get('aldeiaId');
     const templates = searchParams.get('templates') === 'true';
 
-    const eventos = await prisma.evento.findMany({
+    const eventos = await any.findMany({
       where: {
         ...(templates ? { isTemplate: true } : { isTemplate: false }),
         ...(aldeiaId ? { aldeiaId } : {}),
@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest) {
 
     const now = new Date();
     
-    const eventosRecorrentes = await prisma.evento.findMany({
+    const eventosRecorrentes = await any.findMany({
       where: {
         isTemplate: true,
         frequenciaRecorrencia: { not: null },
@@ -114,7 +114,7 @@ export async function PUT(request: NextRequest) {
       // Criar novo evento baseado no template
       const novoSlug = `${evento.slug.split('-')[0]}-${Date.now()}`;
       
-      const novoEvento = await prisma.evento.create({
+      const novoEvento = await any.create({
         data: {
           nome: evento.nome,
           slug: novoSlug,
@@ -142,7 +142,7 @@ publico: false,
           break;
       }
 
-      await prisma.evento.update({
+      await any.update({
         where: { id: evento.id },
         data: { proximaData: nextDate }
       });

@@ -123,7 +123,7 @@ async function processCarregamento(transactionId: string) {
 }
 
 async function processParticipacao(transactionId: string) {
-  const participacao = await prisma.participacao.findFirst({
+  const participacao = await any.findFirst({
     where: {
       dadosParticipacao: { contains: transactionId },
     },
@@ -135,7 +135,7 @@ async function processParticipacao(transactionId: string) {
     return; // already processed
   }
 
-  await prisma.participacao.update({
+  await any.update({
     where: { id: participacao.id },
     data: {
       estadoPagamento: "concluido",
@@ -151,7 +151,7 @@ async function processParticipacao(transactionId: string) {
       data: { saldo: { increment: cashbackValor } },
     });
 
-    await prisma.transacao.create({
+    await any.create({
       data: {
         userId: participacao.userId,
         valor: cashbackValor,

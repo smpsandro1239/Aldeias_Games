@@ -7,7 +7,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
     const jogoId = id;
 
     // Find the jogo
-    const jogo = await prisma.jogo.findUnique({
+    const jogo = await any.findUnique({
       where: { id: jogoId },
       select: {
         id: true,

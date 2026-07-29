@@ -143,7 +143,7 @@ where.evento = {
     }
 
     const [jogos, total] = await Promise.all([
-      prisma.jogo.findMany({
+      any.findMany({
         where,
         include: {
           evento: {
@@ -176,7 +176,7 @@ where.evento = {
           },
         },
       }),
-      prisma.jogo.count({ where }),
+      any.count({ where }),
     ]);
 
     // Adicionar configuracao a cada jogo
@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
       }
 
      // Verificar se evento exists
-    const evento = await prisma.evento.findUnique({
+    const evento = await any.findUnique({
       where: { id: data.eventoId },
       include: { aldeia: true },
     });
@@ -387,7 +387,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const jogo = await prisma.jogo.create({
+    const jogo = await any.create({
       data: createData,
       include: includeData,
     });

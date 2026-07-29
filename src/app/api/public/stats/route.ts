@@ -6,7 +6,7 @@ export async function GET() {
     const [totalAldeias, totalUtilizadores, totalAngariado] = await Promise.all([
       prisma.aldeia.count(),
       prisma.user.count(),
-      prisma.participacao.aggregate({ _sum: { valorPago: true } }),
+      any.aggregate({ _sum: { valorPago: true } }),
     ]);
 
     return NextResponse.json({

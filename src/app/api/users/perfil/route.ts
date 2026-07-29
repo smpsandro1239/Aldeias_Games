@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Calcular estatísticas
-    const participacoes = await prisma.participacao.findMany({
+    const participacoes = await any.findMany({
       where: { userId: user.id },
       select: {
         valorPago: true,

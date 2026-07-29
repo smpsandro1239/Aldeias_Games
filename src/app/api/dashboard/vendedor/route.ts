@@ -18,19 +18,19 @@ export async function GET(request: NextRequest) {
     amanha.setDate(amanha.getDate() + 1);
 
     // Fetch Comissao config
-    const comissaoConfig = await prisma.comissao.findFirst({
+    const comissaoConfig = await any.findFirst({
         where: { vendedorId: user.id }
     });
     const percentual = comissaoConfig?.percentual || 5; // Default 5%
 
     // Fetch Apostas (Poio da Vaca / Rifas Livro)
     const [apostasHoje, apostasTotais] = await Promise.all([
-      prisma.aposta.findMany({
+      any.findMany({
         where: { vendedorId: user.id, pago: true, createdAt: { gte: hoje, lt: amanha } },
         include: { jogo: { select: { nome: true, preco: true } } },
         orderBy: { createdAt: 'desc' }
       }),
-      prisma.aposta.findMany({
+      any.findMany({
         where: { vendedorId: user.id, pago: true },
         include: { jogo: { select: { preco: true } } }
       })
@@ -38,12 +38,12 @@ export async function GET(request: NextRequest) {
 
     // Fetch Participacoes (Raspadinhas e Rifas Digitais POS)
     const [partHoje, partTotais] = await Promise.all([
-        prisma.participacao.findMany({
+        any.findMany({
             where: { vendedorId: user.id, estadoPagamento: 'concluido', createdAt: { gte: hoje, lt: amanha } },
             include: { jogo: { select: { nome: true } } },
             orderBy: { createdAt: 'desc' }
         }),
-        prisma.participacao.findMany({
+        any.findMany({
             where: { vendedorId: user.id, estadoPagamento: 'concluido' }
         })
     ]);
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const valorTotalApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { preco: true } } } }>) => acc + valorAposta(a), 0);
 
     const valorHojePart = partHoje.reduce((acc: number, p: Prisma.ParticipacaoGetPayload<{ include: { jogo: { select: { nome: true } } } }>) => acc + (p.valorPago || 0), 0);
-    const valorTotalPart = partTotais.reduce((acc: number, p: Prisma.Participacao) => acc + (p.valorPago || 0), 0);
+    const valorTotalPart = partTotais.reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
 
     const valorHoje = valorHojeApostas + valorHojePart;
     const valorTotal = valorTotalApostas + valorTotalPart;
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     // The seller holds cash but some sales might be digital/Stripe/MBWay.
     // Let's filter cash sales only to calculate what they need to hand over explicitly.
     const dinheiroEmMaoApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { preco: true } } } }>) => acc + valorAposta(a), 0); // Apostas are always physical cash in POS
-    const dinheiroEmMaoPart = partTotais.filter((p: Prisma.Participacao) => p.metodoPagamento === 'dinheiro').reduce((acc: number, p: Prisma.Participacao) => acc + (p.valorPago || 0), 0);
+    const dinheiroEmMaoPart = partTotais.filter((p: any) => p.metodoPagamento === 'dinheiro').reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
     
     const totalDinheiroLivre = dinheiroEmMaoApostas + dinheiroEmMaoPart;
     const aEntregar = Math.max(0, totalDinheiroLivre - comissaoTotal);

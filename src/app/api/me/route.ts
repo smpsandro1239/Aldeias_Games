@@ -28,18 +28,18 @@ export async function GET(request: NextRequest) {
       entregas,
       permissoes
     ] = await Promise.all([
-      prisma.participacao.findMany({
+      any.findMany({
         where: { userId: user.id },
         include: { jogo: { include: { evento: true } } },
         orderBy: { createdAt: 'desc' },
         take: 1000,
       }),
-      prisma.transacao.findMany({
+      any.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 1000,
       }),
-       prisma.venda.findMany({
+       any.findMany({
          where: { vendedorId: user.id },
          orderBy: { createdAt: 'desc' },
          take: 1000,
@@ -49,23 +49,23 @@ export async function GET(request: NextRequest) {
         include: { badge: true },
         orderBy: { conquistadoEm: 'desc' },
       }),
-       prisma.userLevel.findMany({
+       any.findMany({
          where: { userId: user.id },
          orderBy: { atualizadoEm: 'desc' },
        }),
-      prisma.pushSubscription.findMany({
+      any.findMany({
         where: { userId: user.id },
       }),
-      prisma.notificacao.findMany({
+      any.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 100,
       }),
-      prisma.pedidoCarregamento.findMany({
+      any.findMany({
         where: { vendedorId: user.id },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.entregaSaldo.findMany({
+      any.findMany({
         where: { vendedorId: user.id },
         orderBy: { dataSolicitacao: 'desc' },
       }),
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
          premiado: p.premioEntregue,
          createdAt: p.createdAt,
        })),
-      transacoes: transacoes.map((t: Prisma.Transacao) => ({
+      transacoes: transacoes.map((t: any) => ({
         id: t.id,
         tipo: t.tipo,
         valor: t.valor,
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
         estado: t.estado,
         createdAt: t.createdAt,
       })),
-       vendas: vendas.map((v: Prisma.Venda) => ({
+       vendas: vendas.map((v: any) => ({
          id: v.id,
          valor: v.valor,
          comissao: v.comissao,
@@ -128,31 +128,31 @@ export async function GET(request: NextRequest) {
         },
         conquistadoEm: ub.conquistadoEm,
       })),
-       levels: levels.map((l: Prisma.UserLevel) => ({
+       levels: levels.map((l: any) => ({
          level: l.nivel,
          xpAtual: l.pontos,
          atribuidoEm: l.atualizadoEm,
        })),
-      pushSubscriptions: pushSubs.map((ps: Prisma.PushSubscription) => ({
+      pushSubscriptions: pushSubs.map((ps: any) => ({
         endpoint: ps.endpoint,
         p256dh: ps.p256dh,
         auth: ps.auth,
       })),
-      notificacoes: notificacoes.map((n: Prisma.Notificacao) => ({
+      notificacoes: notificacoes.map((n: any) => ({
         id: n.id,
         titulo: n.titulo,
         mensagem: n.mensagem,
         lida: n.lida,
         createdAt: n.createdAt,
       })),
-      pedidosCarregamento: pedidosCarregamento.map((p: Prisma.PedidoCarregamento) => ({
+      pedidosCarregamento: pedidosCarregamento.map((p: any) => ({
         id: p.id,
         valor: p.valor,
         estado: p.estado,
         metodoPagamento: p.metodoPagamento,
         createdAt: p.createdAt,
       })),
-      entregasSaldo: entregas.map((e: Prisma.EntregaSaldo) => ({
+      entregasSaldo: entregas.map((e: any) => ({
         id: e.id,
         valor: e.valor,
         estado: e.estado,
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
       });
 
       for (const admin of admins) {
-        await (prisma.notificacao as any).create({
+        await (any as any).create({
           data: {
             userId: admin.id,
             tipo: 'sistema',

@@ -136,23 +136,23 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
      // Delete all other user-related records in a transaction
      await prisma.$transaction([
-       prisma.pushSubscription.deleteMany({ where: { userId: id } }),
-       prisma.notificacao.deleteMany({ where: { userId: id } }),
+       any.deleteMany({ where: { userId: id } }),
+       any.deleteMany({ where: { userId: id } }),
        prisma.consentimento.deleteMany({ where: { userId: id } }),
        prisma.direitoEsquecimento.deleteMany({ where: { userId: id } }),
        prisma.passwordReset.deleteMany({ where: { userId: id } }),
        prisma.twoFactorAuth.deleteMany({ where: { userId: id } }),
        prisma.userBadge.deleteMany({ where: { userId: id } }),
-       prisma.userLevel.deleteMany({ where: { userId: id } }),
+       any.deleteMany({ where: { userId: id } }),
        prisma.userPermission.deleteMany({ where: { userId: id } }),
        prisma.logAcesso.deleteMany({ where: { userId: id } }),
-       prisma.transacao.deleteMany({ where: { userId: id } }),
-       prisma.participacao.deleteMany({ where: { userId: id } }),
-       prisma.pedidoCarregamento.deleteMany({ where: { OR: [{ userId: id }, { vendedorId: id }] } }),
-       prisma.venda.deleteMany({ where: { vendedorId: id } }),
-       prisma.comissao.deleteMany({ where: { vendedorId: id } }),
-       prisma.entregaSaldo.deleteMany({ where: { vendedorId: id } }),
-       prisma.pedidoDepositoCofre.deleteMany({ where: { vendedorId: id } }),
+       any.deleteMany({ where: { userId: id } }),
+       any.deleteMany({ where: { userId: id } }),
+       any.deleteMany({ where: { OR: [{ userId: id }, { vendedorId: id }] } }),
+       any.deleteMany({ where: { vendedorId: id } }),
+       any.deleteMany({ where: { vendedorId: id } }),
+       any.deleteMany({ where: { vendedorId: id } }),
+       any.deleteMany({ where: { vendedorId: id } }),
      ]);
 
      await prisma.user.delete({ where: { id } });

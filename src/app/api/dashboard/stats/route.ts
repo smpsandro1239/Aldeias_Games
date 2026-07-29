@@ -44,19 +44,19 @@ export async function GET(request: NextRequest) {
     };
 
     const [eventos, jogos, participacoes, vendas] = await Promise.all([
-      prisma.evento.findMany({
+      any.findMany({
         where: eventosWhere,
         select: { id: true, nome: true, estado: true, totalAngariado: true, totalParticipacoes: true, dataInicio: true },
       }),
-      prisma.jogo.findMany({
+      any.findMany({
         where: eventoId ? { eventoId } : { evento: aldeiaFilter },
         select: { id: true, nome: true, tipo: true, estado: true, totalAngariado: true, totalParticipacoes: true, preco: true },
       }),
-      prisma.participacao.findMany({
+      any.findMany({
         where: eventoId ? { jogo: { eventoId } } : { jogo: { evento: aldeiaFilter } },
         select: { valorPago: true, createdAt: true, estadoPagamento: true, metodoPagamento: true },
       }),
-      prisma.venda.findMany({
+      any.findMany({
         where: {
           vendedor: user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : aldeiaId ? { aldeiaId } : {},
         },
@@ -64,11 +64,11 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    const eventosAtivos = eventos.filter((e: Prisma.Evento) => e.estado === 'ativo').length;
-    const jogosAtivos = jogos.filter((j: Prisma.Jogo) => j.estado === 'aberto').length;
+    const eventosAtivos = eventos.filter((e: any) => e.estado === 'ativo').length;
+    const jogosAtivos = jogos.filter((j: any) => j.estado === 'aberto').length;
     const totalAngariado = participacoes
-      .filter((p: Prisma.Participacao) => p.estadoPagamento === 'concluido')
-      .reduce((acc: number, p: Prisma.Participacao) => acc + p.valorPago, 0);
+      .filter((p: any) => p.estadoPagamento === 'concluido')
+      .reduce((acc: number, p: any) => acc + p.valorPago, 0);
 
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
     }
 
     participacoes
-      .filter((p: Prisma.Participacao) => p.estadoPagamento === 'concluido' && new Date(p.createdAt) >= firstDayOfMonth)
-      .forEach((p: Prisma.Participacao) => {
+      .filter((p: any) => p.estadoPagamento === 'concluido' && new Date(p.createdAt) >= firstDayOfMonth)
+      .forEach((p: any) => {
         const key = new Date(p.createdAt).toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' });
         if (evolucaoMensal[key]) {
           evolucaoMensal[key].valor += p.valorPago;
@@ -115,13 +115,13 @@ export async function GET(request: NextRequest) {
       eventosAtivos,
       totalJogos: jogos.length,
       jogosAtivos,
-      totalParticipacoes: participacoes.filter((p: Prisma.Participacao) => p.estadoPagamento === 'concluido').length,
+      totalParticipacoes: participacoes.filter((p: any) => p.estadoPagamento === 'concluido').length,
       totalAngariado,
       evolucaoMensal: Object.entries(evolucaoMensal)
         .map(([mes, dados]) => ({ mes, ...dados }))
         .reverse(),
       topVendedores: topVendedoresData,
-      jogosPorTipo: jogos.reduce((acc: Record<string, number>, j: Prisma.Jogo) => {
+      jogosPorTipo: jogos.reduce((acc: Record<string, number>, j: any) => {
         const tipoMap: Record<string, string> = {
           rifa: 'Rifas',
           euromilhoes: 'Euromilhões',
@@ -133,8 +133,8 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {}),
       vendasPorMetodo: participacoes
-        .filter((p: Prisma.Participacao) => p.estadoPagamento === 'concluido')
-        .reduce((acc: Record<string, number>, p: Prisma.Participacao) => {
+        .filter((p: any) => p.estadoPagamento === 'concluido')
+        .reduce((acc: Record<string, number>, p: any) => {
           const metodo = p.metodoPagamento || 'dinheiro';
           acc[metodo] = (acc[metodo] || 0) + p.valorPago;
           return acc;

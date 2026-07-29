@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    const eventos = await prisma.evento.findMany({
+    const eventos = await any.findMany({
       where: {
         aldeiaId: aldeiaId,
         createdAt: { gte: sixMonthsAgo },
@@ -63,12 +63,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Eventos ativos
-    const eventosAtivos = await prisma.evento.count({
+    const eventosAtivos = await any.count({
       where: { aldeiaId, estado: 'ativo' }
     });
 
     // Jogos ativos
-    const jogosAtivos = await prisma.jogo.count({
+    const jogosAtivos = await any.count({
       where: { aldeiaId, estado: 'aberto' }
     });
 

@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     if (user.role === 'super_admin') {
       // See everything
     } else if (user.role === 'aldeia_admin') {
-      const jogos = await prisma.jogo.findMany({
+      const jogos = await any.findMany({
         where: { evento: { aldeiaId: user.aldeiaId as string } },
         select: { id: true },
       });
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [participacoes, total] = await Promise.all([
-      prisma.participacao.findMany({
+      any.findMany({
         where,
         select: {
           id: true,
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.participacao.count({ where }),
+      any.count({ where }),
     ]);
 
     return NextResponse.json(

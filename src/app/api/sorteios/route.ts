@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest) {
     const { jogoId, action } = body;
 
     if (action === 'commit') {
-      const jogo = await prisma.jogo.findUnique({
+      const jogo = await any.findUnique({
         where: { id: jogoId },
         include: { evento: { select: { aldeiaId: true } } }
       });
@@ -38,7 +38,7 @@ export async function PATCH(request: NextRequest) {
       const commitSalt = crypto.randomBytes(32).toString('hex');
       const hashSorteio = crypto.createHash('sha256').update(`${commitSalt}:${jogoId}:${new Date().toISOString()}`).digest('hex');
 
-      await prisma.jogo.update({
+      await any.update({
         where: { id: jogoId },
         data: { seedSorteio: serverSeed, hashSorteio }
       });
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     if (!rateLimit.allowed) return createRateLimitResponse(rateLimit.resetTime)
 
     const { jogoId, clientSeed } = await request.json()
-    const jogo = await prisma.jogo.findUnique({
+    const jogo = await any.findUnique({
       where: { id: jogoId },
       include: {
         evento: { select: { aldeiaId: true } },
@@ -159,8 +159,8 @@ export async function POST(request: NextRequest) {
     }
 
     await prisma.$transaction([
-      prisma.participacao.update({ where: { id: vencedorId }, data: { ganhador: true } }),
-      prisma.jogo.update({
+      any.update({ where: { id: vencedorId }, data: { ganhador: true } }),
+      any.update({
         where: { id: jogoId },
         data: {
           sorteado: numeroSorteado,

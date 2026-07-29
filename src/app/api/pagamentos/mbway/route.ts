@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Se há uma participação associada, atualizar referência
     if (body.participacaoId && result.transactionId) {
-      await prisma.participacao.update({
+      await any.update({
         where: { id: body.participacaoId },
         data: {
           referenciaPagamento: result.transactionId,
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Se é um carregamento de saldo, criar registo pendente
     if (body.tipo === 'carregamento_saldo' && user) {
-      await prisma.transacao.create({
+      await any.create({
         data: {
           userId: user.id,
           tipo: 'carregamento_saldo',
@@ -131,12 +131,12 @@ export async function GET(request: NextRequest) {
 
     // Atualizar participação se pagamento concluído
     if (status.status === 'completed') {
-      const participacao = await prisma.participacao.findFirst({
+      const participacao = await any.findFirst({
         where: { referenciaPagamento: transactionId },
       });
 
       if (participacao && participacao.estadoPagamento !== 'concluido') {
-        await prisma.participacao.update({
+        await any.update({
           where: { id: participacao.id },
           data: {
             estadoPagamento: 'concluido',

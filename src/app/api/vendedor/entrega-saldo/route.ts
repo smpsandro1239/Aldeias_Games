@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar saldo a entregar (total angariado - total entregue)
-    const pedidosConfirmados = await prisma.pedidoCarregamento.count({
+    const pedidosConfirmados = await any.count({
       where: {
         vendedorId: user.id,
         estado: 'confirmado'
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Calcular total angariado
-    const totalAngariado = await prisma.pedidoCarregamento.aggregate({
+    const totalAngariado = await any.aggregate({
       where: {
         vendedorId: user.id,
         estado: 'confirmado'
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const totalAngariadoValor = totalAngariado._sum.valor || 0;
 
     // Calcular total entregue (entregas concluídas)
-    const totalEntregue = await prisma.entregaSaldo.aggregate({
+    const totalEntregue = await any.aggregate({
       where: {
         vendedorId: user.id,
         estado: 'concluido'
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar solicitação de entrega
-    const entrega = await prisma.entregaSaldo.create({
+    const entrega = await any.create({
       data: {
         vendedorId: user.id,
         adminId: admin.id,
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
       where.estado = estado as any;
     }
 
-    const entregas = await prisma.entregaSaldo.findMany({
+    const entregas = await any.findMany({
       where,
       include: {
         admin: {
@@ -142,15 +142,15 @@ export async function GET(request: NextRequest) {
     });
 
     // Calcular total de entregas pendentes
-    const pendentes = entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'solicitado' || e.estado === 'confirmado');
-    const totalPendente = pendentes.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0);
+    const pendentes = entregas.filter((e: any) => e.estado === 'solicitado' || e.estado === 'confirmado');
+    const totalPendente = pendentes.reduce((acc: number, e: any) => acc + e.valor, 0);
 
     return NextResponse.json({
       data: entregas,
       resumo: {
-        totalSolicitado: entregas.reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0),
+        totalSolicitado: entregas.reduce((acc: number, e: any) => acc + e.valor, 0),
         totalPendente,
-        totalConcluido: entregas.filter((e: Prisma.EntregaSaldo) => e.estado === 'concluido').reduce((acc: number, e: Prisma.EntregaSaldo) => acc + e.valor, 0)
+        totalConcluido: entregas.filter((e: any) => e.estado === 'concluido').reduce((acc: number, e: any) => acc + e.valor, 0)
       }
     });
 

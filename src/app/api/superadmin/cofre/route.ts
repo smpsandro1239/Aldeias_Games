@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const pendentes = await prisma.pedidoDepositoCofre.findMany({
+    const pendentes = await any.findMany({
       where: { estado: 'pendente' },
       include: {
         vendedor: { select: { id: true, nome: true } },
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
       numVendedores: aldeia._count.users,
       movimentosRecentes: aldeia.vault?.transacoes || [],
       totalAngariado: aldeia.vault?.transacoes
-        .filter((t: Prisma.Transacao) => t.tipo === 'deposito')
-        .reduce((sum: number, t: Prisma.Transacao) => sum + t.valor, 0) || 0,
+        .filter((t: any) => t.tipo === 'deposito')
+        .reduce((sum: number, t: any) => sum + t.valor, 0) || 0,
     }));
 
     return NextResponse.json({
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
           aldeia: p.aldeia,
         })),
         totalGeral: data.reduce((sum: number, a: (typeof data)[number]) => sum + a.saldoCofre, 0),
-        totalPendentes: pendentes.reduce((sum: number, p: Prisma.PedidoDepositoCofre) => sum + p.valor, 0),
+        totalPendentes: pendentes.reduce((sum: number, p: any) => sum + p.valor, 0),
       }
     });
   } catch (error) {

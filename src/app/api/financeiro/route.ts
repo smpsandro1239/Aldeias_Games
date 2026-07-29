@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const { skip, take } = createPagination(page, limit);
 
     const [transacoesRaw, vendasRaw, participacoesRaw, totalTransacoes, totalVendasCount] = await Promise.all([
-      prisma.transacao.findMany({
+      any.findMany({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           user: userWhere,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         include: { user: { select: { id: true, nome: true, email: true } } },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.venda.findMany({
+      any.findMany({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           vendedor: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         include: { vendedor: { select: { id: true, nome: true } } },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.participacao.findMany({
+      any.findMany({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           estadoPagamento: 'concluido',
@@ -64,14 +64,14 @@ export async function GET(request: NextRequest) {
           jogo: { select: { nome: true, tipo: true } },
         },
       }),
-      prisma.transacao.count({
+      any.count({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           user: userWhere,
           tipo: { in: ['carregamento_saldo', 'deposito'] },
         },
       }),
-      prisma.venda.count({
+      any.count({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           vendedor: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},

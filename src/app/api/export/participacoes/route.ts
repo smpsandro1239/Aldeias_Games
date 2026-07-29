@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       where.createdAt.lte = new Date(dataFim);
     }
 
-    const participacoes = await prisma.participacao.findMany({
+    const participacoes = await any.findMany({
       where,
       include: {
         jogo: {

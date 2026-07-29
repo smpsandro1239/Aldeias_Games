@@ -16,6 +16,6 @@ export interface ParticipacaoRequestData {
 
 export interface GameHandler {
   validate?(data: ParticipacaoRequestData, jogo: JogoWithEvento): void | Promise<void>;
-  prepareData(data: ParticipacaoRequestData, jogo: JogoWithEvento, existing: Prisma.Participacao[]): Record<string, unknown>;
-  postCreate?(tx: Prisma.TransactionClient, data: ParticipacaoRequestData, jogo: JogoWithEvento, participacoes: Prisma.Participacao[]): Promise<void>;
+  prepareData(data: ParticipacaoRequestData, jogo: JogoWithEvento, existing: any[]): Record<string, unknown>;
+  postCreate?(tx: Prisma.TransactionClient, data: ParticipacaoRequestData, jogo: JogoWithEvento, participacoes: any[]): Promise<void>;
 }

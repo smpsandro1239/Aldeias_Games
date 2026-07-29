@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar participação com o hash
-    const participacao = await prisma.participacao.findFirst({
+    const participacao = await any.findFirst({
       where: {
         OR: [
           { hashRaspe: hash },

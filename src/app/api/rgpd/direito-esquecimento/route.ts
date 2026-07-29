@@ -114,16 +114,16 @@ export async function PATCH(request: NextRequest) {
 
       // Delete personal data from related tables
       await prisma.$transaction([
-        prisma.pushSubscription.deleteMany({ where: { userId: targetUserId } }),
-        prisma.notificacao.deleteMany({ where: { userId: targetUserId } }),
+        any.deleteMany({ where: { userId: targetUserId } }),
+        any.deleteMany({ where: { userId: targetUserId } }),
         prisma.consentimento.deleteMany({ where: { userId: targetUserId } }),
         prisma.userPermission.deleteMany({ where: { userId: targetUserId } }),
         // RGPD: limpar dados financeiros e de participação
-        prisma.participacao.updateMany({
+        any.updateMany({
           where: { userId: targetUserId },
           data: { dadosParticipacao: '{}', dadosCliente: '{}' },
         }),
-        prisma.transacao.updateMany({
+        any.updateMany({
           where: { userId: targetUserId },
           data: { descricao: 'Transação anonimizada (RGPD)' },
         }),

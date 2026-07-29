@@ -8,7 +8,7 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const jogo = await prisma.jogo.findUnique({
+    const jogo = await any.findUnique({
       where: { id },
       include: {
         evento: {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
     }
 
-    const totalAngariado = await prisma.participacao.aggregate({
+    const totalAngariado = await any.aggregate({
       where: { jogoId: id, estadoPagamento: 'concluido' },
       _sum: { valorPago: true },
     });

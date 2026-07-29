@@ -92,7 +92,7 @@ export async function POST(
       })
 
       // Notify requester
-      await prisma.notificacao.create({
+      await any.create({
         data: {
           userId: pendingChange.requestedById,
           tipo: 'sistema' as const,
@@ -116,7 +116,7 @@ export async function POST(
       })
 
       // Notify requester
-      await prisma.notificacao.create({
+      await any.create({
         data: {
           userId: pendingChange.requestedById,
           tipo: 'sistema' as const,

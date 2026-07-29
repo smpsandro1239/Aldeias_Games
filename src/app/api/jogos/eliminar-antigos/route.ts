@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     const aldeiaId = url.searchParams.get('aldeiaId');
 
     // Buscar todos os jogos que não são dos tipos definitivos
-    const jogosAntigos = await prisma.jogo.findMany({
+    const jogosAntigos = await any.findMany({
       where: aldeiaId ? { evento: { aldeiaId } } : undefined,
       include: {
         evento: {

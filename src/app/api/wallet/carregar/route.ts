@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Para "pedido ao vendedor" (ou qualquer método com vendedor selecionado), criar um pedido pendente
     if (body.vendedorId) {
       const aldeiaTargetIdForPedido = aldeiaId || user.aldeiaId;
-      const pedido = await prisma.pedidoCarregamento.create({
+      const pedido = await any.create({
         data: {
           valor: valor,
           estado: 'pendente',
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
                            metodoCarregamento === 'dinheiro' ? 'em dinheiro' :
                            metodoCarregamento === 'mbway' ? 'via MBWay' :
                            metodoCarregamento === 'transferencia' ? 'por transferência' : metodoCarregamento;
-        await (prisma.notificacao as any).create({
+        await (any as any).create({
           data: {
             userId: body.vendedorId,
             tipo: 'sistema',
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se já existe um carregamento idêntico nos últimos 5 minutos (proteção contra duplicados)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const existingCarregamento = await (prisma.transacao as any).findFirst({
+    const existingCarregamento = await (any as any).findFirst({
       where: {
         userId: user.id,
         tipo: 'carregamento_saldo',
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       }, { status: 429 });
     }
 
-    const carregamento = await (prisma.transacao as any).create({
+    const carregamento = await (any as any).create({
       data: {
         userId: user.id,
         tipo: 'carregamento_saldo',
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
       select: { id: true, email: true, nome: true, telefone: true }
     });
 
-    const eventoInfo = eventoId ? await prisma.evento.findUnique({
+    const eventoInfo = eventoId ? await any.findUnique({
       where: { id: eventoId },
       select: { nome: true }
     }) : null;
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     const notificacoes = [];
 
     for (const admin of adminsDaAldeia) {
-      const notificacao = await (prisma.notificacao as any).create({
+      const notificacao = await (any as any).create({
         data: {
           userId: admin.id,
           tipo: 'sistema',
@@ -275,7 +275,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [carregamentos, total] = await Promise.all([
-      prisma.transacao.findMany({
+      any.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -286,7 +286,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.transacao.count({ where })
+      any.count({ where })
     ]);
 
     return NextResponse.json({

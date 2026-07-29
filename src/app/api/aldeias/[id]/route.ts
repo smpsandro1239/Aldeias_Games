@@ -196,7 +196,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
             const otherAdmins = aldeia.admins.filter((admin: any) => admin.id !== user.userId)
             for (const admin of otherAdmins) {
               notifications.push(
-                prisma.notificacao.create({
+                any.create({
                   data: {
                     userId: admin.id,
                     tipo: 'sistema' as const,
@@ -215,7 +215,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
             })
             for (const sa of superAdmins) {
               notifications.push(
-                prisma.notificacao.create({
+                any.create({
                   data: {
                     userId: sa.id,
                     tipo: 'sistema' as const,

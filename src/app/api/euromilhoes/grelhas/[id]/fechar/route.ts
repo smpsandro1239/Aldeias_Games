@@ -49,7 +49,7 @@ export async function PUT(
     });
 
     if (remainingAbertas === 0 && !grelha.jogo.isFinalizado) {
-      await prisma.jogo.update({
+      await any.update({
         where: { id: grelha.jogoId },
         data: { isFinalizado: true },
       });

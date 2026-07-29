@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       where.jogoId = jogoId;
     }
 
-    const apostas = await prisma.aposta.findMany({
+    const apostas = await any.findMany({
       where,
       include: {
         jogo: {
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar jogo para obter o preço
-    const jogo = await prisma.jogo.findUnique({
+    const jogo = await any.findUnique({
       where: { id: jogoId },
     });
 
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         data: { saldo: { decrement: custoTotal } },
       });
 
-      await prisma.transacao.create({
+      await any.create({
         data: {
           userId: user.id,
           valor: -custoTotal,

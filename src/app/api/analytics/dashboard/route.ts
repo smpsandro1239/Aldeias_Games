@@ -39,15 +39,15 @@ export async function GET(request: NextRequest) {
       topJogos,
       estadoPagamentos,
     ] = await Promise.all([
-      prisma.jogo.count({ where: aldeiaFilter }),
-      prisma.jogo.count({ where: { ...aldeiaFilter, estado: 'aberto' } }),
-      prisma.participacao.count({
+      any.count({ where: aldeiaFilter }),
+      any.count({ where: { ...aldeiaFilter, estado: 'aberto' } }),
+      any.count({
         where: {
           ...aldeiaFilter,
           createdAt: { gte: desde },
         },
       }),
-      prisma.participacao.aggregate({
+      any.aggregate({
         where: {
           ...aldeiaFilter,
           estadoPagamento: 'concluido',
@@ -62,12 +62,12 @@ export async function GET(request: NextRequest) {
         GROUP BY DATE("createdAt")
         ORDER BY data DESC
       `,
-      prisma.jogo.groupBy({
+      any.groupBy({
         by: ['tipo'],
         _count: { id: true },
         where: aldeiaFilter,
       }),
-      prisma.jogo.findMany({
+      any.findMany({
         where: aldeiaFilter,
         select: {
           id: true,
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         orderBy: { totalParticipacoes: 'desc' },
         take: 5,
       }),
-      prisma.participacao.groupBy({
+      any.groupBy({
         by: ['estadoPagamento'],
         _count: { id: true },
         _sum: { valorPago: true },

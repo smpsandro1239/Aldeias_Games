@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get evento to know the aldeia
-    const evento = await prisma.evento.findUnique({
+    const evento = await any.findUnique({
       where: { id: eventoId },
       include: { aldeia: true }
     });
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     nextDate.setDate(nextDate.getDate() + daysUntilNext);
 
     // Create jogo recorrente
-    const jogo = await prisma.jogo.create({
+    const jogo = await any.create({
       data: {
         nome: `${evento.nome} - ${tipoJogo} ${nextDate.toLocaleDateString('pt-PT')}`,
         tipo: tipoJogo,
@@ -89,7 +89,7 @@ export async function PUT(request: NextRequest) {
     const now = new Date();
     
     // Buscar jogos recorrentes que precisam ser criados
-    const jogosRecorrentes = await prisma.jogo.findMany({
+    const jogosRecorrentes = await any.findMany({
       where: {
         recorrente: true,
         ativo: true,
@@ -119,7 +119,7 @@ export async function PUT(request: NextRequest) {
       }
 
       // Criar novo jogo baseado no recorrente
-      await prisma.jogo.create({
+      await any.create({
         data: {
           nome: `${jogo.evento.nome} - ${jogo.tipo} ${now.toLocaleDateString('pt-PT')}`,
           tipo: jogo.tipo,
@@ -138,7 +138,7 @@ export async function PUT(request: NextRequest) {
       });
 
       // Atualizar próxima data do jogo recorrente
-      await prisma.jogo.update({
+      await any.update({
         where: { id: jogo.id },
         data: { proximaDataCriacao: nextDate }
       });

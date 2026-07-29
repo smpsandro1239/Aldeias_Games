@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
         data: { vaultPin: null, vaultPinEnabled: false },
       });
 
-      await prisma.notificacao.create({
+      await any.create({
         data: {
           userId: targetUserId,
           tipo: 'sistema',

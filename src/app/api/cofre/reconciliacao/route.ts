@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch vault for the aldeia
     const vault = aldeiaId
-      ? await prisma.vault.findUnique({
+      ? await any.findUnique({
           where: { aldeiaId },
           include: {
             transacoes: {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       : null;
 
     // Fetch pending deposits
-    const pendentes = await prisma.pedidoDepositoCofre.findMany({
+    const pendentes = await any.findMany({
       where: {
         ...whereAldeia,
         estado: 'pendente',
