@@ -18,7 +18,14 @@ vi.mock("@/lib/db", () => ({
 import { claimWebhookEvent, completeWebhookEvent } from "@/lib/webhook-helpers";
 import { prisma } from "@/lib/db";
 
-const mockPrisma = vi.mocked(prisma);
+type MockFn = ReturnType<typeof vi.fn>;
+const mockPrisma = {
+  webhookEvent: {
+    create: prisma.webhookEvent.create as unknown as MockFn,
+    updateMany: prisma.webhookEvent.updateMany as unknown as MockFn,
+    findFirst: prisma.webhookEvent.findFirst as unknown as MockFn,
+  },
+};
 
 describe("Webhook Idempotency - WebhookEvent", () => {
   beforeEach(() => {

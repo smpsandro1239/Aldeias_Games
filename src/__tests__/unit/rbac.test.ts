@@ -12,8 +12,6 @@ vi.mock("@/lib/db", () => ({
 import { requirePermission, requireAnyOfPermissions } from "@/lib/rbac/checkPermission";
 import { prisma } from "@/lib/db";
 
-const mockPrisma = vi.mocked(prisma);
-
 // Helper to create mock user with roles/permissions
 function makeUserWithPermissions(
   permissions: string[],
@@ -68,7 +66,7 @@ describe("RBAC - requirePermission", () => {
   });
 
   it("should return null when user has the required permission", async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(
+    (prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
       makeUserWithPermissions(["MANAGE_ALDEIA"]) as never
     );
 
@@ -78,7 +76,7 @@ describe("RBAC - requirePermission", () => {
   });
 
   it("should return 403 when user lacks the permission", async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(
+    (prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
       makeUserWithPermissions(["VIEW_JOGO"]) as never
     );
 
@@ -91,7 +89,7 @@ describe("RBAC - requirePermission", () => {
   });
 
   it("should return 403 when user not found", async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(null);
+    (prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     const result = await requirePermission("nonexistent", "MANAGE_ALDEIA");
 
@@ -100,7 +98,7 @@ describe("RBAC - requirePermission", () => {
   });
 
   it("should check aldeia-specific permissions when aldeiaId is provided", async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(
+    (prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
       makeUserWithPermissions(["MANAGE_ALDEIA"], "aldeia-1") as never
     );
 
@@ -114,7 +112,7 @@ describe("RBAC - requirePermission", () => {
   });
 
   it("should return null when user has ANY of the required permissions", async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(
+    (prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
       makeUserWithPermissions(["EXECUTE_VENDA"]) as never
     );
 
@@ -127,7 +125,7 @@ describe("RBAC - requirePermission", () => {
   });
 
   it("should return 403 when user has NONE of the required permissions", async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(
+    (prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
       makeUserWithPermissions(["VIEW_JOGO"]) as never
     );
 

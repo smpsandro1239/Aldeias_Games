@@ -26,8 +26,6 @@ vi.mock("@/lib/db", () => ({
 
 import { prisma } from "@/lib/db";
 
-const mockPrisma = vi.mocked(prisma);
-
 describe("Cofre/Vault Operations - Critical", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,7 +33,7 @@ describe("Cofre/Vault Operations - Critical", () => {
 
   describe("Vault Balance", () => {
     it("should return vault balance for aldeia", async () => {
-      mockPrisma.vault.findUnique.mockResolvedValue({
+      (prisma.vault.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: "vault-1",
         aldeiaId: "aldeia-1",
         saldo: 500.0,
@@ -52,7 +50,7 @@ describe("Cofre/Vault Operations - Critical", () => {
     });
 
     it("should return null for non-existent vault", async () => {
-      mockPrisma.vault.findUnique.mockResolvedValue(null);
+      (prisma.vault.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
       const vault = await prisma.vault.findUnique({
         where: { aldeiaId: "nonexistent" },
@@ -64,7 +62,7 @@ describe("Cofre/Vault Operations - Critical", () => {
 
   describe("Vault Transactions", () => {
     it("should create deposit transaction", async () => {
-      mockPrisma.vaultTransaction.create.mockResolvedValue({
+      (prisma.vaultTransaction.create as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: "vt-1",
         vaultId: "vault-1",
         tipo: "deposito",
@@ -97,7 +95,7 @@ describe("Cofre/Vault Operations - Critical", () => {
     });
 
     it("should list transactions for vault", async () => {
-      mockPrisma.vaultTransaction.findMany.mockResolvedValue([
+      (prisma.vaultTransaction.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
         {
           id: "vt-1",
           vaultId: "vault-1",
@@ -128,7 +126,7 @@ describe("Cofre/Vault Operations - Critical", () => {
 
   describe("Cashbox Operations", () => {
     it("should create cashbox for vendedor", async () => {
-      mockPrisma.vendedorCashbox.upsert.mockResolvedValue({
+      (prisma.vendedorCashbox.upsert as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: "cb-1",
         userId: "vendedor-1",
         saldo: 200,
@@ -146,7 +144,7 @@ describe("Cofre/Vault Operations - Critical", () => {
     });
 
     it("should record cashbox transaction", async () => {
-      mockPrisma.vendedorCashboxTransaction.create.mockResolvedValue({
+      (prisma.vendedorCashboxTransaction.create as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: "cbt-1",
         cashboxId: "cb-1",
         tipo: "RECEBIDO_DO_JOGADOR",
@@ -179,7 +177,7 @@ describe("Cofre/Vault Operations - Critical", () => {
       const initialBalance = 500;
       const depositAmount = 100;
 
-      mockPrisma.vault.findUnique.mockResolvedValue({
+      (prisma.vault.findUnique as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: "vault-1",
         aldeiaId: "aldeia-1",
         saldo: initialBalance,
@@ -194,7 +192,7 @@ describe("Cofre/Vault Operations - Critical", () => {
       expect(vault!.saldo).toBe(initialBalance);
 
       // After deposit, balance should be updated
-      mockPrisma.vault.update.mockResolvedValue({
+      (prisma.vault.update as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: "vault-1",
         aldeiaId: "aldeia-1",
         saldo: initialBalance + depositAmount,
