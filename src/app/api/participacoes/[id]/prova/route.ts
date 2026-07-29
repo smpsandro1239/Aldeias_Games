@@ -10,7 +10,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const participacao = await any.findUnique({
+    const participacao = await prisma.participacao.findUnique({
       where: { id },
       include: {
         jogo: {

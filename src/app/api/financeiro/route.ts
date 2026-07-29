@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const { skip, take } = createPagination(page, limit);
 
     const [transacoesRaw, vendasRaw, participacoesRaw, totalTransacoes, totalVendasCount] = await Promise.all([
-      any.findMany({
+      prisma.transacao.findMany({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           user: userWhere,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         include: { user: { select: { id: true, nome: true, email: true } } },
         orderBy: { createdAt: 'desc' },
       }),
-      any.findMany({
+      prisma.venda.findMany({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           vendedor: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         include: { vendedor: { select: { id: true, nome: true } } },
         orderBy: { createdAt: 'desc' },
       }),
-      any.findMany({
+      prisma.participacao.findMany({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           estadoPagamento: 'concluido',
@@ -64,14 +64,14 @@ export async function GET(request: NextRequest) {
           jogo: { select: { nome: true, tipo: true } },
         },
       }),
-      any.count({
+      prisma.transacao.count({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           user: userWhere,
           tipo: { in: ['carregamento_saldo', 'deposito'] },
         },
       }),
-      any.count({
+      prisma.venda.count({
         where: {
           ...(hasDateFilter ? { createdAt: dateFilter } : {}),
           vendedor: aldeiaId ? { aldeiaId } : user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : {},

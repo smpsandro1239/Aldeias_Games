@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const { skip, take } = createPagination(page, limit);
 
     const [entregas, total] = await Promise.all([
-      any.findMany({
+      prisma.entregaSaldo.findMany({
         where,
         include: {
           vendedor: { select: { id: true, nome: true, email: true, telefone: true } },
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         skip,
         take,
       }),
-      any.count({ where }),
+      prisma.entregaSaldo.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -82,7 +82,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Buscar entrega
-    const entrega = await any.findUnique({
+    const entrega = await prisma.entregaSaldo.findUnique({
       where: { id: entregaId },
       include: {
         vendedor: true,
@@ -183,7 +183,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Atualizar entrega
-    const entregaAtualizada = await any.update({
+    const entregaAtualizada = await prisma.entregaSaldo.update({
       where: { id: entregaId },
       data: {
         estado: novoEstado,

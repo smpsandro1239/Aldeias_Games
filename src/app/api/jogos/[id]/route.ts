@@ -13,7 +13,7 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const jogo = await any.findUnique({
+    const jogo = await prisma.jogo.findUnique({
       where: { id },
       include: {
         evento: { select: { id: true, nome: true, slug: true, aldeiaId: true, aldeia: { select: { id: true, nome: true, slug: true } } } },
@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const jogo = await any.findUnique({ where: { id }, include: { evento: true } });
+    const jogo = await prisma.jogo.findUnique({ where: { id }, include: { evento: true } });
     if (!jogo) return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
 
     if (user.role === 'aldeia_admin' && user.aldeiaId !== jogo.evento.aldeiaId) {
@@ -68,7 +68,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (updateData.configuracao) updateData.configuracao = JSON.stringify(updateData.configuracao);
 
     if (updateData.estado === 'fechado' && jogo.estado !== 'fechado') {
-      const participacoesAtivas = await any.count({
+      const participacoesAtivas = await prisma.participacao.count({
         where: { jogoId: id, estadoPagamento: 'concluido' },
       });
       if (participacoesAtivas > 0) {
@@ -130,14 +130,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const jogo = await any.findUnique({ where: { id }, include: { evento: true } });
+    const jogo = await prisma.jogo.findUnique({ where: { id }, include: { evento: true } });
     if (!jogo) return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
 
     if (user.role === 'aldeia_admin' && user.aldeiaId !== jogo.evento.aldeiaId) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-     await any.delete({ where: { id } });
+     await prisma.jogo.delete({ where: { id } });
 
       // Audit log
       await logAudit(

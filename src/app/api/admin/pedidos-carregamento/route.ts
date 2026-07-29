@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const { skip, take } = createPagination(page, limit);
 
     const [pedidos, total] = await Promise.all([
-      any.findMany({
+      prisma.pedidoCarregamento.findMany({
         where,
         include: {
           user: {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         skip,
         take,
       }),
-      any.count({ where }),
+      prisma.pedidoCarregamento.count({ where }),
     ]);
 
     const data = pedidos.map((p) => ({

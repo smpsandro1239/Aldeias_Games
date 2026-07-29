@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
     }
 
-    const jogosExternos = await any.findMany({
+    const jogosExternos = await prisma.jogo.findMany({
       where: {
         modoSorteio: 'externo',
         detalhesSorteioExterno: tipoLoteria,
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
               },
             },
           }),
-          any.update({
+          prisma.jogo.update({
             where: { id: jogo.id },
             data: { sorteado: numerosSorteados[0], dataSorteio: new Date() }
           }),
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         for (const participacao of jogo.participacoes) {
           const dados = JSON.parse(participacao.dadosParticipacao);
           if (numerosSorteados.includes(dados.numero.toString())) {
-            await any.update({
+            await prisma.participacao.update({
               where: { id: participacao.id },
               data: { ganhador: true },
             });
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const jogosExternos = await any.findMany({
+    const jogosExternos = await prisma.jogo.findMany({
       where: {
         modoSorteio: 'externo',
         evento: user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : undefined,

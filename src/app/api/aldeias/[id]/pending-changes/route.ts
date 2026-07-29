@@ -119,7 +119,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     // Notify other admins
     const otherAdmins = aldeia.admins.filter((a: any) => a.id !== user.userId)
     if (otherAdmins.length > 0) {
-      await any.createMany({
+      await prisma.notificacao.createMany({
         data: otherAdmins.map((admin: any) => ({
           userId: admin.id,
           tipo: 'sistema' as const,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       select: { id: true },
     })
     if (superAdmins.length > 0) {
-      await any.createMany({
+      await prisma.notificacao.createMany({
         data: superAdmins.map((sa) => ({
           userId: sa.id,
           tipo: 'sistema' as const,

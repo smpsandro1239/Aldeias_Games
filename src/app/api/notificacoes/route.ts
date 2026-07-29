@@ -32,14 +32,14 @@ export async function GET(request: NextRequest) {
     }
 
     const [notificacoes, total, naoLidas] = await Promise.all([
-      any.findMany({
+      prisma.notificacao.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      any.count({ where }),
-      any.count({
+      prisma.notificacao.count({ where }),
+      prisma.notificacao.count({
         where: { userId: user.id, lida: false },
       }),
     ]);
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const notificacao = await any.create({
+    const notificacao = await prisma.notificacao.create({
       data: {
         tipo: data.tipo,
         titulo: data.titulo,
@@ -132,7 +132,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    await any.updateMany({
+    await prisma.notificacao.updateMany({
       where: {
         userId: user.id,
         lida: false,

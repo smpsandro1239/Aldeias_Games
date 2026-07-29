@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Se há uma participação associada, atualizar referência
     if (metadata?.participacaoId) {
-      await any.update({
+      await prisma.participacao.update({
         where: { id: metadata.participacaoId },
         data: {
           referenciaPagamento: session.id,
@@ -94,12 +94,12 @@ export async function GET(request: NextRequest) {
 
     // Atualizar participação se pagamento concluído
     if (session.payment_status === 'paid') {
-      const participacao = await any.findFirst({
+      const participacao = await prisma.participacao.findFirst({
         where: { referenciaPagamento: sessionId },
       });
 
       if (participacao && participacao.estadoPagamento !== 'concluido') {
-        await any.update({
+        await prisma.participacao.update({
           where: { id: participacao.id },
           data: {
             estadoPagamento: 'concluido',

@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });
     }
 
-    const vault = await any.findUnique({
+    const vault = await prisma.vault.findUnique({
       where: { aldeiaId }
     });
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (admins.length > 0) {
-      await any.createMany({
+      await prisma.notificacao.createMany({
         data: admins.map((admin: any) => ({
           userId: admin.id,
           tipo: 'levantamento_criado',
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });
     }
 
-    const vault = await any.findUnique({
+    const vault = await prisma.vault.findUnique({
       where: { aldeiaId },
       select: { id: true },
     });

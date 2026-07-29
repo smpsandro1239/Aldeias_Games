@@ -11,7 +11,7 @@ export async function GET(
     const { id: jogoId } = await context.params;
 
     // Buscar participações com estado de pagamento concluído
-    const participacoes = await any.findMany({
+    const participacoes = await prisma.participacao.findMany({
       where: {
         jogoId,
         OR: [

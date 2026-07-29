@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar saldo a entregar (total angariado - total entregue)
-    const pedidosConfirmados = await any.count({
+    const pedidosConfirmados = await prisma.pedidoCarregamento.count({
       where: {
         vendedorId: user.id,
         estado: 'confirmado'
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Calcular total angariado
-    const totalAngariado = await any.aggregate({
+    const totalAngariado = await prisma.pedidoCarregamento.aggregate({
       where: {
         vendedorId: user.id,
         estado: 'confirmado'
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const totalAngariadoValor = totalAngariado._sum.valor || 0;
 
     // Calcular total entregue (entregas concluídas)
-    const totalEntregue = await any.aggregate({
+    const totalEntregue = await prisma.entregaSaldo.aggregate({
       where: {
         vendedorId: user.id,
         estado: 'concluido'
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar solicitação de entrega
-    const entrega = await any.create({
+    const entrega = await prisma.entregaSaldo.create({
       data: {
         vendedorId: user.id,
         adminId: admin.id,
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
       where.estado = estado as any;
     }
 
-    const entregas = await any.findMany({
+    const entregas = await prisma.entregaSaldo.findMany({
       where,
       include: {
         admin: {

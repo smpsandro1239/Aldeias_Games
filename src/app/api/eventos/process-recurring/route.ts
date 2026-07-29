@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     // Encontrar eventos que são templates e cuja próxima data já passou
-    const templates = await any.findMany({
+    const templates = await prisma.evento.findMany({
       where: {
         isTemplate: true,
         proximaData: {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
       // Criar slug único
       let slug = `${template.slug}-${eventStart.toISOString().split('T')[0]}`;
-      const existingSlug = await any.findUnique({
+      const existingSlug = await prisma.evento.findUnique({
         where: { slug },
       });
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Criar novo evento
-      const newEvent = await any.create({
+      const newEvent = await prisma.evento.create({
         data: {
           nome: template.templateNome || template.nome,
           slug,
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
       // Criar jogos para o novo evento (copiar dos jogos do template)
       for (const jogo of template.jogos) {
-        await any.create({
+        await prisma.jogo.create({
           data: {
             nome: jogo.nome,
             tipo: jogo.tipo,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Atualizar próxima data do template
-      await any.update({
+      await prisma.evento.update({
         where: { id: template.id },
         data: {
           proximaData: nextOccurrence

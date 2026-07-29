@@ -23,7 +23,7 @@ export async function PUT(
     const body = await request.json();
     const { acao, observacoes } = body;
 
-    const pedido = await any.findUnique({
+    const pedido = await prisma.pedidoDepositoCofre.findUnique({
       where: { id },
       include: { vendedor: true }
     });
@@ -94,7 +94,7 @@ export async function PUT(
       });
 
       // Notify seller
-      await any.create({
+      await prisma.notificacao.create({
         data: {
           userId: pedido.vendedorId,
           tipo: 'deposito_confirmado',
@@ -122,7 +122,7 @@ export async function PUT(
     }
 
     if (acao === 'rejeitar') {
-      await any.update({
+      await prisma.pedidoDepositoCofre.update({
         where: { id },
         data: {
           estado: 'rejeitado',
@@ -132,7 +132,7 @@ export async function PUT(
       });
 
       // Notify seller
-      await any.create({
+      await prisma.notificacao.create({
         data: {
           userId: pedido.vendedorId,
           tipo: 'deposito_rejeitado',

@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Criar notificação de boas-vindas
-    await any.create({
+    await prisma.notificacao.create({
       data: {
         tipo: 'sistema',
         titulo: 'Bem-vindo ao Aldeias Games!',

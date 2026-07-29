@@ -20,7 +20,7 @@ export const poioHandler: GameHandler = {
       throw new Error('Coordenadas são obrigatórias para Poio da Vaca');
     }
 
-    const existing = await any.findMany({
+    const existing = await prisma.participacao.findMany({
       where: { jogoId: jogo.id },
       select: { dadosParticipacao: true },
     });

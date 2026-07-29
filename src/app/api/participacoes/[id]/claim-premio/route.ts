@@ -57,7 +57,7 @@ export async function POST(
       );
     }
 
-    const participacao = await any.findUnique({
+    const participacao = await prisma.participacao.findUnique({
       where: { id },
       include: {
         jogo: {
@@ -240,7 +240,7 @@ export async function POST(
         };
       });
 
-      await any.create({
+      await prisma.notificacao.create({
         data: {
           userId: user.id,
           tipo: 'deposito_criado',
@@ -256,7 +256,7 @@ export async function POST(
       });
 
       if (admins.length > 0) {
-        await any.createMany({
+        await prisma.notificacao.createMany({
           data: admins.map((admin) => ({
             userId: admin.id,
             tipo: 'deposito_criado' as const,
@@ -316,7 +316,7 @@ export async function POST(
         return { creditedAmount: prizeAmount, newSaldo: updatedUser.saldo };
       });
 
-      await any.create({
+      await prisma.notificacao.create({
         data: {
           userId: user.id,
           tipo: 'premio',
@@ -389,7 +389,7 @@ export async function POST(
         };
       });
 
-      await any.create({
+      await prisma.notificacao.create({
         data: {
           userId: user.id,
           tipo: 'premio',
@@ -446,7 +446,7 @@ export async function POST(
       return { creditedAmount: prizeAmount, newSaldo: updatedUser.saldo };
     });
 
-    await any.create({
+    await prisma.notificacao.create({
       data: {
         userId: user.id,
         tipo: 'premio',

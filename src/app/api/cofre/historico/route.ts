@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const { skip, take } = createPagination(page, limit);
 
-    const vault = await any.findUnique({
+    const vault = await prisma.vault.findUnique({
       where: { aldeiaId },
       select: { saldo: true }
     });

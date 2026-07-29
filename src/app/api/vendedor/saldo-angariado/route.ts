@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (denied) return denied;
 
     // Calcular total angariado (soma de pedidos de carregamento confirmados)
-    const pedidosConfirmados = await any.findMany({
+    const pedidosConfirmados = await prisma.pedidoCarregamento.findMany({
       where: {
         vendedorId: user.id,
         estado: 'confirmado'
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const totalAngariado = pedidosConfirmados.reduce((acc: number, p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => acc + p.valor, 0);
 
     // Obter entregas
-    const entregas = await any.findMany({
+    const entregas = await prisma.entregaSaldo.findMany({
       where: { vendedorId: user.id },
       orderBy: { createdAt: 'desc' },
       take: 50,

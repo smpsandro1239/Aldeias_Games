@@ -97,7 +97,7 @@ async function processParticipacao(
   numeros: string | undefined
 ) {
   const valorTotal = session.amount_total ? session.amount_total / 100 : 0;
-  const jogo = await any.findUnique({ where: { id: jogoId } });
+  const jogo = await prisma.jogo.findUnique({ where: { id: jogoId } });
   if (!jogo) throw new Error(`Jogo ${jogoId} not found`);
 
   const numerosArray = numeros
@@ -150,7 +150,7 @@ async function processParticipacao(
       );
     }
 
-    const p = await any.create({
+    const p = await prisma.participacao.create({
       data: {
         jogoId,
         userId: userId || null,
@@ -192,7 +192,7 @@ async function processParticipacao(
     }
   }
 
-  await any.update({
+  await prisma.jogo.update({
     where: { id: jogoId },
     data: {
       stockAtual: { decrement: qty },
@@ -202,7 +202,7 @@ async function processParticipacao(
   });
 
   if (jogo.eventoId) {
-    await any.update({
+    await prisma.evento.update({
       where: { id: jogo.eventoId },
       data: {
         totalParticipacoes: { increment: qty },
@@ -217,7 +217,7 @@ async function processParticipacao(
       where: { id: userId },
       data: { saldo: { increment: cashbackValor } },
     });
-    await any.create({
+    await prisma.transacao.create({
       data: {
         userId,
         valor: cashbackValor,
@@ -236,7 +236,7 @@ async function processCarregamento(
   const valor = session.amount_total ? session.amount_total / 100 : 0;
 
   // Additional idempotency: check if this session was already processed
-  const existing = await any.findFirst({
+  const existing = await prisma.transacao.findFirst({
     where: { referencia: session.id, tipo: "carregamento_saldo" },
   });
   if (existing) return;
@@ -245,7 +245,7 @@ async function processCarregamento(
     where: { id: userId },
     data: { saldo: { increment: valor } },
   });
-  await any.create({
+  await prisma.transacao.create({
     data: {
       userId,
       valor,

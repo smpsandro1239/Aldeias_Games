@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       where.vendedorId = vendedorId;
     }
 
-    const comissoes = await any.findMany({
+    const comissoes = await prisma.transacao.findMany({
       where,
       include: {
         user: {
@@ -87,13 +87,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Vendedor não encontrado' }, { status: 404 });
     }
 
-    const existingComissao = await any.findFirst({
+    const existingComissao = await prisma.comissao.findFirst({
       where: { vendedorId },
     });
 
     let comissao;
     if (existingComissao) {
-      comissao = await any.update({
+      comissao = await prisma.comissao.update({
         where: { id: existingComissao.id },
         data: {
           percentual,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      comissao = await any.create({
+      comissao = await prisma.comissao.create({
         data: {
           vendedorId,
           percentual,

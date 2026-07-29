@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: Context) {
 
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    const participacao = await any.findUnique({
+    const participacao = await prisma.participacao.findUnique({
       where: { id },
       include: {
         jogo: { include: { evento: { include: { aldeia: true } } } },
@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
     if (body.premioEntregue !== undefined) updateData.premioEntregue = body.premioEntregue;
     if (body.revelado !== undefined) updateData.revelado = body.revelado;
 
-    const updated = await any.update({
+    const updated = await prisma.participacao.update({
       where: { id },
       data: updateData,
     });
@@ -74,7 +74,7 @@ export async function DELETE(request: NextRequest, { params }: Context) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    await any.delete({ where: { id } });
+    await prisma.participacao.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });

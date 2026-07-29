@@ -18,7 +18,7 @@ export async function POST(
     const { id } = await context.params;
 
     // Buscar pedido
-    const pedido = await any.findUnique({
+    const pedido = await prisma.pedidoCarregamento.findUnique({
       where: { id },
     });
 
@@ -31,7 +31,7 @@ export async function POST(
     }
 
     // Confirmar pedido
-    const updatedPedido = await any.update({
+    const updatedPedido = await prisma.pedidoCarregamento.update({
       where: { id },
       data: {
         estado: 'confirmado',
@@ -54,7 +54,7 @@ export async function POST(
       });
 
       // Criar transação
-      await any.create({
+      await prisma.transacao.create({
         data: {
           userId: pedido.id,
           valor: pedido.valor,

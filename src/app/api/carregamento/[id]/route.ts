@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const { ip, dispositivo } = getClientInfo(request);
-    const pedido = await any.findUnique({
+    const pedido = await prisma.pedidoCarregamento.findUnique({
       where: { id: pedidoId },
       include: { user: true }
     });
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Já autorizado' }, { status: 400 });
       }
 
-      const updated = await any.update({
+      const updated = await prisma.pedidoCarregamento.update({
         where: { id: pedidoId },
         data: {
           autorizado: true,
@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest) {
       const denied2 = await requirePermission(user.id, 'MANAGE_ALDEIA');
       if (denied2) return denied2;
 
-      await any.update({
+      await prisma.pedidoCarregamento.update({
         where: { id: pedidoId },
         data: {
           estado: 'cancelado',
@@ -98,7 +98,7 @@ export async function PUT(request: NextRequest) {
 
     // Verificar expiração
     if (pedido.expiresAt && new Date() > pedido.expiresAt) {
-      await any.update({
+      await prisma.pedidoCarregamento.update({
         where: { id: pedidoId },
         data: { estado: 'expirado', tentativaUsada: true }
       });
@@ -115,7 +115,7 @@ export async function PUT(request: NextRequest) {
 
     if (!validado) {
       // Registar tentativa falhada
-      await any.update({
+      await prisma.pedidoCarregamento.update({
         where: { id: pedidoId },
         data: {
           tentativasErro: { increment: 1 },
@@ -126,7 +126,7 @@ export async function PUT(request: NextRequest) {
 
       // Bloquear após 3 tentativas
       if ((pedido.tentativasErro || 0) >= 2) {
-        await any.update({
+        await prisma.pedidoCarregamento.update({
           where: { id: pedidoId },
           data: { tentativasErro: { increment: 1 }, estado: 'cancelado' }
         });
@@ -145,7 +145,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Confirmar pagamento
-    const updated = await any.update({
+    const updated = await prisma.pedidoCarregamento.update({
       where: { id: pedidoId },
       data: {
         vendedorId: user.id,
@@ -187,7 +187,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Criar notificação para o jogador
-    await any.create({
+    await prisma.notificacao.create({
       data: {
         userId: pedido.id,
         tipo: 'sistema',

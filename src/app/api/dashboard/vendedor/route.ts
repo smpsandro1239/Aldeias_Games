@@ -18,19 +18,19 @@ export async function GET(request: NextRequest) {
     amanha.setDate(amanha.getDate() + 1);
 
     // Fetch Comissao config
-    const comissaoConfig = await any.findFirst({
+    const comissaoConfig = await prisma.comissao.findFirst({
         where: { vendedorId: user.id }
     });
     const percentual = comissaoConfig?.percentual || 5; // Default 5%
 
     // Fetch Apostas (Poio da Vaca / Rifas Livro)
     const [apostasHoje, apostasTotais] = await Promise.all([
-      any.findMany({
+      prisma.aposta.findMany({
         where: { vendedorId: user.id, pago: true, createdAt: { gte: hoje, lt: amanha } },
         include: { jogo: { select: { nome: true, preco: true } } },
         orderBy: { createdAt: 'desc' }
       }),
-      any.findMany({
+      prisma.aposta.findMany({
         where: { vendedorId: user.id, pago: true },
         include: { jogo: { select: { preco: true } } }
       })
@@ -38,12 +38,12 @@ export async function GET(request: NextRequest) {
 
     // Fetch Participacoes (Raspadinhas e Rifas Digitais POS)
     const [partHoje, partTotais] = await Promise.all([
-        any.findMany({
+        prisma.participacao.findMany({
             where: { vendedorId: user.id, estadoPagamento: 'concluido', createdAt: { gte: hoje, lt: amanha } },
             include: { jogo: { select: { nome: true } } },
             orderBy: { createdAt: 'desc' }
         }),
-        any.findMany({
+        prisma.participacao.findMany({
             where: { vendedorId: user.id, estadoPagamento: 'concluido' }
         })
     ]);

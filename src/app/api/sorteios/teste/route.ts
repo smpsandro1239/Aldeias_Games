@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar jogo
-    const jogo = await any.findUnique({
+    const jogo = await prisma.jogo.findUnique({
       where: { id: jogoId },
       include: {
         evento: true,

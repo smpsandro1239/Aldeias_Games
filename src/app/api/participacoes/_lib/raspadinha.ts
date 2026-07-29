@@ -158,7 +158,7 @@ export const raspadinhaHandler: GameHandler = {
         : null;
 
     if (maxGanhadores !== null) {
-      const ganhadoresCount = await any.count({
+      const ganhadoresCount = await prisma.participacao.count({
         where: {
           jogoId: jogo.id,
           ganhador: true,
@@ -176,7 +176,7 @@ export const raspadinhaHandler: GameHandler = {
         : null;
 
     if (maxPremioTotal !== null && !(data as Record<string, unknown>)._limiteAtingido) {
-      const winningParticipacoes = await any.findMany({
+      const winningParticipacoes = await prisma.participacao.findMany({
         where: {
           jogoId: jogo.id,
           ganhador: true,

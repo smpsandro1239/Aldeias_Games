@@ -28,18 +28,18 @@ export async function GET(request: NextRequest) {
       entregas,
       permissoes
     ] = await Promise.all([
-      any.findMany({
+      prisma.participacao.findMany({
         where: { userId: user.id },
         include: { jogo: { include: { evento: true } } },
         orderBy: { createdAt: 'desc' },
         take: 1000,
       }),
-      any.findMany({
+      prisma.transacao.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 1000,
       }),
-       any.findMany({
+       prisma.venda.findMany({
          where: { vendedorId: user.id },
          orderBy: { createdAt: 'desc' },
          take: 1000,
@@ -49,23 +49,23 @@ export async function GET(request: NextRequest) {
         include: { badge: true },
         orderBy: { conquistadoEm: 'desc' },
       }),
-       any.findMany({
+       prisma.userLevel.findMany({
          where: { userId: user.id },
          orderBy: { atualizadoEm: 'desc' },
        }),
-      any.findMany({
+      prisma.pushSubscription.findMany({
         where: { userId: user.id },
       }),
-      any.findMany({
+      prisma.notificacao.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 100,
       }),
-      any.findMany({
+      prisma.pedidoCarregamento.findMany({
         where: { vendedorId: user.id },
         orderBy: { createdAt: 'desc' },
       }),
-      any.findMany({
+      prisma.entregaSaldo.findMany({
         where: { vendedorId: user.id },
         orderBy: { dataSolicitacao: 'desc' },
       }),
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
       });
 
       for (const admin of admins) {
-        await (any as any).create({
+        await (prisma.notificacao as any).create({
           data: {
             userId: admin.id,
             tipo: 'sistema',

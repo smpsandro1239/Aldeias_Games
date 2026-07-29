@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     const cleanHash = hash.trim();
 
-    const participacao = await any.findFirst({
+    const participacao = await prisma.participacao.findFirst({
       where: {
         OR: [
           { hashRaspe: cleanHash },

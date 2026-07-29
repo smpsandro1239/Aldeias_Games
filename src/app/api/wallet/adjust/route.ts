@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
           where: { id: user.id },
           data: { saldo: { increment: valor } },
         }),
-any.create({
+prisma.transacao.create({
           data: {
             valor: valor,
             tipo: 'entrega_admin' as any,
@@ -57,7 +57,7 @@ any.create({
       });
 
       for (const admin of adminUsers) {
-        await any.create({
+        await prisma.notificacao.create({
           data: {
             userId: admin.id,
             tipo: 'sistema',
@@ -118,7 +118,7 @@ any.create({
           },
         },
       }),
-      any.create({
+      prisma.transacao.create({
         data: {
           valor: valor,
           tipo: tipoTransacao as any,
@@ -143,7 +143,7 @@ any.create({
     ]);
 
     // Notificar o utilizador sobre o ajuste de saldo
-    await any.create({
+    await prisma.notificacao.create({
       data: {
         userId: userId,
         tipo: 'sistema',

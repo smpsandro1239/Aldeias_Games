@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const [transacoes, total] = await Promise.all([
-      any.findMany({
+      prisma.transacao.findMany({
         take: limit,
         skip,
         orderBy: { createdAt: 'desc' },
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      any.count()
+      prisma.transacao.count()
     ]);
 
     return NextResponse.json({

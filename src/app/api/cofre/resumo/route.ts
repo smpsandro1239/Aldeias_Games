@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });
     }
 
-    const vault = await any.findUnique({
+    const vault = await prisma.vault.findUnique({
       where: { aldeiaId },
       include: {
         transacoes: {
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const depositos = await any.findMany({
+    const depositos = await prisma.pedidoDepositoCofre.findMany({
       where: { aldeiaId },
       select: {
         valor: true,

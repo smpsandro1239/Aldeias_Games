@@ -75,7 +75,7 @@ export async function PUT(
     if (isVendido) {
       // Fetch all participations for this grelha and filter in code to avoid
       // false matches with Prisma's string `contains` (e.g. "1" matching "10")
-      const allParticipacoes = await any.findMany({
+      const allParticipacoes = await prisma.participacao.findMany({
         where: { grelhaId: grelha.id },
         orderBy: { createdAt: "asc" },
       });
@@ -92,7 +92,7 @@ export async function PUT(
       if (participacao) {
         vencedorId = participacao.userId;
 
-        await any.update({
+        await prisma.participacao.update({
           where: { id: participacao.id },
           data: { ganhador: true },
         });
@@ -104,7 +104,7 @@ export async function PUT(
             data: { saldo: { increment: premioValor } },
           });
 
-          await any.create({
+          await prisma.transacao.create({
             data: {
               valor: premioValor,
               tipo: "premio_dinheiro",
@@ -115,12 +115,12 @@ export async function PUT(
             },
           });
 
-          const jogo = await any.findUnique({
+          const jogo = await prisma.jogo.findUnique({
             where: { id: grelha.jogoId },
             select: { nome: true },
           });
 
-          await any.create({
+          await prisma.notificacao.create({
             data: {
               tipo: TipoNotificacao.premio,
               titulo: "Parabéns! Ganhaste o Euromilhões!",

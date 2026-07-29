@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const { skip, take } = createPagination(page, limit);
 
     const [pedidos, total] = await Promise.all([
-      any.findMany({
+      prisma.pedidoCarregamento.findMany({
         where,
         include: {
           user: { select: { id: true, nome: true, telefone: true } },
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         skip,
         take,
       }),
-      any.count({ where }),
+      prisma.pedidoCarregamento.count({ where }),
     ]);
 
     return NextResponse.json(createPaginatedResponse(pedidos, total, page, limit));
@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
     }
 
-    const pedido = await any.findUnique({
+    const pedido = await prisma.pedidoCarregamento.findUnique({
       where: { id: pedidoId },
       include: { user: true, vendedor: true }
     });
@@ -94,7 +94,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Atualizar pedido
-    const pedidoAtualizado = await any.update({
+    const pedidoAtualizado = await prisma.pedidoCarregamento.update({
       where: { id: pedidoId },
       data: { 
         estado: novoEstado,
@@ -133,7 +133,7 @@ export async function PATCH(request: NextRequest) {
     // TODO: Enviar notificações ao utilizador
     // Notificar utilizador sobre resultado do pedido
     try {
-      await (any as any).create({
+      await (prisma.notificacao as any).create({
         data: {
           userId: pedido.userId,
           tipo: 'sistema',

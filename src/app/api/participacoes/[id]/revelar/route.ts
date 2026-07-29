@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: Context) {
 
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    const participacao = await any.findUnique({
+    const participacao = await prisma.participacao.findUnique({
       where: { id },
     });
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest, { params }: Context) {
        return NextResponse.json({ error: 'Já revelada' }, { status: 400 });
     }
 
-    const updated = await any.update({
+    const updated = await prisma.participacao.update({
       where: { id },
       data: {
         revelado: true,

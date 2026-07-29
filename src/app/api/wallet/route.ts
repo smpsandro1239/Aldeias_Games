@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       },
     }) as any;
 
-    const premios = await any.findMany({
+    const premios = await prisma.participacao.findMany({
       where: {
         userId: user.id,
         ganhador: true,

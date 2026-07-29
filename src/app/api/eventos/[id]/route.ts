@@ -85,7 +85,7 @@ function calculateNextRecurrenceDate(
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const evento = await any.findUnique({
+    const evento = await prisma.evento.findUnique({
       where: { id },
       include: {
         aldeia: true,
@@ -117,7 +117,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const evento = await any.findUnique({ where: { id } });
+    const evento = await prisma.evento.findUnique({ where: { id } });
     if (!evento) {
       return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
     }
@@ -133,7 +133,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
     }
 
-    const updated = await any.update({
+    const updated = await prisma.evento.update({
       where: { id },
       data: { estado }
     });
@@ -166,7 +166,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const evento = await any.findUnique({ where: { id } });
+    const evento = await prisma.evento.findUnique({ where: { id } });
     if (!evento) {
       return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
     }
@@ -243,7 +243,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
     }
 
-    const updated = await any.update({
+    const updated = await prisma.evento.update({
       where: { id },
       data: updateData,
     });
@@ -283,14 +283,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const evento = await any.findUnique({ where: { id } });
+    const evento = await prisma.evento.findUnique({ where: { id } });
     if (!evento) return NextResponse.json({ error: 'Evento não encontrado' }, { status: 404 });
 
     if (user.role === 'aldeia_admin' && user.aldeiaId !== evento.aldeiaId) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-     await any.delete({ where: { id } });
+     await prisma.evento.delete({ where: { id } });
 
      // Audit log
      await logAudit(

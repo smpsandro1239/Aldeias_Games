@@ -45,23 +45,23 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch their comissões settings
-    const comissoesConfig = await any.findMany({
+    const comissoesConfig = await prisma.comissao.findMany({
         where: { vendedorId: { in: vendedores.map((v) => v.id) } }
     });
 
     // Fetch their apostas (physical POS)
-    const apostas = await any.findMany({
+    const apostas = await prisma.aposta.findMany({
         where: { vendedorId: { in: vendedores.map((v) => v.id) }, pago: true },
         include: { jogo: { select: { preco: true } } }
     });
 
     // Fetch their participacoes (digital POS)
-    const participacoes = await any.findMany({
+    const participacoes = await prisma.participacao.findMany({
         where: { vendedorId: { in: vendedores.map((v) => v.id) }, estadoPagamento: 'concluido' }
     });
     
     // Fetch transacoes (cashouts already made to them)
-    const payouts = await any.findMany({
+    const payouts = await prisma.transacao.findMany({
         where: { userId: { in: vendedores.map((v) => v.id) }, tipo: 'comissao' }
     });
 

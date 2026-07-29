@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const pedido = await any.create({
+    const pedido = await prisma.pedidoDepositoCofre.create({
       data: {
         vendedorId: user.id,
         aldeiaId,
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (isAdmin) {
-      const vault = await any.upsert({
+      const vault = await prisma.vault.upsert({
         where: { aldeiaId },
         update: { saldo: { increment: valor } },
         create: { aldeiaId, saldo: valor },
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (admins.length > 0) {
-        await any.createMany({
+        await prisma.notificacao.createMany({
           data: admins.map((admin: any) => ({
             userId: admin.id,
             tipo: 'deposito_criado',
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
 
     if (estado) where.estado = estado as any;
 
-    const pedidos = await any.findMany({
+    const pedidos = await prisma.pedidoDepositoCofre.findMany({
       where,
       include: {
         vendedor: { select: { id: true, nome: true, email: true } },

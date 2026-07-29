@@ -24,7 +24,7 @@ export const rifaHandler: GameHandler = {
     }
 
     try {
-      const existing = await any.findMany({
+      const existing = await prisma.participacao.findMany({
         where: { jogoId: jogo.id },
         select: { dadosParticipacao: true },
       });

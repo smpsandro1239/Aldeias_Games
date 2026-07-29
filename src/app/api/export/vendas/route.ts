@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     if (vendedorId) where.vendedorId = vendedorId;
 
     // Buscar vendas com dados relacionados
-    const vendas = await any.findMany({
+    const vendas = await prisma.venda.findMany({
       where,
       include: {
         vendedor: {

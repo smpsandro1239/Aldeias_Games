@@ -105,7 +105,7 @@ export async function PUT(
         userAgent,
       });
 
-      await any.create({
+      await prisma.notificacao.create({
         data: {
           userId: levantamento.criadoPorId,
           tipo: 'levantamento_confirmado',
@@ -125,7 +125,7 @@ export async function PUT(
       });
 
       if (vendedores.length > 0) {
-        await any.createMany({
+        await prisma.notificacao.createMany({
           data: vendedores.map((v: { id: string }) => ({
             userId: v.id,
             tipo: 'levantamento_confirmado' as const,
@@ -171,7 +171,7 @@ export async function PUT(
         userAgent,
       });
 
-      await any.create({
+      await prisma.notificacao.create({
         data: {
           userId: levantamento.criadoPorId,
           tipo: 'levantamento_rejeitado',

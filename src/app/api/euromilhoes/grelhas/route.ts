@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "jogoId é obrigatório" }, { status: 400 });
     }
 
-    const jogo = await any.findUnique({ where: { id: jogoId } });
+    const jogo = await prisma.jogo.findUnique({ where: { id: jogoId } });
     if (!jogo) {
       return NextResponse.json({ error: "Jogo não encontrado" }, { status: 404 });
     }

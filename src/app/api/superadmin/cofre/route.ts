@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const pendentes = await any.findMany({
+    const pendentes = await prisma.pedidoDepositoCofre.findMany({
       where: { estado: 'pendente' },
       include: {
         vendedor: { select: { id: true, nome: true } },

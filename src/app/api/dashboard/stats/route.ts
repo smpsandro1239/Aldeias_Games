@@ -44,19 +44,19 @@ export async function GET(request: NextRequest) {
     };
 
     const [eventos, jogos, participacoes, vendas] = await Promise.all([
-      any.findMany({
+      prisma.evento.findMany({
         where: eventosWhere,
         select: { id: true, nome: true, estado: true, totalAngariado: true, totalParticipacoes: true, dataInicio: true },
       }),
-      any.findMany({
+      prisma.jogo.findMany({
         where: eventoId ? { eventoId } : { evento: aldeiaFilter },
         select: { id: true, nome: true, tipo: true, estado: true, totalAngariado: true, totalParticipacoes: true, preco: true },
       }),
-      any.findMany({
+      prisma.participacao.findMany({
         where: eventoId ? { jogo: { eventoId } } : { jogo: { evento: aldeiaFilter } },
         select: { valorPago: true, createdAt: true, estadoPagamento: true, metodoPagamento: true },
       }),
-      any.findMany({
+      prisma.venda.findMany({
         where: {
           vendedor: user.role === 'aldeia_admin' ? { aldeiaId: user.aldeiaId as string } : aldeiaId ? { aldeiaId } : {},
         },
