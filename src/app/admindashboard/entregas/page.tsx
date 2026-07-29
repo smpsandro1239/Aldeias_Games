@@ -45,8 +45,9 @@ interface EntregaSaldo {
 }
 
 export default function AdminEntregasPage() {
-   const { user, isAuthenticated, isLoading } = useAuth();
-   const [loading, setLoading] = useState(true);
+    const router = useRouter();
+    const { user, isAuthenticated, isLoading } = useAuth();
+    const [loading, setLoading] = useState(true);
    const [entregas, setEntregas] = useState<EntregaSaldo[]>([]);
    const [filter, setFilter] = useState<string>("todos");
    const [processing, setProcessing] = useState<string | null>(null);
