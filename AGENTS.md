@@ -358,7 +358,9 @@ Pages:
 - Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
 - **311 testes** em **20 ficheiros** (unit + integration + API + lib + real-db)
 - **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test.db`) via `prisma db push`, sem mocks
-- **Playwright E2E** (0 specs atualmente): `npx playwright test` (requer `npx playwright install` primeiro)
+- **Playwright E2E** (2 specs em `e2e/`): `npx playwright test` (requer `npx playwright install` primeiro)
+  - `login-compra-raspadinha.spec.ts` — login + compra raspadinha com saldo + verificação
+  - `cofre-cashbox-flow.spec.ts` — vendedor deposita cashbox + admin confirma depósito
 
 #### Ficheiros de teste
 | Ficheiro | Testes | Descrição |
