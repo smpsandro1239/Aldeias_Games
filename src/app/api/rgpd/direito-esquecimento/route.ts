@@ -121,7 +121,7 @@ export async function PATCH(request: NextRequest) {
         // RGPD: limpar dados financeiros e de participação
         prisma.participacao.updateMany({
           where: { userId: targetUserId },
-          data: { dadosParticipacao: '{}', dadosCliente: '{}' },
+          data: { dadosParticipacao: '{}' },
         }),
         prisma.transacao.updateMany({
           where: { userId: targetUserId },

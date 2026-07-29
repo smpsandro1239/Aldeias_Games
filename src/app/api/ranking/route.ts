@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       });
 
       const rankingJogos = jogadores.map((j: any) => {
-        const part = participacoesData.find((p: { userId: string; _count: { id: number }; _sum: { valorPago: number | null } }) => p.userId === j.id);
+        const part = participacoesData.find((p: any) => p.userId === j.id);
         return {
           tipo: 'jogos',
           userId: j.id,
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       });
 
       const rankingPremios = jogadores.map((j: any) => {
-        const prem = premiosData.find((p: { userId: string; _count: { id: number }; _sum: { valorPago: number | null } }) => p.userId === j.id);
+        const prem = premiosData.find((p: any) => p.userId === j.id);
         return {
           tipo: 'premios',
           userId: j.id,

@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
     // Audit log for reveal
     const ip = request.headers.get('x-forwarded-for') || undefined;
     const userAgent = request.headers.get('user-agent') || undefined;
-    logSorteio(user.id, jogoId, jogo.nome, 'reveal', jogo.seedSorteio, jogo.hashSorteio, 1, ip, userAgent);
+    logSorteio(user.id, jogoId, jogo.nome, 'reveal', jogo.seedSorteio, jogo.hashSorteio, 1, ip as string | undefined, userAgent);
 
     return NextResponse.json({ success: true, vencedorId, seedRevelada: jogo.seedSorteio, resultado: winningCoord || winningNumber });
   } catch (error) {

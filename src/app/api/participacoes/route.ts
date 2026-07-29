@@ -249,8 +249,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 });
     }
 
+    const dadosPart = data.dadosParticipacao || {};
+    const numerosArr: number[] = (dadosPart as any).numeros || data.numerosSelecionados || [];
     const valorTotal = jogo.tipo === 'euromilhoes'
-      ? ((data.dadosParticipacao?.numeros as number[] | undefined)?.length || data.numerosSelecionados?.length || 1) * jogo.preco
+      ? (Array.isArray(numerosArr) ? numerosArr.length : 1) * jogo.preco
       : jogo.preco * data.quantidade;
 
     if (data.metodoPagamento === 'saldo') {
@@ -465,9 +467,8 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // --- LÓGICA DE CAIXA DO VENDEDOR ---
-        // Quando vendedor vende em dinheiro, o valor entra na sua caixa física
         if (data.metodoPagamento === 'dinheiro' && canExecuteVenda) {
+          if (!effectiveUser) throw new Error('Utilizador não autenticado');
           const valorVenda = jogo.preco * data.quantidade;
           const cashbox = await tx.vendedorCashbox.upsert({
             where: { userId: effectiveUser.id },

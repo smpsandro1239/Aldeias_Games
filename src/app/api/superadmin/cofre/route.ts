@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         aldeias: data,
-        pendentes: pendentes.map((p: Prisma.PedidoDepositoCofreGetPayload<{ include: { vendedor: true, aldeia: true } }>) => ({
+        pendentes: pendentes.map((p: Prisma.PedidoDepositoCofreGetPayload<{ include: { vendedor: { select: { id: true; nome: true } }; aldeia: { select: { id: true; nome: true } } } }>) => ({
           id: p.id,
           valor: p.valor,
           descricao: p.descricao,
