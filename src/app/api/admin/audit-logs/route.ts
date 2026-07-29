@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const allLogs = [
-      ...auditLogs.map((log: Prisma.AuditLogGetPayload<{ include: { user: true } }>) => ({
+      ...auditLogs.map((log) => ({
         tipo: 'audit' as const,
         id: log.id,
         timestamp: log.createdAt,
@@ -74,7 +73,7 @@ export async function GET(request: NextRequest) {
         metadata: log.metadata,
         user: log.user,
       })),
-      ...logsAcesso.map((log: Prisma.LogAcessoGetPayload<{ include: { user: true } }>) => ({
+      ...logsAcesso.map((log) => ({
         tipo: 'acesso' as const,
         id: log.id,
         timestamp: log.createdAt,
