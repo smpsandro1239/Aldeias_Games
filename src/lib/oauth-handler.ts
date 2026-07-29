@@ -29,12 +29,21 @@ export async function handleOAuthCallback(
   }
 ) {
   try {
-    // Handle different HTTP methods for different providers
-    // Apple uses POST for callback, Google uses GET
-    const formData = await request.formData();
-    const code = formData.get('code') as string | null;
-    const state = formData.get('state') as string | null;
-    const error = formData.get('error') as string | null;
+    // Google sends GET with query params, Apple sends POST with form data
+    let code: string | null;
+    let state: string | null;
+    let error: string | null;
+
+    if (request.method === 'GET') {
+      code = request.nextUrl.searchParams.get('code');
+      state = request.nextUrl.searchParams.get('state');
+      error = request.nextUrl.searchParams.get('error');
+    } else {
+      const formData = await request.formData();
+      code = formData.get('code') as string | null;
+      state = formData.get('state') as string | null;
+      error = formData.get('error') as string | null;
+    }
 
     // Handle provider-specific errors
     if (error) {
@@ -84,7 +93,7 @@ export async function handleOAuthCallback(
         code,
         grant_type: 'authorization_code',
         redirect_uri: options.redirectUri ||
-          `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/${provider}/callback`,
+          `${request.nextUrl.origin}/api/auth/${provider}/callback`,
         ...(options.scope ? { scope: options.scope } : {}),
       }),
     });

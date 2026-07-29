@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     // Construir URL de autorização do Google
     const authUrl = new URL('https://accounts.google.com/o/oauth2/auth');
     authUrl.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID!);
-    authUrl.searchParams.set('redirect_uri', process.env.GOOGLE_REDIRECT_URI!);
+    authUrl.searchParams.set('redirect_uri', process.env.GOOGLE_REDIRECT_URI || `${request.nextUrl.origin}/api/auth/google/callback`);
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('scope', 'openid email profile');
     authUrl.searchParams.set('access_type', 'offline');
