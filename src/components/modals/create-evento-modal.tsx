@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Gift, Star, Award, Gamepad2, CheckCircle2, Loader2 } from "lucide-react";
 import { CreateJogoModal } from "@/components/modals/create-jogo-modal";
+import type { GameType, JogoData } from "./create-jogo-types";
 
 const GAME_TYPES = [
   { id: "raspadinha", nome: "Raspadinha", descricao: "Jogo de raspar instantâneo", icon: Gift },
@@ -359,7 +360,7 @@ export function CreateEventoModal({
           onSubmit={handleCreateGame}
           eventoId={createdEventoId}
           aldeiaId={eventAldeiaId}
-          initialData={selectedGameType ? { tipo: selectedGameType as any } : undefined}
+          initialData={selectedGameType ? { tipo: selectedGameType as GameType } as JogoData : undefined}
         />
       </>
     );

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, Search, Check, X, Loader2, Hash, Calendar, Gamepad2, MapPin, Trophy, Clock, Eye } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { LayoutHeader } from "@/components/layout-header";
+import { toast } from "sonner";
 
 interface VerificationResult {
   valido: boolean;

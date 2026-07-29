@@ -124,7 +124,7 @@ export function GamePaymentDialog({
           )}
 
           {/* Payment methods */}
-          <PaymentSelector amount={amount} onSelect={onSelect} />
+          <PaymentSelector amount={amount} onSelect={onSelect as any} />
         </div>
       </DialogContent>
     </Dialog>

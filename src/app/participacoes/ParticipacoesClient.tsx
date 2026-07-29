@@ -14,6 +14,7 @@ interface Participacao {
   metodoPagamento: string;
   estadoPagamento: string;
   dadosParticipacao?: string;
+  ganhador?: boolean;
   jogo: {
     nome: string;
     tipo: string;

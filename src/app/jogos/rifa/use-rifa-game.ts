@@ -42,10 +42,10 @@ export function useRifaGame(gamePage: ReturnType<typeof useGamePage<JogoRifa>>) 
 
       const data = await response.json();
       if (data.numerosOcupados) {
-        setNumerosOcupados([...new Set(data.numerosOcupados.map((n: number) => Number(n)))]);
+        setNumerosOcupados([...new Set((data.numerosOcupados as number[]).map((n: number) => Number(n)))]);
         setNumerosJogados(
           data.numerosDoUtilizador
-            ? [...new Set(data.numerosDoUtilizador.map((n: number) => Number(n)))]
+            ? [...new Set((data.numerosDoUtilizador as number[]).map((n: number) => Number(n)))]
             : []
         );
       }

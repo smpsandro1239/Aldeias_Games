@@ -501,7 +501,6 @@ export function VencedorDetailModal({
         <VerificarHashModal
           open={verificarHashOpen}
           onOpenChange={setVerificarHashOpen}
-          token={token}
         />
 
       </DialogContent>

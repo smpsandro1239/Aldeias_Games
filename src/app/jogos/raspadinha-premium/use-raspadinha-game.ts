@@ -12,8 +12,8 @@ const CELL_SIZE = 6;
 export function useRaspadinhaGame(
   jogo: Jogo | null,
   jogoId: string | null,
-  participante: { nome: string; telefone: string; email: string },
-  setParticipante: (fn: (prev: { nome: string; telefone: string; email: string; notificacao: string }) => { nome: string; telefone: string; email: string; notificacao: string }) => void,
+  participante: { nome: string; telefone: string; email: string; notificacao: string },
+  setParticipante: (value: { nome: string; telefone: string; email: string; notificacao: string } | ((prev: { nome: string; telefone: string; email: string; notificacao: string }) => { nome: string; telefone: string; email: string; notificacao: string })) => void,
   userOriginalData: { nome: string; telefone: string; email: string },
   isNonRegularUser: boolean,
   refreshBalance: () => void,
