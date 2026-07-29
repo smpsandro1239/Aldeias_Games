@@ -1,3 +1,4 @@
+// @ts-nocheck — @playwright/test in devDependencies (not available on Vercel)
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = process.env.PORT || 3000;
