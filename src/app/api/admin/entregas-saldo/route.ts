@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     if (user.role === 'aldeia_admin' && user.aldeiaId) {
       where.aldeiaId = user.aldeiaId;
     }
-    if (estado) where.estado = estado;
+    if (estado) where.estado = estado as any;
     if (aldeiaId && user.role === 'super_admin') where.aldeiaId = aldeiaId;
 
     const { skip, take } = createPagination(page, limit);
