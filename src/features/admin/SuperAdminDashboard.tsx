@@ -374,14 +374,14 @@ export default function SuperAdminDashboard({
                 />
               </TabsContent>
               <TabsContent value="users">
-                <UsersTab users={users} setSelectedUser={setSelectedUser}
+                <UsersTab users={users}                 setSelectedUser={handleSetSelectedUser}
                   setUserModalOpen={setUserModalOpen} requestDelete={requestDelete}
                 />
               </TabsContent>
               <TabsContent value="aldeias">
                 <Suspense fallback={<div className="p-8 text-center text-muted-foreground">A carregar...</div>}>
                   <AldeiasTab aldeias={aldeias} eventos={eventos} jogos={jogos}
-                    setSelectedAldeia={setSelectedAldeia}
+                    setSelectedAldeia={handleSetSelectedAldeia}
                     setAldeiaModalOpen={setAldeiaModalOpen}
                     setSelectedEvento={setSelectedEvento}
                     setEventoModalOpen={setEventoModalOpen}
@@ -434,7 +434,7 @@ export default function SuperAdminDashboard({
         setVerificarHashOpen={setVerificarHashOpen} setQrCodeOpen={setQrCodeOpen}
         setTestJogoOpen={setTestJogoOpen} setConvertPrizeOpen={setConvertPrizeOpen}
         setConfirmEntregaOpen={setConfirmEntregaOpen} setDeleteData={setDeleteData}
-        setToggleJogoData={setToggleJogoData} setSelectedPremio={setSelectedPremio}
+        setToggleJogoData={setToggleJogoData} setSelectedAldeia={handleSetSelectedAldeia} setSelectedPremio={setSelectedPremio}
         setConvertValor={setConvertValor}         handleSaveEvento={handleSaveEvento}
         handleSaveJogo={handleSaveJogo} handleSaveAldeia={handleSaveAldeia}
         handleSaveUser={handleSaveUser} handleConvertPrize={handleConvertPrize}

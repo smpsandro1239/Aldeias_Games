@@ -318,6 +318,7 @@ export default function AdminDashboard({
         setConfirmEntregaOpen={setConfirmEntregaOpen}
         setDeleteData={setDeleteData}
         setToggleJogoData={setToggleJogoData}
+        setSelectedAldeia={handleSetSelectedAldeia}
         setSelectedPremio={setSelectedPremio}
         setConvertValor={setConvertValor}
         handleSaveEvento={handleSaveEvento}

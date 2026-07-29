@@ -21,6 +21,7 @@ import { VerificarHashModal } from "@/components/verificar-hash-modal";
 import type {
   Jogo,
   Aldeia,
+  Evento,
   Vencedor,
 } from "./types";
 import type { JogoData } from "@/components/modals/create-jogo-types";
@@ -156,7 +157,7 @@ export function DashboardModalsLayer({
           publico: selectedEvento.publico ?? false,
           aldeiaId: selectedEvento.aldeiaId,
           estado: selectedEvento.estado,
-          jogosSelecionados: selectedEvento.jogos?.map((jogo) => jogo.tipo) || [],
+          jogosSelecionados: selectedEvento.jogos?.map((jogo: { tipo: string }) => jogo.tipo) || [],
           isRecurring: selectedEvento.isTemplate ?? false,
           recurrenceFrequency: selectedEvento.frequenciaRecorrencia ?? "semanal",
           recurrenceDayOfWeek: selectedEvento.diaSemanaRecorrencia ?? 1,

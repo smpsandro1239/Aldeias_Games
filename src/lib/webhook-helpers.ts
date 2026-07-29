@@ -19,7 +19,7 @@ export async function claimWebhookEvent(
         eventId,
         tipo: tipo || null,
         status: "processing",
-        metadata: metadata || undefined,
+        metadata: (metadata || undefined) as any,
       },
     });
     return true;
@@ -50,7 +50,7 @@ export async function completeWebhookEvent(
     where: { provider, eventId },
     data: {
       status,
-      ...(metadata ? { metadata } : {}),
+      ...(metadata ? { metadata: metadata as any } : {}),
     },
   });
 }

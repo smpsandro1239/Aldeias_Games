@@ -237,7 +237,7 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
             <p className="text-sm text-muted-foreground">Regista vendas e acompanha o teu desempenho</p>
           </div>
           <div className="flex items-center gap-2">
-            <NotificationBell token={authToken || ""} />
+            <NotificationBell />
           </div>
         </div>
       </div>
@@ -718,7 +718,6 @@ export function VendedorDashboard({ token }: VendedorDashboardProps) {
       <VerificarHashModal
         open={verificarHashOpen}
         onOpenChange={setVerificarHashOpen}
-        token={token}
       />
 
       {/* Modal de Prova de Jogo */}
