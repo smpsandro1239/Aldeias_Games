@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
@@ -46,27 +45,27 @@ export async function GET(request: NextRequest) {
 
     // Fetch their comissões settings
     const comissoesConfig = await prisma.comissao.findMany({
-        where: { vendedorId: { in: vendedores.map((v: Prisma.User) => v.id) } }
+        where: { vendedorId: { in: vendedores.map((v) => v.id) } }
     });
 
     // Fetch their apostas (physical POS)
     const apostas = await prisma.aposta.findMany({
-        where: { vendedorId: { in: vendedores.map((v: Prisma.User) => v.id) }, pago: true },
+        where: { vendedorId: { in: vendedores.map((v) => v.id) }, pago: true },
         include: { jogo: { select: { preco: true } } }
     });
 
     // Fetch their participacoes (digital POS)
     const participacoes = await prisma.participacao.findMany({
-        where: { vendedorId: { in: vendedores.map((v: Prisma.User) => v.id) }, estadoPagamento: 'concluido' }
+        where: { vendedorId: { in: vendedores.map((v) => v.id) }, estadoPagamento: 'concluido' }
     });
     
     // Fetch transacoes (cashouts already made to them)
     const payouts = await prisma.transacao.findMany({
-        where: { userId: { in: vendedores.map((v: Prisma.User) => v.id) }, tipo: 'comissao' }
+        where: { userId: { in: vendedores.map((v) => v.id) }, tipo: 'comissao' }
     });
 
     // Aggregate data
-    const statsResult = vendedores.map((v: Prisma.User) => {
+    const statsResult = vendedores.map((v) => {
         const config = comissoesConfig.find((c: Prisma.Comissao) => c.vendedorId === v.id);
         const percentual = config?.percentual || 5; // Default 5%
         

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest) {
           select: { nome: true, email: true, comissaoTotal: true, saldo: true },
         });
 
-        const rows = vendedores.map((v: Prisma.User) => `<tr>
+        const rows = vendedores.map((v: any) => `<tr>
           <td>${v.nome}</td>
           <td>${v.email}</td>
           <td>${(v.comissaoTotal || 0).toFixed(2)}€</td>

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 
@@ -34,14 +33,14 @@ export async function GET(request: NextRequest) {
       const vendasData = await prisma.transacao.groupBy({
         by: ['userId'],
         where: {
-          userId: { in: vendedores.map((v: Prisma.User) => v.id) },
+          userId: { in: vendedores.map((v: any) => v.id) },
           tipo: { in: ['venda', 'pagamento'] as any },
         },
         _sum: { valor: true },
         _count: { id: true },
       });
 
-      const rankingVendas = vendedores.map((v: Prisma.User) => {
+      const rankingVendas = vendedores.map((v: any) => {
         const venda = vendasData.find((vd: { userId: string; _sum: { valor: number | null }; _count: { id: number } }) => vd.userId === v.id);
         return {
           tipo: 'vendas',
@@ -74,13 +73,13 @@ export async function GET(request: NextRequest) {
       const participacoesData = await prisma.participacao.groupBy({
         by: ['userId'],
         where: {
-          userId: { in: jogadores.map((j: Prisma.User) => j.id) },
+          userId: { in: jogadores.map((j: any) => j.id) },
         },
         _count: { id: true },
         _sum: { valorPago: true },
       });
 
-      const rankingJogos = jogadores.map((j: Prisma.User) => {
+      const rankingJogos = jogadores.map((j: any) => {
         const part = participacoesData.find((p: { userId: string; _count: { id: number }; _sum: { valorPago: number | null } }) => p.userId === j.id);
         return {
           tipo: 'jogos',
@@ -113,14 +112,14 @@ export async function GET(request: NextRequest) {
       const premiosData = await prisma.participacao.groupBy({
         by: ['userId'],
         where: {
-          userId: { in: jogadores.map((j: Prisma.User) => j.id) },
+          userId: { in: jogadores.map((j: any) => j.id) },
           ganhador: true,
         },
         _count: { id: true },
         _sum: { valorPago: true },
       });
 
-      const rankingPremios = jogadores.map((j: Prisma.User) => {
+      const rankingPremios = jogadores.map((j: any) => {
         const prem = premiosData.find((p: { userId: string; _count: { id: number }; _sum: { valorPago: number | null } }) => p.userId === j.id);
         return {
           tipo: 'premios',
