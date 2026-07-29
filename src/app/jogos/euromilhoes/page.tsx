@@ -49,8 +49,8 @@ export default function EuromilhoesPage() {
         totalPago={totalPago}
         setProvaModalOpen={setProvaModalOpen}
         handlePlayAgain={handlePlayAgain}
-        participacaoCriada={participacaoCriada}
-        userRole={userRole}
+          participacaoCriada={participacaoCriada}
+        userRole={userRole as string | undefined}
         provaModalOpen={provaModalOpen}
       />
     );

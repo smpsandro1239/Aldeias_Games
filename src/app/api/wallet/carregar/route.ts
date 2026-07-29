@@ -261,14 +261,14 @@ export async function GET(request: NextRequest) {
     };
 
     if (user.role === 'aldeia_admin' || user.role === 'vendedor') {
-      where.dadosAdicionais = {
+      (where as any).dadosAdicionais = {
         path: ['aldeiaId'],
         equals: aldeiaId || user.aldeiaId
       };
     }
 
     if (eventoId) {
-      where.dadosAdicionais = {
+      (where as any).dadosAdicionais = {
         path: ['eventoId'],
         equals: eventoId
       };

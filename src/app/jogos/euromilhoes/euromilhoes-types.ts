@@ -9,9 +9,11 @@ export interface JogoEuromilhoes {
   stockAtual: number;
   totalAngariado: number;
   totalParticipacoes: number;
-  configuracao?: unknown;
+  estado: string;
+  descricao?: string;
+  configuracao: Record<string, unknown>;
   evento?: { nome: string; aldeia?: { nome: string } };
-  premios?: Array<{ id: string; nome: string; descricao?: string }>;
+  premios?: Array<{ id: string; nome: string; descricao?: string | null; valorDinheiroAlternative?: number | null; imagemUrl?: string | null; icon?: string; percentagem?: number }>;
 }
 
 export interface Grelha {

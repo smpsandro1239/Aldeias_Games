@@ -84,11 +84,8 @@ export async function POST(request: NextRequest) {
       // Super admin: ver todas as aldeias
       if (fullUser.role === 'super_admin') {
         const aldeias = await prisma.aldeia.findMany({
-          where: { deletedAt: null },
-          select: {
-            id: true,
-            nome: true,
-            slug: true,
+          where: { ativo: true },
+          include: {
             vault: {
               select: { saldo: true },
             },

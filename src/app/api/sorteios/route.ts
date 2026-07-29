@@ -179,9 +179,9 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Audit log for reveal
-    const ip = request.headers.get('x-forwarded-for') || undefined;
-    const userAgent = request.headers.get('user-agent') || undefined;
-    logSorteio(user.id, jogoId, jogo.nome, 'reveal', jogo.seedSorteio, jogo.hashSorteio, 1, ip as string | undefined, userAgent);
+    const ip: string | undefined = request.headers.get('x-forwarded-for') ?? undefined;
+    const userAgent: string | undefined = request.headers.get('user-agent') ?? undefined;
+    logSorteio(user.id, jogoId, jogo.nome, 'reveal', jogo.seedSorteio, jogo.hashSorteio, 1, ip, userAgent);
 
     return NextResponse.json({ success: true, vencedorId, seedRevelada: jogo.seedSorteio, resultado: winningCoord || winningNumber });
   } catch (error) {

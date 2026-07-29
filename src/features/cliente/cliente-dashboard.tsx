@@ -18,7 +18,7 @@ import { ClienteParticipacaoCard } from "./cliente-participacao-card";
 import { ClienteExtratoList } from "./cliente-extrato-list";
 import { ClientePagination } from "./cliente-pagination";
 
-export function ClienteDashboard({ token: _token }: { token: string }) {
+export function ClienteDashboard({ token: _token }: { token?: string }) {
   const game = useClienteDashboard();
 
   const {

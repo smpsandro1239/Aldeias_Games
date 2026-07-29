@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
            { status: 400 }
          );
        }
-       updateData.aldeiaId = newAldeiaId;
+       (updateData as any).aldeiaId = newAldeiaId;
     }
     if (body.comissaoAtiva !== undefined) {
        updateData.comissaoAtiva = body.comissaoAtiva;
