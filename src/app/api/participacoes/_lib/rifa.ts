@@ -89,9 +89,9 @@ export const rifaHandler: GameHandler = {
     if (numerosSelecionados.length > 0 && participacoes.length > 0) {
       await tx.numeroVendido.createMany({
         data: numerosSelecionados.map((num: number) => ({
-          jogoId: data.jogoId,
+          jogoId: data.jogoId!,
           numero: num,
-        })),
+        })) as any,
       });
     }
   },

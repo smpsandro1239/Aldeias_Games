@@ -64,7 +64,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const { premios: premiosData, ...otherData } = validation.data;
-    const updateData: Prisma.JogoUpdateInput = { ...otherData };
+    const updateData = { ...otherData } as Prisma.JogoUpdateInput;
     if (updateData.configuracao) updateData.configuracao = JSON.stringify(updateData.configuracao);
 
     if (updateData.estado === 'fechado' && jogo.estado !== 'fechado') {

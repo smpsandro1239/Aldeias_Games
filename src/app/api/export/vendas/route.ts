@@ -25,12 +25,11 @@ export async function GET(request: NextRequest) {
     const vendedorId = searchParams.get('vendedorId');
     const formato = searchParams.get('formato') || 'csv'; // csv ou xlsx (por enquanto só suportamos CSV)
 
-    // Construir filtro de busca
     const where: Prisma.VendaWhereInput = {};
-    if (dataInicio) where.createdAt = { gte: new Date(dataInicio) };
-    if (dataFim) {
-      if (!where.createdAt) where.createdAt = {};
-      where.createdAt.lte = new Date(dataFim);
+    if (dataInicio || dataFim) {
+      (where as any).createdAt = {};
+      if (dataInicio) (where as any).createdAt.gte = new Date(dataInicio);
+      if (dataFim) (where as any).createdAt.lte = new Date(dataFim);
     }
     if (vendedorId) where.vendedorId = vendedorId;
 
@@ -48,7 +47,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Formatar dados para exportação
-    const vendasData = vendas.map((v: Prisma.VendaGetPayload<{ include: { vendedor: true } }>) => ({
+    const vendasData = vendas.map((v: Prisma.VendaGetPayload<{ include: { vendedor: { select: { nome: true } } } }>) => ({
       id: v.id,
       valor: v.valor,
       comissao: v.comissao,

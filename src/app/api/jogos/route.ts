@@ -388,7 +388,7 @@ export async function POST(request: NextRequest) {
     };
 
     const jogo = await prisma.jogo.create({
-      data: createData,
+      data: createData as Prisma.JogoCreateInput,
       include: includeData,
     });
 

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       case 'vendas': {
         const vendas = await prisma.transacao.findMany({
           where: {
-            tipo: { in: ['pagamento_jogo', 'premio_dinheiro'] as Prisma.TipoTransacao[] },
+            tipo: { in: ['pagamento_jogo' as any, 'premio_dinheiro' as any] },
             ...(dataInicio && dataFim ? {
               createdAt: {
                 gte: new Date(dataInicio),
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           orderBy: { createdAt: 'desc' },
         });
 
-        const rows = jogos.map((j: Prisma.JogoGetPayload<{ include: { evento: true } }>) => `<tr>
+        const rows = jogos.map((j: Prisma.JogoGetPayload<{ include: { evento: { select: { nome: true } } } }>) => `<tr>
           <td>${j.nome}</td>
           <td>${j.tipo}</td>
           <td>${j.estado}</td>

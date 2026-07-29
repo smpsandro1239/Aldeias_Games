@@ -70,8 +70,9 @@ export const euromilhoesHandler: GameHandler = {
   },
 
   async postCreate(tx, data, _jogo, _participacoes) {
-    const nums = data.dadosParticipacao?.numeros || data.numerosSelecionados;
-    if (data.grelhaId && nums) {
+    const numsRaw = data.dadosParticipacao?.numeros || data.numerosSelecionados;
+    const nums: number[] = typeof numsRaw === 'string' ? JSON.parse(numsRaw) : (Array.isArray(numsRaw) ? numsRaw : []);
+    if (data.grelhaId && nums.length > 0) {
       const grelha = await tx.grelhaEuromilhoes.findUnique({
         where: { id: data.grelhaId },
       });
@@ -83,14 +84,14 @@ export const euromilhoesHandler: GameHandler = {
           }
         }
         ocupados.sort((a, b) => a - b);
-        const updateData: Prisma.GrelhaEuromilhoesUpdateInput = { numerosOcupados: JSON.stringify(ocupados) };
+        const updateData: Record<string, unknown> = { numerosOcupados: JSON.stringify(ocupados) };
         if (ocupados.length >= 50) {
           updateData.estado = 'preenchida';
           updateData.dataFecho = new Date();
         }
         await tx.grelhaEuromilhoes.update({
           where: { id: data.grelhaId },
-          data: updateData,
+          data: updateData as Prisma.GrelhaEuromilhoesUpdateInput,
         });
       }
     }

@@ -19,6 +19,7 @@ export async function GET(
             nome: true,
             tipo: true,
             preco: true,
+            sorteado: true,
             aldeia: { select: { id: true, nome: true } },
             configuracao: true,
           },
