@@ -356,37 +356,43 @@ Pages:
 - Framework: **Vitest** (v4.1.10) com `jsdom` environment, globals habilitados
 - Config: `vitest.config.ts` — setup file em `src/__tests__/setup.ts`, path alias `@/*`
 - Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
-- **310 testes** em **19 ficheiros** (unit + integration + API + lib)
+- **311 testes** em **20 ficheiros** (unit + integration + API + lib + real-db)
+- **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test.db`) via `prisma db push`, sem mocks
+- **Playwright E2E** (0 specs atualmente): `npx playwright test` (requer `npx playwright install` primeiro)
 
 #### Ficheiros de teste
 | Ficheiro | Testes | Descrição |
 |----------|--------|-----------|
-| `unit/webhook-idempotency.test.ts` | 11 | `claimWebhookEvent`/`completeWebhookEvent` — fluxo idempotente, duplicatas, erros |
+| `unit/webhook-idempotency.test.ts` | 10 | `claimWebhookEvent`/`completeWebhookEvent` — fluxo idempotente, duplicatas, erros |
 | `unit/rbac.test.ts` | 10 | `requirePermission`, `requireAnyOfPermissions`, `hasRole` (legacy) |
-| `unit/auth-security.test.ts` | 11 | Password hashing (bcrypt), JWT tokens, role checking |
+| `unit/auth-security.test.ts` | 14 | Password hashing (bcrypt), JWT tokens, role checking |
 | `unit/raspadinha-critical.test.ts` | 11 | `determineRaspadinhaOutcome`, `buildGridFromOutcome`, forceLoss, probabilidades |
 | `unit/cofre-operations.test.ts` | 8 | Vault balance, vault transactions, cashbox operations, integridade financeira |
 | `unit/raspadinha.test.ts` | 25 | Raspadinha handler completo (prepareData, grid, probabilidades) |
-| `unit/game-handlers.test.ts` | 30 | Registry de handlers, raspadinha, rifa, poio da vaca, euromilhões |
-| `unit/game-logic.test.ts` | 15 | Rentabilidade, hash de verificação, validações de negócio |
-| `integration/game-lifecycle.test.ts` | 25 | Ciclo completo de jogos, stock, sorteio, hash, permissões |
-| `api/business-logic.test.ts` | 10 | Stock race conditions, cashback, vendas externas |
+| `unit/game-handlers.test.ts` | 41 | Registry de handlers, raspadinha, rifa, poio da vaca, euromilhões |
+| `unit/game-logic.test.ts` | 24 | Rentabilidade, hash de verificação, validações de negócio |
+| `integration/game-lifecycle.test.ts` | 35 | Ciclo completo de jogos, stock, sorteio, hash, permissões |
+| `integration/real-db/participacao-flow.test.ts` | 1 | Fluxo real contra SQLite: aldeia → evento → jogo → saldo → participação |
+| `api/business-logic.test.ts` | 9 | Stock race conditions, cashback, vendas externas |
 | `lib/rate-limit.test.ts` | 4 | Rate limiting com Prisma |
-| `lib/validations.test.ts` | 8 | Telefone PT, password, email |
+| `lib/validations.test.ts` | 12 | Telefone PT, password, email |
 | `lib/utils.test.ts` | 9 | formatCurrency, generateSlug, truncateText |
-| `lib/i18n.test.ts` | 7 | Traduções PT/EN/ES |
-| `lib/financial-validations.test.ts` | 20 | Schemas de depósito, levantamento, password |
-| `validations.test.ts` | 10 | login, register, password, evento, jogo schemas |
-| `utils.test.ts` | 10 | formatCurrency, formatDate, generateSlug, etc. |
-| `middleware.test.ts` | 10 | Proxy, auth, CSRF, page role protection |
+| `lib/i18n.test.ts` | 9 | Traduções PT/EN/ES |
+| `lib/financial-validations.test.ts` | 27 | Schemas de depósito, levantamento, password |
+| `validations.test.ts` | 21 | login, register, password, evento, jogo schemas |
+| `utils.test.ts` | 16 | formatCurrency, formatDate, generateSlug, etc. |
+| `middleware.test.ts` | 16 | Proxy, auth, CSRF, page role protection |
+| `auth.test.ts` | 9 | Login, hasRole, 2FA, lockout |
 
 #### Tipos de teste
 - **Unit**: Funções puras, handlers de jogo, RBAC, auth, webhooks
-- **Integration**: Ciclos completos de jogo (criar → jogar → sortear → vencedor)
+- **Integration (mock)**: Ciclos completos de jogo (criar → jogar → sortear → vencedor)
+- **Integration (real DB)**: Operações contra SQLite real via `src/__tests__/helpers/test-db.ts` — sem mocks, usa `prisma db push` em temp DB
 - **API**: Business logic isolada (stock, cashback, vendas externas)
 
 #### Convenções
 - Todos os testes usam `// @vitest-environment node` ou `jsdom` conforme o contexto
-- Mocks via `vi.mock()` para Prisma e dependências externas
+- Testes mockados usam `vi.mock()` para Prisma e dependências externas
+- Testes de integração real (real-db/) usam helper `test-db.ts` e limpam DB após cada suite
 - Testes de probabilidades usam iterações (1000x) com margens alargadas
-- Ficheiros de teste em `src/__tests__/unit/`, `src/__tests__/integration/`, `src/__tests__/api/`, `src/__tests__/lib/`
+- Ficheiros de teste em `src/__tests__/unit/`, `src/__tests__/integration/`, `src/__tests__/api/`, `src/__tests__/lib/`, `src/__tests__/integration/real-db/`
