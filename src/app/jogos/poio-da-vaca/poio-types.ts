@@ -15,7 +15,11 @@ export interface Jogo {
   nome: string;
   tipo: string;
   preco: number;
-  configuracao: string;
+  stockInicial: number;
+  stockAtual: number;
+  estado: string;
+  descricao?: string;
+  configuracao: Record<string, unknown>;
   dimensoesCampo: string | null;
   custoQuadrado: number | null;
   valorPremioVaca: number | null;

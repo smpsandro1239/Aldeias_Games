@@ -13,7 +13,7 @@ export function useRaspadinhaGame(
   jogo: Jogo | null,
   jogoId: string | null,
   participante: { nome: string; telefone: string; email: string },
-  setParticipante: (fn: (prev: { nome: string; telefone: string; email: string; notificacao: string }) => { nome: string; telefone: string; email: string }) => void,
+  setParticipante: (fn: (prev: { nome: string; telefone: string; email: string; notificacao: string }) => { nome: string; telefone: string; email: string; notificacao: string }) => void,
   userOriginalData: { nome: string; telefone: string; email: string },
   isNonRegularUser: boolean,
   refreshBalance: () => void,
@@ -467,6 +467,7 @@ export function useRaspadinhaGame(
         nome: userOriginalData.nome,
         telefone: userOriginalData.telefone,
         email: userOriginalData.email,
+        notificacao: "nenhum" as const,
       }));
     }
   }, [isNonRegularUser, userOriginalData, setParticipante]);

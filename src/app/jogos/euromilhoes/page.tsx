@@ -189,7 +189,7 @@ export default function EuromilhoesPage() {
         description={`${numerosSelecionados.length} número${numerosSelecionados.length > 1 ? "s" : ""} selecionado${numerosSelecionados.length > 1 ? "s" : ""} — Total: ${totalPago.toFixed(2)}€`}
       />
 
-      <ParticipacaoConfirmacaoModal open={confirmacaoModalOpen} onOpenChange={setConfirmacaoModalOpen} participacao={participacaoCriada} />
+      <ParticipacaoConfirmacaoModal open={confirmacaoModalOpen} onOpenChange={setConfirmacaoModalOpen} participacao={participacaoCriada as any} />
 
       <PlayerDataConfirmModal
         open={playerDataConfirmOpen}

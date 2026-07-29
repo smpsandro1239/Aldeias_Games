@@ -575,7 +575,7 @@ function RaspadinhaPremiumContent() {
       <ParticipacaoConfirmacaoModal
         open={confirmacaoModalOpen}
         onOpenChange={setConfirmacaoModalOpen}
-        participacao={participacaoCriada}
+        participacao={participacaoCriada as any}
       />
 
       <PlayerDataConfirmModal

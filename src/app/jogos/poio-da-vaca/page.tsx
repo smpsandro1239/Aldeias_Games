@@ -290,7 +290,7 @@ function PoioDaVacaPage() {
               <div className="space-y-4">
                 <PaymentSelector
                   amount={selectedSquares.length * custoPorQuadrado}
-                  onSelect={processarPagamento}
+                  onSelect={processarPagamento as any}
                 />
               </div>
             </div>

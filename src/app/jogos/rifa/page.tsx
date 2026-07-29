@@ -63,7 +63,7 @@ export default function RifaPage() {
         setProvaModalOpen={setProvaModalOpen}
         handlePlayAgain={handlePlayAgain}
         participacaoCriada={participacaoCriada}
-        userRole={userRole}
+        userRole={userRole ?? undefined}
         provaModalOpen={provaModalOpen}
       />
     );
@@ -195,7 +195,7 @@ export default function RifaPage() {
 
       <p className="text-center text-on-surface/40 text-xs">Apoie a cultura local. Todos os lucros revertem para a associação.</p>
 
-      <ParticipacaoConfirmacaoModal open={confirmacaoModalOpen} onOpenChange={setConfirmacaoModalOpen} participacao={participacaoCriada} />
+      <ParticipacaoConfirmacaoModal open={confirmacaoModalOpen} onOpenChange={setConfirmacaoModalOpen} participacao={participacaoCriada as any} />
 
       <GamePaymentDialog
         open={paymentModalOpen}
