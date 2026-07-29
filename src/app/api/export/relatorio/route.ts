@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       case 'vendas': {
         const vendas = await prisma.transacao.findMany({
           where: {
-            tipo: { in: ['venda', 'pagamento'] as const },
+            tipo: { in: ['pagamento_jogo', 'premio_dinheiro'] as Prisma.TipoTransacao[] },
             ...(dataInicio && dataFim ? {
               createdAt: {
                 gte: new Date(dataInicio),
@@ -60,10 +60,10 @@ export async function POST(request: NextRequest) {
         });
         
         // Filter by aldeia in JavaScript
-        const filteredVendas = vendas.filter((v: Prisma.TransacaoGetPayload<{ include: { user: true } }>) => v.user?.aldeiaId === user.aldeiaId);
+        const filteredVendas = vendas.filter((v: Prisma.TransacaoGetPayload<{ include: { user: { select: { nome: true; aldeiaId: true } } } }>) => v.user?.aldeiaId === user.aldeiaId);
 
         let total = 0;
-        const rows = filteredVendas.map((v: Prisma.TransacaoGetPayload<{ include: { user: true } }>) => {
+        const rows = filteredVendas.map((v: Prisma.TransacaoGetPayload<{ include: { user: { select: { nome: true; aldeiaId: true } } } }>) => {
           total += v.valor;
           return `<tr>
             <td>${new Date(v.createdAt).toLocaleDateString('pt-PT')}</td>

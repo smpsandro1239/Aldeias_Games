@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     };
 
     const valorHojeApostas = apostasHoje.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { nome: true; preco: true } } } }>) => acc + valorAposta(a), 0);
-    const valorTotalApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { preco: true } } } }>) => acc + valorAposta(a), 0);
+    const valorTotalApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { nome: true; preco: true } } } }>) => acc + valorAposta(a), 0);
 
     const valorHojePart = partHoje.reduce((acc: number, p: Prisma.ParticipacaoGetPayload<{ include: { jogo: { select: { nome: true } } } }>) => acc + (p.valorPago || 0), 0);
     const valorTotalPart = partTotais.reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // The seller holds cash but some sales might be digital/Stripe/MBWay.
     // Let's filter cash sales only to calculate what they need to hand over explicitly.
-    const dinheiroEmMaoApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { preco: true } } } }>) => acc + valorAposta(a), 0); // Apostas are always physical cash in POS
+    const dinheiroEmMaoApostas = apostasTotais.reduce((acc: number, a: Prisma.ApostaGetPayload<{ include: { jogo: { select: { nome: true; preco: true } } } }>) => acc + valorAposta(a), 0); // Apostas are always physical cash in POS
     const dinheiroEmMaoPart = partTotais.filter((p: any) => p.metodoPagamento === 'dinheiro').reduce((acc: number, p: any) => acc + (p.valorPago || 0), 0);
     
     const totalDinheiroLivre = dinheiroEmMaoApostas + dinheiroEmMaoPart;

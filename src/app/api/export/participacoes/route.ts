@@ -53,14 +53,14 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    const participacoesData = participacoes.map((p: Prisma.ParticipacaoGetPayload<{ include: { jogo: true, user: true } }>) => ({
+    const participacoesData = participacoes.map((p: any) => ({
       id: p.id,
       dadosParticipacao: p.dadosParticipacao,
       nomeCliente: p.nomeCliente || p.user?.nome,
       telefoneCliente: p.telefoneCliente || p.user?.telefone,
       emailCliente: p.emailCliente || p.user?.email,
       valorPago: p.valorPago,
-      createdAt: p.createdAt.toISOString(),
+      createdAt: new Date(p.createdAt).toISOString(),
       estadoPagamento: p.estadoPagamento,
       jogo: p.jogo ? { nome: p.jogo.nome, tipo: p.jogo.tipo } : undefined,
       evento: p.jogo?.evento ? { nome: p.jogo.evento.nome, aldeia: p.jogo.evento.aldeia ? { nome: p.jogo.evento.aldeia.nome } : undefined } : undefined
