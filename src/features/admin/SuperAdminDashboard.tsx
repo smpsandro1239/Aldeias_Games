@@ -359,7 +359,7 @@ export default function SuperAdminDashboard({
               <TabsContent value="jogos">
                 <JogosTab jogos={jogos} eventos={eventos} userRole={userRole}
                   selectedEventoIdParaJogo={selectedEventoIdParaJogo}
-                  setSelectedJogo={setSelectedJogo} setJogoModalOpen={setJogoModalOpen}
+                   setSelectedJogo={handleSetSelectedJogo} setJogoModalOpen={setJogoModalOpen}
                   setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
                   setQrCodeData={setQrCodeData} setQrCodeOpen={setQrCodeOpen}
                   handleTestarJogo={handleTestarJogo} setTestJogoOpen={setTestJogoOpen}
@@ -439,7 +439,7 @@ export default function SuperAdminDashboard({
         handleSaveJogo={handleSaveJogo} handleSaveAldeia={handleSaveAldeia}
         handleSaveUser={handleSaveUser} handleConvertPrize={handleConvertPrize}
         executeDelete={executeDelete} executeToggleJogoEstado={executeToggleJogoEstado}
-        fetchData={fetchData} setQrCodeData={setQrCodeData}
+        fetchData={fetchData}
         eventoModalAldeiaId={eventoModalAldeiaId} setEventoModalAldeiaId={setEventoModalAldeiaId}
       />
     </div>

@@ -5,6 +5,7 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { apiRequest } from '@/lib/api-client';
 import type { Prize, Jogo, SlotState, GamePhase, SlotSummary } from "./raspadinha-types";
+import type { Participante } from "@/hooks/useGamePage";
 
 const SLOT_SIZE = 120;
 const CELL_SIZE = 6;
@@ -12,8 +13,8 @@ const CELL_SIZE = 6;
 export function useRaspadinhaGame(
   jogo: Jogo | null,
   jogoId: string | null,
-  participante: { nome: string; telefone: string; email: string; notificacao: string },
-  setParticipante: (value: { nome: string; telefone: string; email: string; notificacao: string } | ((prev: { nome: string; telefone: string; email: string; notificacao: string }) => { nome: string; telefone: string; email: string; notificacao: string })) => void,
+  participante: Participante,
+  setParticipante: React.Dispatch<React.SetStateAction<Participante>>,
   userOriginalData: { nome: string; telefone: string; email: string },
   isNonRegularUser: boolean,
   refreshBalance: () => void,

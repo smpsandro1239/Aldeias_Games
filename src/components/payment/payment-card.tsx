@@ -1,6 +1,6 @@
 "use client";
 
-import { Euro, CreditCard, Smartphone, Wallet, AlertCircle } from "lucide-react";
+import { Euro, CreditCard, Smartphone, Wallet, AlertCircle, User } from "lucide-react";
 import { MetodoPagamento, PAYMENT_COMMISSIONS, hasCommission } from "@/lib/payment-commissions";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +52,13 @@ const methodConfig: Record<MetodoPagamento, {
     bgColor: "bg-muted/20",
     textColor: "text-muted-foreground",
     borderColor: "border-muted/30",
+  },
+  vendedor: {
+    icon: User,
+    label: "Vendedor",
+    bgColor: "bg-secondary/20",
+    textColor: "text-primary",
+    borderColor: "border-secondary/30",
   },
 };
 

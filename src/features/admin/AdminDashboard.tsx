@@ -46,6 +46,7 @@ export default function AdminDashboard({
   userRole = "aldeia_admin",
   aldeia,
 }: AdminDashboardProps) {
+  const router = useRouter();
   useAuth();
   const pendingCount = usePendingChangesCount();
 
@@ -327,7 +328,6 @@ export default function AdminDashboard({
         executeDelete={executeDelete}
         executeToggleJogoEstado={executeToggleJogoEstado}
         fetchData={fetchData}
-        setQrCodeData={setQrCodeData}
       />
     </div>
   );
