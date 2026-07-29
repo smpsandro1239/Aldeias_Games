@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.aposta.findMany({
         where: { vendedorId: user.id, pago: true },
-        include: { jogo: { select: { preco: true } } }
+        include: { jogo: { select: { nome: true, preco: true } } }
       })
     ]);
 

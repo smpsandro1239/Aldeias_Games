@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
 
     const where: Prisma.ParticipacaoWhereInput = {};
     if (jogoId) where.jogoId = jogoId;
-    if (eventoId) where.eventoId = eventoId;
-    if (dataInicio) where.createdAt = { gte: new Date(dataInicio) };
-    if (dataFim) {
-      if (!where.createdAt) where.createdAt = {};
-      where.createdAt.lte = new Date(dataFim);
+    if (eventoId) (where as any).jogo = { eventoId };
+    if (dataInicio || dataFim) {
+      (where as any).createdAt = {};
+      if (dataInicio) (where as any).createdAt.gte = new Date(dataInicio);
+      if (dataFim) (where as any).createdAt.lte = new Date(dataFim);
     }
 
     const participacoes = await prisma.participacao.findMany({

@@ -191,9 +191,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       imagemUrl = saved.url;
     }
 
-    const updateData: Prisma.EventoUpdateInput = { ...data };
+    const updateData: Record<string, unknown> = { ...data };
     delete updateData.imagemBase64;
-    // Remover campos que não devem ir para o banco
     delete updateData.jogosSelecionados;
     delete updateData.isRecurring;
     delete updateData.recurrenceFrequency;
@@ -245,7 +244,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const updated = await prisma.evento.update({
       where: { id },
-      data: updateData,
+      data: updateData as Prisma.EventoUpdateInput,
     });
 
     // Audit log for event update
