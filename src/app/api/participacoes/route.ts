@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sanitizeObject } from '@/lib/sanitization';
 import { escapeHtml } from '@/lib/utils';
 import { prisma } from '@/lib/db';
-import { getFullUserFromRequest, hasRole } from '@/lib/auth';
+import { getFullUserFromRequest } from '@/lib/auth';
 import { createParticipacaoSchema } from '@/lib/validations';
 import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/pagination';
 import { sendTicketEmail } from '@/lib/email';
 import { executeWithRetry } from '@/lib/transaction-retry';
 import { createLogger, extractRequestContext } from '@/lib/logger';
 import { isMethodAllowed } from '@/lib/payment-commissions';
+import { resolvePermissions } from '@/lib/rbac/resolvePermissions';
 // @ts-ignore - @prisma/client types generated at build time
 import { Prisma } from '@prisma/client';
 import { getGameHandler } from './_lib';
@@ -195,6 +196,9 @@ export async function POST(request: NextRequest) {
 
     const effectiveUser = user;
 
+    const permResult = effectiveUser ? await resolvePermissions(effectiveUser.id, effectiveUser.aldeiaId ?? undefined) : null;
+    const canExecuteVenda = permResult?.hasPermission('EXECUTE_VENDA' as any) ?? false;
+
     const validation = createParticipacaoSchema.safeParse(normalizedBody);
     if (!validation.success) {
       return NextResponse.json(
@@ -370,7 +374,7 @@ export async function POST(request: NextRequest) {
             estadoPagamento: data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo' ? 'concluido' : 'pendente',
             jogoId: data.jogoId,
             userId: resolvedUserId,
-            vendedorId: effectiveUser && hasRole(effectiveUser.role, ['aldeia_admin', 'vendedor']) ? effectiveUser.id : undefined,
+            vendedorId: canExecuteVenda ? effectiveUser!.id : undefined,
             nomeCliente: data.dadosCliente?.nome ? escapeHtml(String(data.dadosCliente.nome)) : undefined,
             telefoneCliente: data.dadosCliente?.telefone || undefined,
             emailCliente: data.dadosCliente?.email || undefined,
@@ -463,7 +467,7 @@ export async function POST(request: NextRequest) {
 
         // --- LÓGICA DE CAIXA DO VENDEDOR ---
         // Quando vendedor vende em dinheiro, o valor entra na sua caixa física
-        if (data.metodoPagamento === 'dinheiro' && effectiveUser && hasRole(effectiveUser.role, ['vendedor', 'aldeia_admin', 'super_admin'])) {
+        if (data.metodoPagamento === 'dinheiro' && canExecuteVenda) {
           const valorVenda = jogo.preco * data.quantidade;
           const cashbox = await tx.vendedorCashbox.upsert({
             where: { userId: effectiveUser.id },

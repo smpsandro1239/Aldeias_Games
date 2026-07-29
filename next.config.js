@@ -7,10 +7,7 @@ const nextConfig = {
       ? { exclude: ["error"] }
       : false,
   },
-  // SWC crash on Windows with Node.js v24 — keep until Vercel (Linux) build is verified without it
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+
   serverExternalPackages: ['@upstash/redis'],
   async headers() {
     return [
