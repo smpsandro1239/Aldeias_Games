@@ -133,11 +133,11 @@ export async function GET(request: NextRequest) {
     }
     // Vendedor: ver pedidos pendentes da sua aldeia
     else if (user.role === 'vendedor') {
-      where = { aldeiaId: user.aldeiaId, estado: 'pendente' };
+      where = { aldeiaId: user.aldeiaId ?? undefined, estado: 'pendente' } as any;
     }
     // Admin: ver todos ou os que precisam de aprovação
     else if (user.role === 'aldeia_admin' || user.role === 'super_admin') {
-      where = { aldeiaId: user.aldeiaId };
+      where = { aldeiaId: user.aldeiaId ?? undefined };
       if (tipo === 'aprovacao') {
         where = { ...where, requerAutorizacao: true, autorizado: false, estado: 'pendente' };
       }

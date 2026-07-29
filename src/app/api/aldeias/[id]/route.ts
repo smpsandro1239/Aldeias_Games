@@ -306,7 +306,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
         action: 'UPDATE_ALDEIA',
         resource: 'Aldeia',
         resourceId: id,
-        metadata: metadata
+        metadata: metadata as any
       }
     })
 

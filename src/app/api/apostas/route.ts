@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         return { ...a, numeros: nums };
       }
 
-      const isPropria = payload?.userId === a.userId || (a.jogadorNome === payload?.email); // Fallback logic
+      const isPropria = payload?.userId === (a as any).userId || (a.jogadorNome === payload?.email);
 
       return {
         id: a.id,

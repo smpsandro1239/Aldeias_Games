@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      where.nome = { contains: search, mode: 'insensitive' }
+      where.nome = { contains: search }
     }
 
     if (tipoOrganizacao) {

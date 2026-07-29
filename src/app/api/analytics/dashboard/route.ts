@@ -23,11 +23,11 @@ export async function GET(request: NextRequest) {
     const desde = new Date();
     desde.setDate(desde.getDate() - dias);
 
-    const aldeiaFilter = user.role === 'aldeia_admin'
+    const aldeiaFilter = (user.role === 'aldeia_admin'
       ? { evento: { aldeiaId: user.aldeiaId } }
       : aldeiaIdParam
         ? { evento: { aldeiaId: aldeiaIdParam } }
-        : {};
+        : {}) as any;
 
     const [
       totalJogos,
@@ -104,11 +104,11 @@ export async function GET(request: NextRequest) {
         data: p.data,
         count: Number(p.count),
       })),
-      jogosPorTipo: jogosPorTipo.map((j: { tipo: string | null; _count: { id: number } }) => ({
+      jogosPorTipo: (jogosPorTipo as any[]).map((j: { tipo: string | null; _count: { id: number } }) => ({
         tipo: j.tipo,
         count: j._count.id,
       })),
-      topJogos: topJogos.map((j: { id: string; nome: string; tipo: string; totalParticipacoes: number; totalAngariado: number; estado: string }) => ({
+      topJogos: (topJogos as any[]).map((j: { id: string; nome: string; tipo: string; totalParticipacoes: number; totalAngariado: number; estado: string }) => ({
         id: j.id,
         nome: j.nome,
         tipo: j.tipo,
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
         angariado: j.totalAngariado,
         estado: j.estado,
       })),
-      pagamentos: estadoPagamentos.map((p: { estadoPagamento: string | null; _count: { id: number }; _sum: { valorPago: number | null } }) => ({
+      pagamentos: (estadoPagamentos as any[]).map((p: { estadoPagamento: string | null; _count: { id: number }; _sum: { valorPago: number | null } }) => ({
         estado: p.estadoPagamento,
         count: p._count.id,
         total: p._sum.valorPago || 0,
