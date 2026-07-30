@@ -465,7 +465,7 @@ export function VencedorDetailModal({
 
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>⚠️ Obrigatório:</strong> A entrega de prêmios só pode ser realizada após verificação do hash de autenticidade.
+                  <strong>⚠️ Obrigatório:</strong> A entrega de prémios só pode ser realizada após verificação do hash de autenticidade.
                   {!hashVerificado && " Clique em 'Verificar Hash' para validar a participação."}
                 </p>
               </div>

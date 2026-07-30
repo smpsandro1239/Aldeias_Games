@@ -37,7 +37,7 @@ export function RaspadinhaConfig({
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Configuração da Raspadinha</h3>
         <Badge variant={isLucrativo ? "default" : "destructive"} className={isLucrativo ? "bg-green-500" : ""}>
-          {isLucrativo ? `${metricsRaspadinha.margemLucro}% lucro` : "Lucre baixo!"}
+          {isLucrativo ? `${metricsRaspadinha.margemLucro}% lucro` : "Lucro baixo!"}
         </Badge>
       </div>
 

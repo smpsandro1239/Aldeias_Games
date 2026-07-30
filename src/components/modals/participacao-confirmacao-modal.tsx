@@ -238,7 +238,7 @@ export function ParticipacaoConfirmacaoModal({
                       <li>1. Dirija-se à organização/bilheteria</li>
                       <li>2. Mostre este código de verificação</li>
                       <li>3. Apresente documento de identificação</li>
-                      <li>4. Receba seu prêmio após validação</li>
+                      <li>4. Receba o seu prémio após validação</li>
                     </ol>
                   </div>
                   <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded p-2">

@@ -16,7 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import { Evento, Jogo } from "../types";
 
 interface EventosTabProps {
