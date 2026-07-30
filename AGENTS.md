@@ -398,3 +398,32 @@ Pages:
 - Testes de integração real (real-db/) usam helper `test-db.ts` e limpam DB após cada suite
 - Testes de probabilidades usam iterações (1000x) com margens alargadas
 - Ficheiros de teste em `src/__tests__/unit/`, `src/__tests__/integration/`, `src/__tests__/api/`, `src/__tests__/lib/`, `src/__tests__/integration/real-db/`
+
+## Google OAuth (Login com Google)
+
+### Fluxo
+1. User clica "Continuar com o Google" → `GET /api/auth/google`
+2. Server gera CSRF state cookie, redireciona para `accounts.google.com`
+3. Google redireciona para `GET /api/auth/google/callback?code=...&state=...`
+4. Callback handler troca code por tokens, cria/linca user, gera JWT, seta cookie
+
+### Pontos Críticos
+- **Callback é GET com query params** — `oauth-handler.ts` usa `request.nextUrl.searchParams` (NÃO `request.formData()`)
+- **Redirect URI** deve corresponder exatamente ao registado no Google Cloud Console
+- **State cookie** (`google_oauth_state`) verifica CSRF — deve ser enviado com callback
+
+### Vercel Env Vars Necessárias
+```
+GOOGLE_CLIENT_ID=<your-google-client-id>
+GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+GOOGLE_REDIRECT_URI=https://aldeiasgames.vercel.app/api/auth/google/callback
+```
+
+### Google Cloud Console
+URL: https://console.cloud.google.com/apis/credentials (project: aldeiasgames)
+- **Authorized redirect URIs** deve incluir TANTO `http://localhost:3000/api/auth/google/callback` (dev) COMO `https://aldeiasgames.vercel.app/api/auth/google/callback` (prod)
+
+### Erro `/?error=unexpected_error`
+- Causa mais comum: `oauth-handler.ts` a chamar `request.formData()` em GET — fix: usar `request.nextUrl.searchParams`
+- Outra causa: `GOOGLE_REDIRECT_URI` não configurado em Vercel (dynamic fallback usa `request.nextUrl.origin`)
+- Verificar logs do servidor para detalhe do erro
