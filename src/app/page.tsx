@@ -53,6 +53,7 @@ interface RegisterFormState {
   email: string;
   password: string;
   telefone: string;
+  aldeiaId: string;
 }
 
 // Reducer for form state
@@ -71,7 +72,7 @@ function formReducer(state: { login: LoginFormState; register: RegisterFormState
     case 'UPDATE_REGISTER':
       return { ...state, register: { ...state.register, [action.field]: action.value } };
     case 'RESET_REGISTER':
-      return { ...state, register: { nome: "", email: "", password: "", telefone: "" } };
+      return { ...state, register: { nome: "", email: "", password: "", telefone: "", aldeiaId: "" } };
     default:
       return state;
   }
@@ -91,8 +92,9 @@ export default function Home() {
 
   const [formState, dispatchForm] = useReducer(formReducer, {
     login: { email: "", password: "" },
-    register: { nome: "", email: "", password: "", telefone: "" }
+    register: { nome: "", email: "", password: "", telefone: "", aldeiaId: "" }
   });
+  const [registerFieldErrors, setRegisterFieldErrors] = useState<Record<string, string>>({});
 
   const [eventos, setEventos] = useState<LandingEvento[]>([]);
   const [jogos, setJogos] = useState<LandingJogo[]>([]);
@@ -184,12 +186,15 @@ export default function Home() {
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    setRegisterFieldErrors({});
     const result = await register({ ...formState.register, role: DEFAULT_ROLE });
     if (result.success) {
       setRegisterModalOpen(false);
       dispatchForm({ type: 'RESET_REGISTER' });
-      // Redirecionar para o dashboard correto após registo
+      setRegisterFieldErrors({});
       router.push(ROLE_PATHS.user);
+    } else if (result.fieldErrors) {
+      setRegisterFieldErrors(result.fieldErrors as Record<string, string>);
     }
   }, [register, formState.register, router]);
 
@@ -417,10 +422,11 @@ export default function Home() {
                   id="nome"
                   placeholder="O teu nome"
                   value={formState.register.nome}
-                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'nome', value: e.target.value })}
+                  onChange={(e) => { dispatchForm({ type: 'UPDATE_REGISTER', field: 'nome', value: e.target.value }); setRegisterFieldErrors(prev => { const next = { ...prev }; delete next.nome; return next; }); }}
                   required
                   className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
+                {registerFieldErrors.nome && <p className="text-xs text-destructive ml-1">{registerFieldErrors.nome}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="register-email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
@@ -429,23 +435,24 @@ export default function Home() {
                   type="email"
                   placeholder="teu@email.com"
                   value={formState.register.email}
-                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'email', value: e.target.value })}
+                  onChange={(e) => { dispatchForm({ type: 'UPDATE_REGISTER', field: 'email', value: e.target.value }); setRegisterFieldErrors(prev => { const next = { ...prev }; delete next.email; return next; }); }}
                   required
                   className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
+                {registerFieldErrors.email && <p className="text-xs text-destructive ml-1">{registerFieldErrors.email}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="register-password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
                 <Input
                   id="register-password"
                   type="password"
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Mín. 12 chars, 1 maiúscula, 1 número, 1 especial"
                   value={formState.register.password}
-                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'password', value: e.target.value })}
+                  onChange={(e) => { dispatchForm({ type: 'UPDATE_REGISTER', field: 'password', value: e.target.value }); setRegisterFieldErrors(prev => { const next = { ...prev }; delete next.password; return next; }); }}
                   required
-                  minLength={8}
                   className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
+                {registerFieldErrors.password && <p className="text-xs text-destructive ml-1">{registerFieldErrors.password}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="telefone" className="text-xs font-bold uppercase tracking-widest ml-1">Telefone</Label>
@@ -454,9 +461,26 @@ export default function Home() {
                   type="tel"
                   placeholder="+351 9XX XXX XXX"
                   value={formState.register.telefone}
-                  onChange={(e) => dispatchForm({ type: 'UPDATE_REGISTER', field: 'telefone', value: e.target.value })}
+                  onChange={(e) => { dispatchForm({ type: 'UPDATE_REGISTER', field: 'telefone', value: e.target.value }); setRegisterFieldErrors(prev => { const next = { ...prev }; delete next.telefone; return next; }); }}
                   className="bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 focus:ring-2 focus:ring-secondary/50 text-foreground text-sm sm:text-base"
                 />
+                {registerFieldErrors.telefone && <p className="text-xs text-destructive ml-1">{registerFieldErrors.telefone}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="register-aldeia" className="text-xs font-bold uppercase tracking-widest ml-1">Aldeia *</Label>
+                <select
+                  id="register-aldeia"
+                  value={formState.register.aldeiaId}
+                  onChange={(e) => { dispatchForm({ type: 'UPDATE_REGISTER', field: 'aldeiaId', value: e.target.value }); setRegisterFieldErrors(prev => { const next = { ...prev }; delete next.aldeiaId; return next; }); }}
+                  required
+                  className="w-full bg-background border-none rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-foreground text-sm sm:text-base focus:ring-2 focus:ring-secondary/50"
+                >
+                  <option value="">Selecione a sua aldeia</option>
+                  {aldeias.map((aldeia) => (
+                    <option key={aldeia.id} value={aldeia.id}>{aldeia.nome}</option>
+                  ))}
+                </select>
+                {registerFieldErrors.aldeiaId && <p className="text-xs text-destructive ml-1">{registerFieldErrors.aldeiaId}</p>}
               </div>
             </div>
 

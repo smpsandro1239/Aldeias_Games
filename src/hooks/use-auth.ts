@@ -124,7 +124,11 @@ export function useAuth() {
       const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(responseData.error || "Erro ao registar");
+        const err = new Error(responseData.error || "Erro ao registar");
+        if (responseData.fieldErrors) {
+          (err as any).fieldErrors = responseData.fieldErrors;
+        }
+        throw err;
       }
 
       // Armazenar apenas dados do utilizador (não o token — httpOnly cookie já é suficiente)
@@ -141,8 +145,9 @@ export function useAuth() {
       return { success: true, data: responseData };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao registar";
-      toast.error(message);
-      return { success: false, error: message };
+      const fieldErrors = error instanceof Error ? (error as any).fieldErrors : undefined;
+      if (!fieldErrors) toast.error(message);
+      return { success: false, error: message, fieldErrors };
     }
   }, []);
 

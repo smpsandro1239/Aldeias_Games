@@ -4,7 +4,7 @@ import { hashPassword } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { getClientIdentifier } from '@/lib/rate-limit';
-import { generateSlug, escapeHtml } from '@/lib/utils';
+import { escapeHtml } from '@/lib/utils';
 import { sendEmail } from '@/lib/email';
 import crypto from 'crypto';
 
@@ -23,32 +23,45 @@ export async function POST(request: NextRequest) {
     const validation = registerSchema.safeParse(body);
 
     if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const err of validation.error.errors) {
+        const field = err.path.join('.') || 'form';
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message;
+        }
+      }
       return NextResponse.json(
-        { error: 'Dados inválidos', details: validation.error.errors },
+        { error: 'Corrija os erros no formulário', fieldErrors },
         { status: 400 }
       );
     }
 
     const { nome, email, password, telefone, role, tipoOrganizacao, aldeiaId: aldeiaIdFromBody } = validation.data;
 
-    // Verificar se email já existe - mensagem genérica (não revelar se existe)
+    // Verificar se email já existe
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
     if (existingUser) {
-      // Mensagem genérica para prevenir enumeração de emails
       return NextResponse.json({
-        success: true,
-        message: 'Se o email existir e não estiver verificado, receberá instruções de verificação',
-      });
+        error: 'Este email já está registado',
+        fieldErrors: { email: 'Já existe uma conta com este email' },
+      }, { status: 409 });
+    }
+
+    // Validar aldeia obrigatória para roles não-org
+    if (role !== 'aldeia_admin' && !aldeiaIdFromBody) {
+      return NextResponse.json({
+        error: 'Selecione uma aldeia',
+        fieldErrors: { aldeiaId: 'É obrigatório selecionar uma aldeia' },
+      }, { status: 400 });
     }
 
     // Hash da password
     const hashedPassword = await hashPassword(password);
 
-    // Criar utilizador (sempre com papel 'user')
-    let aldeiaId = aldeiaIdFromBody || undefined;
+    const aldeiaId = aldeiaIdFromBody;
     const isNewOrganization = false;
 
     // Gerar token de verificação de email

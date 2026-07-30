@@ -101,6 +101,7 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const { aldeias } = useAldeias(open);
 
@@ -123,6 +124,7 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     setLoading(true);
 
     try {
@@ -142,7 +144,12 @@ export function RegisterModal({ open, onOpenChange, onRegister, onLoginClick }: 
         aldeiaId: "",
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao registar");
+      if (err instanceof Error && (err as any).fieldErrors) {
+        setFieldErrors((err as any).fieldErrors);
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : "Erro ao registar");
+      }
     } finally {
       setLoading(false);
     }
