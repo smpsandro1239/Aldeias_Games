@@ -19,6 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Gamepad2,
+  Tag,
+  Euro,
+  Package,
+  Users,
+  Sparkles,
+  Ticket,
+  Star,
+} from "lucide-react";
 import { useEffect, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { TransparencyModal } from "./transparency-modal";
@@ -138,146 +149,203 @@ export function CreateJogoModal({
     }
   }, [open, resetForm]);
 
+  const tipoIcons: Record<string, React.ReactNode> = {
+    [GAME_TYPES.RASPADINHA]: <Sparkles className="h-4 w-4" />,
+    [GAME_TYPES.RIFA]: <Ticket className="h-4 w-4" />,
+    [GAME_TYPES.EUROMILHOES]: <Star className="h-4 w-4" />,
+    [GAME_TYPES.POIO_DA_VACA]: <Gamepad2 className="h-4 w-4" />,
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto" aria-describedby="create-jogo-description">
-          <DialogHeader>
-            <DialogTitle>{initialData ? "Editar Jogo" : "Novo Jogo"}</DialogTitle>
-            <DialogDescription id="create-jogo-description">
-              {initialData ? "Edite as informações do jogo." : "Crie um novo jogo para este evento."}
-            </DialogDescription>
+          <DialogHeader className="bg-gradient-to-r from-primary/5 to-transparent -mx-6 -mt-6 px-6 pt-6 pb-4 mb-2 border-b border-outline-variant/5 rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                {formData.tipo ? tipoIcons[formData.tipo] || <Gamepad2 className="h-5 w-5 text-primary" /> : <Gamepad2 className="h-5 w-5 text-primary" />}
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold text-accent">{initialData ? "Editar Jogo" : "Novo Jogo"}</DialogTitle>
+                <DialogDescription id="create-jogo-description" className="text-xs">
+                  {initialData ? "Edite as informações do jogo." : "Crie um novo jogo para este evento."}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
           <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="tipo">Tipo de Jogo *</Label>
-                <Select
-                  value={formData.tipo}
-                  onValueChange={(value: JogoFormData["tipo"]) =>
-                    updateFormData({ tipo: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={GAME_TYPES.RASPADINHA}>Raspadinha</SelectItem>
-                    <SelectItem value={GAME_TYPES.RIFA}>Rifa</SelectItem>
-                    <SelectItem value={GAME_TYPES.EUROMILHOES}>Euromilhões</SelectItem>
-                    <SelectItem value={GAME_TYPES.POIO_DA_VACA}>Poio da Vaca</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid gap-5 py-2">
 
-              {needsAldeiaSelection && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Aldeia *</Label>
-                    <Select
-                      value={selectedAldeiaId}
-                      onValueChange={(value) => {
-                        setSelectedAldeiaId(value);
-                        setSelectedEventoIdLocal("");
-                      }}
-                      disabled={loadingAldeias}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={loadingAldeias ? "A carregar..." : "Selecionar aldeia"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {aldeiasList.map((a) => (
-                          <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Evento *</Label>
-                    <Select
-                      value={selectedEventoIdLocal}
-                      onValueChange={setSelectedEventoIdLocal}
-                      disabled={!selectedAldeiaId || loadingEventos}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={loadingEventos ? "A carregar..." : selectedAldeiaId ? "Selecionar evento" : "Primeiro selecione a aldeia"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {eventosList.map((e) => (
-                          <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {/* === TIPO E LOCALIZAÇÃO === */}
+              <Card className="border-outline-variant/10 overflow-hidden">
+                <div className="bg-gradient-to-r from-primary/5 to-transparent px-4 py-2.5 border-b border-outline-variant/5">
+                  <h3 className="text-sm font-semibold text-accent flex items-center gap-2">
+                    <Gamepad2 className="h-4 w-4 text-primary" />
+                    Tipo e Localização
+                  </h3>
                 </div>
-              )}
-
-              <div className="grid gap-2">
-                <Label htmlFor="nome">Nome do Jogo *</Label>
-                <Input
-                  id="nome"
-                  placeholder="Ex: Rifa da Festa"
-                  value={formData.nome}
-                  onChange={(e) => updateFormData({ nome: e.target.value })}
-                  required
-                />
-              </div>
-
-              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.EUROMILHOES || formData.tipo === GAME_TYPES.RASPADINHA) && (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="preco">Preço (€) *</Label>
-                      <Input
-                        id="preco"
-                        type="number"
-                        min="0.5"
-                        step="0.01"
-                        value={formData.preco}
-                        onChange={(e) => updateFormData({ preco: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="stockInicial">Stock Total *</Label>
-                      <Input
-                        id="stockInicial"
-                        type="number"
-                        min="1"
-                        value={formData.stockInicial}
-                        onChange={(e) => updateFormData({ stockInicial: e.target.value })}
-                        required
-                      />
-                    </div>
+                <CardContent className="p-4 space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="tipo" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo de Jogo *</Label>
+                    <Select
+                      value={formData.tipo}
+                      onValueChange={(value: JogoFormData["tipo"]) =>
+                        updateFormData({ tipo: value })
+                      }
+                    >
+                      <SelectTrigger className="h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={GAME_TYPES.RASPADINHA}><span className="flex items-center gap-2"><Sparkles className="h-4 w-4" /> Raspadinha</span></SelectItem>
+                        <SelectItem value={GAME_TYPES.RIFA}><span className="flex items-center gap-2"><Ticket className="h-4 w-4" /> Rifa</span></SelectItem>
+                        <SelectItem value={GAME_TYPES.EUROMILHOES}><span className="flex items-center gap-2"><Star className="h-4 w-4" /> Euromilhões</span></SelectItem>
+                        <SelectItem value={GAME_TYPES.POIO_DA_VACA}><span className="flex items-center gap-2"><Gamepad2 className="h-4 w-4" /> Poio da Vaca</span></SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        checked={formData.limitePorUsuario !== "0"}
-                        onChange={(e) => updateFormData({ limitePorUsuario: e.target.checked ? "10" : "0" })}
-                      />
-                      <div className="w-9 h-5 bg-gray-300 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                    </label>
-                    <Label className="text-sm">Limitar participações por utilizador</Label>
-                  </div>
-                  {formData.limitePorUsuario !== "0" && (
-                    <div className="grid gap-2 mt-2">
-                      <Label htmlFor="limitePorUsuario">Máximo de participações por utilizador</Label>
-                      <Input
-                        id="limitePorUsuario"
-                        type="number"
-                        min="1"
-                        max="1000"
-                        value={formData.limitePorUsuario}
-                        onChange={(e) => updateFormData({ limitePorUsuario: e.target.value })}
-                      />
+
+                  {needsAldeiaSelection && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Aldeia *</Label>
+                        <Select
+                          value={selectedAldeiaId}
+                          onValueChange={(value) => {
+                            setSelectedAldeiaId(value);
+                            setSelectedEventoIdLocal("");
+                          }}
+                          disabled={loadingAldeias}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder={loadingAldeias ? "A carregar..." : "Selecionar aldeia"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {aldeiasList.map((a) => (
+                              <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Evento *</Label>
+                        <Select
+                          value={selectedEventoIdLocal}
+                          onValueChange={setSelectedEventoIdLocal}
+                          disabled={!selectedAldeiaId || loadingEventos}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder={loadingEventos ? "A carregar..." : selectedAldeiaId ? "Selecionar evento" : "Primeiro selecione a aldeia"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {eventosList.map((e) => (
+                              <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
-                </>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="nome" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do Jogo *</Label>
+                    <div className="relative">
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="nome"
+                        placeholder="Ex: Rifa da Festa"
+                        value={formData.nome}
+                        onChange={(e) => updateFormData({ nome: e.target.value })}
+                        required
+                        className="pl-9 h-10"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* === PREÇO E STOCK === */}
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.EUROMILHOES || formData.tipo === GAME_TYPES.RASPADINHA) && (
+                <Card className="border-outline-variant/10 overflow-hidden">
+                  <div className="bg-gradient-to-r from-emerald-500/5 to-transparent px-4 py-2.5 border-b border-outline-variant/5">
+                    <h3 className="text-sm font-semibold text-accent flex items-center gap-2">
+                      <Euro className="h-4 w-4 text-emerald-500" />
+                      Preço e Stock
+                    </h3>
+                  </div>
+                  <CardContent className="p-4 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="preco" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Preço (€) *</Label>
+                        <div className="relative">
+                          <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="preco"
+                            type="number"
+                            min="0.5"
+                            step="0.01"
+                            value={formData.preco}
+                            onChange={(e) => updateFormData({ preco: e.target.value })}
+                            required
+                            className="pl-9 h-10"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="stockInicial" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Stock Total *</Label>
+                        <div className="relative">
+                          <Package className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="stockInicial"
+                            type="number"
+                            min="1"
+                            value={formData.stockInicial}
+                            onChange={(e) => updateFormData({ stockInicial: e.target.value })}
+                            required
+                            className="pl-9 h-10"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-surface-container-low rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={formData.limitePorUsuario !== "0"}
+                            onChange={(e) => updateFormData({ limitePorUsuario: e.target.checked ? "10" : "0" })}
+                          />
+                          <div className="w-10 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </div>
+                        <div className="flex-1">
+                          <Label className="text-sm font-medium cursor-pointer">Limitar participações por utilizador</Label>
+                          <p className="text-xs text-muted-foreground">Restringe o número máximo de bilhetes que cada pessoa pode comprar</p>
+                        </div>
+                      </div>
+                      {formData.limitePorUsuario !== "0" && (
+                        <div className="mt-3 pt-3 border-t border-outline-variant/10">
+                          <Label htmlFor="limitePorUsuario" className="text-xs font-medium text-muted-foreground">Máximo por utilizador</Label>
+                          <div className="relative mt-1">
+                            <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="limitePorUsuario"
+                              type="number"
+                              min="1"
+                              max="1000"
+                              value={formData.limitePorUsuario}
+                              onChange={(e) => updateFormData({ limitePorUsuario: e.target.value })}
+                              className="pl-9 h-10"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {formData.tipo === GAME_TYPES.RASPADINHA && (
@@ -312,25 +380,24 @@ export function CreateJogoModal({
                 />
               )}
 
-              <div className="border-t pt-4 mt-2">
-                <LucratividadeCard
-                  formData={formData}
-                  getMetrics={getMetrics}
-                  metricsRaspadinha={metricsRaspadinha}
-                  metricsRifa={metricsRifa}
-                  metricsPoioDaVaca={metricsPoioDaVaca}
-                />
-              </div>
+              {/* === LUCRATIVIDADE === */}
+              <LucratividadeCard
+                formData={formData}
+                getMetrics={getMetrics}
+                metricsRaspadinha={metricsRaspadinha}
+                metricsRifa={metricsRifa}
+                metricsPoioDaVaca={metricsPoioDaVaca}
+              />
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <DialogFooter className="mt-6 pt-4 border-t border-outline-variant/10">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-outline-variant/20">
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={loading || !isLucrativo || !formData.nome.trim()}
-                className={isLucrativo ? "bg-green-500 hover:bg-green-600" : ""}
+                className={isLucrativo ? "bg-green-500 hover:bg-green-600 shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]" : ""}
               >
                 {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Jogo")}
               </Button>
