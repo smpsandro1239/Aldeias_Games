@@ -37,7 +37,6 @@ export interface JogoFormData {
   detalhesSorteioExterno: string;
   raspadinhaTitulo: string;
   raspadinhaSubtitulo: string;
-  raspadinhaOrganizacao: string;
   dimensoesX: string;
   dimensoesY: string;
   custoQuadrado: string;
@@ -152,7 +151,6 @@ export function buildJogoData(
   if (formData.tipo === GAME_TYPES.RASPADINHA) {
     config.titulo = formData.raspadinhaTitulo;
     config.subtitulo = formData.raspadinhaSubtitulo;
-    config.organizacao = formData.raspadinhaOrganizacao;
     config.premios = raspadinhaPremios.filter(p => p.nome.trim() && p.valorDinheiroAlternative > 0);
     const maxGanhadores = safeParseInt(formData.raspadinhaMaxGanhadores, 0);
     if (maxGanhadores > 0) {

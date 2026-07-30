@@ -46,6 +46,10 @@ export function TwoFactorSetup({ isMandatory = false }: TwoFactorSetupProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "setup" }),
       });
+      if (res.status === 401) {
+        toast.error("Sessão expirada. Faça login novamente para configurar 2FA.");
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setQrCode(data.qrCode);
@@ -73,6 +77,10 @@ export function TwoFactorSetup({ isMandatory = false }: TwoFactorSetupProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "verify", code: verifyCode }),
       });
+      if (res.status === 401) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setEnabled(true);
@@ -97,6 +105,10 @@ export function TwoFactorSetup({ isMandatory = false }: TwoFactorSetupProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "disable" }),
       });
+      if (res.status === 401) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setEnabled(false);

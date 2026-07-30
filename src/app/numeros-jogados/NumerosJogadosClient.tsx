@@ -152,6 +152,7 @@ export default function NumerosJogadosClient() {
   const [participacoes, setParticipacoes] = useState<Participacao[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [showHashes, setShowHashes] = useState<Record<string, boolean>>({});
 
   const [search, setSearch] = useState('');
@@ -183,6 +184,7 @@ export default function NumerosJogadosClient() {
 
   const fetchParticipacoes = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const params = new URLSearchParams();
       params.set('page', String(currentPage));
@@ -194,13 +196,16 @@ export default function NumerosJogadosClient() {
       if (ganhadorFilter !== 'all') params.set('ganhador', ganhadorFilter);
 
       const res = await apiRequest(`/api/numeros-jogados?${params.toString()}`);
-      if (!res.ok) throw new Error('Erro ao carregar');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erro ao carregar');
+      }
       const data = await res.json();
       setParticipacoes(data.data || []);
       setPagination(data.pagination || null);
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao carregar números jogados');
+      setFetchError(err instanceof Error ? err.message : 'Erro ao carregar');
     } finally {
       setLoading(false);
     }
@@ -313,11 +318,24 @@ export default function NumerosJogadosClient() {
       )}
 
       {/* Empty */}
-      {!loading && participacoes.length === 0 && (
+      {!loading && !fetchError && participacoes.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
             <Gamepad2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground">Nenhum número jogado encontrado</p>
+            <p className="text-muted-foreground">
+              {search || jogoTipo !== 'all' || aldeiaFilter !== 'all' || estadoFilter !== 'all' || ganhadorFilter !== 'all'
+                ? 'Nenhum resultado encontrado com os filtros atuais'
+                : 'Ainda não tem números jogados'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error */}
+      {!loading && fetchError && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-destructive">{fetchError}</p>
           </CardContent>
         </Card>
       )}

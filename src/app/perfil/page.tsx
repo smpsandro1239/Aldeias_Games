@@ -128,7 +128,9 @@ export default function PerfilPage() {
     try {
       const response = await fetch("/api/aldeias");
       const data = await response.json();
-      if (data.data) {
+      if (data.aldeias) {
+        setAldeias(data.aldeias);
+      } else if (data.data) {
         setAldeias(data.data);
       }
     } catch (error) {

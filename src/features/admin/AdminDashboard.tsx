@@ -6,7 +6,7 @@ import { useAdminDashboardData } from "./hooks/use-admin-dashboard-data";
 import useAdminCrudHandlers from "./hooks/use-admin-crud-handlers";
 
 import { Tabs } from "@/components/ui/tabs";
-import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins, Ticket, ClipboardList } from "lucide-react";
+import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins, Ticket, ClipboardList, Gamepad2, Shield } from "lucide-react";
 import { usePendingChangesCount } from "@/hooks/use-pending-changes-count";
 import { QuickAction } from "@/components/dashboard/quick-action";
 
@@ -183,6 +183,12 @@ export default function AdminDashboard({
               color="blue"
             />
             <QuickAction
+              icon={<Gamepad2 className="h-5 w-5" />}
+              label="Novo Jogo"
+              onClick={() => { setSelectedJogo(null); setJogoModalOpen(true); }}
+              color="green"
+            />
+            <QuickAction
               icon={<Ticket className="h-5 w-5" />}
               label="Números"
               onClick={() => router.push("/numeros-jogados")}
@@ -218,6 +224,12 @@ export default function AdminDashboard({
               onClick={() => router.push("/pending-changes")}
               color="amber"
               badge={pendingCount}
+            />
+            <QuickAction
+              icon={<Shield className="h-5 w-5" />}
+              label="Auditoria"
+              onClick={() => setActiveTab("auditoria")}
+              color="violet"
             />
             <QuickAction
               icon={<Settings className="h-5 w-5" />}

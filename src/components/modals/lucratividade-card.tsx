@@ -8,10 +8,10 @@ interface LucratividadeCardProps {
   getMetrics: () => JogoMetrics;
   metricsRaspadinha: {
     totalPercentagem?: number;
-    lucroMinimo?: number;
     custoMedioPorBilhete?: number;
     receitaTotal?: number;
     lucroEstimado?: number;
+    margemLucro?: number;
   };
   metricsRifa: {
     totalPremios?: number;
@@ -55,23 +55,23 @@ export function LucratividadeCard({
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Lucro Mínimo:</span>
-            <span className={metricsRaspadinha.lucroMinimo! >= 50 ? "text-green-500" : "text-red-500"}>
-              {metricsRaspadinha.lucroMinimo}%
-            </span>
-          </div>
-          <div className="flex justify-between">
             <span className="text-muted-foreground">Custo Médio/Bilhete:</span>
             <span className="font-bold text-[#ff734b]">{metricsRaspadinha.custoMedioPorBilhete!.toFixed(2)}€</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Receita (100 bilhetes):</span>
+            <span className="text-muted-foreground">Receita ({formData.stockInicial} bilhetes):</span>
             <span className="font-bold">{metricsRaspadinha.receitaTotal!.toFixed(2)}€</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Lucro Estimado:</span>
             <span className={metricsRaspadinha.lucroEstimado! >= 0 ? "text-green-500" : "text-red-500"}>
               {metricsRaspadinha.lucroEstimado!.toFixed(2)}€
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Margem:</span>
+            <span className={metricsRaspadinha.margemLucro! >= 50 ? "text-green-500" : "text-red-500"}>
+              {metricsRaspadinha.margemLucro!.toFixed(1)}%
             </span>
           </div>
         </div>

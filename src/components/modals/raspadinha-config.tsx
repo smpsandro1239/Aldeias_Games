@@ -12,7 +12,7 @@ interface RaspadinhaConfigProps {
   raspadinhaPremios: Premio[];
   isLucrativo: boolean;
   metricsRaspadinha: {
-    lucroMinimo?: number;
+    margemLucro?: number;
   };
   expectedCountMap: Map<string, number>;
   updateFormData: (updates: Partial<JogoFormData>) => void;
@@ -37,7 +37,7 @@ export function RaspadinhaConfig({
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Configuração da Raspadinha</h3>
         <Badge variant={isLucrativo ? "default" : "destructive"} className={isLucrativo ? "bg-green-500" : ""}>
-          {isLucrativo ? `${metricsRaspadinha.lucroMinimo}% lucro` : "Lucre baixo!"}
+          {isLucrativo ? `${metricsRaspadinha.margemLucro}% lucro` : "Lucre baixo!"}
         </Badge>
       </div>
 
@@ -51,16 +51,7 @@ export function RaspadinhaConfig({
             onChange={(e) => updateFormData({ raspadinhaTitulo: e.target.value })}
           />
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="raspadinhaOrganizacao">Organização</Label>
-          <Input
-            id="raspadinhaOrganizacao"
-            placeholder="Ex: Junta de Freguesia"
-            value={formData.raspadinhaOrganizacao}
-            onChange={(e) => updateFormData({ raspadinhaOrganizacao: e.target.value })}
-          />
         </div>
-      </div>
 
       <div className="bg-[#1f1b19] rounded-xl p-4 space-y-4 border border-[#ff734b]/20">
         <div className="flex items-center justify-between">

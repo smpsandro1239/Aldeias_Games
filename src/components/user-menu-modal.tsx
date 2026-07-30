@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut, Settings, Banknote, Shield } from "lucide-react";
+import { User, LogOut, Settings, Banknote, Shield, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/components/providers/wallet-provider";
 import { apiRequest } from "@/lib/api-client";
 import { VaultPinModal } from "@/components/modals/vault-pin-modal";
+import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
 
 interface User {
   id: string;
@@ -30,6 +31,7 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   const { saldo, loading: walletLoading } = useWallet();
   const [cashboxSaldo, setCashboxSaldo] = useState<number | null>(null);
   const [vaultPinOpen, setVaultPinOpen] = useState(false);
+  const [carregarSaldoOpen, setCarregarSaldoOpen] = useState(false);
 
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
 
@@ -92,18 +94,29 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
 
   return (
     <>
+    <CarregarSaldoModal
+      open={carregarSaldoOpen}
+      onOpenChange={setCarregarSaldoOpen}
+      aldeiaId={user?.aldeiaId}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-surface-container border border-primary/10 p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="font-serif text-xl text-accent">A minha Conta</DialogTitle>
         </DialogHeader>
         <div className="px-6 pb-6 space-y-4">
-          <div className="bg-surface-container-low rounded-xl p-4 text-center">
+          <div
+            className="bg-surface-container-low rounded-xl p-4 text-center cursor-pointer hover:bg-surface-container-high transition-colors"
+            onClick={() => { onOpenChange(false); router.push('/perfil'); }}
+          >
             <p className="text-xs text-muted-foreground mb-1">Bem-vindo</p>
             <p className="font-serif text-lg text-accent">{user?.nome}</p>
             <p className="text-xs text-muted-foreground/60 mt-1">{user?.email}</p>
           </div>
-          <div className="bg-surface-container-low rounded-xl p-4 text-center">
+          <div
+            className="bg-surface-container-low rounded-xl p-4 text-center cursor-pointer hover:bg-surface-container-high transition-colors"
+            onClick={() => { onOpenChange(false); setCarregarSaldoOpen(true); }}
+          >
             <p className="text-xs text-muted-foreground mb-1">O meu Saldo Aldeias</p>
             <p className="font-serif text-3xl text-primary">{saldo.toFixed(2)} €</p>
           </div>

@@ -85,8 +85,8 @@ async function main() {
     { name: RoleName.ALDEIA_ADMIN, desc: 'Admin de Aldeia', pk: [PermissionKey.VIEW_ALDEIA, PermissionKey.CREATE_EVENTO, PermissionKey.EDIT_EVENTO, PermissionKey.DELETE_EVENTO, PermissionKey.VIEW_EVENTO, PermissionKey.CREATE_JOGO, PermissionKey.EDIT_JOGO, PermissionKey.DELETE_JOGO, PermissionKey.VIEW_JOGO, PermissionKey.MANAGE_PREMIOS, PermissionKey.VIEW_PREMIOS, PermissionKey.MANAGE_VENDEDORES, PermissionKey.VIEW_VENDEDORES, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS, PermissionKey.VIEW_ANALYTICS_LOCAL] },
     { name: RoleName.GESTOR, desc: 'Gestor', pk: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.VIEW_PREMIOS, PermissionKey.VIEW_VENDEDORES, PermissionKey.EXECUTE_VENDA, PermissionKey.VIEW_VENDAS] },
     { name: RoleName.COLABORADOR, desc: 'Colaborador', pk: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.VIEW_PREMIOS, PermissionKey.EXECUTE_VENDA] },
-    { name: RoleName.VIEWER, desc: 'Visualizador', pk: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.VIEW_PREMIOS] },
-    { name: RoleName.MEMBRO, desc: 'Membro', pk: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.VIEW_PREMIOS] },
+    { name: RoleName.VIEWER, desc: 'Visualizador', pk: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.VIEW_PREMIOS, PermissionKey.VIEW_VENDEDORES] },
+    { name: RoleName.MEMBRO, desc: 'Membro', pk: [PermissionKey.VIEW_ALDEIA, PermissionKey.VIEW_EVENTO, PermissionKey.VIEW_JOGO, PermissionKey.VIEW_PREMIOS, PermissionKey.VIEW_VENDEDORES] },
   ];
   const roles: Record<string, any> = {};
   for (const r of roleDefs) {

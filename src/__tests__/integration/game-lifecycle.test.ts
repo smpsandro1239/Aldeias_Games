@@ -14,7 +14,6 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
         configuracao: {
           titulo: "Grande Rifa",
           subtitulo: "Ganha prémios incríveis",
-          organizacao: "Associação X",
         },
         premios: [
           { nome: "Prémio 1", valorDinheiroAlternative: 500, percentagem: 50 },

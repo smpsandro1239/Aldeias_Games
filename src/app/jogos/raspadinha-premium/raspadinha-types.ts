@@ -24,7 +24,6 @@ export interface Jogo {
   configuracao: {
     titulo?: string;
     subtitulo?: string;
-    organizacao?: string;
     premioMaximo?: number;
     premios?: Prize[];
     dataSorteio?: string;

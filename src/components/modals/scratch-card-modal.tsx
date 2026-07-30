@@ -19,7 +19,6 @@ interface ScratchCardModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   titulo?: string;
-  organizacao?: string;
   // Props novas (opcional)
   premio?: {
     id: string;
@@ -42,7 +41,6 @@ export function ScratchCardModal({
   open,
   onOpenChange,
   titulo = "RASPADINHA PREMIUM",
-  organizacao = "",
   premio,
   jogoId,
   participacaoId,
@@ -141,7 +139,6 @@ export function ScratchCardModal({
               <Sparkles className="w-8 h-8 text-foreground" />
             </motion.div>
             <h2 className="text-4xl font-black text-foreground font-headline tracking-wider">{titulo}</h2>
-            {organizacao && <p className="text-tertiary mt-1 font-semibold">{organizacao}</p>}
           </div>
 
           {/* Área da raspadinha */}

@@ -86,7 +86,8 @@ export function CreateJogoModal({
     apiRequest("/api/aldeias")
       .then((res) => res.json())
       .then((data) => {
-        const aldeias = (data.data || data || []).map((a: { id: string; nome: string }) => ({ id: a.id, nome: a.nome }));
+        const items = data.aldeias || data.data || [];
+        const aldeias = (Array.isArray(items) ? items : []).map((a: { id: string; nome: string }) => ({ id: a.id, nome: a.nome }));
         setAldeiasList(aldeias);
       })
       .catch(() => toast.error("Erro ao carregar aldeias"))
@@ -103,7 +104,8 @@ export function CreateJogoModal({
     apiRequest(`/api/eventos?aldeiaId=${selectedAldeiaId}&limit=100`)
       .then((res) => res.json())
       .then((data) => {
-        const eventos = (data.data || data || []).map((e: { id: string; nome: string }) => ({ id: e.id, nome: e.nome }));
+        const items = data.eventos || data.data || [];
+        const eventos = (Array.isArray(items) ? items : []).map((e: { id: string; nome: string }) => ({ id: e.id, nome: e.nome }));
         setEventosList(eventos);
         setSelectedEventoIdLocal("");
       })
@@ -223,7 +225,7 @@ export function CreateJogoModal({
                 />
               </div>
 
-              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.RASPADINHA) && (
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.EUROMILHOES || formData.tipo === GAME_TYPES.RASPADINHA) && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
@@ -292,7 +294,7 @@ export function CreateJogoModal({
                 />
               )}
 
-              {(formData.tipo === GAME_TYPES.RIFA) && (
+              {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.EUROMILHOES) && (
                 <RifaConfig
                   formData={formData}
                   rifaPremios={rifaPremios}

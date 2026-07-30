@@ -85,8 +85,8 @@ async function runSeed() {
     { name: 'ALDEIA_ADMIN', desc: 'Admin de Aldeia', pk: ['VIEW_ALDEIA','CREATE_EVENTO','EDIT_EVENTO','DELETE_EVENTO','VIEW_EVENTO','CREATE_JOGO','EDIT_JOGO','DELETE_JOGO','VIEW_JOGO','MANAGE_PREMIOS','VIEW_PREMIOS','MANAGE_VENDEDORES','VIEW_VENDEDORES','EXECUTE_VENDA','VIEW_VENDAS','VIEW_ANALYTICS_LOCAL'] },
     { name: 'GESTOR', desc: 'Gestor', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES','EXECUTE_VENDA','VIEW_VENDAS'] },
     { name: 'COLABORADOR', desc: 'Colaborador', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','EXECUTE_VENDA'] },
-    { name: 'VIEWER', desc: 'Visualizador', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS'] },
-    { name: 'MEMBRO', desc: 'Membro', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS'] },
+    { name: 'VIEWER', desc: 'Visualizador', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES'] },
+    { name: 'MEMBRO', desc: 'Membro', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES'] },
   ];
 
   const roles: Record<string, { id: string }> = {};

@@ -56,10 +56,12 @@ function calcularRentabilidade(tipo: string, dados: CalcularRentabilidadeData) {
   if (tipo === 'raspadinha') {
     const premios = dados.premios || [];
     resultado.percentagemTotalPremios = premios.reduce((acc: number, p: { percentagem?: number; valorDinheiroAlternative?: number }) => acc + (p.percentagem || 0), 0);
-    resultado.lucroMinimoPercent = 100 - resultado.percentagemTotalPremios;
     resultado.custoMedioPrevisto = premios.reduce((acc: number, p: { percentagem?: number; valorDinheiroAlternative?: number }) => 
       acc + ((p.valorDinheiroAlternative || 0) * (p.percentagem || 0) / 100), 0);
     resultado.lucroLiquidoPrevisto = resultado.receitaEsperada - (resultado.custoMedioPrevisto * stock);
+    resultado.lucroMinimoPercent = resultado.receitaEsperada > 0
+      ? (resultado.lucroLiquidoPrevisto / resultado.receitaEsperada) * 100
+      : 0;
   } else if (tipo === 'rifa') {
     const premios = dados.premios || [];
     const custoTotalPremios = premios.reduce((acc: number, p: { percentagem?: number; valorDinheiroAlternative?: number }) => acc + (p.valorDinheiroAlternative || 0), 0);

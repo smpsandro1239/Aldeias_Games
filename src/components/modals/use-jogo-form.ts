@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useReducer, useCallback } from "react";
+import { useMemo, useReducer, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import {
   GAME_TYPES,
@@ -31,7 +31,6 @@ const getInitialState = (initialData?: JogoData) => ({
     detalhesSorteioExterno: initialData?.detalhesSorteioExterno || "",
     raspadinhaTitulo: "RASPADINHA DA SORTE",
     raspadinhaSubtitulo: "Raspe com o dedo para revelar o seu prémio!",
-    raspadinhaOrganizacao: "",
     dimensoesX: "10",
     dimensoesY: "10",
     custoQuadrado: "5",
@@ -123,6 +122,17 @@ export function useJogoForm(initialData?: JogoData, eventoId?: string, effective
   const preco = useMemo(() => safeParseFloat(state.formData.preco), [state.formData.preco]);
   const stock = useMemo(() => safeParseInt(state.formData.stockInicial), [state.formData.stockInicial]);
 
+  useEffect(() => {
+    if (preco > 0 && state.formData.tipo === GAME_TYPES.RASPADINHA) {
+      setRaspadinhaPremios(
+        state.raspadinhaPremios.map(p =>
+          p.nome === "Valor da Raspadinha" ? { ...p, valorDinheiroAlternative: preco } : p
+        )
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preco, state.formData.tipo]);
+
   const expectedCountMap = useMemo(() => {
     const map = new Map<string, number>();
     state.raspadinhaPremios.forEach(p => {
@@ -144,13 +154,12 @@ export function useJogoForm(initialData?: JogoData, eventoId?: string, effective
 
     return {
       totalPercentagem,
-      lucroMinimo,
       custoMedioPorBilhete,
       receitaTotal,
       custoTotalEstimado,
       lucroEstimado,
       margemLucro,
-      isLucrativo: lucroMinimo >= 50
+      isLucrativo: margemLucro >= 50
     };
   }, [state.raspadinhaPremios, preco, stock]);
 
@@ -282,6 +291,13 @@ export function useJogoForm(initialData?: JogoData, eventoId?: string, effective
 
       if (!state.formData.dataSorteio || !state.formData.horaSorteio || !state.formData.localSorteio) {
         toast.error('Data, hora e local do sorteio são obrigatórios para rifa');
+        return;
+      }
+    }
+
+    if (state.formData.tipo === GAME_TYPES.EUROMILHOES) {
+      if (!state.formData.dataSorteio || !state.formData.horaSorteio || !state.formData.localSorteio) {
+        toast.error('Data, hora e local do sorteio são obrigatórios para Euromilhões');
         return;
       }
     }

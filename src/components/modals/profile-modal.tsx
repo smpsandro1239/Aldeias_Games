@@ -82,12 +82,13 @@ function useAldeiasPermitidas(user: User, onUpdate: ProfileModalProps['onUpdate'
         throw new Error("Erro ao carregar aldeias");
       }
       const data = await res.json();
-      if (data.data) {
+      const items = data.aldeias || data.data || [];
+      if (Array.isArray(items) && items.length > 0) {
         const aldeiaIds = permittedAldeias.map((a) => a.id);
         if (user.aldeia) {
           aldeiaIds.push(user.aldeia.id);
         }
-        const filtered = (data.data as Aldeia[]).filter(
+        const filtered = (items as Aldeia[]).filter(
           (a) => !aldeiaIds.includes(a.id)
         );
         setAldeias(filtered);

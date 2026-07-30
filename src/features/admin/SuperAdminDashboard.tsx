@@ -17,6 +17,7 @@ import {
   Plus, Building2, Calendar, Wallet, Globe, RotateCcw,
   DollarSign, Users, Gamepad2, Trophy, CreditCard,
   Shield, TrendingUp, ArrowRight, BarChart3, Hash, Ticket, ClipboardList,
+  Receipt, ArrowUpRight, ArrowDownRight, Clock,
 } from "lucide-react";
 import { usePendingChangesCount } from "@/hooks/use-pending-changes-count";
 
@@ -192,6 +193,12 @@ export default function SuperAdminDashboard({
               color="blue"
             />
             <QuickAction
+              icon={<Gamepad2 className="h-5 w-5" />}
+              label="Novo Jogo"
+              onClick={() => { setSelectedJogo(null); setJogoModalOpen(true); }}
+              color="green"
+            />
+            <QuickAction
               icon={<Wallet className="h-5 w-5" />}
               label="Cofre Global"
               onClick={() => router.push("/superadmindashboard/cofre")}
@@ -246,53 +253,77 @@ export default function SuperAdminDashboard({
         {/* ===== RECENT ACTIVITY ===== */}
         {(transacoes.length > 0 || eventos.length > 0) && (
           <div>
-            <h2 className="font-serif text-lg font-semibold text-accent mb-3">Atividade Recente</h2>
+            <h2 className="font-serif text-lg font-semibold text-accent mb-3 flex items-center gap-2">
+              <Clock className="h-5 w-5" /> Atividade Recente
+            </h2>
             <div className="grid md:grid-cols-2 gap-4">
               {transacoes.length > 0 && (
-                <Card className="bg-card border-outline-variant/10">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-muted-foreground">Últimas Transações</h3>
-                      <button onClick={() => setActiveTab("transacoes")} className="text-xs text-primary hover:underline flex items-center gap-1">
-                        Ver tudo <ArrowRight className="h-3 w-3" />
-                      </button>
+                <Card className="bg-surface-container-low border-outline-variant/10 overflow-hidden">
+                  <div className="bg-gradient-to-r from-primary/5 to-transparent px-4 py-3 flex items-center justify-between border-b border-outline-variant/5">
+                    <div className="flex items-center gap-2">
+                      <Receipt className="h-4 w-4 text-primary" />
+                      <h3 className="text-sm font-semibold">Últimas Transações</h3>
                     </div>
-                    <div className="space-y-2">
-                      {transacoes.slice(0, 5).map((t) => (
-                        <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-outline-variant/5 last:border-0">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-accent truncate">{t.user?.nome || "Sistema"}</p>
-                            <p className="text-xs text-muted-foreground truncate">{t.descricao || t.tipo}</p>
+                    <button onClick={() => setActiveTab("transacoes")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 font-medium">
+                      Ver tudo <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <CardContent className="p-3">
+                    <div className="space-y-1">
+                      {transacoes.slice(0, 5).map((t) => {
+                        const isCredit = t.tipo === 'carregamento' || t.tipo === 'deposito';
+                        return (
+                          <div key={t.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-container transition-colors">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isCredit ? 'bg-emerald-500/15' : 'bg-red-500/15'}`}>
+                                {isCredit
+                                  ? <ArrowUpRight className={`h-4 w-4 ${isCredit ? 'text-emerald-500' : 'text-red-500'}`} />
+                                  : <ArrowDownRight className="h-4 w-4 text-red-500" />
+                                }
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-accent truncate">{t.user?.nome || "Sistema"}</p>
+                                <p className="text-xs text-muted-foreground truncate">{t.descricao || t.tipo}</p>
+                              </div>
+                            </div>
+                            <div className="text-right ml-3 shrink-0">
+                              <span className={`text-sm font-bold ${isCredit ? 'text-emerald-500' : 'text-red-500'}`}>
+                                {isCredit ? '+' : '-'}{formatCurrency(Math.abs(t.valor))}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-right ml-3 shrink-0">
-                            <p className={`text-sm font-bold ${t.tipo === 'carregamento' || t.tipo === 'deposito' ? 'text-emerald-500' : 'text-red-500'}`}>
-                              {t.tipo === 'carregamento' || t.tipo === 'deposito' ? '+' : '-'}{formatCurrency(t.valor)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
               )}
               {eventos.length > 0 && (
-                <Card className="bg-card border-outline-variant/10">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-muted-foreground">Últimos Eventos</h3>
-                      <button onClick={() => setActiveTab("eventos")} className="text-xs text-primary hover:underline flex items-center gap-1">
-                        Ver tudo <ArrowRight className="h-3 w-3" />
-                      </button>
+                <Card className="bg-surface-container-low border-outline-variant/10 overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-500/5 to-transparent px-4 py-3 flex items-center justify-between border-b border-outline-variant/5">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <h3 className="text-sm font-semibold">Últimos Eventos</h3>
                     </div>
-                    <div className="space-y-2">
+                    <button onClick={() => setActiveTab("eventos")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 font-medium">
+                      Ver tudo <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <CardContent className="p-3">
+                    <div className="space-y-1">
                       {eventos.slice(0, 5).map((e) => (
-                        <div key={e.id} className="flex items-center justify-between py-1.5 border-b border-outline-variant/5 last:border-0">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-accent truncate">{e.nome}</p>
-                            <p className="text-xs text-muted-foreground">{e.aldeia?.nome || "—"}</p>
+                        <div key={e.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-container transition-colors">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <Calendar className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-accent truncate">{e.nome}</p>
+                              <p className="text-xs text-muted-foreground">{e.aldeia?.nome || "—"}</p>
+                            </div>
                           </div>
-                          <div className="text-right ml-3 shrink-0">
-                            <Badge variant={e.estado === "ativo" ? "default" : "secondary"} className="text-xs">
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant={e.estado === "ativo" ? "default" : "secondary"} className={`text-xs capitalize ${e.estado === "ativo" ? "bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/20" : ""}`}>
                               {e.estado}
                             </Badge>
                           </div>
@@ -308,37 +339,43 @@ export default function SuperAdminDashboard({
 
         {/* ===== TABS (deep dive) ===== */}
         <div>
-          <h2 className="font-serif text-lg font-semibold text-accent mb-3">Gestão Detalhada</h2>
+          <h2 className="font-serif text-lg font-semibold text-accent mb-3 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" /> Gestão Detalhada
+          </h2>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="flex overflow-x-auto gap-1 bg-surface-container-low p-1 rounded-xl">
-              <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <TrendingUp className="h-4 w-4" /> Geral
-              </TabsTrigger>
-              <TabsTrigger value="eventos" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <Calendar className="h-4 w-4" /> Eventos
-              </TabsTrigger>
-              <TabsTrigger value="jogos" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <Gamepad2 className="h-4 w-4" /> Jogos
-              </TabsTrigger>
-              <TabsTrigger value="vencedores" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <Trophy className="h-4 w-4" /> Prémios
-              </TabsTrigger>
-              <TabsTrigger value="aldeias" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <Building2 className="h-4 w-4" /> Aldeias
-              </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <Users className="h-4 w-4" /> Users
-              </TabsTrigger>
-              <TabsTrigger value="transacoes" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <CreditCard className="h-4 w-4" /> Transações
-              </TabsTrigger>
-              <TabsTrigger value="verificar" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <Hash className="h-4 w-4" /> Verificar
-              </TabsTrigger>
-              <TabsTrigger value="auditoria" className="flex items-center gap-1.5 text-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold">
-                <Shield className="h-4 w-4" /> Auditoria
-              </TabsTrigger>
-            </TabsList>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+              <TabsList className="flex overflow-x-auto gap-1 bg-surface-container-low p-1 rounded-xl scrollbar-none">
+                <TabsTrigger value="overview" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <TrendingUp className="h-4 w-4" /> Geral
+                </TabsTrigger>
+                <TabsTrigger value="eventos" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <Calendar className="h-4 w-4" /> Eventos
+                </TabsTrigger>
+                <TabsTrigger value="jogos" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <Gamepad2 className="h-4 w-4" /> Jogos
+                </TabsTrigger>
+                <TabsTrigger value="vencedores" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <Trophy className="h-4 w-4" /> Prémios
+                </TabsTrigger>
+                <TabsTrigger value="aldeias" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <Building2 className="h-4 w-4" /> Aldeias
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <Users className="h-4 w-4" /> Users
+                </TabsTrigger>
+                <TabsTrigger value="transacoes" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <CreditCard className="h-4 w-4" /> Transações
+                </TabsTrigger>
+                <TabsTrigger value="verificar" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <Hash className="h-4 w-4" /> Verificar
+                </TabsTrigger>
+                <TabsTrigger value="auditoria" className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold data-[state=active]:shadow-lg transition-all">
+                  <Shield className="h-4 w-4" /> Auditoria
+                </TabsTrigger>
+              </TabsList>
+              <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            </div>
 
             <div className="mt-4">
               <TabsContent value="overview">

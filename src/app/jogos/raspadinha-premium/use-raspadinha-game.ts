@@ -98,7 +98,7 @@ export function useRaspadinhaGame(
 
   const titulo = jogo?.configuracao?.titulo || jogo?.nome || "RASPADINHA PREMIUM";
   const subtitulo = jogo?.configuracao?.subtitulo || "Raspe com o dedo para revelar o seu prémio!";
-  const organizacao = jogo?.configuracao?.organizacao || jogo?.evento?.aldeia?.nome || "Aldeias Games";
+  const organizacao = jogo?.evento?.aldeia?.nome || "Aldeias Games";
   const premioMaximo = jogo?.configuracao?.premioMaximo || 5000;
   const preco = jogo?.preco || 2;
 
@@ -480,6 +480,7 @@ export function useRaspadinhaGame(
     provaModalOpen, setProvaModalOpen,
     slotSummary, premiosDisplay,
     titulo, subtitulo, organizacao, premioMaximo, preco,
+    // organizacao currently always reflects aldeia name
     initSlotCanvas, handlePointerDown, handlePointerMove, handlePointerUp,
     scratchAll, claimPremio, criarParticipacao, handleComprarNova,
     setShowWin, initSlotsFromGrid,
