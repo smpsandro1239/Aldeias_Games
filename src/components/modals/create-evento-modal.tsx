@@ -138,6 +138,21 @@ export function CreateEventoModal({
         aldeiaId: aldeiaId || "",
         estado: EVENT_STATES.RASCUNHO,
       });
+      setErrors({});
+      setJogosSelecionados([]);
+      setIsRecurring(false);
+      setRecurrenceFrequency('semanal');
+      setRecurrenceDayOfWeek(1);
+      setRecurrenceTime('08:00');
+      setMaxOccurrences(undefined);
+      setStep('event');
+      setCreatedEventoId(null);
+      setJogoModalOpen(false);
+      setSelectedGameType(null);
+      selectedGameTypeRef.current = null;
+      setConfiguredGames(new Set());
+    } else if (aldeiaId && !initialData) {
+      setFormData(prev => ({ ...prev, aldeiaId }));
       setJogosSelecionados([]);
       setIsRecurring(false);
       setRecurrenceFrequency('semanal');
@@ -395,6 +410,7 @@ export function CreateEventoModal({
                   value={formData.aldeiaId}
                   onValueChange={handleAldeiaChange}
                   required
+                  disabled={!!aldeiaId && !initialData}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma aldeia" />
@@ -407,6 +423,9 @@ export function CreateEventoModal({
                     ))}
                   </SelectContent>
                 </Select>
+                {!!aldeiaId && !initialData && (
+                  <p className="text-xs text-muted-foreground">O evento será criado nesta organização.</p>
+                )}
                 {errors.aldeiaId && <p className="text-sm text-destructive" role="alert">{errors.aldeiaId}</p>}
               </div>
             )}
