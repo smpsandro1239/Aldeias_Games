@@ -306,10 +306,10 @@ export default function NumerosJogadosClient() {
               className="pl-10"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className={`grid gap-2 ${showAldeiaFilter ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3'}`}>
             <Select value={jogoTipo} onValueChange={setJogoTipo}>
-              <SelectTrigger className="w-[140px]">
-                <Gamepad2 className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+              <SelectTrigger className="w-full">
+                <Gamepad2 className="h-3.5 w-3.5 mr-2 text-muted-foreground flex-shrink-0" />
                 <SelectValue placeholder="Tipo de Jogo" />
               </SelectTrigger>
               <SelectContent>
@@ -322,7 +322,7 @@ export default function NumerosJogadosClient() {
             </Select>
 
             <Select value={estadoFilter} onValueChange={setEstadoFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
@@ -333,7 +333,7 @@ export default function NumerosJogadosClient() {
             </Select>
 
             <Select value={ganhadorFilter} onValueChange={setGanhadorFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Resultado" />
               </SelectTrigger>
               <SelectContent>
@@ -345,8 +345,8 @@ export default function NumerosJogadosClient() {
 
             {showAldeiaFilter && (
               <Select value={aldeiaFilter} onValueChange={setAldeiaFilter}>
-                <SelectTrigger className="w-[160px]">
-                  <MapPin className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                <SelectTrigger className="w-full">
+                  <MapPin className="h-3.5 w-3.5 mr-2 text-muted-foreground flex-shrink-0" />
                   <SelectValue placeholder="Aldeia" />
                 </SelectTrigger>
                 <SelectContent>
