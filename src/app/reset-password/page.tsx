@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
     }
 
     if (novaPassword !== confirmPassword) {
-      setError("As passwords não coincidem");
+      setError("As palavras-passe não coincidem");
       setLoading(false);
       return;
     }
@@ -64,11 +64,11 @@ export default function ResetPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Erro ao redefinir password");
+        setError(data.error || "Erro ao redefinir palavra-passe");
         return;
       }
 
-      setMessage("Password alterada com sucesso");
+      setMessage("Palavra-passe alterada com sucesso");
       setNovaPassword("");
       setConfirmPassword("");
 
@@ -89,10 +89,10 @@ export default function ResetPasswordPage() {
         {showSuccess ? (
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
             <h2 className="text-xl font-semibold text-green-800 mb-4">
-              Password redefinida com sucesso!
+              Palavra-passe redefinida com sucesso!
             </h2>
             <p className="text-green-700 mb-6">
-              Sua password foi alterada. Agora você pode fazer login com a nova password.
+              A sua palavra-passe foi alterada. Agora pode iniciar sessão com a sua nova palavra-passe.
             </p>
             <Button
               variant="outline"
@@ -105,16 +105,16 @@ export default function ResetPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <h2 className="text-2xl font-bold text-center mb-6">
-              Redefinir Password
+Redefinir Palavra-passe
             </h2>
 
             <p className="text-center text-gray-600 mb-8">
-              Crie uma nova password para a sua conta.
+              Crie uma nova palavra-passe para a sua conta.
             </p>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="reset-password">Nova Password</Label>
+                <Label htmlFor="reset-password">Nova Palavra-passe</Label>
                 <Input
                   id="reset-password"
                   type="password"
@@ -128,7 +128,7 @@ export default function ResetPasswordPage() {
               </div>
 
               <div>
-                <Label htmlFor="reset-password-confirm">Confirmar Nova Password</Label>
+                <Label htmlFor="reset-password-confirm">Confirmar Nova Palavra-passe</Label>
                 <Input
                   id="reset-password-confirm"
                   type="password"
@@ -142,10 +142,7 @@ export default function ResetPasswordPage() {
               </div>
 
               <p className="text-xs text-gray-500 mb-2">
-                A password deve ter pelo menos 12 caracteres e conter:
-              </p>
-              <p className="text-xs text-gray-500 mb-2">
-                A password deve ter pelo menos 12 caracteres e conter:
+                A palavra-passe deve ter pelo menos 12 caracteres e conter:
               </p>
               <ul className="text-xs text-gray-500 space-y-2 pl-4">
                 <li>1 letra maiúscula</li>

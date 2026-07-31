@@ -395,7 +395,7 @@ export function SuperAdminCofre() {
       open={!!confirmDepId}
       onOpenChange={(open) => { if (!open) setConfirmDepId(null); }}
       title="Confirmar Depósito"
-      description="Tem certeza que deseja confirmar este depósito? O valor será creditado no cofre da aldeia."
+      description="Tem a certeza de que deseja confirmar este depósito? O valor será creditado no cofre da aldeia."
       confirmText="Confirmar"
       variant="default"
       onConfirm={() => { if (confirmDepId) { handleConfirmar(confirmDepId); setConfirmDepId(null); } }}

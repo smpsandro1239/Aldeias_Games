@@ -16,8 +16,8 @@ export default function TermosPage() {
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Introdução</h2>
             <p className="text-gray-600">
-              Ao utilizar a plataforma Aldeias Games, você concorda com os presentes termos de serviço. 
-              Leia-os atentamente antes de utilizar os nossos serviços.
+              Ao utilizar a plataforma Aldeias Games, o Utilizador concorda com os presentes termos de serviço. 
+              Leia atentamente os Termos antes de utilizar os nossos serviços.
             </p>
           </section>
 

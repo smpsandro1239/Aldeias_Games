@@ -60,15 +60,15 @@ export async function POST(request: NextRequest) {
     try {
       await sendEmail({
         to: user.email,
-        subject: 'Recuperação de Password - Aldeias Games',
+        subject: 'Recuperação de Palavra-passe - Aldeias Games',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Recuperação de Password</h2>
+            <h2>Recuperação de Palavra-passe</h2>
             <p>Olá ${user.nome},</p>
-            <p>Recebemos um pedido para recuperação da sua password.</p>
-            <p>Clique no botão abaixo para criar uma nova password:</p>
+            <p>Recebemos um pedido para recuperação da sua palavra-passe.</p>
+            <p>Clique no botão abaixo para criar uma nova palavra-passe:</p>
             <a href="${resetUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-              Recuperar Password
+              Recuperar Palavra-passe
             </a>
             <p>Este link expira em 1 hora.</p>
             <p>Se não pediu esta recuperação, ignore este email.</p>

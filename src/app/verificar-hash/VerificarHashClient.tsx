@@ -35,7 +35,7 @@ export default function VerificarHashClient() {
 
   const handleVerify = async () => {
     if (!hash.trim()) {
-      toast.error('Digite um hash para verificar');
+      toast.error('Insira um hash para verificar');
       return;
     }
 

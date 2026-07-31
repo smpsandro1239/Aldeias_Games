@@ -69,7 +69,7 @@ export function VaultPinModal({ open, onOpenChange }: VaultPinModalProps) {
       return;
     }
     if (!password) {
-      toast.error("Insira a sua password");
+      toast.error("Insira a sua palavra-passe");
       return;
     }
     setLoading(true);

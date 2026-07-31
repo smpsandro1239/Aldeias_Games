@@ -204,7 +204,7 @@ export default function DadosPessoaisPage() {
                 <li><strong>Retificação:</strong> Corrija informações inexatas no seu perfil.</li>
                 <li><strong>Apagamento:</strong> Solicite a eliminação dos seus dados.</li>
                 <li><strong>Limitação:</strong> Restrinja o tratamento dos seus dados.</li>
-                <li><strong>Portabilidade:</strong> Receba seus dados em formato estruturado.</li>
+                <li><strong>Portabilidade:</strong> Receba os seus dados em formato estruturado.</li>
                 <li><strong>Oposição:</strong> Conteste o tratamento dos seus dados.</li>
               </ul>
               <p className="text-xs text-muted-foreground/60 mt-4">

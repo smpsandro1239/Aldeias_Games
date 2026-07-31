@@ -284,7 +284,7 @@ export default function PoioDaVacaTicket({
                       if (isCowNumber) {
                         alert("PARABÉNS! Você encontrou o número da vaca! 🐄💩");
                       } else {
-                        alert("Tente novamente! Continue procurando o número onde a vaca vai fazer o poio.");
+                        alert("Tente novamente! Continue à procura do número onde a vaca vai fazer o poio.");
                       }
                     }}
                   >

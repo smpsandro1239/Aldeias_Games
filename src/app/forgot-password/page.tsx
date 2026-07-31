@@ -46,12 +46,12 @@ export default function ForgotPasswordPage() {
       <div className="mx-auto max-w-md">
         <form onSubmit={handleSubmit} className="space-y-6">
           <h2 className="text-2xl font-bold text-center mb-6">
-            Esqueci-me da Password
+            Esqueci-me da Palavra-passe
           </h2>
           
           <p className="text-center text-gray-600 mb-8">
-            Introduza o seu endereço de email para receber um link de
-            recuperação de password.
+            Introduza o seu email para receber um link de
+            recuperação de palavra-passe.
           </p>
 
           <div className="space-y-4">
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
           )}
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Lembra-se da sua password?{' '}
+            Lembra-se da sua palavra-passe?{' '}
             <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               Fazer login
             </a>

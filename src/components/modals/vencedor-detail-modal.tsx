@@ -255,7 +255,7 @@ export function VencedorDetailModal({
             Detalhes do Vencedor
           </DialogTitle>
           <DialogDescription id="vencedor-detail-description">
-            Informações completas sobre o vencedor {nomeExibicao} e seu histórico
+            Informações completas sobre o vencedor {nomeExibicao} e o seu histórico
           </DialogDescription>
         </DialogHeader>
 

@@ -175,7 +175,7 @@ export function UserModal({ open, onOpenChange, onSubmit, initialData, aldeias =
                 aria-describedby="email-description"
                 placeholder="email@exemplo.com"
               />
-              <p id="email-description" className="sr-only">Endereço de email válido para login</p>
+              <p id="email-description" className="sr-only">Email válido para login</p>
             </div>
 
             {!initialData && (

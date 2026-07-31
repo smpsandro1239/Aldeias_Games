@@ -403,7 +403,7 @@ export function PremioModal({
       open={showDeleteConfirm}
       onOpenChange={setShowDeleteConfirm}
       title="Eliminar Prémio"
-      description={`Tem certeza que deseja eliminar o prémio "${premio?.nome}"? Esta ação não pode ser desfeita.`}
+      description={`Tem a certeza de que deseja eliminar o prémio "${premio?.nome}"? Esta ação não pode ser desfeita.`}
       confirmText="Eliminar"
       variant="destructive"
       onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
@@ -443,7 +443,7 @@ export function PremioList({ premios, onEdit, onDelete, onReorder }: PremioListP
   }, [onEdit]);
 
   const handleDelete = useCallback((id: string, nome: string) => {
-    if (window.confirm(`Tem certeza que deseja eliminar o prémio "${nome}"?`)) {
+    if (window.confirm(`Tem a certeza de que deseja eliminar o prémio "${nome}"?`)) {
       onDelete(id);
     }
   }, [onDelete]);

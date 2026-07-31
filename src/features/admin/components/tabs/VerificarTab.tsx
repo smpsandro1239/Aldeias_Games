@@ -81,8 +81,8 @@ export function VerificarTab({ setVerificarHashOpen }: VerificarTabProps) {
             <div className="flex items-start gap-3">
               <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
               <div>
-                <h5 className="font-semibold">Digite o hash</h5>
-                <p className="text-sm text-muted-foreground">Cole ou digite o código hash completo no campo de entrada. Pressione Enter ou clique na lupa.</p>
+                <h5 className="font-semibold">Insira o hash</h5>
+                <p className="text-sm text-muted-foreground">Cole ou insira o código hash completo no campo de entrada. Pressione Enter ou clique na lupa.</p>
               </div>
             </div>
 

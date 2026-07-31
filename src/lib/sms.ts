@@ -102,11 +102,11 @@ export async function sendWinnerSMS(
     return false;
   }
 
-  let message = `Parabens ${nome}! Voce ganhou o sorteio ${jogoNome} - Premio: ${premio}.`;
+  let message = `Parabéns ${nome}! Você ganhou o sorteio ${jogoNome} - Prémio: ${premio}.`;
   if (hash) {
-    message += ` Codigo de verificacao: ${hash}`;
+    message += ` Código de verificação: ${hash}`;
   }
-  message += ` Contacte a organizacao para receber.${ALDEIAS_GAMES_SIGNATURE}`;
+  message += ` Contacte a organização para receber.${ALDEIAS_GAMES_SIGNATURE}`;
   return sendSMS({ to: telefone, message });
 }
 
@@ -122,7 +122,7 @@ export async function sendTicketSMS(
     return false;
   }
 
-  let message = `Ola ${nome}! O seu bilhete para ${jogoNome}: ${numeros.join(', ')}.`;
+  let message = `Olá ${nome}! O seu bilhete para ${jogoNome}: ${numeros.join(', ')}.`;
   if (hash) {
     message += ` Hash: ${hash}`;
   }

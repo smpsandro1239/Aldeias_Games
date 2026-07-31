@@ -229,11 +229,11 @@ export function ParticipacaoConfirmacaoModal({
               <Trophy className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
               <div className="space-y-3">
                 <h4 className="font-semibold text-amber-900 dark:text-amber-100">
-                  🎯 Como Resgatar seu Prêmio
+                  🎯 Como Resgatar o seu Prémio
                 </h4>
                 <div className="space-y-2">
                   <div className="bg-white/50 dark:bg-black/20 rounded p-2">
-                    <h5 className="font-medium text-amber-900 dark:text-amber-100 text-sm">Se você GANHAR:</h5>
+                    <h5 className="font-medium text-amber-900 dark:text-amber-100 text-sm">Se GANHAR:</h5>
                     <ol className="text-xs text-amber-800 dark:text-amber-200 space-y-1 ml-4 mt-1">
                       <li>1. Dirija-se à organização/bilheteria</li>
                       <li>2. Mostre este código de verificação</li>
@@ -254,8 +254,8 @@ export function ParticipacaoConfirmacaoModal({
                   <h5 className="font-medium text-red-900 dark:text-red-100 text-sm">⚠️ Importante:</h5>
                   <ul className="text-xs text-red-800 dark:text-red-200 space-y-1 ml-4 mt-1">
                     <li>• Guarde este código em local seguro</li>
-                    <li>• Sem este código, não é possível validar sua participação</li>
-                    <li>• Você pode visualizá-lo novamente em "Meus Bilhetes"</li>
+                    <li>• Sem este código, não é possível validar a sua participação</li>
+                    <li>• Pode visualizá-lo novamente em "Os Meus Bilhetes"</li>
                     <li>• Prêmios têm prazo de validade</li>
                   </ul>
                 </div>

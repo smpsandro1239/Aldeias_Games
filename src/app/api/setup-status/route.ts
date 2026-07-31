@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         needsSetup: true,
         step: 1,
-        message: 'Você precisa criar ou se associar a uma aldeia para continuar.'
+        message: 'É necessário criar ou associar-se a uma aldeia para continuar.'
       });
     }
 

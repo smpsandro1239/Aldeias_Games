@@ -190,13 +190,13 @@ export function useRifaGame(gamePage: ReturnType<typeof useGamePage<JogoRifa>>) 
           const tel = participante.telefone.replace(/\D/g, "");
           const hash = data.data?.hashParticipacao || data.data?.hashRaspe;
           const msg = encodeURIComponent(
-            `🎉 Participação Confirmada!\n\nRifa: ${jogo.nome}\nNúmeros: ${numerosSelecionados.join(", ")}\n\nCódigo: ${hash ? hash.substring(0, 16) + "..." : "Consulte seu perfil"}\n\nObrigado por apoiar!`
+            `🎉 Participação Confirmada!\n\nRifa: ${jogo.nome}\nNúmeros: ${numerosSelecionados.join(", ")}\n\nCódigo: ${hash ? hash.substring(0, 16) + "..." : "Consulte o seu perfil"}\n\nObrigado por apoiar!`
           );
           window.open(`https://wa.me/351${tel}?text=${msg}`, "_blank");
         } else if (participante.notificacao === "email" && participante.email) {
           const hash = data.data?.hashParticipacao || data.data?.hashRaspe;
           const subject = encodeURIComponent(`Confirmação - ${jogo.nome}`);
-          const body = encodeURIComponent(`Números: ${numerosSelecionados.join(", ")}\nCódigo: ${hash || "Consulte seu perfil"}`);
+          const body = encodeURIComponent(`Números: ${numerosSelecionados.join(", ")}\nCódigo: ${hash || "Consulte o seu perfil"}`);
           window.open(`mailto:${participante.email}?subject=${subject}&body=${body}`);
         }
         toast.success("Participação confirmada!");

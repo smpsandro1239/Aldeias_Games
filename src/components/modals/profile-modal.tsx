@@ -294,16 +294,16 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
     const errors: Record<string, string> = {};
 
     if (!passwordData.atual) {
-      errors.atual = "Password atual é obrigatória";
+      errors.atual = "Palavra-passe atual é obrigatória";
     }
     if (!passwordData.nova) {
-      errors.nova = "Nova password é obrigatória";
+      errors.nova = "Nova palavra-passe é obrigatória";
     }
     if (passwordData.nova.length < 8) {
-      errors.nova = "Password deve ter pelo menos 8 caracteres";
+      errors.nova = "Palavra-passe deve ter pelo menos 8 caracteres";
     }
     if (passwordData.nova !== passwordData.confirmacao) {
-      errors.confirmacao = "As passwords não coincidem";
+      errors.confirmacao = "As palavras-passe não coincidem";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -327,15 +327,15 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Erro ao alterar password");
+        toast.error(data.error || "Erro ao alterar palavra-passe");
         return;
       }
 
-      toast.success("Password alterada com sucesso");
+      toast.success("Palavra-passe alterada com sucesso");
       setShowPasswordChange(false);
       setPasswordData({ atual: "", nova: "", confirmacao: "" });
     } catch (error) {
-      toast.error("Erro ao alterar password");
+      toast.error("Erro ao alterar palavra-passe");
     } finally {
       setPasswordLoading(false);
     }
@@ -450,7 +450,7 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
                     }}
                     aria-describedby={passwordErrors.atual ? "password-atual-error" : "password-atual-description"}
                   />
-                  <p id="password-atual-description" className="sr-only">Digite sua password atual</p>
+                  <p id="password-atual-description" className="sr-only">Insira a sua palavra-passe atual</p>
                   {passwordErrors.atual && <p id="password-atual-error" className="text-sm text-destructive" role="alert">{passwordErrors.atual}</p>}
                 </div>
 
@@ -466,12 +466,12 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
                     }}
                     aria-describedby={passwordErrors.nova ? "password-nova-error" : "password-nova-description"}
                   />
-                  <p id="password-nova-description" className="sr-only">Digite sua nova password (mínimo 8 caracteres)</p>
+                  <p id="password-nova-description" className="sr-only">Insira a sua nova palavra-passe (mínimo 8 caracteres)</p>
                   {passwordErrors.nova && <p id="password-nova-error" className="text-sm text-destructive" role="alert">{passwordErrors.nova}</p>}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword">Confirmar Password</Label>
+                  <Label htmlFor="confirmPassword">Confirmar Palavra-passe</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -482,7 +482,7 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
                     }}
                     aria-describedby={passwordErrors.confirmacao ? "password-confirm-error" : "password-confirm-description"}
                   />
-                  <p id="password-confirm-description" className="sr-only">Confirme sua nova password</p>
+                  <p id="password-confirm-description" className="sr-only">Confirme a sua nova palavra-passe</p>
                   {passwordErrors.confirmacao && <p id="password-confirm-error" className="text-sm text-destructive" role="alert">{passwordErrors.confirmacao}</p>}
                 </div>
 
@@ -503,7 +503,7 @@ export function ProfileModal({ open, onOpenChange, user, onUpdate }: ProfileModa
                     onClick={handlePasswordChange}
                     disabled={passwordLoading}
                   >
-                    {passwordLoading ? "A guardar..." : "Guardar Password"}
+                    {passwordLoading ? "A guardar..." : "Guardar Palavra-passe"}
                   </Button>
                 </div>
               </div>

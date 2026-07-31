@@ -547,7 +547,7 @@ export function AdminCofre() {
         open={!!confirmDepId}
         onOpenChange={(open) => { if (!open) setConfirmDepId(null); }}
         title="Confirmar Depósito"
-        description="Tem certeza que deseja confirmar este depósito? O valor será creditado no cofre da aldeia."
+        description="Tem a certeza de que deseja confirmar este depósito? O valor será creditado no cofre da aldeia."
         confirmText="Confirmar"
         variant="default"
         onConfirm={() => { if (confirmDepId) { handleConfirmarDeposito(confirmDepId); setConfirmDepId(null); } }}
@@ -559,7 +559,7 @@ export function AdminCofre() {
         title="Rejeitar Depósito"
         description={
           <div className="space-y-2">
-            <p>Tem certeza que deseja rejeitar este depósito?</p>
+            <p>Tem a certeza de que deseja rejeitar este depósito?</p>
             <Textarea
               placeholder="Motivo da rejeição (obrigatório)"
               value={rejectDepMotivo}
@@ -577,7 +577,7 @@ export function AdminCofre() {
         open={!!confirmLevId}
         onOpenChange={(open) => { if (!open) setConfirmLevId(null); }}
         title="Confirmar Levantamento"
-        description="Tem certeza que deseja confirmar este levantamento? O valor será deduzido do cofre."
+        description="Tem a certeza de que deseja confirmar este levantamento? O valor será deduzido do cofre."
         confirmText="Confirmar"
         variant="default"
         onConfirm={() => { if (confirmLevId) { handleConfirmarLevantamento(confirmLevId); setConfirmLevId(null); } }}
@@ -589,7 +589,7 @@ export function AdminCofre() {
         title="Rejeitar Levantamento"
         description={
           <div className="space-y-2">
-            <p>Tem certeza que deseja rejeitar este levantamento?</p>
+            <p>Tem a certeza de que deseja rejeitar este levantamento?</p>
             <Textarea
               placeholder="Motivo da rejeição (obrigatório)"
               value={rejectLevMotivo}

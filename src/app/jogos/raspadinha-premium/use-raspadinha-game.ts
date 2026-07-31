@@ -384,12 +384,12 @@ export function useRaspadinhaGame(
           if (participante.notificacao === "whatsapp" && participante.telefone) {
             const telLimpo = participante.telefone.replace(/\D/g, "");
             const hash = participacao.hashRaspe || participacao.hashParticipacao;
-            const msg = encodeURIComponent(`Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nCódigo de Verificação: ${hash ? hash.substring(0, 16) + '...' : 'Consulte seu perfil'}\n\nObrigado por participar!`);
+            const msg = encodeURIComponent(`Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nCódigo de Verificação: ${hash ? hash.substring(0, 16) + '...' : 'Consulte o seu perfil'}\n\nObrigado por participar!`);
             window.open(`https://wa.me/351${telLimpo}?text=${msg}`, "_blank");
           } else if (participante.notificacao === "email" && participante.email) {
             const hash = participacao.hashRaspe || participacao.hashParticipacao;
             const subject = encodeURIComponent(`Raspadinha Registada - ${jogo.nome}`);
-            const body = encodeURIComponent(`Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nCódigo de Verificação: ${hash || 'Consulte seu perfil'}\n\nObrigado por participar!\n\nAldeias Games`);
+            const body = encodeURIComponent(`Raspadinha registada!\n\nJogo: ${jogo.nome}\nPreço: ${jogo.preco}€\n\nCódigo de Verificação: ${hash || 'Consulte o seu perfil'}\n\nObrigado por participar!\n\nAldeias Games`);
             window.open(`mailto:${participante.email}?subject=${subject}&body=${body}`);
           }
 

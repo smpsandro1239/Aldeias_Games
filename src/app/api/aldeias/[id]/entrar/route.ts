@@ -52,7 +52,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{id:
 
     if (existingMembership) {
       return NextResponse.json(
-        { error: 'Você já é membro desta aldeia' },
+        { error: 'Já é membro desta aldeia' },
         { status: 409 }
       )
     }
