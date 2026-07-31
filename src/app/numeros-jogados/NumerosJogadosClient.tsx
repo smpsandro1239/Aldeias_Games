@@ -29,6 +29,10 @@ import {
   Filter,
   Loader2,
   Gamepad2,
+  Star,
+  Gift,
+  Award,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiRequest } from '@/lib/api-client';
@@ -133,6 +137,36 @@ function getJogoTipoColor(tipo: string): string {
   }
 }
 
+function getJogoAccent(tipo: string): string {
+  switch (tipo) {
+    case 'rifa': return 'from-blue-500/60 to-blue-500/10';
+    case 'raspadinha': return 'from-purple-500/60 to-purple-500/10';
+    case 'poio_da_vaca': return 'from-amber-500/60 to-amber-500/10';
+    case 'euromilhoes': return 'from-green-500/60 to-green-500/10';
+    default: return 'from-gray-500/60 to-gray-500/10';
+  }
+}
+
+function getJogoChip(tipo: string): string {
+  switch (tipo) {
+    case 'rifa': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    case 'raspadinha': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+    case 'poio_da_vaca': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+    case 'euromilhoes': return 'bg-green-500/10 text-green-500 border-green-500/20';
+    default: return 'bg-primary/10 text-primary border-primary/20';
+  }
+}
+
+function getJogoIcon(tipo: string) {
+  switch (tipo) {
+    case 'rifa': return Star;
+    case 'raspadinha': return Gift;
+    case 'poio_da_vaca': return Gamepad2;
+    case 'euromilhoes': return Award;
+    default: return Ticket;
+  }
+}
+
 function getPaymentLabel(metodo: string): string {
   switch (metodo) {
     case 'saldo': return 'Saldo';
@@ -165,7 +199,6 @@ export default function NumerosJogadosClient() {
   const [aldeias, setAldeias] = useState<AldeiaOption[]>([]);
 
   const showAldeiaFilter = role === 'super_admin';
-  const showPlayerInfo = role === 'super_admin' || role === 'aldeia_admin';
   const showVendedorInfo = role === 'super_admin' || role === 'aldeia_admin';
 
   const fetchAldeias = useCallback(async () => {
@@ -233,10 +266,36 @@ export default function NumerosJogadosClient() {
     return '—';
   };
 
+  const hasActiveFilters = search || jogoTipo !== 'all' || aldeiaFilter !== 'all' || estadoFilter !== 'all' || ganhadorFilter !== 'all';
+
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <Card className="bg-card border-outline-variant/10">
+      <Card className="bg-card border-outline-variant/10 overflow-hidden">
+        <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-outline-variant/10">
+          <div className="flex items-center gap-2">
+            <div className="bg-primary/20 p-1.5 rounded-lg">
+              <Filter className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <span className="text-sm font-semibold">Filtros</span>
+          </div>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs px-2 text-muted-foreground hover:text-destructive"
+              onClick={() => {
+                setSearch('');
+                setJogoTipo('all');
+                setAldeiaFilter('all');
+                setEstadoFilter('all');
+                setGanhadorFilter('all');
+              }}
+            >
+              Limpar
+            </Button>
+          )}
+        </div>
         <CardContent className="p-4 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -250,7 +309,7 @@ export default function NumerosJogadosClient() {
           <div className="flex flex-wrap gap-2">
             <Select value={jogoTipo} onValueChange={setJogoTipo}>
               <SelectTrigger className="w-[140px]">
-                <Filter className="h-3.5 w-3.5 mr-2" />
+                <Gamepad2 className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                 <SelectValue placeholder="Tipo de Jogo" />
               </SelectTrigger>
               <SelectContent>
@@ -287,7 +346,7 @@ export default function NumerosJogadosClient() {
             {showAldeiaFilter && (
               <Select value={aldeiaFilter} onValueChange={setAldeiaFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <MapPin className="h-3.5 w-3.5 mr-2" />
+                  <MapPin className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Aldeia" />
                 </SelectTrigger>
                 <SelectContent>
@@ -305,7 +364,9 @@ export default function NumerosJogadosClient() {
       {/* Stats bar */}
       {pagination && (
         <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-          <span>{pagination.total} resultado{pagination.total !== 1 ? 's' : ''}</span>
+          <Badge variant="secondary" className="text-[11px] font-medium">
+            {pagination.total} resultado{pagination.total !== 1 ? 's' : ''}
+          </Badge>
           <span>Página {pagination.page} de {pagination.totalPages}</span>
         </div>
       )}
@@ -319,13 +380,18 @@ export default function NumerosJogadosClient() {
 
       {/* Empty */}
       {!loading && !fetchError && participacoes.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Gamepad2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground">
-              {search || jogoTipo !== 'all' || aldeiaFilter !== 'all' || estadoFilter !== 'all' || ganhadorFilter !== 'all'
-                ? 'Nenhum resultado encontrado com os filtros atuais'
-                : 'Ainda não tem números jogados'}
+        <Card className="border-dashed">
+          <CardContent className="py-14 text-center flex flex-col items-center">
+            <div className="bg-primary/10 p-4 rounded-full mb-4">
+              <Ticket className="h-8 w-8 text-primary/50" />
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              {hasActiveFilters ? 'Nenhum resultado encontrado' : 'Ainda não tem números jogados'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+              {hasActiveFilters
+                ? 'Experimente remover alguns filtros para alargar a pesquisa.'
+                : 'Os números que comprar ou vender aparecerão aqui.'}
             </p>
           </CardContent>
         </Card>
@@ -333,9 +399,12 @@ export default function NumerosJogadosClient() {
 
       {/* Error */}
       {!loading && fetchError && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-destructive">{fetchError}</p>
+        <Card className="border-destructive/30">
+          <CardContent className="py-12 text-center flex flex-col items-center">
+            <div className="bg-destructive/10 p-4 rounded-full mb-4">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <p className="text-sm font-medium text-destructive">{fetchError}</p>
           </CardContent>
         </Card>
       )}
@@ -347,19 +416,27 @@ export default function NumerosJogadosClient() {
         const coordenadas = dados?.coordenadas;
         const hash = getHash(p);
         const isRaspadinha = p.jogo.tipo === 'raspadinha';
+        const Icon = getJogoIcon(p.jogo.tipo);
 
         return (
-          <Card key={p.id} className="overflow-hidden">
+          <Card
+            key={p.id}
+            className={`overflow-hidden ${p.ganhador ? 'border-yellow-500/40 shadow-[0_0_24px_-8px_rgba(234,179,8,0.35)]' : ''}`}
+          >
+            <div className={`h-1 bg-gradient-to-r ${getJogoAccent(p.jogo.tipo)}`} />
             <CardContent className="p-4 space-y-3">
               {/* Header row */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-sm">{p.jogo.nome}</span>
+                  <div className={`p-1.5 rounded-lg border ${getJogoChip(p.jogo.tipo)}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className="font-semibold text-sm">{p.jogo.nome}</span>
                   <Badge className={`text-[10px] font-bold ${getJogoTipoColor(p.jogo.tipo)}`}>
                     {getJogoTipoLabel(p.jogo.tipo)}
                   </Badge>
                   {p.ganhador && (
-                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">
+                    <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 text-[10px]">
                       <Trophy className="w-3 h-3 mr-1" />
                       Ganhador
                     </Badge>
@@ -377,23 +454,23 @@ export default function NumerosJogadosClient() {
               </div>
 
               {/* Context info */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-3 h-3" />
-                  <span>{p.jogo.evento.aldeia.nome}</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="flex items-center gap-2 bg-surface-container/60 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground">
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{p.jogo.evento.aldeia.nome}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="w-3 h-3" />
-                  <span>{p.jogo.evento.nome}</span>
+                <div className="flex items-center gap-2 bg-surface-container/60 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground min-w-0">
+                  <Calendar className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{p.jogo.evento.nome}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground/60">Valor: </span>
-                  <span className="font-medium">€{p.valorPago.toFixed(2)}</span>
-                  <span className="text-muted-foreground/60 ml-1">({getPaymentLabel(p.metodoPagamento)})</span>
+                <div className="flex items-center gap-1.5 bg-surface-container/60 rounded-lg px-2.5 py-1.5 text-xs">
+                  <span className="text-muted-foreground/60">Valor:</span>
+                  <span className="font-semibold">€{p.valorPago.toFixed(2)}</span>
+                  <span className="text-muted-foreground/60">({getPaymentLabel(p.metodoPagamento)})</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <User className="w-3 h-3" />
-                  <span>{getJogadorLabel(p)}</span>
+                <div className="flex items-center gap-2 bg-surface-container/60 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground min-w-0">
+                  <User className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{getJogadorLabel(p)}</span>
                 </div>
               </div>
 
@@ -409,15 +486,17 @@ export default function NumerosJogadosClient() {
               {numeros && numeros.length > 0 && (
                 <div className="border-t pt-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Ticket className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-xs font-medium">Números Jogados</span>
+                    <div className="bg-primary/10 p-1 rounded-md">
+                      <Ticket className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <span className="text-xs font-semibold">Números Jogados</span>
                     <span className="text-[10px] text-muted-foreground">({numeros.length})</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {numeros.map((num) => (
                       <span
                         key={num}
-                        className="inline-flex items-center justify-center min-w-[2.5rem] h-8 px-2 bg-primary/10 text-primary text-xs font-mono font-bold rounded-lg border border-primary/20"
+                        className={`inline-flex items-center justify-center min-w-[2.5rem] h-8 px-2 text-xs font-mono font-bold rounded-lg border ${getJogoChip(p.jogo.tipo)}`}
                       >
                         {formatNumero(num)}
                       </span>
@@ -430,15 +509,17 @@ export default function NumerosJogadosClient() {
               {!numeros && p.numerosVendidos.length > 0 && (
                 <div className="border-t pt-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Ticket className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-xs font-medium">Números</span>
+                    <div className="bg-primary/10 p-1 rounded-md">
+                      <Ticket className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <span className="text-xs font-semibold">Números</span>
                     <span className="text-[10px] text-muted-foreground">({p.numerosVendidos.length})</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {p.numerosVendidos.map((nv) => (
                       <span
                         key={nv.numero}
-                        className="inline-flex items-center justify-center min-w-[2.5rem] h-8 px-2 bg-primary/10 text-primary text-xs font-mono font-bold rounded-lg border border-primary/20"
+                        className={`inline-flex items-center justify-center min-w-[2.5rem] h-8 px-2 text-xs font-mono font-bold rounded-lg border ${getJogoChip(p.jogo.tipo)}`}
                       >
                         {formatNumero(nv.numero)}
                       </span>
@@ -451,14 +532,16 @@ export default function NumerosJogadosClient() {
               {coordenadas && coordenadas.length > 0 && (
                 <div className="border-t pt-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Ticket className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-xs font-medium">Coordenadas</span>
+                    <div className="bg-amber-500/10 p-1 rounded-md">
+                      <MapPin className="w-3.5 h-3.5 text-amber-500" />
+                    </div>
+                    <span className="text-xs font-semibold">Coordenadas</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {coordenadas.map((c, i) => (
                       <span
                         key={i}
-                        className="inline-flex items-center justify-center min-w-[2.5rem] h-8 px-2 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold rounded-lg border border-amber-500/20"
+                        className="inline-flex items-center justify-center min-w-[2.5rem] h-8 px-2 bg-amber-500/10 text-amber-500 text-xs font-mono font-bold rounded-lg border border-amber-500/20"
                       >
                         {formatCoordenada(c)}
                       </span>
@@ -470,7 +553,7 @@ export default function NumerosJogadosClient() {
               {/* Raspadinha result */}
               {isRaspadinha && p.resultadoRaspe && (
                 <div className="border-t pt-3">
-                  <span className="text-xs font-medium text-muted-foreground">Resultado Raspadinha</span>
+                  <span className="text-xs font-semibold text-muted-foreground">Resultado Raspadinha</span>
                   <pre className="bg-surface-container p-2 rounded-lg text-[10px] font-mono overflow-auto max-h-16 mt-1">
                     {p.resultadoRaspe}
                   </pre>
@@ -479,20 +562,22 @@ export default function NumerosJogadosClient() {
 
               {/* Hash */}
               {hash && (
-                <div className="border-t pt-3 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Hash className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs text-muted-foreground/60 truncate">
-                      {showHashes[p.id] ? hash : hash.substring(0, 16) + '...'}
-                    </span>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => toggleHash(p.id)}>
-                      {showHashes[p.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => copyHash(hash)}>
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
+                <div className="border-t pt-3">
+                  <div className="flex items-center justify-between gap-2 bg-surface-container/50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Hash className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs font-mono text-muted-foreground/70 truncate">
+                        {showHashes[p.id] ? hash : hash.substring(0, 16) + '...'}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => toggleHash(p.id)}>
+                        {showHashes[p.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => copyHash(hash)}>
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
