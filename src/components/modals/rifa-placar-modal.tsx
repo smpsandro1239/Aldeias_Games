@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Loader2, ShoppingCart, Eye, CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { Loader2, ShoppingCart, Eye, CheckCircle2, XCircle, Trash2, Ticket } from "lucide-react";
 
 // Constants for purchase modes to avoid magic strings
 const PURCHASE_MODES = {
@@ -180,8 +180,13 @@ export function RifaPlacarModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col" aria-describedby="rifa-placar-description">
-        <DialogHeader>
-          <DialogTitle>Comprar Rifas</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-rose-600/10 via-pink-600/10 to-fuchsia-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-rose-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-rose-600/20 p-2 rounded-lg">
+              <Ticket className="h-5 w-5 text-rose-600" />
+            </div>
+            Comprar Rifas
+          </DialogTitle>
           <DialogDescription id="rifa-placar-description">
             Selecione a quantidade ou escolha números específicos
           </DialogDescription>

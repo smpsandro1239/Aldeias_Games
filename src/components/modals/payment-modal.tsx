@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Smartphone, Wallet } from "lucide-react";
+import { CreditCard, Smartphone, Wallet, Phone, Receipt } from "lucide-react";
 import { playSound } from "@/lib/audio-utils";
 import { toast } from "sonner";
 
@@ -205,11 +205,20 @@ export function PaymentModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Pagamento</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-indigo-600/10 via-violet-600/10 to-purple-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-indigo-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-indigo-600/20 p-2 rounded-lg">
+              <CreditCard className="h-5 w-5 text-indigo-600" />
+            </div>
+            Pagamento
+          </DialogTitle>
           <DialogDescription>
-            {descricao} - Total: <strong>{valor.toFixed(2)}€</strong>
+            {descricao}
           </DialogDescription>
+          <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/25 text-primary text-sm font-bold px-3 py-1 rounded-full mt-2 w-fit">
+            <Receipt className="h-4 w-4" aria-hidden="true" />
+            Total: {valor.toFixed(2)}€
+          </div>
         </DialogHeader>
 
         <Tabs value={state.metodo} onValueChange={handleMetodoChange} className="w-full" aria-describedby="payment-description">
@@ -247,6 +256,9 @@ export function PaymentModal({
             <TabsContent value={PAYMENT_METHODS.SALDO}>
               <div className="py-6 text-center space-y-4">
                 <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-xl border border-primary/20">
+                  <div className="bg-primary/10 p-2 rounded-full mb-1">
+                    <Wallet className="h-5 w-5 text-primary" aria-hidden="true" />
+                  </div>
                   <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Saldo Disponível</span>
                   <span className={`text-3xl font-black ${saldoDisponivel >= valor ? 'text-primary' : 'text-destructive'}`}>
                     {saldoDisponivel.toFixed(2)}€
@@ -289,15 +301,21 @@ export function PaymentModal({
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="telefone">Número de Telefone *</Label>
-                  <Input
-                    id="telefone"
-                    type="tel"
-                    placeholder="+351 9XX XXX XXX"
-                    value={state.telefone}
-                    onChange={(e) => handleTelefoneChange(e.target.value)}
-                    required
-                    aria-describedby="telefone-help"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="telefone"
+                      type="tel"
+                      placeholder="+351 9XX XXX XXX"
+                      value={state.telefone}
+                      onChange={(e) => handleTelefoneChange(e.target.value)}
+                      required
+                      aria-describedby="telefone-help"
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Phone className="h-4 w-4" aria-hidden="true" />
+                    </div>
+                  </div>
                   <p id="telefone-help" className="text-xs text-muted-foreground">
                     Receberá uma notificação no seu telemóvel para aceitar o pagamento.
                   </p>

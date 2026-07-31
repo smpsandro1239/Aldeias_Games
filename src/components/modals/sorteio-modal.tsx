@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Dice5 } from "lucide-react";
 import { LotteryAnimation } from "@/components/games/lottery-animation";
 import { motion } from "framer-motion";
 
@@ -102,8 +102,13 @@ export function SorteioModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]" aria-describedby="sorteio-modal-description">
-        <DialogHeader>
-          <DialogTitle>Executar Sorteio</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-orange-600/10 via-amber-600/10 to-yellow-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-orange-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-orange-600/20 p-2 rounded-lg">
+              <Dice5 className="h-5 w-5 text-orange-600" />
+            </div>
+            Executar Sorteio
+          </DialogTitle>
           <DialogDescription id="sorteio-modal-description">
             {jogoNome}
           </DialogDescription>

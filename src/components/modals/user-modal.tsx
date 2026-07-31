@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { normalizeAldeiasList } from "@/lib/utils";
+import { UserPlus, User, Mail, KeyRound, Phone, ShieldCheck, Building2 } from "lucide-react";
 
 // Constants for user roles to avoid magic strings
 const USER_ROLES = {
@@ -141,8 +142,13 @@ export function UserModal({ open, onOpenChange, onSubmit, initialData, aldeias =
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Utilizador" : "Novo Utilizador"}</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-sky-600/10 via-blue-600/10 to-indigo-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-blue-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-blue-600/20 p-2 rounded-lg">
+              <UserPlus className="h-5 w-5 text-blue-600" />
+            </div>
+            {initialData ? "Editar Utilizador" : "Novo Utilizador"}
+          </DialogTitle>
           <DialogDescription>
             {initialData ? "Altere as permissões ou dados do utilizador." : "Registe um novo utilizador na plataforma."}
           </DialogDescription>
@@ -150,109 +156,162 @@ export function UserModal({ open, onOpenChange, onSubmit, initialData, aldeias =
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="nome">Nome *</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => updateFormField('nome', e.target.value)}
-                required
-                aria-describedby="nome-description"
-                placeholder="Nome completo do utilizador"
-              />
-              <p id="nome-description" className="sr-only">Nome completo do utilizador (mínimo 2 caracteres)</p>
-            </div>
+            <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <User className="h-3 w-3" /> Dados da Conta
+              </p>
+              <div className="grid gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="nome" className="text-sm font-medium">Nome *</Label>
+                  <div className="relative">
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => updateFormField('nome', e.target.value)}
+                      required
+                      aria-describedby="nome-description"
+                      placeholder="Nome completo do utilizador"
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <User className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <p id="nome-description" className="sr-only">Nome completo do utilizador (mínimo 2 caracteres)</p>
+                </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => updateFormField('email', e.target.value)}
-                required
-                disabled={!!initialData}
-                aria-describedby="email-description"
-                placeholder="email@exemplo.com"
-              />
-              <p id="email-description" className="sr-only">Email válido para login</p>
-            </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => updateFormField('email', e.target.value)}
+                      required
+                      disabled={!!initialData}
+                      aria-describedby="email-description"
+                      placeholder="email@exemplo.com"
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <p id="email-description" className="sr-only">Email válido para login</p>
+                </div>
 
-            {!initialData && (
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password || ""}
-                  onChange={(e) => updateFormField('password', e.target.value)}
-                  required={!initialData}
-                  aria-describedby="password-description"
-                  placeholder="Mínimo 6 caracteres"
-                />
-                <p id="password-description" className="sr-only">Password de acesso (mínimo 6 caracteres)</p>
+                {!initialData && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password || ""}
+                        onChange={(e) => updateFormField('password', e.target.value)}
+                        required={!initialData}
+                        aria-describedby="password-description"
+                        placeholder="Mínimo 6 caracteres"
+                        className="pl-10"
+                      />
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                        <KeyRound className="h-4 w-4" />
+                      </div>
+                    </div>
+                    <p id="password-description" className="sr-only">Password de acesso (mínimo 6 caracteres)</p>
+                  </div>
+                )}
               </div>
-            )}
-
-            <div className="grid gap-2">
-              <Label htmlFor="role">Role *</Label>
-              <Select
-                value={formData.role}
-                onValueChange={handleRoleChange}
-                aria-describedby="role-description"
-              >
-                <SelectTrigger aria-label="Selecionar role do utilizador">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={USER_ROLES.USER}>Utilizador Geral</SelectItem>
-                  {currentUserRole === USER_ROLES.SUPER_ADMIN && (
-                    <>
-                      <SelectItem value={USER_ROLES.VENDEDOR}>Vendedor</SelectItem>
-                      <SelectItem value={USER_ROLES.ALDEIA_ADMIN}>Admin da Aldeia</SelectItem>
-                      <SelectItem value={USER_ROLES.SUPER_ADMIN}>Super Admin</SelectItem>
-                    </>
-                  )}
-                  {currentUserRole === USER_ROLES.ALDEIA_ADMIN && (
-                    <SelectItem value={USER_ROLES.VENDEDOR}>Vendedor</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <p id="role-description" className="sr-only">Define as permissões e acesso do utilizador no sistema</p>
             </div>
 
-            {(currentUserRole === USER_ROLES.SUPER_ADMIN || (currentUserRole === USER_ROLES.ALDEIA_ADMIN && normalizedAldeias.length > 0)) && (
-              <div className="grid gap-2">
-                <Label htmlFor="aldeiaId">Aldeia {formData.role === USER_ROLES.ALDEIA_ADMIN && '*'}</Label>
-                <Select
-                  value={formData.aldeiaId || "none"}
-                  onValueChange={(value) => updateFormField('aldeiaId', value === "none" ? "" : value)}
-                  aria-describedby="aldeia-description"
-                >
-                  <SelectTrigger aria-label="Selecionar aldeia do utilizador">
-                    <SelectValue placeholder="Selecione uma aldeia" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Geral (Nenhuma)</SelectItem>
-                    {normalizedAldeias.map(a => (
-                      <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p id="aldeia-description" className="sr-only">Aldeia associada ao utilizador (obrigatório para admins)</p>
-              </div>
-            )}
+            <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <ShieldCheck className="h-3 w-3" /> Permissões
+              </p>
+              <div className="grid gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="role" className="text-sm font-medium">Role *</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={handleRoleChange}
+                    aria-describedby="role-description"
+                  >
+                    <SelectTrigger aria-label="Selecionar role do utilizador">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={USER_ROLES.USER}>
+                        <div className="flex items-center gap-2"><User className="h-4 w-4" /> Utilizador Geral</div>
+                      </SelectItem>
+                      {currentUserRole === USER_ROLES.SUPER_ADMIN && (
+                        <>
+                          <SelectItem value={USER_ROLES.VENDEDOR}>
+                            <div className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Vendedor</div>
+                          </SelectItem>
+                          <SelectItem value={USER_ROLES.ALDEIA_ADMIN}>
+                            <div className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Admin da Aldeia</div>
+                          </SelectItem>
+                          <SelectItem value={USER_ROLES.SUPER_ADMIN}>
+                            <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Super Admin</div>
+                          </SelectItem>
+                        </>
+                      )}
+                      {currentUserRole === USER_ROLES.ALDEIA_ADMIN && (
+                        <SelectItem value={USER_ROLES.VENDEDOR}>
+                          <div className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Vendedor</div>
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p id="role-description" className="sr-only">Define as permissões e acesso do utilizador no sistema</p>
+                </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                value={formData.telefone || ""}
-                onChange={(e) => updateFormField('telefone', e.target.value)}
-                placeholder="+351 912345678"
-                aria-describedby="telefone-description"
-              />
-              <p id="telefone-description" className="sr-only">Número de telefone opcional para contacto</p>
+                {(currentUserRole === USER_ROLES.SUPER_ADMIN || (currentUserRole === USER_ROLES.ALDEIA_ADMIN && normalizedAldeias.length > 0)) && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="aldeiaId" className="text-sm font-medium">Aldeia {formData.role === USER_ROLES.ALDEIA_ADMIN && '*'}</Label>
+                    <Select
+                      value={formData.aldeiaId || "none"}
+                      onValueChange={(value) => updateFormField('aldeiaId', value === "none" ? "" : value)}
+                      aria-describedby="aldeia-description"
+                    >
+                      <SelectTrigger aria-label="Selecionar aldeia do utilizador">
+                        <SelectValue placeholder="Selecione uma aldeia" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Geral (Nenhuma)</SelectItem>
+                        {normalizedAldeias.map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p id="aldeia-description" className="sr-only">Aldeia associada ao utilizador (obrigatório para admins)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <Phone className="h-3 w-3" /> Contacto
+              </p>
+              <div className="grid gap-2">
+                <Label htmlFor="telefone" className="text-sm font-medium">Telefone</Label>
+                <div className="relative">
+                  <Input
+                    id="telefone"
+                    value={formData.telefone || ""}
+                    onChange={(e) => updateFormField('telefone', e.target.value)}
+                    placeholder="+351 912345678"
+                    className="pl-10"
+                    aria-describedby="telefone-description"
+                  />
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                    <Phone className="h-4 w-4" />
+                  </div>
+                </div>
+                <p id="telefone-description" className="sr-only">Número de telefone opcional para contacto</p>
+              </div>
             </div>
           </div>
 

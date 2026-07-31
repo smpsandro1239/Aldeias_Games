@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { Log } from "@/features/admin/components/types";
-import { X } from "lucide-react";
+import { X, ShieldAlert } from "lucide-react";
 
 interface AuditLogDetailModalProps {
   log: Log | null;
@@ -19,8 +19,13 @@ export function AuditLogDetailModal({ log, open, onOpenChange }: AuditLogDetailM
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg" aria-describedby="audit-log-description">
-        <DialogHeader>
-          <DialogTitle>Detalhes do Registo de Acesso</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-amber-600/10 via-orange-600/10 to-red-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-amber-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-amber-600/20 p-2 rounded-lg">
+              <ShieldAlert className="h-5 w-5 text-amber-600" />
+            </div>
+            Detalhes do Registo de Acesso
+          </DialogTitle>
           <DialogDescription id="audit-log-description">
             Informações completas do registo de acesso #{log.id}
           </DialogDescription>

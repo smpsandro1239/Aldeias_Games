@@ -132,9 +132,11 @@ export function EsvaziarSacoModal({ open, onOpenChange, aldeiaId, aldeiaNome }: 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md bg-surface-container border-primary/20" aria-describedby="esvaziar-saco-description">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <Banknote className="w-5 h-5 text-primary" aria-hidden="true" />
+        <DialogHeader className="bg-gradient-to-r from-amber-600/10 via-orange-600/10 to-red-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-amber-500/20">
+          <DialogTitle className="text-foreground flex items-center gap-2 text-xl">
+            <div className="bg-amber-600/20 p-2 rounded-lg">
+              <Banknote className="w-5 h-5 text-amber-600" aria-hidden="true" />
+            </div>
             Entregar Dinheiro
           </DialogTitle>
           <p id="esvaziar-saco-description" className="sr-only">Modal para entregar dinheiro ao administrador da aldeia</p>

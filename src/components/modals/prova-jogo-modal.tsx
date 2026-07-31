@@ -25,6 +25,7 @@ import {
   Download,
   Eye,
   Hourglass,
+  Euro,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
@@ -229,12 +230,16 @@ export function ProvaJogoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-surface-container border-primary/20 max-h-[90vh] overflow-y-auto z-[60]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-center justify-center">
+        <DialogHeader className="bg-gradient-to-r from-emerald-600/10 via-teal-600/10 to-green-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-emerald-500/20">
+          <DialogTitle className="flex items-center gap-2 text-center justify-center text-xl">
             {data?.ganhador ? (
-              <Trophy className="h-5 w-5 text-amber-500" />
+              <div className="bg-amber-500/20 p-2 rounded-lg">
+                <Trophy className="h-5 w-5 text-amber-500" />
+              </div>
             ) : (
-              <Shield className="h-5 w-5 text-primary" />
+              <div className="bg-emerald-600/20 p-2 rounded-lg">
+                <Shield className="h-5 w-5 text-emerald-600" />
+              </div>
             )}
             {data?.ganhador ? "Jogo Premiado!" : "Prova de Jogo"}
           </DialogTitle>
@@ -326,7 +331,7 @@ export function ProvaJogoModal({
             <div className="space-y-2">
               <div className="flex justify-between items-center py-1.5 border-b border-outline-variant/10">
                 <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5" /> Valor Pago
+                  <Euro className="h-3.5 w-3.5" /> Valor Pago
                 </span>
                 <span className="text-sm font-bold text-primary">
                   {formatCurrency(data.valorPago)}
@@ -441,25 +446,5 @@ export function ProvaJogoModal({
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function DollarSign(props: React.SVGProps<SVGSVGElement> & { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <line x1="12" x2="12" y1="2" y2="22" />
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-    </svg>
   );
 }

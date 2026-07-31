@@ -247,9 +247,11 @@ export function PremioModal({
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-surface-container border-primary/20 p-0 max-w-md overflow-hidden">
-        <DialogHeader className="p-6 pb-0">
+        <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-amber-600/10 via-orange-600/10 to-yellow-600/10 border-b border-amber-500/20">
           <DialogTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-primary" />
+            <div className="bg-amber-600/20 p-2 rounded-lg">
+              <Gift className="h-5 w-5 text-amber-600" />
+            </div>
             {premio ? "Editar Prémio" : "Novo Prémio"}
           </DialogTitle>
           <DialogDescription>

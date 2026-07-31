@@ -160,9 +160,9 @@ export function CreateJogoModal({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto" aria-describedby="create-jogo-description">
-          <DialogHeader className="bg-gradient-to-r from-primary/5 to-transparent -mx-6 -mt-6 px-6 pt-6 pb-4 mb-2 border-b border-outline-variant/5 rounded-t-lg">
+          <DialogHeader className="bg-gradient-to-r from-primary/10 via-violet-600/10 to-transparent -mx-6 -mt-6 px-6 pt-6 pb-4 mb-2 border-b border-outline-variant/10 rounded-t-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/20">
                 {formData.tipo ? tipoIcons[formData.tipo] || <Gamepad2 className="h-5 w-5 text-primary" /> : <Gamepad2 className="h-5 w-5 text-primary" />}
               </div>
               <div>

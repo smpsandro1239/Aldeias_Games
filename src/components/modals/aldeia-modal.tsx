@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Building2, Home, School, Users, Music, Phone, Mail, FileText } from "lucide-react";
 
 // Constants for organization types
 const TIPO_ORGANIZACAO = {
@@ -81,8 +82,13 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData, loading
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Organização" : "Nova Organização"}</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-amber-600/10 via-orange-600/10 to-yellow-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-amber-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-amber-600/20 p-2 rounded-lg">
+              <Building2 className="h-5 w-5 text-amber-600" />
+            </div>
+            {initialData ? "Editar Organização" : "Nova Organização"}
+          </DialogTitle>
           <DialogDescription>
             {initialData ? "Edite as propriedades da organização." : "Registe uma nova organização."}
           </DialogDescription>
@@ -90,64 +96,112 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData, loading
 
         <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[60vh]">
           <div className="grid gap-4 py-4 pr-2">
-            <div className="grid gap-2">
-              <Label htmlFor="nome">Nome *</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => handleChange("nome", e.target.value)}
-                required
-              />
+            <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <Building2 className="h-3 w-3" /> Informação
+              </p>
+              <div className="grid gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="nome" className="text-sm font-medium">Nome *</Label>
+                  <div className="relative">
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => handleChange("nome", e.target.value)}
+                      required
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Building2 className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="tipo" className="text-sm font-medium">Tipo de Organização *</Label>
+                  <Select
+                    value={formData.tipoOrganizacao}
+                    onValueChange={handleTipoChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TIPO_ORGANIZACAO.ALDEIA}>
+                        <div className="flex items-center gap-2"><Home className="h-4 w-4" /> Aldeia</div>
+                      </SelectItem>
+                      <SelectItem value={TIPO_ORGANIZACAO.ESCOLA}>
+                        <div className="flex items-center gap-2"><School className="h-4 w-4" /> Escola</div>
+                      </SelectItem>
+                      <SelectItem value={TIPO_ORGANIZACAO.ASSOCIACAO_PAIS}>
+                        <div className="flex items-center gap-2"><Users className="h-4 w-4" /> Associação de Pais</div>
+                      </SelectItem>
+                      <SelectItem value={TIPO_ORGANIZACAO.CLUBE}>
+                        <div className="flex items-center gap-2"><Music className="h-4 w-4" /> Clube Desportivo</div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="tipo">Tipo de Organização *</Label>
-              <Select
-                value={formData.tipoOrganizacao}
-                onValueChange={handleTipoChange}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TIPO_ORGANIZACAO.ALDEIA}>Aldeia</SelectItem>
-                  <SelectItem value={TIPO_ORGANIZACAO.ESCOLA}>Escola</SelectItem>
-                  <SelectItem value={TIPO_ORGANIZACAO.ASSOCIACAO_PAIS}>Associação de Pais</SelectItem>
-                  <SelectItem value={TIPO_ORGANIZACAO.CLUBE}>Clube Desportivo</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <Mail className="h-3 w-3" /> Contacto
+              </p>
+              <div className="grid gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email || ""}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="telefone" className="text-sm font-medium">Telefone</Label>
+                  <div className="relative">
+                    <Input
+                      id="telefone"
+                      value={formData.telefone || ""}
+                      onChange={(e) => handleChange("telefone", e.target.value)}
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Phone className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email || ""}
-                onChange={(e) => handleChange("email", e.target.value)}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                value={formData.telefone || ""}
-                onChange={(e) => handleChange("telefone", e.target.value)}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                value={formData.descricao || ""}
-                onChange={(e) => handleChange("descricao", e.target.value)}
-              />
+            <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                <FileText className="h-3 w-3" /> Descrição
+              </p>
+              <div className="grid gap-2">
+                <Label htmlFor="descricao" className="text-sm font-medium">Descrição</Label>
+                <Textarea
+                  id="descricao"
+                  value={formData.descricao || ""}
+                  onChange={(e) => handleChange("descricao", e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="sticky bottom-0 bg-background pt-2">
+          <DialogFooter className="sticky bottom-0 bg-background pt-2 gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={loading || localLoading}>
+            <Button type="submit" disabled={loading || localLoading} className="bg-amber-600 hover:bg-amber-700">
               {loading || localLoading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Organização")}
             </Button>
           </DialogFooter>

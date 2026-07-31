@@ -68,9 +68,11 @@ export function QRScannerModal({ open, onOpenChange, onConfirm }: QRScannerModal
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-surface-container border-primary/20">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <ScanLine className="w-5 h-5 text-primary" />
+        <DialogHeader className="bg-gradient-to-r from-cyan-600/10 via-sky-600/10 to-blue-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-cyan-500/20">
+          <DialogTitle className="text-foreground flex items-center gap-2 text-xl">
+            <div className="bg-cyan-600/20 p-2 rounded-lg">
+              <ScanLine className="w-5 h-5 text-cyan-600" />
+            </div>
             Ler Código de Carregamento
           </DialogTitle>
         </DialogHeader>

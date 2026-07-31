@@ -111,7 +111,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
   }
 }
 
-export async function PATCH(request: NextRequest, context: { params: Promise<{id: string}> }) {
+async function updateAldeia(request: NextRequest, context: { params: Promise<{id: string}> }) {
   try {
     const { id } = await context.params
     const user = await getUserFromRequest(request)
@@ -319,3 +319,5 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{id
     )
   }
 }
+
+export { updateAldeia as PATCH, updateAldeia as PUT }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Transacao } from "@/features/admin/components/types";
-import { X } from "lucide-react";
+import { X, Receipt } from "lucide-react";
 
 interface TransactionDetailModalProps {
   transacao: Transacao | null;
@@ -19,8 +19,13 @@ export function TransactionDetailModal({ transacao, open, onOpenChange }: Transa
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg" aria-describedby="transaction-detail-description">
-        <DialogHeader>
-          <DialogTitle>Detalhes da Transação</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-violet-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-blue-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-blue-600/20 p-2 rounded-lg">
+              <Receipt className="h-5 w-5 text-blue-600" />
+            </div>
+            Detalhes da Transação
+          </DialogTitle>
           <DialogDescription id="transaction-detail-description">
             Informações completas da transação #{transacao.id}
           </DialogDescription>

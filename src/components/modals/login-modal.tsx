@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LogIn, Shield, ArrowLeft, KeyRound } from "lucide-react";
 
 interface LoginModalProps {
   open: boolean;
@@ -68,8 +69,13 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{requiresTwoFactor ? "Verificação 2FA" : "Iniciar Sessão"}</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-violet-600/10 via-indigo-600/10 to-blue-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-indigo-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-indigo-600/20 p-2 rounded-lg">
+              {requiresTwoFactor ? <Shield className="h-5 w-5 text-indigo-600" /> : <LogIn className="h-5 w-5 text-indigo-600" />}
+            </div>
+            {requiresTwoFactor ? "Verificação 2FA" : "Iniciar Sessão"}
+          </DialogTitle>
           <DialogDescription>
             {requiresTwoFactor
               ? "Introduza o código de 6 dígitos da sua aplicação autenticadora."
@@ -82,31 +88,43 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
             {!requiresTwoFactor ? (
               <>
                 <div className="grid gap-2">
-                  <Label htmlFor="modal-email">Email</Label>
-                  <Input
-                    id="modal-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  <Label htmlFor="modal-email" className="text-sm font-medium">Email</Label>
+                  <div className="relative">
+                    <Input
+                      id="modal-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                  </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="modal-password">Password</Label>
-                  <Input
-                    id="modal-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <Label htmlFor="modal-password" className="text-sm font-medium">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="modal-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <KeyRound className="h-4 w-4" />
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (
               <div className="grid gap-2">
-                <Label htmlFor="modal-totp">Código 2FA</Label>
+                <Label htmlFor="modal-totp" className="text-sm font-medium">Código 2FA</Label>
                 <Input
                   id="modal-totp"
                   type="text"
@@ -122,16 +140,20 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                 />
               </div>
             )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+              </div>
+            )}
           </div>
 
-          <DialogFooter className="flex-col gap-2">
+          <DialogFooter className="flex-col gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "A entrar..." : requiresTwoFactor ? "Verificar Código" : "Entrar"}
             </Button>
             {requiresTwoFactor && (
-              <Button type="button" variant="ghost" onClick={handleBack} disabled={loading}>
-                Voltar
+              <Button type="button" variant="ghost" onClick={handleBack} disabled={loading} className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" /> Voltar
               </Button>
             )}
             {!requiresTwoFactor && (
@@ -143,7 +165,7 @@ export function LoginModal({ open, onOpenChange, onLogin, onRegisterClick }: Log
                     onOpenChange(false);
                     onRegisterClick();
                   }}
-                  className="text-primary hover:underline"
+                  className="text-indigo-600 hover:text-indigo-500 hover:underline font-medium"
                 >
                   Registe-se
                 </button>

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Smartphone, Wallet } from "lucide-react";
+import { Smartphone, Wallet, Phone, Receipt } from "lucide-react";
 
 // Constants for payment methods
 const PAYMENT_METHODS = {
@@ -82,11 +82,20 @@ export function PaymentMethodModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]" aria-describedby="payment-method-description">
-        <DialogHeader>
-          <DialogTitle>Escolher Método de Pagamento</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-slate-700/10 via-slate-800/10 to-slate-900/10 dark:from-slate-400/10 dark:via-slate-500/10 dark:to-slate-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-slate-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-slate-600/20 p-2 rounded-lg">
+              <Wallet className="h-5 w-5 text-slate-600 dark:text-slate-300" aria-hidden="true" />
+            </div>
+            Escolher Método de Pagamento
+          </DialogTitle>
           <DialogDescription id="payment-method-description">
-            {descricao} - Total: <strong>{valor.toFixed(2)}€</strong>
+            {descricao}
           </DialogDescription>
+          <div className="inline-flex items-center gap-1.5 bg-slate-600/10 border border-slate-600/25 text-slate-700 dark:text-slate-300 text-sm font-bold px-3 py-1 rounded-full mt-2 w-fit">
+            <Receipt className="h-4 w-4" aria-hidden="true" />
+            Total: {valor.toFixed(2)}€
+          </div>
         </DialogHeader>
 
         <Tabs value={metodo} onValueChange={handleMetodoChange} className="w-full">
@@ -107,6 +116,9 @@ export function PaymentMethodModal({
             <TabsContent value={PAYMENT_METHODS.SALDO}>
               <div className="py-6 text-center space-y-4">
                 <div className="flex flex-col items-center justify-center p-4 bg-primary/5 rounded-xl border border-primary/20">
+                  <div className="bg-primary/10 p-2 rounded-full mb-1">
+                    <Wallet className="h-5 w-5 text-primary" aria-hidden="true" />
+                  </div>
                   <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Saldo Disponível</span>
                   <span className={`text-3xl font-black ${podeUsarSaldo ? 'text-primary' : 'text-destructive'}`} aria-label={`Saldo disponível: ${saldoDisponivel.toFixed(2)} euros`}>
                     {saldoDisponivel.toFixed(2)}€
@@ -145,15 +157,21 @@ export function PaymentMethodModal({
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="telefone">Número de Telefone MBWay</Label>
-                  <Input
-                    id="telefone"
-                    type="tel"
-                    placeholder="+351 9XX XXX XXX"
-                    value={telefone}
-                    onChange={(e) => handleTelefoneChange(e.target.value)}
-                    required
-                    aria-describedby="telefone-description"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="telefone"
+                      type="tel"
+                      placeholder="+351 9XX XXX XXX"
+                      value={telefone}
+                      onChange={(e) => handleTelefoneChange(e.target.value)}
+                      required
+                      aria-describedby="telefone-description"
+                      className="pl-10"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
+                      <Phone className="h-4 w-4" aria-hidden="true" />
+                    </div>
+                  </div>
                   <p id="telefone-description" className="text-xs text-muted-foreground">
                     Receberá uma notificação no telemóvel para aceitar o pagamento.
                   </p>

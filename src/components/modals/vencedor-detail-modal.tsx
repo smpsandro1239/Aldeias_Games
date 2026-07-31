@@ -18,7 +18,7 @@ import {
   User,
   Trophy,
   Gamepad2,
-  DollarSign,
+  Euro,
   Calendar,
   TrendingUp,
   Award,
@@ -249,9 +249,11 @@ export function VencedorDetailModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto" aria-describedby="vencedor-detail-description">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-accent" aria-hidden="true" />
+        <DialogHeader className="bg-gradient-to-r from-amber-600/10 via-yellow-600/10 to-orange-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-amber-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-amber-600/20 p-2 rounded-lg">
+              <Trophy className="h-5 w-5 text-amber-600" aria-hidden="true" />
+            </div>
             Detalhes do Vencedor
           </DialogTitle>
           <DialogDescription id="vencedor-detail-description">
@@ -479,7 +481,7 @@ export function VencedorDetailModal({
                   onClick={handleConvertPrize}
                   aria-label="Converter prémio em saldo"
                 >
-                  <DollarSign className="w-4 h-4 mr-2" aria-hidden="true" />
+                  <Euro className="w-4 h-4 mr-2" aria-hidden="true" />
                   Converter em Saldo
                 </Button>
                 <Button

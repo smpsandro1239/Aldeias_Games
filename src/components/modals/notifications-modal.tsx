@@ -104,9 +104,11 @@ export function NotificationsModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col" aria-describedby="notifications-description">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" aria-hidden="true" />
+        <DialogHeader className="bg-gradient-to-r from-sky-600/10 via-blue-600/10 to-indigo-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-sky-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-sky-600/20 p-2 rounded-lg">
+              <Bell className="h-5 w-5 text-sky-600" aria-hidden="true" />
+            </div>
             Notificações
             {naoLidas > 0 && (
               <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full" aria-label={`${naoLidas} notificações não lidas`}>
@@ -151,7 +153,9 @@ export function NotificationsModal({
         <ScrollArea className="flex-1 -mx-6 px-6">
           {notificacoesFiltradas.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground" role="status" aria-live="polite">
-              <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" aria-hidden="true" />
+              <div className="bg-muted/60 mx-auto w-fit p-4 rounded-full mb-2">
+                <Bell className="h-10 w-10 opacity-50" aria-hidden="true" />
+              </div>
               <p>Sem notificações</p>
             </div>
           ) : (
@@ -164,14 +168,16 @@ export function NotificationsModal({
                   <div
                     key={notificacao.id}
                     className={cn(
-                      "p-3 rounded-lg border transition-all",
-                      notificacao.lida ? "bg-muted/50" : "bg-card border-primary/20"
+                      "p-3 rounded-xl border transition-all",
+                      notificacao.lida ? "bg-muted/50" : "bg-card border-primary/20 shadow-sm"
                     )}
                     role="listitem"
                   >
                     <div className="flex gap-3">
-                      <div className={cn("mt-0.5", cor)}>
-                        <Icone className="h-5 w-5" aria-hidden="true" />
+                      <div className={cn("mt-0.5 shrink-0", cor)}>
+                        <div className="bg-slate-100 dark:bg-slate-800/60 p-2 rounded-lg">
+                          <Icone className="h-5 w-5" aria-hidden="true" />
+                        </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">

@@ -40,9 +40,11 @@ export function PlayerDataConfirmModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[92vw] sm:max-w-md bg-surface-container border border-outline-variant/10 p-0 sm:p-6 overflow-hidden max-h-[90vh] flex flex-col">
-        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-2">
+        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-2 bg-gradient-to-r from-violet-600/10 via-purple-600/10 to-fuchsia-600/10">
           <DialogTitle className="font-headline text-lg flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-accent" />
+            <div className="bg-violet-600/20 p-2 rounded-lg">
+              <AlertTriangle className="w-5 h-5 text-violet-600" />
+            </div>
             Dados do Jogador
           </DialogTitle>
         </DialogHeader>

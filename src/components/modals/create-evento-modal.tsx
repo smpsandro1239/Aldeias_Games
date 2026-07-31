@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Gift, Star, Award, Gamepad2, CheckCircle2, Loader2 } from "lucide-react";
+import { Gift, Star, Award, Gamepad2, CheckCircle2, Loader2, CalendarDays } from "lucide-react";
 import { CreateJogoModal } from "@/components/modals/create-jogo-modal";
 import type { GameType, JogoData } from "./create-jogo-types";
 
@@ -281,8 +281,13 @@ export function CreateEventoModal({
       <>
         <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent className="sm:max-w-[500px]" aria-describedby="configure-games-description">
-            <DialogHeader>
-              <DialogTitle>Configurar Jogos</DialogTitle>
+            <DialogHeader className="bg-gradient-to-r from-green-600/10 via-emerald-600/10 to-teal-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-green-500/20">
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <div className="bg-green-600/20 p-2 rounded-lg">
+                  <Gamepad2 className="h-5 w-5 text-green-600" />
+                </div>
+                Configurar Jogos
+              </DialogTitle>
               <DialogDescription id="configure-games-description">
                 Configure cada jogo selecionado para o evento &quot;{formData.nome}&quot;.
               </DialogDescription>
@@ -369,8 +374,13 @@ export function CreateEventoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" aria-describedby="create-evento-description">
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Evento" : "Novo Evento"}</DialogTitle>
+        <DialogHeader className="bg-gradient-to-r from-indigo-600/10 via-violet-600/10 to-purple-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-indigo-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-indigo-600/20 p-2 rounded-lg">
+              <CalendarDays className="h-5 w-5 text-indigo-600" />
+            </div>
+            {initialData ? "Editar Evento" : "Novo Evento"}
+          </DialogTitle>
           <DialogDescription>
             {initialData ? "Edite as informações do evento." : "Crie um novo evento de angariação de fundos."}
           </DialogDescription>

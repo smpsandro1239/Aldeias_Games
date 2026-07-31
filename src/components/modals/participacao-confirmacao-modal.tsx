@@ -12,7 +12,7 @@ import {
   Hash,
   Trophy,
   Calendar,
-  DollarSign,
+  Euro,
   Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
@@ -124,9 +124,11 @@ export function ParticipacaoConfirmacaoModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-surface-container border-primary/20">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-center">
-            <CheckCircle className="h-6 w-6 text-primary" />
+        <DialogHeader className="bg-gradient-to-r from-emerald-600/10 via-teal-600/10 to-green-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-emerald-500/20">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-emerald-600/20 p-2 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-emerald-600" />
+            </div>
             Participação Confirmada!
           </DialogTitle>
         </DialogHeader>
@@ -145,7 +147,7 @@ export function ParticipacaoConfirmacaoModal({
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b">
               <span className="text-muted-foreground flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <Euro className="h-4 w-4" />
                 Valor Pago
               </span>
               <span className="font-bold text-primary">
