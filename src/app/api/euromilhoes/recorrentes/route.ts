@@ -107,8 +107,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Processar jogos euromilhões recorrentes (chamado por cron)
+// PUT - Processar jogos euromilhões recorrentes (chamado manualmente por cron)
 export async function PUT(request: NextRequest) {
+  return processarRecorrentes(request);
+}
+
+// GET - Processar jogos euromilhões recorrentes (Vercel Cron envia GET)
+// Vercel envia automaticamente o header Authorization: Bearer ${CRON_SECRET}
+export async function GET(request: NextRequest) {
+  return processarRecorrentes(request);
+}
+
+async function processarRecorrentes(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
     if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

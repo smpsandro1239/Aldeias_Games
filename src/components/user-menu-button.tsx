@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut, Settings, Banknote, Shield, ChevronRight, LogIn } from "lucide-react";
+import {
+  User, LogOut, Settings, Banknote, Shield, ChevronRight, LogIn,
+  Ticket, Wallet, ScanSearch, Hash, Lock, ShieldCheck, ShieldAlert,
+} from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
 import { useAuth } from "@/hooks/use-auth";
 import { VaultPinModal } from "@/components/modals/vault-pin-modal";
+import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
 
 interface User {
   id: string;
@@ -15,6 +19,20 @@ interface User {
   role: string;
   aldeiaId?: string;
 }
+
+const ROLE_LABEL: Record<string, string> = {
+  super_admin: "Super Administrador",
+  aldeia_admin: "Administrador",
+  vendedor: "Vendedor",
+  user: "Jogador",
+};
+
+const ROLE_BADGE: Record<string, string> = {
+  super_admin: "bg-amber-500/20 text-amber-700 border-amber-500/30",
+  aldeia_admin: "bg-purple-500/20 text-purple-700 border-purple-500/30",
+  vendedor: "bg-blue-500/20 text-blue-700 border-blue-500/30",
+  user: "bg-green-500/20 text-green-700 border-green-500/30",
+};
 
 interface UserMenuButtonProps {
   className?: string;
@@ -25,7 +43,9 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
   const [user, setUser] = useState<User | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [cashboxSaldo, setCashboxSaldo] = useState<number | null>(null);
+  const [pinEnabled, setPinEnabled] = useState<boolean | null>(null);
   const [vaultPinOpen, setVaultPinOpen] = useState(false);
+  const [carregarSaldoOpen, setCarregarSaldoOpen] = useState(false);
   const { logout } = useAuth();
 
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
@@ -35,6 +55,8 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
     : user?.role === "aldeia_admin"
     ? "/admindashboard/cofre"
     : "/vendedordashboard?tab=cofre";
+
+  const participacoesPath = user?.role === "user" ? "/participacoes" : "/numeros-jogados";
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -56,6 +78,17 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
           }
         })
         .catch(() => setCashboxSaldo(0));
+
+      apiRequest("/api/users/vault-pin")
+        .then(async (res) => {
+          if (res.ok) {
+            const d = await res.json();
+            setPinEnabled(d.data?.vaultPinEnabled ?? false);
+          } else {
+            setPinEnabled(false);
+          }
+        })
+        .catch(() => setPinEnabled(null));
     }
   }, [userMenuOpen, showCashbox]);
 
@@ -112,10 +145,43 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
               <p className="text-xs text-muted-foreground mb-1">Bem-vindo</p>
               <p className="font-serif text-lg text-accent">{user?.nome}</p>
               <p className="text-xs text-muted-foreground/60 mt-1">{user?.email}</p>
+              <span className={`inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${ROLE_BADGE[user?.role || ""] || ROLE_BADGE.user}`}>
+                {ROLE_LABEL[user?.role || ""] || user?.role || "Jogador"}
+              </span>
             </div>
             <div className="bg-surface-container-low rounded-xl p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">O meu Saldo Aldeias</p>
               <p className="font-serif text-3xl text-primary">0,00 €</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => { setUserMenuOpen(false); router.push(participacoesPath); }}
+                className="bg-surface-container-low hover:bg-surface-container-high rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 text-xs font-medium transition-colors"
+              >
+                <Ticket className="h-4 w-4 text-primary" />
+                Minhas Participações
+              </button>
+              <button
+                onClick={() => { setUserMenuOpen(false); setCarregarSaldoOpen(true); }}
+                className="bg-surface-container-low hover:bg-surface-container-high rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 text-xs font-medium transition-colors"
+              >
+                <Wallet className="h-4 w-4 text-secondary" />
+                Carregar Saldo
+              </button>
+              <button
+                onClick={() => { setUserMenuOpen(false); router.push('/verificar-raspadinha'); }}
+                className="bg-surface-container-low hover:bg-surface-container-high rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 text-xs font-medium transition-colors"
+              >
+                <ScanSearch className="h-4 w-4 text-primary" />
+                Verificar Raspadinha
+              </button>
+              <button
+                onClick={() => { setUserMenuOpen(false); router.push('/numeros-jogados'); }}
+                className="bg-surface-container-low hover:bg-surface-container-high rounded-xl px-3 py-3 flex flex-col items-center gap-1.5 text-xs font-medium transition-colors"
+              >
+                <Hash className="h-4 w-4 text-secondary" />
+                Meus Números
+              </button>
             </div>
             {showCashbox && (
               <div
@@ -130,6 +196,31 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
                   {cashboxSaldo !== null ? `${cashboxSaldo.toFixed(2)} €` : "..."}
                 </p>
               </div>
+            )}
+            {showCashbox && (
+              <button
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  setVaultPinOpen(true);
+                }}
+                className="w-full flex items-center justify-between bg-surface-container-low hover:bg-surface-container-high rounded-xl px-4 py-3 transition-colors"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <Lock className="h-4 w-4 text-primary" />
+                  PIN do Cofre
+                </span>
+                {pinEnabled === null ? (
+                  <span className="text-xs text-muted-foreground">A carregar...</span>
+                ) : pinEnabled ? (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Configurado
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-amber-600">
+                    <ShieldAlert className="h-3.5 w-3.5" /> Não configurado
+                  </span>
+                )}
+              </button>
             )}
             {showCashbox && (
               <button
@@ -178,6 +269,11 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
         </DialogContent>
       </Dialog>
       <VaultPinModal open={vaultPinOpen} onOpenChange={setVaultPinOpen} />
+      <CarregarSaldoModal
+        open={carregarSaldoOpen}
+        onOpenChange={setCarregarSaldoOpen}
+        aldeiaId={user?.aldeiaId}
+      />
     </>
   );
 }

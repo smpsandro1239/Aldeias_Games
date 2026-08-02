@@ -429,3 +429,11 @@ URL: https://console.cloud.google.com/apis/credentials (project: aldeiasgames)
 - Causa mais comum: `oauth-handler.ts` a chamar `request.formData()` em GET — fix: usar `request.nextUrl.searchParams`
 - Outra causa: `GOOGLE_REDIRECT_URI` não configurado em Vercel (dynamic fallback usa `request.nextUrl.origin`)
 - Verificar logs do servidor para detalhe do erro
+
+## Vercel Cron — Euromilhões Recorrentes
+- **Configurado em `vercel.json`** → `crons` → `{ path: "/api/euromilhoes/recorrentes", schedule: "0 22 * * 5" }` (todas as sextas 22:00 UTC, depois do sorteio das 21:30)
+- **Vercel envia GET** (não PUT) com header `Authorization: Bearer ${CRON_SECRET}` — o route tem handlers `GET` e `PUT` (mesma função `processarRecorrentes`)
+- **Env var obrigatória na Vercel (production)**: `CRON_SECRET` = string secreta. Sem ela, o cron devolve 401.
+- Requer **plano Pro** da Vercel (cron jobs não existem no Hobby).
+- Nota: `POST` mantém-se para criar jogo recorrente manualmente (admin autenticado).
+

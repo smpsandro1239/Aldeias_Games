@@ -1,5 +1,11 @@
 {
   "framework": "nextjs",
   "buildCommand": "npx prisma@6.19.3 generate && rm -rf .next && next build",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/euromilhoes/recorrentes",
+      "schedule": "0 22 * * 5"
+    }
+  ]
 }
