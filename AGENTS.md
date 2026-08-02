@@ -341,6 +341,12 @@ Pages:
 - Both desktop nav and mobile hamburger menu use `roleNavItems` computed from `NAV_ITEMS`
 - Adding a new nav item only requires editing `NAV_ITEMS` — it propagates to both menus
 
+### Resumo por Aldeia → Gestão da Aldeia
+- Cada card do "Resumo por aldeia" (`StatsDetailPanels.renderAldeiasPanel`) é um botão clicável quando `onSelectAldeia` é passado
+- `SuperAdminDashboard` liga `onSelectAldeia={handleAbrirAldeia}` → seta `focusAldeiaId` + `setActiveTab("aldeias")`
+- `AldeiasTab` recebe `focusAldeiaId` + `onFocusConsumed`: expande a aldeia, faz scroll até `#aldeia-card-{id}` e limpa o foco
+- Props são opcionais — o fluxo atravessa `SuperAdminDashboard` → `AldeiasTab` diretamente, e `AdminDashboard` → `DashboardTabContent` → `AldeiasTab`
+
 ### Prova de Jogo — z-index fix
 - `prova-jogo-modal.tsx` DialogContent bumped to `z-[60]` (from z-50) to render above confirmation overlays
 
