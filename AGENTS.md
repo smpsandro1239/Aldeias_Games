@@ -34,6 +34,8 @@
 - Heredocs (`<<<`) and `<<` are NOT supported in PowerShell. Use `cmd /c` + temp files.
 
 ### Commit Flow
+- **Obrigatório**: no final de cada tarefa fazer SEMPRE commit + push (instrução do utilizador).
+- Mensagens de commit SEMPRE em **pt-PT**, formato `type: descrição` (ex.: `feat: ...`, `fix: ...`, `chore: ...`).
 ```bash
 git add -A
 git commit -m "type: description"
