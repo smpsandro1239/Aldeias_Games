@@ -33,6 +33,8 @@ import {
   Gift,
   Award,
   AlertCircle,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiRequest } from '@/lib/api-client';
@@ -55,6 +57,7 @@ interface UserInfo {
   id: string;
   nome: string;
   email: string;
+  telefone?: string | null;
 }
 
 interface NumeroVendido {
@@ -258,12 +261,22 @@ export default function NumerosJogadosClient() {
     toast.success('Hash copiada');
   };
 
-  const getJogadorLabel = (p: Participacao): string => {
-    if (p.user?.nome) return p.user.nome;
-    if (p.nomeCliente) return p.nomeCliente;
-    if (p.emailCliente) return p.emailCliente || '—';
-    if (p.user?.email) return p.user.email;
-    return '—';
+  const getJogadorContact = (p: Participacao): { nome: string; email?: string | null; telefone?: string | null } => {
+    if (p.user?.nome) {
+      return {
+        nome: p.user.nome,
+        email: p.user.email || p.emailCliente,
+        telefone: p.user.telefone || p.telefoneCliente,
+      };
+    }
+    if (p.nomeCliente) {
+      return { nome: p.nomeCliente, email: p.emailCliente, telefone: p.telefoneCliente };
+    }
+    return {
+      nome: p.emailCliente || p.user?.email || '—',
+      email: p.emailCliente,
+      telefone: p.telefoneCliente,
+    };
   };
 
   const hasActiveFilters = search || jogoTipo !== 'all' || aldeiaFilter !== 'all' || estadoFilter !== 'all' || ganhadorFilter !== 'all';
@@ -415,6 +428,7 @@ export default function NumerosJogadosClient() {
         const numeros = dados?.numeros;
         const coordenadas = dados?.coordenadas;
         const hash = getHash(p);
+        const jogador = getJogadorContact(p);
         const isRaspadinha = p.jogo.tipo === 'raspadinha';
         const Icon = getJogoIcon(p.jogo.tipo);
 
@@ -470,15 +484,47 @@ export default function NumerosJogadosClient() {
                 </div>
                 <div className="flex items-center gap-2 bg-surface-container/60 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground min-w-0">
                   <User className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{getJogadorLabel(p)}</span>
+                  <span className="truncate">{jogador.nome}</span>
                 </div>
               </div>
 
+              {/* Jogador contact info */}
+              {(jogador.email || jogador.telefone) && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  {jogador.email && (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Mail className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
+                      <span className="truncate">{jogador.email}</span>
+                    </div>
+                  )}
+                  {jogador.telefone && (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Phone className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
+                      <span className="truncate">{jogador.telefone}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Vendedor info */}
               {showVendedorInfo && p.vendedor && (
-                <div className="text-xs text-muted-foreground">
-                  <span className="text-muted-foreground/60">Vendido por: </span>
-                  <span className="font-medium">{p.vendedor.nome || p.vendedor.email}</span>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-muted-foreground/60 flex-shrink-0">Vendido por:</span>
+                    <span className="font-medium truncate">{p.vendedor.nome || p.vendedor.email}</span>
+                  </div>
+                  {p.vendedor.email && (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Mail className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
+                      <span className="truncate">{p.vendedor.email}</span>
+                    </div>
+                  )}
+                  {p.vendedor.telefone && (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Phone className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
+                      <span className="truncate">{p.vendedor.telefone}</span>
+                    </div>
+                  )}
                 </div>
               )}
 

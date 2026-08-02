@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
             select: { id: true, nome: true, email: true },
           },
           user: {
-            select: { id: true, nome: true, email: true },
+            select: { id: true, nome: true, email: true, telefone: true },
           },
           numerosVendidos: {
             select: { numero: true },
