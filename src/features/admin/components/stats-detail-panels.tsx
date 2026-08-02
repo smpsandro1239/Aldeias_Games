@@ -36,6 +36,7 @@ interface StatsDetailPanelsProps {
   mode?: "global" | "aldeia";
   onNavigate?: (tab: string) => void;
   onPush?: (href: string) => void;
+  onSelectAldeia?: (aldeia: Aldeia) => void;
 }
 
 interface AldeiaAgg {
@@ -68,6 +69,7 @@ export function StatsDetailPanels({
   mode = "global",
   onNavigate,
   onPush,
+  onSelectAldeia,
 }: StatsDetailPanelsProps) {
   const [expanded, setExpanded] = useState<StatExpandKey | null>(null);
 
@@ -274,21 +276,39 @@ export function StatsDetailPanels({
 
   const renderAldeiasPanel = (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {porAldeia.map((a) => (
-        <div key={a.id} className="rounded-xl bg-surface-container p-3 border border-outline-variant/5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-accent truncate">{a.nome}</p>
-            <Badge className="bg-violet-500/15 text-violet-500 hover:bg-violet-500/20 text-[10px]">
-              {formatCurrency(a.angariado)}
-            </Badge>
-          </div>
-          <div className="flex gap-3 mt-2 text-[11px] text-muted-foreground">
-            <span>{a.eventos} evento{a.eventos === 1 ? "" : "s"}</span>
-            <span>{a.jogos} jogo{a.jogos === 1 ? "" : "s"}</span>
-            <span>{formatNum(a.participacoes)} part.</span>
-          </div>
-        </div>
-      ))}
+      {porAldeia.map((a) => {
+        const full = aldeias.find((x) => x.id === a.id);
+        const clickable = !!onSelectAldeia && !!full;
+        return (
+          <button
+            key={a.id}
+            type="button"
+            onClick={() => clickable && full && onSelectAldeia(full)}
+            title={clickable ? `Abrir gestão de ${a.nome}` : undefined}
+            className={cn(
+              "rounded-xl bg-surface-container p-3 border border-outline-variant/5 text-left transition-colors",
+              clickable && "hover:bg-surface-container-high hover:border-primary/40 cursor-pointer group"
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-accent truncate">{a.nome}</p>
+              <Badge className="bg-violet-500/15 text-violet-500 hover:bg-violet-500/20 text-[10px]">
+                {formatCurrency(a.angariado)}
+              </Badge>
+            </div>
+            <div className="flex gap-3 mt-2 text-[11px] text-muted-foreground">
+              <span>{a.eventos} evento{a.eventos === 1 ? "" : "s"}</span>
+              <span>{a.jogos} jogo{a.jogos === 1 ? "" : "s"}</span>
+              <span>{formatNum(a.participacoes)} part.</span>
+            </div>
+            {clickable && (
+              <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                Abrir gestão <ArrowRight className="h-3 w-3" />
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 

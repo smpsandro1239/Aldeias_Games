@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import {
   Plus,
   Edit,
@@ -42,6 +43,8 @@ interface AldeiasTabProps {
   setSelectedEventoIdParaJogo: (id: string) => void;
   onToggleJogoEstado?: (jogo: Jogo) => void;
   requestDelete: (type: string, id: string) => void;
+  focusAldeiaId?: string | null;
+  onFocusConsumed?: () => void;
 }
 
 function getEstadoBadge(estado: EstadoEvento) {
@@ -84,6 +87,8 @@ export function AldeiasTab({
   setSelectedEventoIdParaJogo,
   onToggleJogoEstado,
   requestDelete,
+  focusAldeiaId,
+  onFocusConsumed,
 }: AldeiasTabProps) {
   const [aldeiaSearch, setAldeiaSearch] = useState("");
   const [expandedAldeias, setExpandedAldeias] = useState<Set<string>>(new Set());
@@ -91,6 +96,23 @@ export function AldeiasTab({
   const [jogoDetailOpen, setJogoDetailOpen] = useState(false);
   const [jogoDetail, setJogoDetail] = useState<any>(null);
   const [jogoDetailLoading, setJogoDetailLoading] = useState(false);
+
+  useEffect(() => {
+    if (!focusAldeiaId) return;
+    setExpandedAldeias((prev) => {
+      const next = new Set(prev);
+      next.add(focusAldeiaId);
+      return next;
+    });
+    const t = setTimeout(() => {
+      document.getElementById(`aldeia-card-${focusAldeiaId}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 150);
+    onFocusConsumed?.();
+    return () => clearTimeout(t);
+  }, [focusAldeiaId, onFocusConsumed]);
 
   const eventosByAldeia = useMemo(() => {
     const map: Record<string, Evento[]> = {};
@@ -214,7 +236,7 @@ export function AldeiasTab({
             const ativos = evs.filter((e) => e.estado === "ativo").length;
 
             return (
-              <Card key={al.id} className="overflow-hidden">
+              <Card key={al.id} id={`aldeia-card-${al.id}`} className="overflow-hidden scroll-mt-24">
                 <CardContent className="p-0">
                   {/* Aldeia header */}
                   <div

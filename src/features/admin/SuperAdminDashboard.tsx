@@ -26,7 +26,7 @@ import {
   OverviewTab, EventosTab, JogosTab, VencedoresTab,
   UsersTab, VerificarTab,
 } from "./components";
-import type { Evento, Jogo, Vencedor } from "./components/types";
+import type { Evento, Jogo, Vencedor, Aldeia } from "./components/types";
 import type { JogoData } from "@/components/modals/create-jogo-types";
 import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
@@ -99,6 +99,12 @@ export default function SuperAdminDashboard({
   const [testJogoTotalParticipacoes, setTestJogoTotalParticipacoes] = useState(0);
   const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
   const [toggleJogoData, setToggleJogoData] = useState<{ jogo: Jogo; novoEstado: 'aberto' | 'fechado' } | null>(null);
+  const [focusAldeiaId, setFocusAldeiaId] = useState<string | null>(null);
+
+  const handleAbrirAldeia = useCallback((aldeia: Aldeia) => {
+    setFocusAldeiaId(aldeia.id);
+    setActiveTab("aldeias");
+  }, [setActiveTab]);
 
   const {
     handleProcessRecurringEvents, handleSaveEvento, handleSaveJogo,
@@ -155,6 +161,7 @@ export default function SuperAdminDashboard({
           mode="global"
           onNavigate={setActiveTab}
           onPush={router.push}
+          onSelectAldeia={handleAbrirAldeia}
         />
 
         {/* ===== QUICK ACTIONS ===== */}
@@ -409,6 +416,8 @@ export default function SuperAdminDashboard({
                     setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
                     onToggleJogoEstado={handleToggleJogoEstado}
                     requestDelete={requestDelete}
+                    focusAldeiaId={focusAldeiaId}
+                    onFocusConsumed={() => setFocusAldeiaId(null)}
                   />
                 </Suspense>
               </TabsContent>

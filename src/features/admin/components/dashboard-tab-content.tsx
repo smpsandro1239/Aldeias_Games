@@ -76,6 +76,8 @@ interface DashboardTabContentProps {
   handleLimparFiltroJogos: () => void;
   requestDelete: (type: string, id: string) => void;
   getEstadoBadge: (estado: string) => React.ReactNode;
+  focusAldeiaId?: string | null;
+  onFocusConsumed?: () => void;
 }
 
 export function DashboardTabContent({
@@ -115,6 +117,8 @@ export function DashboardTabContent({
   handleLimparFiltroJogos,
   requestDelete,
   getEstadoBadge,
+  focusAldeiaId,
+  onFocusConsumed,
 }: DashboardTabContentProps) {
   return (
     <>
@@ -235,6 +239,8 @@ export function DashboardTabContent({
               setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
               onToggleJogoEstado={handleToggleJogoEstado}
               requestDelete={requestDelete}
+              focusAldeiaId={focusAldeiaId}
+              onFocusConsumed={onFocusConsumed}
             />
           </Suspense>
         </TabsContent>
