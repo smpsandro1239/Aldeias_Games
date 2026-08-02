@@ -71,7 +71,7 @@ export function StatsDetailPanels({
 }: StatsDetailPanelsProps) {
   const [expanded, setExpanded] = useState<StatExpandKey | null>(null);
 
-  const jogosAtivos = useMemo(() => jogos.filter((j) => j.estado === "ativo"), [jogos]);
+  const jogosAtivos = useMemo(() => jogos.filter((j) => j.estado === "aberto"), [jogos]);
   const eventosAtivos = useMemo(() => eventos.filter((e) => e.estado === "ativo"), [eventos]);
 
   const porAldeia = useMemo<AldeiaAgg[]>(() => {
