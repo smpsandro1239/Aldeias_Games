@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,9 @@ import {
   X,
   Coins,
   Activity,
+  Ticket,
+  Sparkles,
+  Award,
 } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
@@ -50,6 +53,13 @@ interface AldeiaAgg {
 
 const formatNum = (n: number) => n.toLocaleString("pt-PT");
 
+const JOGO_META: Record<string, { icon: LucideIcon; color: string }> = {
+  rifa: { icon: Ticket, color: "bg-blue-500/15 text-blue-500" },
+  raspadinha: { icon: Sparkles, color: "bg-amber-500/15 text-amber-500" },
+  euromilhoes: { icon: Award, color: "bg-violet-500/15 text-violet-500" },
+  poio_da_vaca: { icon: Gamepad2, color: "bg-emerald-500/15 text-emerald-500" },
+};
+
 function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   return (
@@ -72,9 +82,49 @@ export function StatsDetailPanels({
   onSelectAldeia,
 }: StatsDetailPanelsProps) {
   const [expanded, setExpanded] = useState<StatExpandKey | null>(null);
+  const [jogosAldeiasExpandidas, setJogosAldeiasExpandidas] = useState<Set<string>>(new Set());
+  const [jogosEventosExpandidos, setJogosEventosExpandidos] = useState<Set<string>>(new Set());
 
   const jogosAtivos = useMemo(() => jogos.filter((j) => j.estado === "aberto"), [jogos]);
   const eventosAtivos = useMemo(() => eventos.filter((e) => e.estado === "ativo"), [eventos]);
+
+  const jogosPorAldeiaEvento = useMemo(() => {
+    const map = new Map<string, { aldeiaNome: string; eventos: Map<string, Jogo[]> }>();
+    for (const j of jogosAtivos) {
+      const aldeiaNome = j.evento?.aldeia?.nome || "Outros";
+      const eventoNome = j.evento?.nome || "Sem evento";
+      if (!map.has(aldeiaNome)) map.set(aldeiaNome, { aldeiaNome, eventos: new Map() });
+      const aldeia = map.get(aldeiaNome)!;
+      if (!aldeia.eventos.has(eventoNome)) aldeia.eventos.set(eventoNome, []);
+      aldeia.eventos.get(eventoNome)!.push(j);
+    }
+    return Array.from(map.values());
+  }, [jogosAtivos]);
+
+  useEffect(() => {
+    if (jogosAldeiasExpandidas.size === 0 && jogosPorAldeiaEvento.length > 0) {
+      setJogosAldeiasExpandidas(new Set(jogosPorAldeiaEvento.map((g) => g.aldeiaNome)));
+    }
+  }, [jogosPorAldeiaEvento, jogosAldeiasExpandidas.size]);
+
+  const toggleJogosAldeia = (nome: string) => {
+    setJogosAldeiasExpandidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(nome)) next.delete(nome);
+      else next.add(nome);
+      return next;
+    });
+  };
+
+  const toggleJogosEvento = (aldeia: string, evento: string) => {
+    const key = `${aldeia}::${evento}`;
+    setJogosEventosExpandidos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const porAldeia = useMemo<AldeiaAgg[]>(() => {
     const map = new Map<string, AldeiaAgg>();
@@ -313,28 +363,86 @@ export function StatsDetailPanels({
   );
 
   const renderJogosPanel = (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {jogosAtivos.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Sem jogos ativos.</p>}
-      {jogosAtivos.map((j) => (
-        <div key={j.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-container transition-colors">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-              <Gamepad2 className="h-4 w-4 text-amber-500" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-accent truncate">{j.nome}</p>
-              <p className="text-[11px] text-muted-foreground truncate capitalize">
-                {j.tipo.replace(/_/g, " ")}
-                {j.evento?.aldeia?.nome ? ` · ${j.evento.aldeia.nome}` : ""}
-                {j.evento?.nome ? ` · ${j.evento.nome}` : ""}
-              </p>
-            </div>
+      {jogosPorAldeiaEvento.map((aldeia) => {
+        const aldeiaExpandida = jogosAldeiasExpandidas.has(aldeia.aldeiaNome);
+        const totalJogos = Array.from(aldeia.eventos.values()).reduce((acc, js) => acc + js.length, 0);
+        return (
+          <div key={aldeia.aldeiaNome} className="rounded-xl border border-outline-variant/10 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleJogosAldeia(aldeia.aldeiaNome)}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 bg-surface-container hover:bg-surface-container-high transition-colors text-left"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <Building2 className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm font-semibold text-accent truncate">{aldeia.aldeiaNome}</span>
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                <Badge className="bg-amber-500/15 text-amber-500 hover:bg-amber-500/20 text-[10px]">
+                  {totalJogos} jogo{totalJogos === 1 ? "" : "s"}
+                </Badge>
+                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", !aldeiaExpandida && "-rotate-90")} />
+              </span>
+            </button>
+
+            {aldeiaExpandida && (
+              <div className="divide-y divide-outline-variant/5">
+                {Array.from(aldeia.eventos.entries()).map(([eventoNome, jogos]) => {
+                  const eventoExpandido = jogosEventosExpandidos.has(`${aldeia.aldeiaNome}::${eventoNome}`);
+                  return (
+                    <div key={eventoNome}>
+                      <button
+                        type="button"
+                        onClick={() => toggleJogosEvento(aldeia.aldeiaNome, eventoNome)}
+                        className="w-full flex items-center justify-between gap-2 px-3 py-2 hover:bg-surface-container transition-colors text-left"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <Calendar className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                          <span className="text-xs font-medium text-muted-foreground truncate">{eventoNome}</span>
+                        </span>
+                        <span className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] text-muted-foreground">{jogos.length} jogo{jogos.length === 1 ? "" : "s"}</span>
+                          <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", !eventoExpandido && "-rotate-90")} />
+                        </span>
+                      </button>
+
+                      {eventoExpandido && (
+                        <div className="px-3 pb-2 space-y-1.5">
+                          {jogos.map((j) => {
+                            const meta = JOGO_META[j.tipo] || { icon: Gamepad2, color: "bg-primary/15 text-primary" };
+                            const Icon = meta.icon;
+                            return (
+                              <div key={j.id} className="flex items-center justify-between gap-2 p-2 rounded-lg border border-outline-variant/10 bg-background/40">
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                  <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", meta.color)}>
+                                    <Icon className="h-3.5 w-3.5" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-accent truncate">{j.nome}</p>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">
+                                      {j.tipo.replace(/_/g, " ")}
+                                      {typeof j.stockInicial === "number" ? ` · ${formatNum(j.stockInicial)} bilhetes` : ""}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Badge className="bg-amber-500/15 text-amber-500 hover:bg-amber-500/20 text-[10px] shrink-0 ml-2">
+                                  {formatCurrency(j.preco)}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <Badge className="bg-amber-500/15 text-amber-500 hover:bg-amber-500/20 text-[10px] shrink-0 ml-3">
-            {formatCurrency(j.preco)}/bilhete
-          </Badge>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
