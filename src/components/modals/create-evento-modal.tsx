@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,63 @@ const safeParseFloat = (val: string, fallback: number = 0): number => {
   const parsed = parseFloat(val);
   return isNaN(parsed) ? fallback : parsed;
 };
+
+type RecurrenceFrequency = 'semanal' | 'quinzenal' | 'mensal';
+
+function computeFirstRecurrenceDate(
+  frequency: RecurrenceFrequency,
+  dayOfWeek: number,
+  time: string,
+  from: Date = new Date()
+): Date | null {
+  if (!time) return null;
+  const [hours, minutes] = time.split(':').map(Number);
+  const next = new Date(from);
+  next.setHours(hours, minutes, 0, 0);
+  const currentDay = next.getDay();
+  const targetDay = dayOfWeek;
+  let daysToAdd = targetDay - currentDay;
+
+  if (daysToAdd <= 0) {
+    if (frequency === 'semanal') {
+      daysToAdd += 7;
+    } else if (frequency === 'quinzenal') {
+      daysToAdd += 14;
+    } else if (frequency === 'mensal') {
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(1);
+      while (next.getDay() !== targetDay) next.setDate(next.getDate() + 1);
+    }
+  } else {
+    if (frequency === 'quinzenal') {
+      daysToAdd += 7;
+    } else if (frequency === 'mensal') {
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(1);
+      while (next.getDay() !== targetDay) next.setDate(next.getDate() + 1);
+    }
+  }
+
+  if (frequency !== 'mensal') next.setDate(next.getDate() + daysToAdd);
+  return next;
+}
+
+function addRecurrence(prev: Date, frequency: RecurrenceFrequency, dayOfWeek: number): Date {
+  const next = new Date(prev);
+  if (frequency === 'semanal') {
+    next.setDate(next.getDate() + 7);
+  } else if (frequency === 'quinzenal') {
+    next.setDate(next.getDate() + 14);
+  } else if (frequency === 'mensal') {
+    next.setMonth(next.getMonth() + 1);
+    while (next.getDay() !== dayOfWeek) {
+      next.setDate(next.getDate() + (dayOfWeek > next.getDay() ? 1 : -6));
+    }
+  }
+  return next;
+}
+
+const formatRecDate = (d: Date) => d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" });
 
 interface Aldeia {
   id: string;
@@ -101,6 +158,38 @@ export function CreateEventoModal({
   const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number>(1);
   const [recurrenceTime, setRecurrenceTime] = useState<string>('08:00');
   const [maxOccurrences, setMaxOccurrences] = useState<number | undefined>(undefined);
+
+  const freqLabel = recurrenceFrequency === 'semanal' ? 'semana' : recurrenceFrequency === 'quinzenal' ? 'quinzena' : 'mês';
+
+  const recurrencePreview = useMemo(() => {
+    if (!isRecurring) return null;
+    const hasFim = !!formData.dataFim;
+    if (!recurrenceTime) {
+      return { hasFim, countAteFim: 0, effective: 0, lastDate: null as Date | null, limitCompleto: false };
+    }
+    const dataFim = formData.dataFim ? new Date(formData.dataFim) : null;
+    if (!dataFim || isNaN(dataFim.getTime())) {
+      return { hasFim, countAteFim: 0, effective: 0, lastDate: null as Date | null, limitCompleto: false };
+    }
+    const first = computeFirstRecurrenceDate(recurrenceFrequency, recurrenceDayOfWeek, recurrenceTime);
+    if (!first) {
+      return { hasFim, countAteFim: 0, effective: 0, lastDate: null as Date | null, limitCompleto: false };
+    }
+    const max = maxOccurrences && maxOccurrences >= 1 ? maxOccurrences : null;
+    const dates: Date[] = [];
+    let cursor = first;
+    let safety = 0;
+    while (safety++ < 5000) {
+      if (cursor > dataFim) break;
+      dates.push(new Date(cursor));
+      cursor = addRecurrence(cursor, recurrenceFrequency, recurrenceDayOfWeek);
+    }
+    const countAteFim = dates.length;
+    const effective = max ? Math.min(max, countAteFim) : countAteFim;
+    const lastDate = effective > 0 ? dates[effective - 1] : null;
+    const limitCompleto = !!max && countAteFim >= max;
+    return { hasFim, countAteFim, effective, lastDate, limitCompleto };
+  }, [isRecurring, recurrenceTime, recurrenceFrequency, recurrenceDayOfWeek, maxOccurrences, formData.dataFim]);
 
   const [step, setStep] = useState<'event' | 'games'>('event');
   const [createdEventoId, setCreatedEventoId] = useState<string | null>(null);
@@ -652,11 +741,37 @@ export function CreateEventoModal({
                     </div>
                   </div>
 
-                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-3">
+                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-3 space-y-1.5">
                     <p className="text-xs text-accent font-medium">
-                      Próximas ocorrências serão criadas automaticamente às {recurrenceTime} de cada {recurrenceFrequency === 'semanal' ? 'semana' : recurrenceFrequency === 'quinzenal' ? 'quinzena' : 'mês'}.
-                      {maxOccurrences && ` Máximo de ${maxOccurrences} ocorrências.`}
+                      As ocorrências serão criadas automaticamente às {recurrenceTime} de cada {freqLabel}.
+                      {maxOccurrences && maxOccurrences >= 1 ? ` Máximo de ${maxOccurrences} ocorrências.` : " Sem limite de ocorrências."}
                     </p>
+
+                    {recurrencePreview?.hasFim ? (
+                      recurrencePreview.countAteFim === 0 ? (
+                        <p className="text-xs text-amber-600 font-medium">
+                          Nenhuma ocorrência cabe antes da data de fim ({formatRecDate(new Date(formData.dataFim))}). Aumenta a data de fim ou reduz a frequência.
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          {recurrencePreview.effective} ocorrência{recurrencePreview.effective === 1 ? "" : "s"} até {formatRecDate(new Date(formData.dataFim))}
+                          {recurrencePreview.lastDate ? ` — última a ${formatRecDate(recurrencePreview.lastDate)}.` : "."}
+                          {recurrencePreview.limitCompleto
+                            ? " O limite definido cabe no período."
+                            : " O período da festa limita o nº de ocorrências."}
+                        </p>
+                      )
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Define a data de fim para ver o calendário de ocorrências.
+                      </p>
+                    )}
+
+                    {recurrencePreview?.hasFim && recurrencePreview.countAteFim > 0 && !recurrencePreview.limitCompleto && maxOccurrences && maxOccurrences >= 1 && (
+                      <p className="text-xs text-amber-600 font-medium">
+                        Aviso: o limite de {maxOccurrences} ocorrências ultrapassa a data de fim — só cabem {recurrencePreview.countAteFim} até {formatRecDate(new Date(formData.dataFim))}. Reduz o nº ou aumenta a data de fim.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

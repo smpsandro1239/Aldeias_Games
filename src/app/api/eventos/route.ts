@@ -218,6 +218,7 @@ export async function POST(request: NextRequest) {
         frequenciaRecorrencia: data.recurrenceFrequency || undefined,
         diaSemanaRecorrencia: data.recurrenceDayOfWeek,
         proximaData,
+        maxOcorrencias: data.isRecurring ? data.maxOccurrences : undefined,
       },
       include: {
         aldeia: {

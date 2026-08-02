@@ -198,7 +198,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     delete updateData.recurrenceFrequency;
     delete updateData.recurrenceDayOfWeek;
     delete updateData.recurrenceTime;
-    delete updateData.maxOccurrences;
 
 
     if (imagemUrl) updateData.imagemUrl = imagemUrl;
@@ -239,6 +238,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         updateData.frequenciaRecorrencia = null;
         updateData.diaSemanaRecorrencia = null;
         updateData.proximaData = null;
+        updateData.maxOcorrencias = null;
+        updateData.ocorrenciasCriadas = 0;
       }
     }
 

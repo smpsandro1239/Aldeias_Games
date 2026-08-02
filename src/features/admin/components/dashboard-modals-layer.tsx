@@ -169,6 +169,7 @@ export function DashboardModalsLayer({
           recurrenceTime: selectedEvento.proximaData
             ? new Date(selectedEvento.proximaData).toTimeString().slice(0, 5)
             : "08:00",
+          maxOccurrences: selectedEvento.maxOcorrencias ?? undefined,
         } : undefined}
         aldeias={userRole === "super_admin" ? aldeias : undefined}
         onSubmitJogo={handleSaveJogo}

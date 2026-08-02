@@ -349,6 +349,8 @@ model Evento {
   frequenciaRecorrencia Recorrencia? // semanal, quinzenal, mensal
   diaSemanaRecorrencia  Int? // 0=Domingo, 1=Segunda, etc
   proximaData           DateTime? // Próxima data de criação automática
+  maxOcorrencias        Int? // Nº máximo de ocorrências a criar automaticamente (null = ilimitado)
+  ocorrenciasCriadas    Int      @default(0) // Ocorrências já criadas a partir deste template
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

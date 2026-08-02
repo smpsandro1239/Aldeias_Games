@@ -36,10 +36,29 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
+      // Limite máximo de ocorrências atingido → parar recorrência
+      if (template.maxOcorrencias !== null && template.maxOcorrencias !== undefined &&
+          template.ocorrenciasCriadas >= template.maxOcorrencias) {
+        await prisma.evento.update({
+          where: { id: template.id },
+          data: { proximaData: null }
+        });
+        continue;
+      }
+
       // Calcular datas para o novo evento
       const eventStart = new Date(template.proximaData);
       const eventEnd = new Date(eventStart);
       eventEnd.setHours(eventStart.getHours() + (template.dataFim.getTime() - template.dataInicio.getTime()) / (1000 * 60 * 60)); // Mesma duração
+
+      // Data da festa já passou antes da próxima ocorrência → parar recorrência
+      if (eventStart > template.dataFim) {
+        await prisma.evento.update({
+          where: { id: template.id },
+          data: { proximaData: null }
+        });
+        continue;
+      }
 
       // Criar slug único
       let slug = `${template.slug}-${eventStart.toISOString().split('T')[0]}`;
@@ -101,11 +120,13 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Atualizar próxima data do template
+      // Atualizar próxima data do template e contador de ocorrências
+      const stopRecurrence = nextOccurrence > template.dataFim;
       await prisma.evento.update({
         where: { id: template.id },
         data: {
-          proximaData: nextOccurrence
+          proximaData: stopRecurrence ? null : nextOccurrence,
+          ocorrenciasCriadas: { increment: 1 }
         }
       });
 

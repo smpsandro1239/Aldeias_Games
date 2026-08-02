@@ -33,6 +33,8 @@ export interface Evento {
   frequenciaRecorrencia?: Recorrencia;
   diaSemanaRecorrencia?: number; // 0=Domingo, 1=Segunda, etc
   proximaData?: Date;
+  maxOcorrencias?: number | null;
+  ocorrenciasCriadas?: number;
   
   // Estatísticas
   totalAngariado: number;
