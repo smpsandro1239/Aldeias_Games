@@ -214,9 +214,12 @@ async function proxyInner(request: NextRequest) {
 
   // API routes: check authentication for protected endpoints
   if (pathname.startsWith('/api/')) {
+    // Prova de jogo é acessível a convidados — a route valida permissão internamente (isPublic)
+    const isProvaRoute =
+      pathname.startsWith('/api/participacoes/') && pathname.endsWith('/prova');
     const isPublicRoute = publicRoutes.some(route =>
       pathname === route || pathname.startsWith(`${route}/`)
-    );
+    ) || isProvaRoute;
 
     if (!isPublicRoute && !pathname.startsWith('/api/auth/')) {
       // Try to get token from Authorization header first

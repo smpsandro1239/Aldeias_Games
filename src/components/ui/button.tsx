@@ -53,7 +53,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={isDisabled}
         {...props}
       >
-        {loading && <span className="animate-spin mr-2">⟳</span>}
+        {!asChild && loading && <span className="animate-spin mr-2">⟳</span>}
         {children}
       </Comp>
     );

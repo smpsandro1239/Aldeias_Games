@@ -85,13 +85,14 @@ export function RifaNumberGrid({
             const ocup = numerosOcupados.includes(num);
             const jog = numerosJogados.includes(num);
             return (
-              <button key={num} onClick={() => toggleNumero(num)} disabled={ocup}
+              <button key={num} onClick={() => toggleNumero(num)}
                 className={`py-2 px-1 rounded-lg text-xs font-bold transition-all ${
                   sel ? "bg-secondary text-primary-foreground"
-                  : jog ? "bg-orange-500/70 text-foreground border-2 border-orange-400 cursor-not-allowed"
-                  : ocup ? "bg-red-900/40 text-red-400 cursor-not-allowed border-2 border-red-800/60"
+                  : jog ? "bg-orange-500/70 text-foreground border-2 border-orange-400 cursor-pointer"
+                  : ocup ? "bg-red-900/40 text-red-400 cursor-pointer border-2 border-red-800/60 hover:bg-red-900/60"
                   : "bg-surface-container-highest text-on-surface hover:bg-muted/30"
-                }`}>
+                }`}
+                title={ocup ? "Clique para ver quem jogou este número" : undefined}>
                 {num}
               </button>
             );

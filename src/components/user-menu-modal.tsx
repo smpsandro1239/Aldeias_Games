@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut, Settings, Banknote, Shield, Wallet } from "lucide-react";
-import { toast } from "sonner";
+import { User, LogOut, Settings, Banknote, Shield, ChevronRight, LogIn } from "lucide-react";
 import { useWallet } from "@/components/providers/wallet-provider";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/api-client";
 import { VaultPinModal } from "@/components/modals/vault-pin-modal";
 import { CarregarSaldoModal } from "@/components/modals/carregar-saldo-modal";
@@ -29,11 +29,18 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { saldo, loading: walletLoading } = useWallet();
+  const { logout } = useAuth();
   const [cashboxSaldo, setCashboxSaldo] = useState<number | null>(null);
   const [vaultPinOpen, setVaultPinOpen] = useState(false);
   const [carregarSaldoOpen, setCarregarSaldoOpen] = useState(false);
 
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
+
+  const cashboxPath = user?.role === "super_admin"
+    ? "/superadmindashboard/cofre"
+    : user?.role === "aldeia_admin"
+    ? "/admindashboard/cofre"
+    : "/vendedordashboard?tab=cofre";
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -66,12 +73,10 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
   }, [open, showCashbox]);
 
   const handleLogout = () => {
-    setUser(null);
     onOpenChange(false);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    toast.success("Logout efetuado!");
-    router.push("/");
+    void logout();
+    // Hard reload para limpar o estado do header e o cookie httpOnly
+    window.location.href = "/";
   };
 
   if (loading || walletLoading) {
@@ -105,6 +110,24 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
           <DialogTitle className="font-serif text-xl text-accent">A minha Conta</DialogTitle>
         </DialogHeader>
         <div className="px-6 pb-6 space-y-4">
+          {!user ? (
+            <div className="space-y-4">
+              <div className="bg-surface-container-low rounded-xl p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">Bem-vindo</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Inicie sessão para aceder à sua conta, saldo e participações.
+                </p>
+              </div>
+              <button
+                onClick={() => { onOpenChange(false); router.push("/"); }}
+                className="w-full py-3 text-center text-primary bg-primary/10 hover:bg-primary/20 rounded-xl flex items-center justify-center gap-2 font-semibold"
+              >
+                <LogIn className="h-4 w-4" />
+                Fazer Login / Registar
+              </button>
+            </div>
+          ) : (
+            <>
           <div
             className="bg-surface-container-low rounded-xl p-4 text-center cursor-pointer hover:bg-surface-container-high transition-colors"
             onClick={() => { onOpenChange(false); router.push('/perfil'); }}
@@ -121,8 +144,13 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
             <p className="font-serif text-3xl text-primary">{saldo.toFixed(2)} €</p>
           </div>
           {showCashbox && (
-            <div className="bg-surface-container-low rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Saldo na Caixa</p>
+            <div
+              className="bg-surface-container-low rounded-xl p-4 text-center cursor-pointer hover:bg-surface-container-high transition-colors"
+              onClick={() => { onOpenChange(false); router.push(cashboxPath); }}
+            >
+              <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                Saldo na Caixa <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+              </p>
               <p className="font-serif text-2xl text-accent flex items-center justify-center gap-2">
                 <Banknote className="h-5 w-5" />
                 {cashboxSaldo !== null ? `${cashboxSaldo.toFixed(2)} €` : "A carregar..."}
@@ -170,6 +198,8 @@ export function UserMenuModal({ open, onOpenChange }: UserMenuModalProps) {
             <LogOut className="h-4 w-4" />
             Terminar Sessão
           </button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

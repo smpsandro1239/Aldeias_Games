@@ -7,6 +7,25 @@ import { toast } from "sonner";
 import type { JogoRifa, RifaConfig } from "./rifa-types";
 import { DEFAULT_CONFIG } from "./rifa-types";
 
+interface NumeroInfoData {
+  numero: number;
+  jogoNome: string;
+  participacoes: Array<{
+    id: string;
+    nomeCliente: string;
+    telefoneCliente: string | null;
+    vendedor: string | null;
+    data: string;
+    valorPago: number;
+    metodoPagamento: string;
+    estadoPagamento: string;
+    ganhador: boolean;
+    premioEntregue: boolean;
+    hash: string | null;
+  }>;
+  totalParticipacoes: number;
+}
+
 export function useRifaGame(gamePage: ReturnType<typeof useGamePage<JogoRifa>>) {
   const {
     jogo, setJogo, loading, setLoading, jogoId,
@@ -26,6 +45,9 @@ export function useRifaGame(gamePage: ReturnType<typeof useGamePage<JogoRifa>>) 
   const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
   const [numerosJogados, setNumerosJogados] = useState<number[]>([]);
   const [provaModalOpen, setProvaModalOpen] = useState(false);
+  const [numeroInfoOpen, setNumeroInfoOpen] = useState(false);
+  const [numeroInfoData, setNumeroInfoData] = useState<NumeroInfoData | null>(null);
+  const [numeroInfoLoading, setNumeroInfoLoading] = useState(false);
 
   const randomOptions = [1, 2, 3, 5, 10, 20];
 
@@ -116,11 +138,51 @@ export function useRifaGame(gamePage: ReturnType<typeof useGamePage<JogoRifa>>) 
     }
   }, [blocoSelecionado, jogo, config]);
 
+  const fetchNumeroInfo = useCallback(
+    async (num: number) => {
+      if (!jogo?.id) return;
+      setNumeroInfoLoading(true);
+      setNumeroInfoData(null);
+      setNumeroInfoOpen(true);
+      try {
+        const res = await fetch(`/api/jogos/${jogo.id}/numeros/${num}`);
+        if (res.ok) {
+          const data = await res.json();
+          setNumeroInfoData(data as NumeroInfoData);
+        } else {
+          const err = await res.json().catch(() => null);
+          setNumeroInfoData(null);
+          setNumeroInfoOpen(false);
+          toast.error(err?.error || "Erro ao carregar informação do número");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar informação do número:", error);
+        setNumeroInfoData(null);
+        setNumeroInfoOpen(false);
+        toast.error("Erro ao carregar informação do número");
+      } finally {
+        setNumeroInfoLoading(false);
+      }
+    },
+    [jogo?.id]
+  );
+
   const toggleNumero = (num: number) => {
     if (numerosSelecionados.includes(num)) {
       setNumerosSelecionados(numerosSelecionados.filter((n) => n !== num));
     } else if (numerosOcupados.includes(num)) {
-      toast.warning("Este número já foi adquirido.");
+      if (!jogo?.id) return;
+      try {
+        const userStr = localStorage.getItem("user");
+        const userId = userStr ? JSON.parse(userStr).id : null;
+        if (userId) {
+          fetchNumeroInfo(num);
+        } else {
+          toast.info("Inicie sessão para ver quem jogou este número.");
+        }
+      } catch {
+        toast.info("Inicie sessão para ver quem jogou este número.");
+      }
     } else if (numerosSelecionados.length < 20) {
       setNumerosSelecionados([...numerosSelecionados, num]);
     } else {
@@ -231,7 +293,9 @@ export function useRifaGame(gamePage: ReturnType<typeof useGamePage<JogoRifa>>) 
     blocoSelecionado, setBlocoSelecionado,
     numerosOcupados, numerosJogados,
     provaModalOpen, setProvaModalOpen,
-    fetchNumerosOcupados,
+    numeroInfoOpen, setNumeroInfoOpen,
+    numeroInfoData, numeroInfoLoading,
+    fetchNumerosOcupados, fetchNumeroInfo,
     toggleNumero, selectRandomNumbers,
     handleParticipar, processarPagamento,
     precoNumero, randomOptions, handlePlayAgain,

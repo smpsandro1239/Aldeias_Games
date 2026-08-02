@@ -102,6 +102,9 @@ export function ProvaJogoModal({
       if (res.ok) {
         const json = await res.json();
         setData(json);
+      } else {
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error || "Erro ao carregar prova");
       }
     } catch {
       toast.error("Erro ao carregar prova");

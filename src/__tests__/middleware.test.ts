@@ -91,6 +91,12 @@ describe('Proxy', () => {
       expect(res.status).not.toBe(401);
     });
 
+    it('deve permitir GET da prova de jogo sem token', async () => {
+      const req = createRequest('/api/participacoes/abc123/prova');
+      const res = await proxy(req);
+      expect(res.status).not.toBe(401);
+    });
+
     it('deve permitir API com Bearer token válido', async () => {
       vi.mocked(jwtVerify).mockResolvedValue({
         payload: { userId: 'user-1', role: 'user', aldeiaId: 'aldeia-1' },

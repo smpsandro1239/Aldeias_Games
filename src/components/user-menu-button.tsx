@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { User, LogOut, Settings, Banknote, Shield } from "lucide-react";
-import { toast } from "sonner";
+import { User, LogOut, Settings, Banknote, Shield, ChevronRight, LogIn } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
+import { useAuth } from "@/hooks/use-auth";
 import { VaultPinModal } from "@/components/modals/vault-pin-modal";
 
 interface User {
@@ -26,8 +26,15 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [cashboxSaldo, setCashboxSaldo] = useState<number | null>(null);
   const [vaultPinOpen, setVaultPinOpen] = useState(false);
+  const { logout } = useAuth();
 
   const showCashbox = user?.role === "vendedor" || user?.role === "aldeia_admin" || user?.role === "super_admin";
+
+  const cashboxPath = user?.role === "super_admin"
+    ? "/superadmindashboard/cofre"
+    : user?.role === "aldeia_admin"
+    ? "/admindashboard/cofre"
+    : "/vendedordashboard?tab=cofre";
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -55,10 +62,9 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
   const handleLogout = () => {
     setUser(null);
     setUserMenuOpen(false);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    toast.success("Logout efetuado!");
-    router.push("/");
+    void logout();
+    // Hard reload para limpar o estado do header e o cookie httpOnly
+    window.location.href = "/";
   };
 
   return (
@@ -84,6 +90,24 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
             <DialogTitle className="font-serif text-xl text-accent">A minha Conta</DialogTitle>
           </DialogHeader>
           <div className="px-6 pb-6 space-y-4">
+            {!user ? (
+              <div className="space-y-4">
+                <div className="bg-surface-container-low rounded-xl p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Bem-vindo</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Inicie sessão para aceder à sua conta, saldo e participações.
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setUserMenuOpen(false); router.push("/"); }}
+                  className="w-full py-3 text-center text-primary bg-primary/10 hover:bg-primary/20 rounded-xl flex items-center justify-center gap-2 font-semibold"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Fazer Login / Registar
+                </button>
+              </div>
+            ) : (
+              <>
             <div className="bg-surface-container-low rounded-xl p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">Bem-vindo</p>
               <p className="font-serif text-lg text-accent">{user?.nome}</p>
@@ -94,8 +118,13 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
               <p className="font-serif text-3xl text-primary">0,00 €</p>
             </div>
             {showCashbox && (
-              <div className="bg-surface-container-low rounded-xl p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Saldo na Caixa</p>
+              <div
+                className="bg-surface-container-low rounded-xl p-4 text-center cursor-pointer hover:bg-surface-container-high transition-colors"
+                onClick={() => { setUserMenuOpen(false); router.push(cashboxPath); }}
+              >
+                <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                  Saldo na Caixa <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                </p>
                 <p className="font-serif text-2xl text-accent flex items-center justify-center gap-2">
                   <Banknote className="h-5 w-5" />
                   {cashboxSaldo !== null ? `${cashboxSaldo.toFixed(2)} €` : "..."}
@@ -143,6 +172,8 @@ export function UserMenuButton({ className = "" }: UserMenuButtonProps) {
               <LogOut className="h-4 w-4" />
               Terminar Sessão
             </button>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>

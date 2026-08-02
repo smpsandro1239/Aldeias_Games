@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ParticipacaoConfirmacaoModal } from "@/components/modals/participacao-confirmacao-modal";
 import { PlayerDataConfirmModal } from "@/components/modals/player-data-confirm-modal";
+import { NumeroInfoModal } from "@/components/modals/numero-info-modal";
 import { useGamePage } from "@/hooks/useGamePage";
 import { GameDetailLayout } from "@/components/game-detail-layout";
 import { GamePaymentDialog } from "@/components/game-payment-dialog";
@@ -40,6 +41,8 @@ export default function RifaPage() {
     numerosDisponiveis, blocoSelecionado, setBlocoSelecionado,
     numerosOcupados, numerosJogados,
     provaModalOpen, setProvaModalOpen,
+    numeroInfoOpen, setNumeroInfoOpen,
+    numeroInfoData, numeroInfoLoading,
     fetchNumerosOcupados,
     toggleNumero, selectRandomNumbers,
     handleParticipar, processarPagamento,
@@ -214,6 +217,13 @@ export default function RifaPage() {
         userEmail={gamePage.userOriginalData.email}
         onConfirmWithOwnData={handlePlayerConfirmOwnData}
         onConfirmWithNewData={handlePlayerConfirmNewData}
+      />
+
+      <NumeroInfoModal
+        open={numeroInfoOpen}
+        onOpenChange={setNumeroInfoOpen}
+        data={numeroInfoData}
+        loading={numeroInfoLoading}
       />
     </GameDetailLayout>
   );
