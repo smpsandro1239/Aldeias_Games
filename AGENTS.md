@@ -347,6 +347,19 @@ Pages:
 - `AldeiasTab` recebe `focusAldeiaId` + `onFocusConsumed`: expande a aldeia, faz scroll até `#aldeia-card-{id}` e limpa o foco
 - Props são opcionais — o fluxo atravessa `SuperAdminDashboard` → `AldeiasTab` diretamente, e `AdminDashboard` → `DashboardTabContent` → `AldeiasTab`
 
+### Recorrência de Eventos — maxOcorrencias (real no backend)
+- **Schema** (`prisma/schema.prisma` model Evento): `maxOcorrencias Int?` (null = ilimitado) + `ocorrenciasCriadas Int @default(0)`
+- **POST /api/eventos** persiste `maxOcorrencias` quando `isRecurring`; **PUT /api/eventos/[id]** mantém `maxOcorrencias` no updateData (já não o elimina) e faz reset (`null` + `0`) ao desativar recorrência
+- **Cron** (`/api/eventos/process-recurring`): respeita o limite (`ocorrenciasCriadas >= maxOcorrencias` → para e põe `proximaData = null`), para se `eventStart > dataFim`, incrementa `ocorrenciasCriadas` em cada criação e põe `proximaData = null` quando a próxima ocorrência ultrapassa a `dataFim`
+- **Modal** (`create-evento-modal.tsx`): pré-visualização em tempo real — nº de ocorrências que cabem até à data de fim, data da última ocorrência, e aviso âmbar quando o limite de ocorrências ultrapassa a data de fim (helpers `computeFirstRecurrenceDate`/`addRecurrence` espelham a lógica do POST/cron)
+- **Edit**: `dashboard-modals-layer.tsx` mapeia `selectedEvento.maxOcorrencias` → `initialData.maxOccurrences`; `Evento` type em `types.ts` ganhou `maxOcorrencias`/`ocorrenciasCriadas`
+
+### Jogos Ativos — Painel Agrupado (Aldeia → Evento → Jogos)
+- `StatsDetailPanels.renderJogosPanel` reescrito com accordion hierárquico: Aldeia (chevron) → Evento (chevron) → lista de jogos
+- Aldeias expandidas por padrão no primeiro load; eventos começam colapsados (mesmo padrão do `/jogos`)
+- Cada jogo tem ícone por tipo (`JOGO_META`: rifa=Ticket, raspadinha=Sparkles, euromilhoes=Award, poio_da_vaca=Gamepad2), stock e preço
+- Estado local `jogosAldeiasExpandidas`/`jogosEventosExpandidos` + agrupamento `jogosPorAldeiaEvento`
+
 ### Prova de Jogo — z-index fix
 - `prova-jogo-modal.tsx` DialogContent bumped to `z-[60]` (from z-50) to render above confirmation overlays
 
