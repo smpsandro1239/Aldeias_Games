@@ -128,12 +128,42 @@ export function CreateJogoModal({
     if (!submittedData) return;
     setLoading(true);
     try {
-      await onSubmit(submittedData);
+      const config = (submittedData.configuracao || {}) as Record<string, unknown>;
+      const isRecorrenteEuromilhoes = submittedData.tipo === GAME_TYPES.EUROMILHOES && config.recorrente === true;
+
+      if (isRecorrenteEuromilhoes) {
+        const res = await apiRequest("/api/euromilhoes/recorrentes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            eventoId: submittedData.eventoId,
+            nome: submittedData.nome,
+            preco: submittedData.preco,
+            stockInicial: submittedData.stockInicial,
+            limitePorUsuario: submittedData.limitePorUsuario,
+            descricao: submittedData.descricao,
+            localSorteio: config.localSorteio || "",
+            premioDescricao: config.recorrentePremioDescricao || "",
+            premioValor: config.recorrentePremioValor || undefined,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || "Erro ao criar jogo recorrente");
+        }
+      } else {
+        await onSubmit(submittedData);
+      }
+
       setShowTransparency(false);
       onOpenChange(false);
       resetForm();
-    } catch {
-      toast.error("Erro ao criar jogo");
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      toast.error(err.message || "Erro ao criar jogo");
     } finally {
       setLoading(false);
     }

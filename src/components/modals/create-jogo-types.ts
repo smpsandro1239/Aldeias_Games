@@ -50,6 +50,9 @@ export interface JogoFormData {
   valorPremios: string;
   raspadinhaMaxGanhadores: string;
   raspadinhaMaxPremioTotal: string;
+  recorrenteEuromilhoes: boolean;
+  recorrentePremioDescricao: string;
+  recorrentePremioValor: string;
 }
 
 export interface JogoMetrics {
@@ -138,6 +141,14 @@ export function buildJogoData(
     config.numeroBlocos = safeParseInt(formData.numeroBlocos, 1);
     config.permitirStripe = formData.permitirStripe;
     config.valorPremios = formData.valorPremios ? safeParseFloat(formData.valorPremios) : null;
+  }
+
+  if (formData.tipo === GAME_TYPES.EUROMILHOES && formData.recorrenteEuromilhoes) {
+    config.recorrente = true;
+    config.frequenciaRecorrencia = "semanal";
+    config.diaSemanaRecorrencia = 5; // Sexta-feira
+    config.recorrentePremioDescricao = formData.recorrentePremioDescricao;
+    config.recorrentePremioValor = formData.recorrentePremioValor ? safeParseFloat(formData.recorrentePremioValor) : null;
   }
 
   if (formData.tipo === GAME_TYPES.POIO_DA_VACA) {

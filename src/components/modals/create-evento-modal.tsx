@@ -505,7 +505,10 @@ export function CreateEventoModal({
                 value={formData.objectivoAngariacao}
                 onChange={(e) => handleChange("objectivoAngariacao", e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Valor objetivo a angariar (opcional)</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                Meta a alcançar com as vendas deste evento. O progresso será mostrado no dashboard do admin.
+                <span className="text-muted-foreground/60">(opcional)</span>
+              </p>
             </div>
 
             <div className="grid gap-2">

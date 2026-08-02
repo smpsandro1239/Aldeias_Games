@@ -77,7 +77,7 @@ export function LucratividadeCard({
         </div>
       )}
 
-      {(formData.tipo === GAME_TYPES.RIFA) && (
+      {(formData.tipo === GAME_TYPES.RIFA || formData.tipo === GAME_TYPES.EUROMILHOES) && (
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total Prémios:</span>

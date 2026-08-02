@@ -44,6 +44,9 @@ const getInitialState = (initialData?: JogoData) => ({
     valorPremios: "",
     raspadinhaMaxGanhadores: "0",
     raspadinhaMaxPremioTotal: "0",
+    recorrenteEuromilhoes: false,
+    recorrentePremioDescricao: "",
+    recorrentePremioValor: "",
   } as JogoFormData,
   raspadinhaPremios: initialData?.premios && initialData.tipo === GAME_TYPES.RASPADINHA
     ? initialData.premios.map((p, i) => ({
@@ -296,7 +299,12 @@ export function useJogoForm(initialData?: JogoData, eventoId?: string, effective
     }
 
     if (state.formData.tipo === GAME_TYPES.EUROMILHOES) {
-      if (!state.formData.dataSorteio || !state.formData.horaSorteio || !state.formData.localSorteio) {
+      if (state.formData.recorrenteEuromilhoes) {
+        if (!state.formData.localSorteio) {
+          toast.error('Local do sorteio é obrigatório para Euromilhões');
+          return;
+        }
+      } else if (!state.formData.dataSorteio || !state.formData.horaSorteio || !state.formData.localSorteio) {
         toast.error('Data, hora e local do sorteio são obrigatórios para Euromilhões');
         return;
       }

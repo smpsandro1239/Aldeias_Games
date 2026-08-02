@@ -85,30 +85,53 @@ export function OverviewTab({
               </div>
             ) : (
               eventos.slice(0, 3).map((ev) => (
-                <div
-                  key={ev.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-all cursor-pointer group"
-                  onClick={() => {
-                    setSelectedEvento(ev);
-                    setEventoModalOpen(true);
-                  }}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                      <Calendar className="h-5 w-5 text-primary" />
+                <div key={ev.id} className="rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-all cursor-pointer group overflow-hidden">
+                  <div
+                    className="flex items-center justify-between p-3"
+                    onClick={() => {
+                      setSelectedEvento(ev);
+                      setEventoModalOpen(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <Calendar className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-accent truncate">{ev.nome}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Clock className="h-3 w-3" />
+                          {formatDate(ev.dataInicio)} — {formatDate(ev.dataFim)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-accent truncate">{ev.nome}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(ev.dataInicio)} — {formatDate(ev.dataFim)}
-                      </p>
+                    <div className="text-right ml-3 shrink-0 flex flex-col items-end gap-1">
+                      {getEstadoBadge(ev.estado)}
+                      <p className="text-sm font-bold text-emerald-500">{formatCurrency(ev.totalAngariado || 0)}</p>
+                      {ev.objectivoAngariacao && ev.objectivoAngariacao > 0 && (
+                        <p className="text-xs text-muted-foreground">de {formatCurrency(ev.objectivoAngariacao)}</p>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right ml-3 shrink-0 flex flex-col items-end gap-1">
-                    {getEstadoBadge(ev.estado)}
-                    <p className="text-sm font-bold text-emerald-500">{formatCurrency(ev.totalAngariado || 0)}</p>
-                  </div>
+                  {ev.objectivoAngariacao && ev.objectivoAngariacao > 0 && (() => {
+                    const pct = Math.min(100, Math.round(((ev.totalAngariado || 0) / ev.objectivoAngariacao) * 100));
+                    return (
+                      <div className="px-3 pb-3">
+                        <div className="flex items-center justify-between text-[11px] mb-1">
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Target className="h-3 w-3" /> Meta
+                          </span>
+                          <span className={`font-semibold ${pct >= 100 ? "text-emerald-500" : "text-primary"}`}>{pct}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r ${pct >= 100 ? "from-emerald-500 to-green-400" : "from-primary to-blue-400"}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))
             )}

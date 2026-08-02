@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           _count: {
-            select: { userAldeiaRoles: true, eventos: true, jogos: true }
+            select: { userAldeiaRoles: true, eventos: true, jogos: true, premios: true }
           }
         },
         skip,
@@ -60,12 +60,26 @@ export async function GET(request: NextRequest) {
       prisma.aldeia.count({ where })
     ])
 
+    // Per-aldeia raised totals (concluded participations only)
+    const aggs = await Promise.all(
+      aldeias.map((a) =>
+        prisma.participacao.aggregate({
+          where: { estadoPagamento: 'concluido', jogo: { evento: { aldeiaId: a.id } } },
+          _count: true,
+          _sum: { valorPago: true }
+        })
+      )
+    )
+
     return NextResponse.json({
-      aldeias: aldeias.map((aldeia: any) => ({
+      aldeias: aldeias.map((aldeia: any, i: number) => ({
         ...aldeia,
         membrosAtivos: aldeia._count.userAldeiaRoles,
         totalEventos: aldeia._count.eventos,
-        totalJogos: aldeia._count.jogos
+        totalJogos: aldeia._count.jogos,
+        totalPremios: aldeia._count.premios,
+        totalParticipacoes: aggs[i]._count,
+        totalAngariado: aggs[i]._sum.valorPago ?? 0
       })),
       pagination: {
         page,

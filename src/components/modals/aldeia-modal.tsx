@@ -47,17 +47,17 @@ export function AldeiaModal({ open, onOpenChange, onSubmit, initialData, loading
   const [localLoading, setLocalLoading] = useState(false);
 
   useEffect(() => {
-    if (initialData && open) {
-      setFormData(initialData);
-    } else if (!open) {
-      setFormData({
-        nome: "",
-        tipoOrganizacao: TIPO_ORGANIZACAO.ALDEIA,
-        descricao: "",
-        telefone: "",
-        email: "",
-      });
-    }
+    setFormData(
+      initialData
+        ? { ...initialData }
+        : {
+            nome: "",
+            tipoOrganizacao: TIPO_ORGANIZACAO.ALDEIA,
+            descricao: "",
+            telefone: "",
+            email: "",
+          }
+    );
   }, [initialData, open]);
 
   const handleChange = useCallback((field: keyof AldeiaData, value: string) => {
