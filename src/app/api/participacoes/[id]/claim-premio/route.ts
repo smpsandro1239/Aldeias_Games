@@ -66,6 +66,11 @@ export async function POST(
             nome: true,
             tipo: true,
             configuracao: true,
+            evento: {
+              select: {
+                aldeiaId: true,
+              },
+            },
           },
         },
       },
@@ -107,6 +112,16 @@ export async function POST(
         { error: 'Apenas vendedores e administradores podem usar esta opção de reclamação.' },
         { status: 400 }
       );
+    }
+
+    // Scoping: entregar ao cofre ou pagar ao cliente envolve a caixa da aldeia do utilizador
+    if (claimType === 'cofre' || claimType === 'pagar_cliente') {
+      if (user.role !== 'super_admin' && participacao.jogo.evento?.aldeiaId !== user.aldeiaId) {
+        return NextResponse.json(
+          { error: 'Esta participação pertence a outra aldeia' },
+          { status: 403 }
+        );
+      }
     }
 
     let dados: Record<string, unknown>;
@@ -172,30 +187,8 @@ export async function POST(
 
     if (claimType === 'cofre') {
       const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const cashbox = await tx.vendedorCashbox.findUnique({
-          where: { userId: user.id },
-        });
-
-        if (!cashbox || cashbox.saldo < prizeAmount) {
-          throw new Error('CAIXA_INSUFICIENTE');
-        }
-
-        await tx.vendedorCashbox.update({
-          where: { userId: user.id },
-          data: { saldo: { decrement: prizeAmount } },
-        });
-
-        await tx.vendedorCashboxTransaction.create({
-          data: {
-            cashboxId: cashbox.id,
-            tipo: 'DEPOSITADO_NO_COFRE',
-            valor: -prizeAmount,
-            descricao: `Prémio raspadinha entregue ao cofre: ${winningPrize.nome}`,
-            referencia: participacao.id,
-            criadoPorId: user.id,
-          },
-        });
-
+        // O dinheiro fica na caixa do vendedor até o admin confirmar o depósito
+        // (a confirmação é que desconta a caixa e credita o cofre) — evita débito duplo.
         let pedidoId: string | null = null;
         if (user.aldeiaId) {
           const pedido = await tx.pedidoDepositoCofre.create({
@@ -224,18 +217,19 @@ export async function POST(
             userId: user.id,
             tipoAlteracao: 'claim_cofre',
             dadosAnteriores: JSON.stringify({ premioEntregue: false, ganhador: false }),
+            motivo: `Prémio "${winningPrize.nome}" no valor de ${prizeAmount.toFixed(2)}€ entregue ao cofre (depósito pendente de confirmação)`,
             ip,
           },
         });
 
-        const updatedCashbox = await tx.vendedorCashbox.findUnique({
+        const currentCashbox = await tx.vendedorCashbox.findUnique({
           where: { userId: user.id },
           select: { saldo: true },
         });
 
         return {
           creditedAmount: 0,
-          cashboxSaldo: updatedCashbox?.saldo || 0,
+          cashboxSaldo: currentCashbox?.saldo || 0,
           pedidoId,
         };
       });
@@ -309,6 +303,7 @@ export async function POST(
             userId: user.id,
             tipoAlteracao: 'claim_jogar_novamente',
             dadosAnteriores: JSON.stringify({ premioEntregue: false, ganhador: false }),
+            motivo: `Prémio "${winningPrize.nome}" no valor de ${prizeAmount.toFixed(2)}€ convertido em crédito para jogar novamente`,
             ip,
           },
         });
@@ -375,6 +370,7 @@ export async function POST(
             userId: user.id,
             tipoAlteracao: 'claim_pagar_cliente',
             dadosAnteriores: JSON.stringify({ premioEntregue: false, ganhador: false }),
+            motivo: `Prémio "${winningPrize.nome}" no valor de ${prizeAmount.toFixed(2)}€ pago ao cliente em dinheiro`,
             ip,
           },
         });
@@ -439,6 +435,7 @@ export async function POST(
           userId: user.id,
           tipoAlteracao: 'claim',
           dadosAnteriores: JSON.stringify({ premioEntregue: false, ganhador: false }),
+          motivo: `Prémio "${winningPrize.nome}" no valor de ${prizeAmount.toFixed(2)}€ creditado na carteira`,
           ip,
         },
       });

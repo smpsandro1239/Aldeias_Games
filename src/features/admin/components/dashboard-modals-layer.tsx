@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -75,7 +76,7 @@ interface DashboardModalsLayerProps {
   handleSaveJogo: (data: any) => Promise<void>;
   handleSaveAldeia: (data: any) => Promise<void>;
   handleSaveUser: (data: any) => Promise<void>;
-  handleConvertPrize: (participacaoId: string, valor: number) => Promise<void>;
+  handleConvertPrize: (participacaoId: string, valor: number, observacoes?: string) => Promise<void>;
   executeDelete: () => Promise<void>;
   executeToggleJogoEstado: () => Promise<void>;
   fetchData: () => Promise<void>;
@@ -137,6 +138,10 @@ export function DashboardModalsLayer({
   eventoModalAldeiaId,
   setEventoModalAldeiaId,
 }: DashboardModalsLayerProps) {
+  const [entregaMetodo, setEntregaMetodo] = useState("");
+  const [entregaObservacoes, setEntregaObservacoes] = useState("");
+  const [convertObservacoes, setConvertObservacoes] = useState("");
+
   return (
     <>
       <CreateEventoModal
@@ -254,43 +259,127 @@ export function DashboardModalsLayer({
 
       <ConfirmModal
         open={convertPrizeOpen}
-        onOpenChange={setConvertPrizeOpen}
+        onOpenChange={(open) => {
+          setConvertPrizeOpen(open);
+          if (!open) setConvertObservacoes("");
+        }}
         title="Converter Prémio em Saldo"
         description={
           <div className="space-y-4">
             <p>Introduza o valor a creditar na carteira do utilizador:</p>
-            <Input
-              type="number"
-              value={convertValor}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConvertValor(e.target.value)}
-              placeholder="Valor em euros"
-            />
+            {(selectedPremio?.jogo?.premios?.filter((p) => typeof p.valorDinheiroAlternative === "number" && p.valorDinheiroAlternative > 0) ?? []).length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Valores dos prémios do jogo (clique para preencher):</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedPremio?.jogo?.premios
+                    ?.filter((p) => typeof p.valorDinheiroAlternative === "number" && p.valorDinheiroAlternative > 0)
+                    .map((p, i) => (
+                      <button
+                        key={p.id || i}
+                        type="button"
+                        onClick={() => setConvertValor(String(p.valorDinheiroAlternative))}
+                        className="px-3 py-1 rounded-full border text-sm hover:bg-accent/10 transition-colors"
+                      >
+                        {p.nome}: {Number(p.valorDinheiroAlternative).toFixed(2)}€
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-1">
+              <label className="text-sm font-medium" htmlFor="convertValor">Valor (€)</label>
+              <Input
+                id="convertValor"
+                type="number"
+                value={convertValor}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConvertValor(e.target.value)}
+                placeholder="Valor em euros"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium" htmlFor="convertObservacoes">Observações</label>
+              <Input
+                id="convertObservacoes"
+                value={convertObservacoes}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConvertObservacoes(e.target.value)}
+                placeholder="Motivo da conversão (mín. 3 caracteres)"
+              />
+            </div>
           </div>
         }
         confirmText="Converter"
         onConfirm={() => {
           const valor = parseFloat(convertValor);
           if (selectedPremio && !isNaN(valor) && valor > 0) {
-            handleConvertPrize(selectedPremio.id, valor);
+            if (convertObservacoes.trim().length < 3) {
+              toast.error("Indique uma observação (mínimo 3 caracteres) para registar na auditoria");
+              return;
+            }
+            handleConvertPrize(selectedPremio.id, valor, convertObservacoes.trim());
+            setConvertObservacoes("");
           }
         }}
       />
 
       <ConfirmModal
         open={confirmEntregaOpen}
-        onOpenChange={setConfirmEntregaOpen}
+        onOpenChange={(open) => {
+          setConfirmEntregaOpen(open);
+          if (!open) {
+            setEntregaMetodo("");
+            setEntregaObservacoes("");
+          }
+        }}
         title="Confirmar Entrega"
-        description="Tem a certeza que deseja marcar este prémio como entregue fisicamente?"
+        confirmText="Registar Entrega"
+        description={
+          <div className="space-y-4">
+            <p>Confirme a entrega física do prémio. Esta ação é registada na auditoria da participação.</p>
+            <div className="space-y-1">
+              <label className="text-sm font-medium" htmlFor="entregaMetodo">Método de entrega</label>
+              <Input
+                id="entregaMetodo"
+                value={entregaMetodo}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEntregaMetodo(e.target.value)}
+                placeholder="Ex.: presencial, correio..."
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium" htmlFor="entregaObservacoes">Observações</label>
+              <Input
+                id="entregaObservacoes"
+                value={entregaObservacoes}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEntregaObservacoes(e.target.value)}
+                placeholder="Detalhes da entrega (mín. 3 caracteres)"
+              />
+            </div>
+          </div>
+        }
         onConfirm={async () => {
           if (selectedPremio) {
+            const metodo = entregaMetodo.trim();
+            const obs = entregaObservacoes.trim();
+            if (!metodo) {
+              toast.error("Indique o método de entrega (ex.: presencial, correio)");
+              return;
+            }
+            if (obs.length < 3) {
+              toast.error("Indique uma observação (mínimo 3 caracteres)");
+              return;
+            }
             const res = await fetch(`/api/participacoes/${selectedPremio.id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ premioEntregue: true }),
+              body: JSON.stringify({ premioEntregue: true, metodoEntrega: metodo, observacoes: obs }),
             });
             if (res.ok) {
               toast.success("Marcado como entregue");
+              setEntregaMetodo("");
+              setEntregaObservacoes("");
               fetchData();
+            } else {
+              const err = await res.json().catch(() => null);
+              toast.error(err?.error || "Erro ao registar a entrega");
             }
           }
         }}

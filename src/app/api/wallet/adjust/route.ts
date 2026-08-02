@@ -100,6 +100,11 @@ prisma.transacao.create({
       return NextResponse.json({ error: 'Utilizador não encontrado' }, { status: 404 });
     }
 
+    // Scoping por aldeia: aldeia_admin só pode ajustar saldo de utilizadores da sua aldeia
+    if (user.role !== 'super_admin' && (!targetUser.aldeiaId || targetUser.aldeiaId !== user.aldeiaId)) {
+      return NextResponse.json({ error: 'Não pode ajustar o saldo de um utilizador de outra aldeia' }, { status: 403 });
+    }
+
     const valorAntes = targetUser.saldo;
     const valorDepois = valorAntes + valor;
     const tipoTransacao = tipo || 'deposito';

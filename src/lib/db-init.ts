@@ -2,8 +2,66 @@ import prisma from './db';
 import bcrypt from 'bcryptjs';
 
 let seeded = false;
+let reconciled = false;
+
+// ── PERMISSOES (defaults) ──
+const permKeys = [
+  'MANAGE_ALDEIA', 'VIEW_ALDEIA',
+  'CREATE_EVENTO', 'EDIT_EVENTO', 'DELETE_EVENTO', 'VIEW_EVENTO',
+  'CREATE_JOGO', 'EDIT_JOGO', 'DELETE_JOGO', 'VIEW_JOGO',
+  'MANAGE_PREMIOS', 'VIEW_PREMIOS',
+  'MANAGE_VENDEDORES', 'VIEW_VENDEDORES',
+  'EXECUTE_VENDA', 'VIEW_VENDAS',
+  'VIEW_ANALYTICS_GLOBAL', 'VIEW_ANALYTICS_LOCAL',
+  'MANAGE_USERS', 'MANAGE_PLANOS',
+] as const;
+
+// ── ROLES (defaults) ──
+const roleDefs: { name: string; desc: string; pk: string[] }[] = [
+  { name: 'SUPER_ADMIN', desc: 'Super Administrador', pk: [...permKeys] },
+  { name: 'ALDEIA_ADMIN', desc: 'Admin de Aldeia', pk: ['VIEW_ALDEIA','MANAGE_ALDEIA','CREATE_EVENTO','EDIT_EVENTO','DELETE_EVENTO','VIEW_EVENTO','CREATE_JOGO','EDIT_JOGO','DELETE_JOGO','VIEW_JOGO','MANAGE_PREMIOS','VIEW_PREMIOS','MANAGE_VENDEDORES','VIEW_VENDEDORES','EXECUTE_VENDA','VIEW_VENDAS','VIEW_ANALYTICS_LOCAL'] },
+  { name: 'GESTOR', desc: 'Gestor', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES','EXECUTE_VENDA','VIEW_VENDAS'] },
+  { name: 'COLABORADOR', desc: 'Colaborador', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','EXECUTE_VENDA'] },
+  { name: 'VIEWER', desc: 'Visualizador', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES'] },
+  { name: 'MEMBRO', desc: 'Membro', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES'] },
+];
+
+// Idempotente: cria permissões/roles em falta e adiciona RolePermission em falta.
+// NUNCA remove — RBAC personalizado pelos admins é preservado.
+async function ensureDefaultRoles() {
+  const perms: Record<string, { id: string }> = {};
+  for (const k of permKeys) {
+    perms[k] = await prisma.permission.upsert({
+      where: { key: k },
+      update: {},
+      create: { key: k, description: k },
+    });
+  }
+  for (const r of roleDefs) {
+    const role = await prisma.role.upsert({
+      where: { name: r.name as any },
+      update: { description: r.desc },
+      create: { name: r.name as any, description: r.desc },
+    });
+    for (const k of r.pk) {
+      const existing = await prisma.rolePermission.findFirst({ where: { roleId: role.id, permissionId: perms[k].id } });
+      if (!existing) {
+        await prisma.rolePermission.create({ data: { roleId: role.id, permissionId: perms[k].id } });
+      }
+    }
+  }
+}
 
 export async function ensureSeeded(): Promise<{ seeded: boolean; counts?: Record<string, number> }> {
+  if (!reconciled) {
+    try {
+      await ensureDefaultRoles();
+    } catch (e) {
+      console.error('[db-init] role permission reconcile failed:', e);
+    }
+    reconciled = true;
+  }
+
   if (seeded) return { seeded: true };
 
   try {
@@ -58,51 +116,11 @@ async function runSeed() {
   const daysAgo = (n: number) => new Date(Date.now() - n * 86400000);
   const daysFromNow = (n: number) => new Date(Date.now() + n * 86400000);
 
-  // ── PERMISSOES ──
-  const permKeys = [
-    'MANAGE_ALDEIA', 'VIEW_ALDEIA',
-    'CREATE_EVENTO', 'EDIT_EVENTO', 'DELETE_EVENTO', 'VIEW_EVENTO',
-    'CREATE_JOGO', 'EDIT_JOGO', 'DELETE_JOGO', 'VIEW_JOGO',
-    'MANAGE_PREMIOS', 'VIEW_PREMIOS',
-    'MANAGE_VENDEDORES', 'VIEW_VENDEDORES',
-    'EXECUTE_VENDA', 'VIEW_VENDAS',
-    'VIEW_ANALYTICS_GLOBAL', 'VIEW_ANALYTICS_LOCAL',
-    'MANAGE_USERS', 'MANAGE_PLANOS',
-  ] as const;
-
-  const perms: Record<string, { id: string }> = {};
-  for (const k of permKeys) {
-    perms[k] = await prisma.permission.upsert({
-      where: { key: k },
-      update: {},
-      create: { key: k, description: k },
-    });
-  }
-
-  // ── ROLES ──
-  const roleDefs: { name: string; desc: string; pk: string[] }[] = [
-    { name: 'SUPER_ADMIN', desc: 'Super Administrador', pk: [...permKeys] },
-    { name: 'ALDEIA_ADMIN', desc: 'Admin de Aldeia', pk: ['VIEW_ALDEIA','CREATE_EVENTO','EDIT_EVENTO','DELETE_EVENTO','VIEW_EVENTO','CREATE_JOGO','EDIT_JOGO','DELETE_JOGO','VIEW_JOGO','MANAGE_PREMIOS','VIEW_PREMIOS','MANAGE_VENDEDORES','VIEW_VENDEDORES','EXECUTE_VENDA','VIEW_VENDAS','VIEW_ANALYTICS_LOCAL'] },
-    { name: 'GESTOR', desc: 'Gestor', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES','EXECUTE_VENDA','VIEW_VENDAS'] },
-    { name: 'COLABORADOR', desc: 'Colaborador', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','EXECUTE_VENDA'] },
-    { name: 'VIEWER', desc: 'Visualizador', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES'] },
-    { name: 'MEMBRO', desc: 'Membro', pk: ['VIEW_ALDEIA','VIEW_EVENTO','VIEW_JOGO','VIEW_PREMIOS','VIEW_VENDEDORES'] },
-  ];
-
+  // ── PERMISSOES + ROLES ──
+  await ensureDefaultRoles();
   const roles: Record<string, { id: string }> = {};
   for (const r of roleDefs) {
-    const role = await prisma.role.upsert({
-      where: { name: r.name as any },
-      update: { description: r.desc },
-      create: { name: r.name as any, description: r.desc },
-    });
-    roles[r.name] = role;
-    for (const k of r.pk) {
-      const existing = await prisma.rolePermission.findFirst({ where: { roleId: role.id, permissionId: perms[k].id } });
-      if (!existing) {
-        await prisma.rolePermission.create({ data: { roleId: role.id, permissionId: perms[k].id } });
-      }
-    }
+    roles[r.name] = (await prisma.role.findUniqueOrThrow({ where: { name: r.name as any } })) as { id: string };
   }
 
   // ── PLANOS ──

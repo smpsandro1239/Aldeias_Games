@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +14,9 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url);
     const aldeiaId = url.searchParams.get('aldeiaId') || user.aldeiaId;
+
+    const scopeDenied = aldeiaScopeDenied(user, aldeiaId);
+    if (scopeDenied) return scopeDenied;
 
     if (!aldeiaId) {
       return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });

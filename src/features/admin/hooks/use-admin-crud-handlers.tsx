@@ -361,14 +361,14 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
     }
   }, [fetchData, setUserModalOpen, userRole, aldeiaId]);
 
-  const handleConvertPrize = useCallback(async (participacaoId: string, valor: number) => {
+  const handleConvertPrize = useCallback(async (participacaoId: string, valor: number, observacoes?: string) => {
     try {
       const res = await apiRequest("/api/admin/convert-prize", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ participacaoId, valor }),
+        body: JSON.stringify({ participacaoId, valor, observacoes: observacoes ?? "" }),
       });
 
       if (res.ok) {

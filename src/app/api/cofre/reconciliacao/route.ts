@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,6 +17,11 @@ export async function GET(request: NextRequest) {
 
     if (!aldeiaId && user.role !== 'super_admin') {
       return NextResponse.json({ error: 'Aldeia não encontrada' }, { status: 400 });
+    }
+
+    if (aldeiaId) {
+      const scopeDenied = aldeiaScopeDenied(user, aldeiaId);
+      if (scopeDenied) return scopeDenied;
     }
 
     const whereAldeia = aldeiaId ? { aldeiaId } : {};

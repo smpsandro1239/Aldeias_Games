@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/notification-bell";
 
-import { StatCard } from "@/components/dashboard/stat-card";
 import { QuickAction } from "@/components/dashboard/quick-action";
+import { StatsDetailPanels } from "./components/stats-detail-panels";
 import {
   Plus, Building2, Calendar, Wallet, Globe, RotateCcw,
-  DollarSign, Users, Gamepad2, Trophy, CreditCard,
+  Users, Gamepad2, Trophy, CreditCard,
   Shield, TrendingUp, ArrowRight, BarChart3, Hash, Ticket, ClipboardList,
   Receipt, ArrowUpRight, ArrowDownRight, Clock,
 } from "lucide-react";
@@ -144,37 +144,18 @@ export default function SuperAdminDashboard({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        {/* ===== STATS GRID ===== */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <StatCard
-            title="Total Angariado"
-            value={stats?.totalAngariado ? formatCurrency(stats.totalAngariado) : "0,00 €"}
-            icon={<DollarSign className="h-5 w-5" />}
-            color="emerald"
-            onClick={() => setActiveTab("financeiro")}
-          />
-          <StatCard
-            title="Participações"
-            value={stats?.totalParticipacoes?.toLocaleString("pt-PT") || "0"}
-            icon={<Users className="h-5 w-5" />}
-            color="blue"
-            onClick={() => setActiveTab("numeros")}
-          />
-          <StatCard
-            title="Aldeias"
-            value={aldeias.length.toString()}
-            icon={<Building2 className="h-5 w-5" />}
-            color="violet"
-            onClick={() => setActiveTab("aldeias")}
-          />
-          <StatCard
-            title="Jogos Ativos"
-            value={stats?.jogosAtivos?.toString() || "0"}
-            icon={<Gamepad2 className="h-5 w-5" />}
-            color="amber"
-            onClick={() => setActiveTab("jogos")}
-          />
-        </div>
+        {/* ===== STATS GRID + DETAILS ===== */}
+        <StatsDetailPanels
+          stats={stats}
+          aldeias={aldeias}
+          eventos={eventos}
+          jogos={jogos}
+          transacoes={transacoes}
+          vencedores={vencedores}
+          mode="global"
+          onNavigate={setActiveTab}
+          onPush={router.push}
+        />
 
         {/* ===== QUICK ACTIONS ===== */}
         <div>

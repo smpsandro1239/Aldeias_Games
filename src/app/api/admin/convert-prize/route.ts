@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { logAudit } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,10 +12,14 @@ export async function POST(request: NextRequest) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const { participacaoId, valor } = await request.json();
+    const { participacaoId, valor, observacoes } = await request.json();
 
     if (!participacaoId || !valor || valor <= 0) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
+    }
+
+    if (!observacoes || typeof observacoes !== 'string' || observacoes.trim().length < 3) {
+      return NextResponse.json({ error: 'Indique uma observação (mínimo 3 caracteres) para registar na auditoria' }, { status: 400 });
     }
 
     // HIGH #11: Validar limite máximo de conversão de prémio (prevenir abuso)
@@ -28,12 +33,22 @@ export async function POST(request: NextRequest) {
       where: { id: participacaoId },
       include: {
         user: true,
-        jogo: true,
+        jogo: {
+          include: {
+            premios: true,
+            evento: { select: { aldeiaId: true } },
+          },
+        },
       },
     });
 
     if (!participacao) {
       return NextResponse.json({ error: 'Participação não encontrada' }, { status: 404 });
+    }
+
+    // Scoping por aldeia
+    if (user.role !== 'super_admin' && participacao.jogo.evento?.aldeiaId !== user.aldeiaId) {
+      return NextResponse.json({ error: 'Não pode converter prémios de outra aldeia' }, { status: 403 });
     }
 
     if (!participacao.ganhador) {
@@ -42,6 +57,27 @@ export async function POST(request: NextRequest) {
 
     if (participacao.premioEntregue) {
       return NextResponse.json({ error: 'O prémio desta participação já foi entregue ou convertido' }, { status: 400 });
+    }
+
+    // Transparência: o valor convertido tem de corresponder a um prémio configurado no jogo
+    const allowedValues: number[] = [];
+    for (const p of participacao.jogo.premios ?? []) {
+      if (typeof p.valorDinheiroAlternative === 'number' && p.valorDinheiroAlternative > 0) {
+        allowedValues.push(p.valorDinheiroAlternative);
+      }
+    }
+    const config = typeof participacao.jogo.configuracao === 'string'
+      ? JSON.parse(participacao.jogo.configuracao)
+      : participacao.jogo.configuracao;
+    for (const p of (config?.premios ?? [])) {
+      if (typeof p?.valorDinheiroAlternative === 'number' && p.valorDinheiroAlternative > 0) {
+        allowedValues.push(p.valorDinheiroAlternative);
+      }
+    }
+    if (allowedValues.length > 0 && !allowedValues.some(v => Math.abs(v - valor) < 0.001)) {
+      return NextResponse.json({
+        error: `O valor ${valor.toFixed(2)}€ não corresponde a nenhum prémio configurado para este jogo`,
+      }, { status: 400 });
     }
 
     // Determinar qual utilizador vai receber o crédito
@@ -73,9 +109,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não foi possível identificar o vencedor para crédito. O vencedor não tem conta na aplicação.' }, { status: 400 });
     }
 
-    // Executar transação no Prisma
-    const [updatedUser, updatedParticipacao, transacao] = await prisma.$transaction([
-      // 1. Atualizar saldo do utilizador
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || undefined;
+
+    // Executar transação no Prisma (forma em array — evita TransactionClient stale do cliente local)
+    const [updatedUser, , transacao] = await prisma.$transaction([
       prisma.user.update({
         where: { id: userIdToCredit },
         data: {
@@ -84,14 +122,12 @@ export async function POST(request: NextRequest) {
           },
         },
       }),
-      // 2. Marcar prémio como entregue
       prisma.participacao.update({
         where: { id: participacaoId },
         data: {
           premioEntregue: true,
         },
       }),
-      // 3. Registar transação
       prisma.transacao.create({
         data: {
           valor: valor,
@@ -101,7 +137,34 @@ export async function POST(request: NextRequest) {
           userId: userIdToCredit,
         },
       }),
+      prisma.alteracaoParticipacao.create({
+        data: {
+          participacaoId: participacaoId,
+          userId: user.id,
+          tipoAlteracao: 'convert_prize',
+          dadosAnteriores: JSON.stringify({ premioEntregue: false }),
+          motivo: `Prémio "${participacao.jogo.nome}" convertido em ${valor.toFixed(2)}€ de saldo. Observações: ${observacoes.trim()}`,
+          ip,
+        },
+      }),
     ]);
+
+    logAudit({
+      userId: user.id,
+      aldeiaId: participacao.jogo.evento?.aldeiaId,
+      action: 'premio.convertido',
+      resource: 'participacao',
+      resourceId: participacaoId,
+      metadata: {
+        valor,
+        userIdCreditado: userIdToCredit,
+        jogoId: participacao.jogoId,
+        jogoNome: participacao.jogo.nome,
+        observacoes,
+      },
+      ip,
+      userAgent,
+    });
 
     return NextResponse.json({
       success: true,

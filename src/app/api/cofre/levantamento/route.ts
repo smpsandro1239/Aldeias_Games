@@ -5,6 +5,7 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { logAudit } from '@/lib/audit';
 import { criarLevantamentoSchema } from '@/lib/validations';
+import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
     const { valor, descricao, destino, observacoes, aldeiaId: bodyAldeiaId } = validation.data;
 
     const aldeiaId = bodyAldeiaId || user.aldeiaId;
+    const scopeDenied = aldeiaScopeDenied(user, aldeiaId);
+    if (scopeDenied) return scopeDenied;
+
     if (!aldeiaId) {
       return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });
     }
@@ -111,6 +115,9 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const aldeiaId = url.searchParams.get('aldeiaId') || user.aldeiaId;
     const estado = url.searchParams.get('estado');
+
+    const scopeDenied = aldeiaScopeDenied(user, aldeiaId);
+    if (scopeDenied) return scopeDenied;
 
     if (!aldeiaId) {
       return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });

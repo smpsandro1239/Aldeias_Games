@@ -13,11 +13,11 @@ import { QuickAction } from "@/components/dashboard/quick-action";
 import {
   DashboardLoadingSkeleton,
   DashboardHeader,
-  DashboardStatCards,
   DashboardTabsNavigation,
   DashboardTabContent,
   DashboardModalsLayer,
 } from "./components";
+import { StatsDetailPanels } from "./components/stats-detail-panels";
 
 import type {
   Evento,
@@ -169,7 +169,17 @@ export default function AdminDashboard({
         onOpenResultadosExternos={() => setResultadosExternosOpen(true)}
       />
 
-      <DashboardStatCards stats={stats} onNavigate={setActiveTab} />
+      <StatsDetailPanels
+        stats={stats}
+        aldeias={aldeias}
+        eventos={eventos}
+        jogos={jogos}
+        transacoes={transacoes}
+        vencedores={vencedores}
+        mode="aldeia"
+        onNavigate={setActiveTab}
+        onPush={router.push}
+      />
 
       {/* ===== QUICK ACTIONS (aldeia_admin) ===== */}
       {userRole === "aldeia_admin" && (

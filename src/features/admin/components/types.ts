@@ -96,6 +96,12 @@ export interface Vencedor {
         nome?: string;
       };
     };
+    premios?: {
+      id?: string;
+      nome?: string;
+      ordem?: number;
+      valorDinheiroAlternative?: number | null;
+    }[];
   };
   nomeCliente?: string;
   telefoneCliente?: string;
@@ -110,6 +116,24 @@ export interface Vencedor {
   participacaoId?: string;
   createdAt: string;
   premioEntregue: boolean;
+  ganhador?: boolean;
+  valorPago?: number;
+  metodoPagamento?: string;
+  estadoPagamento?: string;
+  resultadoRaspe?: string | null;
+  dadosParticipacao?: string | null;
+  alteracoes?: {
+    id?: string;
+    tipoAlteracao?: string;
+    motivo?: string | null;
+    dadosAnteriores?: string | null;
+    createdAt?: string;
+    user?: {
+      id?: string;
+      nome?: string;
+      email?: string;
+    };
+  }[];
   dadosVencedor?: {
     userId?: string;
     userNome?: string;

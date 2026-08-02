@@ -5,6 +5,7 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { logAudit } from '@/lib/audit';
 import { processarLevantamentoSchema } from '@/lib/validations';
+import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
 
 export async function PUT(
   request: NextRequest,
@@ -37,6 +38,9 @@ export async function PUT(
     if (!levantamento) {
       return NextResponse.json({ error: 'Levantamento não encontrado' }, { status: 404 });
     }
+
+    const scopeDenied = aldeiaScopeDenied(user, levantamento.vault.aldeiaId);
+    if (scopeDenied) return scopeDenied;
 
     if (levantamento.tipo !== 'levantamento') {
       return NextResponse.json({ error: 'Tipo de transação inválido' }, { status: 400 });

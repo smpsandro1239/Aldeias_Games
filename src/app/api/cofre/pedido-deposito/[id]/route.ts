@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
-import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
+import { requirePermission } from '@/lib/rbac/checkPermission';
 import { logAudit } from '@/lib/audit';
+import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
 
 export async function PUT(
   request: NextRequest,
@@ -15,8 +16,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // RBAC: cofre requires MANAGE_ALDEIA or VIEW_ALDEIA (admin roles)
-    const denied = await requireAnyOfPermissions(user.id, ['MANAGE_ALDEIA', 'VIEW_ALDEIA']);
+    // RBAC: confirmar/rejeitar depósito é exclusivo de quem gere a aldeia
+    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
     const { id } = await params;
@@ -31,6 +32,9 @@ export async function PUT(
     if (!pedido) {
       return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
+
+    const scopeDenied = aldeiaScopeDenied(user, pedido.aldeiaId);
+    if (scopeDenied) return scopeDenied;
 
     if (pedido.estado !== 'pendente') {
       return NextResponse.json({ error: 'Pedido já foi processado' }, { status: 400 });

@@ -5,6 +5,7 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
 import { logAudit } from '@/lib/audit';
 import { criarDepositoSchema } from '@/lib/validations';
+import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
     const { valor, descricao, referencias, aldeiaId: bodyAldeiaId } = validation.data;
 
     const aldeiaId = bodyAldeiaId || user.aldeiaId;
+    const scopeDenied = aldeiaScopeDenied(user, aldeiaId);
+    if (scopeDenied) return scopeDenied;
+
     if (!aldeiaId) {
       return NextResponse.json({ error: 'Aldeia não especificada' }, { status: 400 });
     }
@@ -136,8 +140,11 @@ export async function GET(request: NextRequest) {
     if (user.role === 'vendedor') {
       where.vendedorId = user.id;
     } else if (user.role === 'aldeia_admin' || user.role === 'super_admin') {
-      if (aldeiaId) where.aldeiaId = aldeiaId;
-      else if (user.aldeiaId) where.aldeiaId = user.aldeiaId;
+      if (aldeiaId) {
+        const scopeDenied = aldeiaScopeDenied(user, aldeiaId);
+        if (scopeDenied) return scopeDenied;
+        where.aldeiaId = aldeiaId;
+      } else if (user.aldeiaId) where.aldeiaId = user.aldeiaId;
     } else {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }

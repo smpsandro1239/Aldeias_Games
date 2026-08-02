@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
      const jogoId = url.searchParams.get('jogoId');
      const userId = url.searchParams.get('userId');
      const estadoPagamento = url.searchParams.get('estadoPagamento') as any || undefined;
+     const ganhador = url.searchParams.get('ganhador');
 
      // Construir where
      let where: Record<string, unknown> = {};
@@ -43,6 +44,10 @@ export async function GET(request: NextRequest) {
 
      if (estadoPagamento) {
        where.estadoPagamento = estadoPagamento;
+     }
+
+     if (ganhador === 'true') {
+       where.ganhador = true;
      }
 
     // Filtrar por permissões
@@ -140,10 +145,29 @@ export async function GET(request: NextRequest) {
                   id: true,
                   nome: true,
                   ordem: true,
+                  valorDinheiroAlternative: true,
                 },
                 orderBy: { ordem: 'asc' },
               },
             },
+          },
+          alteracoes: {
+            select: {
+              id: true,
+              tipoAlteracao: true,
+              dadosAnteriores: true,
+              motivo: true,
+              ip: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  nome: true,
+                  email: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
           },
         },
         skip,

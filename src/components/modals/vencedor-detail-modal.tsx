@@ -43,6 +43,12 @@ interface Vencedor {
         nome?: string;
       };
     };
+    premios?: {
+      id?: string;
+      nome?: string;
+      ordem?: number;
+      valorDinheiroAlternative?: number | null;
+    }[];
   };
   nomeCliente?: string;
   telefoneCliente?: string;
@@ -57,6 +63,22 @@ interface Vencedor {
   participacaoId?: string;
   createdAt: string;
   premioEntregue: boolean;
+  ganhador?: boolean;
+  valorPago?: number;
+  resultadoRaspe?: string | null;
+  dadosParticipacao?: string | null;
+  alteracoes?: {
+    id?: string;
+    tipoAlteracao?: string;
+    motivo?: string | null;
+    dadosAnteriores?: string | null;
+    createdAt?: string;
+    user?: {
+      id?: string;
+      nome?: string;
+      email?: string;
+    };
+  }[];
   dadosVencedor?: {
     userId?: string;
     userNome?: string;
@@ -240,7 +262,48 @@ export function VencedorDetailModal({
     if (vencedor) onEntregaPremio(vencedor);
   }, [vencedor, onEntregaPremio, hashVerificado]);
 
+  const parseWinningPrize = (v: Vencedor): { nome: string; valor: number } | null => {
+    let dp: Record<string, unknown> | null = null;
+    try {
+      dp = typeof v.dadosParticipacao === 'string' ? JSON.parse(v.dadosParticipacao) : (v.dadosParticipacao as unknown);
+    } catch {
+      dp = null;
+    }
+    const winningPrize = (dp as Record<string, unknown>)?.winningPrize as Record<string, unknown> | null | undefined;
+    if (winningPrize && typeof winningPrize.nome === 'string') {
+      return { nome: winningPrize.nome, valor: Number(winningPrize.valorDinheiroAlternative) || 0 };
+    }
+    if ((dp as Record<string, unknown>)?.hasWin === true && Array.isArray((dp as Record<string, unknown>)?.grid)) {
+      const counts = new Map<string, number>();
+      for (const g of ((dp as Record<string, unknown>).grid as { nome?: string; valorDinheiroAlternative?: number }[])) {
+        if (!g?.nome) continue;
+        counts.set(g.nome, (counts.get(g.nome) || 0) + 1);
+        if (counts.get(g.nome)! >= 3 && (Number(g.valorDinheiroAlternative) || 0) > 0) {
+          return { nome: g.nome, valor: Number(g.valorDinheiroAlternative) || 0 };
+        }
+      }
+    }
+    if (v.resultadoRaspe && v.resultadoRaspe !== 'sem_premio') {
+      const match = v.jogo?.premios?.find((p) => p.nome === v.resultadoRaspe);
+      if (match) return { nome: match.nome || v.resultadoRaspe, valor: Number(match.valorDinheiroAlternative) || 0 };
+      return { nome: v.resultadoRaspe, valor: 0 };
+    }
+    return null;
+  };
+
+  const ENTREGA_TIPO_LABEL: Record<string, string> = {
+    entrega_premio: "Entregue",
+    convert_prize: "Convertido em saldo",
+    claim: "Reclamado (carteira)",
+    claim_cofre: "Entregue ao cofre",
+    claim_jogar_novamente: "Convertido para jogar",
+    claim_pagar_cliente: "Pago ao cliente",
+    desfazer_entrega_premio: "Entrega anulada",
+  };
+
   if (!vencedor) return null;
+
+  const wonPrize = parseWinningPrize(vencedor);
 
   const nomeExibicao = vencedor.nomeCliente || vencedor.user?.nome || vencedor.dadosVencedor?.userNome || "Anónimo";
   const emailExibicao = vencedor.user?.email || vencedor.dadosVencedor?.userEmail || vencedor.emailCliente || "";
@@ -291,10 +354,10 @@ export function VencedorDetailModal({
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-primary" aria-label={`Valor do prémio: ${formatCurrency(vencedor.jogo?.preco || 0)}`}>
-                    {formatCurrency(vencedor.jogo?.preco || 0)}
+                  <p className="text-xl font-bold text-primary" aria-label={`Valor do prémio: ${formatCurrency(wonPrize?.valor ?? 0)}`}>
+                    {formatCurrency(wonPrize?.valor ?? 0)}
                   </p>
-                  <p className="text-xs text-muted-foreground">Valor do prémio</p>
+                  <p className="text-xs text-muted-foreground">{wonPrize?.nome ? `Prémio: ${wonPrize.nome}` : "Valor do prémio"}</p>
                 </div>
               </div>
             </CardContent>
@@ -355,6 +418,54 @@ export function VencedorDetailModal({
                         {vencedor.premioEntregue ? "Entregue/Convertido" : "Pendente"}
                       </Badge>
                     </div>
+                  </div>
+
+                  {(vencedor.jogo?.premios?.length ?? 0) > 0 && (
+                    <div className="pt-3 border-t">
+                      <p className="text-sm text-muted-foreground mb-1">Prémios em jogo</p>
+                      <div className="flex flex-wrap gap-2">
+                        {vencedor.jogo!.premios!.map((p, i) => (
+                          <Badge key={p.id || i} variant="outline">
+                            {p.nome}
+                            {typeof p.valorDinheiroAlternative === "number" && p.valorDinheiroAlternative > 0
+                              ? ` • ${formatCurrency(p.valorDinheiroAlternative)}`
+                              : ""}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {wonPrize && (
+                    <div className="pt-3 border-t">
+                      <p className="text-sm text-muted-foreground mb-1">Prémio ganho</p>
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {wonPrize.nome}
+                        {wonPrize.valor > 0 ? ` • ${formatCurrency(wonPrize.valor)}` : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t">
+                    <p className="text-sm text-muted-foreground mb-1">Histórico de entrega / auditoria</p>
+                    {vencedor.alteracoes && vencedor.alteracoes.length > 0 ? (
+                      <ul className="space-y-2">
+                        {vencedor.alteracoes.map((a) => (
+                          <li key={a.id} className="rounded-lg border p-2 text-sm">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="font-medium">{ENTREGA_TIPO_LABEL[a.tipoAlteracao || ""] || a.tipoAlteracao || "Alteração"}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {a.user?.nome || "Desconhecido"}
+                                {a.createdAt ? ` • ${formatDate(a.createdAt)}` : ""}
+                              </span>
+                            </div>
+                            {a.motivo && <p className="text-xs text-muted-foreground mt-1">{a.motivo}</p>}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Sem registo de entrega.</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
