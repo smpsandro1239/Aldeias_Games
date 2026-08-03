@@ -122,6 +122,20 @@ API Endpoints:
 - `PUT /api/cofre/levantamento/[id]` — confirmar/rejeitar levantamento
 - `GET /api/cofre/historico` — histórico de transações do vault
 
+### Cofre Admin — Widgets Extraídos (Refactor)
+- `admin-cofre.tsx` é agora uma orquestração fina (estado, fetch, handlers) — todo o JSX foi extraído para `src/components/dashboard/`
+- Widgets (padrão presentacional, props-driven — como `quick-action.tsx`):
+  - `cofre-header.tsx` — hero banner com botão voltar (usa `aldeiaId` do searchParams)
+  - `cofre-stats-cards.tsx` — 3 cards (Saldo do Cofre, Pedidos Pendentes, Total Levantado)
+  - `cofre-quick-actions.tsx` — 4 `QuickAction` (Depositar, Levantar, Reconciliação, Movimentos)
+  - `cofre-pendentes-tab.tsx` — tab Pendentes (levantamentos + depósitos pendentes + empty state)
+  - `cofre-confirmados-tab.tsx` — tab Depósitos confirmados
+  - `cofre-levantamentos-tab.tsx` — tab Levantamentos (pendentes de aprovação + histórico)
+  - `cofre-confirm-modals.tsx` — os 4 `ConfirmModal`; **gere os motivos de rejeição localmente** (parent só controla os ids `confirmDepId`/`rejectDepId`/`confirmLevId`/`rejectLevId`)
+- Diferença de comportamento preservada: na tab "Pendentes" aprovar levantamento abre modal de confirmação (`setConfirmLevId`); na tab "Levantamentos" aprova diretamente (`handleConfirmarLevantamento`)
+- Tipos partilhados continuam em `admin-cofre-types.ts` (importados pelos widgets)
+- Diálogos `CofreDepositDialog`/`CofreWithdrawalDialog` e `CofreTransactionHistory` já viviam em `src/features/admin/`
+
 ### Role-Based Prize Claiming
 Utilizadores normais (`user`) reclamam prémios para a carteira.
 Vendedores e administradores (`vendedor`, `aldeia_admin`, `super_admin`) têm 3 opções:
