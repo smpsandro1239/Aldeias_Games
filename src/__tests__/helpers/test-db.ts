@@ -2,7 +2,12 @@ import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
 
-const TEST_DB_PATH = path.resolve(__dirname, "../../../prisma/test.db");
+// Each test file runs in its own vitest worker with its own module registry,
+// so a pid-based suffix guarantees a unique DB file per file -> parallel-safe.
+const TEST_DB_PATH = path.resolve(
+  __dirname,
+  `../../../prisma/test-${process.pid}-${Math.random().toString(36).slice(2, 8)}.db`
+);
 
 let prismaInstance: any = null;
 

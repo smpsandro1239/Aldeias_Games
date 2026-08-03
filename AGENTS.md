@@ -391,8 +391,8 @@ Pages:
 - Framework: **Vitest** (v4.1.10) com `jsdom` environment, globals habilitados
 - Config: `vitest.config.ts` — setup file em `src/__tests__/setup.ts`, path alias `@/*`
 - Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
-- **311 testes** em **20 ficheiros** (unit + integration + API + lib + real-db)
-- **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test.db`) via `prisma db push`, sem mocks
+- **326 testes** em **23 ficheiros** (unit + integration + API + lib + real-db)
+- **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test-<pid>-<random>.db`, ficheiro único por ficheiro de teste → seguro em execução paralela) via `prisma db push`, sem mocks. Importante: libs que importam `@/lib/db` (ex.: webhooks, RBAC) devem ser importadas dinamicamente DEPOIS de `setupTestDatabase()` para que `DATABASE_URL` já aponte para o ficheiro de teste
 - **Playwright E2E** (2 specs em `e2e/`): `npx playwright test` (requer `npx playwright install` primeiro)
   - `login-compra-raspadinha.spec.ts` — login + compra raspadinha com saldo + verificação
   - `cofre-cashbox-flow.spec.ts` — vendedor deposita cashbox + admin confirma depósito
@@ -410,6 +410,9 @@ Pages:
 | `unit/game-logic.test.ts` | 24 | Rentabilidade, hash de verificação, validações de negócio |
 | `integration/game-lifecycle.test.ts` | 35 | Ciclo completo de jogos, stock, sorteio, hash, permissões |
 | `integration/real-db/participacao-flow.test.ts` | 1 | Fluxo real contra SQLite: aldeia → evento → jogo → saldo → participação |
+| `integration/real-db/cofre-flow.test.ts` | 4 | Fluxo real do cofre: depósito (cashbox→vault), rejeição, levantamento, saldo insuficiente |
+| `integration/real-db/webhook-idempotency.test.ts` | 5 | Idempotência real contra SQLite: claim/complete, duplicatas, providers distintos |
+| `integration/real-db/rbac-permissions.test.ts` | 5 | RBAC real: roles globais, overrides deny, roles por aldeia |
 | `api/business-logic.test.ts` | 9 | Stock race conditions, cashback, vendas externas |
 | `lib/rate-limit.test.ts` | 4 | Rate limiting com Prisma |
 | `lib/validations.test.ts` | 12 | Telefone PT, password, email |
