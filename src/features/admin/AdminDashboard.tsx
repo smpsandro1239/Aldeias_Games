@@ -6,9 +6,8 @@ import { useAdminDashboardData } from "./hooks/use-admin-dashboard-data";
 import useAdminCrudHandlers from "./hooks/use-admin-crud-handlers";
 
 import { Tabs } from "@/components/ui/tabs";
-import { Calendar, Wallet, BarChart3, Users, Settings, HandCoins, Ticket, ClipboardList, Gamepad2, Shield } from "lucide-react";
 import { usePendingChangesCount } from "@/hooks/use-pending-changes-count";
-import { QuickAction } from "@/components/dashboard/quick-action";
+import { AdminQuickActions } from "@/components/dashboard/admin-quick-actions";
 
 import {
   DashboardLoadingSkeleton,
@@ -183,72 +182,19 @@ export default function AdminDashboard({
 
       {/* ===== QUICK ACTIONS (aldeia_admin) ===== */}
       {userRole === "aldeia_admin" && (
-        <div>
-          <h2 className="font-serif text-lg font-semibold text-accent mb-3">Ações Rápidas</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <QuickAction
-              icon={<Calendar className="h-5 w-5" />}
-              label="Novo Evento"
-              onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}
-              color="blue"
-            />
-            <QuickAction
-              icon={<Gamepad2 className="h-5 w-5" />}
-              label="Novo Jogo"
-              onClick={() => { setSelectedJogo(null); setJogoModalOpen(true); }}
-              color="green"
-            />
-            <QuickAction
-              icon={<Ticket className="h-5 w-5" />}
-              label="Números"
-              onClick={() => router.push("/numeros-jogados")}
-              color="violet"
-            />
-            <QuickAction
-              icon={<Wallet className="h-5 w-5" />}
-              label="Cofre"
-              onClick={() => router.push("/admindashboard/cofre")}
-              color="emerald"
-            />
-            <QuickAction
-              icon={<BarChart3 className="h-5 w-5" />}
-              label="Financeiro"
-              onClick={() => router.push("/admindashboard/financeiro")}
-              color="amber"
-            />
-            <QuickAction
-              icon={<Users className="h-5 w-5" />}
-              label="Utilizadores"
-              onClick={() => setActiveTab("users")}
-              color="blue"
-            />
-            <QuickAction
-              icon={<HandCoins className="h-5 w-5" />}
-              label="Pedidos"
-              onClick={() => router.push("/admindashboard/pedidos")}
-              color="orange"
-            />
-            <QuickAction
-              icon={<ClipboardList className="h-5 w-5" />}
-              label="Pedidos Pendentes"
-              onClick={() => router.push("/pending-changes")}
-              color="amber"
-              badge={pendingCount}
-            />
-            <QuickAction
-              icon={<Shield className="h-5 w-5" />}
-              label="Auditoria"
-              onClick={() => setActiveTab("auditoria")}
-              color="violet"
-            />
-            <QuickAction
-              icon={<Settings className="h-5 w-5" />}
-              label="Configurações"
-              onClick={() => router.push("/configuracoes")}
-              color="violet"
-            />
-          </div>
-        </div>
+        <AdminQuickActions
+          pendingCount={pendingCount}
+          onNovoEvento={() => { setSelectedEvento(null); setEventoModalOpen(true); }}
+          onNovoJogo={() => { setSelectedJogo(null); setJogoModalOpen(true); }}
+          onNumeros={() => router.push("/numeros-jogados")}
+          onCofre={() => router.push("/admindashboard/cofre")}
+          onFinanceiro={() => router.push("/admindashboard/financeiro")}
+          onUtilizadores={() => setActiveTab("users")}
+          onPedidos={() => router.push("/admindashboard/pedidos")}
+          onPedidosPendentes={() => router.push("/pending-changes")}
+          onAuditoria={() => setActiveTab("auditoria")}
+          onConfiguracoes={() => router.push("/configuracoes")}
+        />
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-5">
