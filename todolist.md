@@ -183,3 +183,50 @@ TOTAL: ██████████ 100%
 
 *Última actualização: 03/04/2026*  
 *Projeto: Aldeias Games v3.14.0 - 92% completo*
+
+---
+
+## 🏗️ Fase 7: Refatorar monólitos restantes
+
+| # | Ficheiro | Linhas | Estratégia | Estado |
+|---|----------|--------|-----------|--------|
+| 7.1 | create-evento-modal.tsx | 833 | Extrair passos (evento + jogos) para componentes; lógica de recorrência para hook | ⏳ |
+| 7.2 | vendedor-dashboard.tsx | 733 | Extrair widgets: cabeçalho com estatísticas, quick actions, tabs content | ⏳ |
+| 7.3 | RbacUserTable.tsx | 613 | Extrair colunas, filtros, modais de edição de roles/permissões | ⏳ |
+
+## 🧪 Fase 8: Cobertura de testes (real-DB + E2E)
+
+| # | Teste | Prioridade | Estado |
+|---|-------|-----------|--------|
+| 8.1 | Euromilhões: grelhas, bloqueio antes do sorteio, processRecorrentes cron | Alta | ⏳ |
+| 8.2 | Cashbox/Vendedor: depósito, levantamento, histórico, reconciliação | Alta | ⏳ |
+| 8.3 | Vault PIN: setup, verificação, rate-limit | Média | ⏳ |
+| 8.4 | Pending Changes: aprovação/rejeição (IBAN, titular) | Média | ⏳ |
+| 8.5 | Webhook replay: reprocessamento failed/processing | Baixa | ⏳ |
+| 8.6 | Verificar público: página /verificar com hash | Baixa | ⏳ |
+
+## 🏛️ Fase 9: RGPD e Compliance
+
+| # | Tarefa | Estado |
+|---|--------|--------|
+| 9.1 | Anonimização automática (cron 365 dias) nomeCliente/telefoneCliente/emailCliente | ⏳ |
+| 9.2 | Política de retenção + doc docs/DPA.md | ⏳ |
+| 9.3 | Purga automática de dados anonimizados (cron) | ⏳ |
+
+## 🏗️ Fase 10: Infraestrutura e P3
+
+| # | Tarefa | Estado |
+|---|--------|--------|
+| 10.1 | Migrar logoBase64/imagemBase64 para Vercel Blob; remover campos do schema | ⏳ |
+| 10.2 | Backup real para storage externo (Blob/S3) com restore | ⏳ |
+| 10.3 | SAF-T PT (exportação fiscal) | ⏳ |
+| 10.4 | OpenAPI formal com zod-to-openapi (109 endpoints) | ⏳ |
+| 10.5 | Sentry server-side (instrument.ts + alerts) | ⏳ |
+
+## 🔒 Pendente (depois das fases)
+
+| # | Tarefa | Estado |
+|---|--------|--------|
+| P1 | Resolver vulnerabilidades npm audit (5 moderate, 7 high, 1 critical) | ⏳ |
+
+*Última actualização: 07/08/2026*
