@@ -213,9 +213,11 @@ TOTAL: ██████████ 100%
 
 | # | Tarefa | Estado |
 |---|--------|--------|
-| 9.1 | Anonimização automática (cron 365 dias) nomeCliente/telefoneCliente/emailCliente | ⏳ |
-| 9.2 | Política de retenção + doc docs/DPA.md | ⏳ |
-| 9.3 | Purga automática de dados anonimizados (cron) | ⏳ |
+| 9.1 | Anonimização automática (cron 365 dias) nomeCliente/telefoneCliente/emailCliente | ✅ FEITO (`src/lib/rgpd.ts` + `/api/rgpd/anonimizacao`, idempotente, AuditLog) |
+| 9.2 | Política de retenção + doc docs/DPA.md | ✅ FEITO |
+| 9.3 | Purga automática de dados anonimizados (cron) | ✅ FEITO (`/api/rgpd/purga`: webhooks completed >365d + notificações lidas >180d) |
+
+> **Fase 9**: 385 testes / 32 ficheiros (suite completa passa; typecheck limpo).
 
 ## 🏗️ Fase 10: Infraestrutura e P3
 

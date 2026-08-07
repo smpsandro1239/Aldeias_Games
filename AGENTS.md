@@ -246,6 +246,14 @@ Pages:
 - `GET /api/verificar-publico?hash=...` — endpoint público (sem auth) que valida e retorna resultado
 - Retorna: estado (ganhou/perdeu), prémio (se ganhou), data, tipo de jogo
 - Botão "Verificar" no BottomNav para utilizadores não autenticados
+- **Hash autêntico**: sha256(`${seedRaspe}:${resultadoRaspe}:${uniqueSalt}:${generatedAt}`) — `generatedAt` deve ser EXATAMENTE o mesmo `timestamp` usado no hash (bug corrigido: antes eram dois `new Date().toISOString()` independentes, o que fazia verificação falhar por milissegundos)
+
+### RGPD — Anonimização e Purga Automática (v3.14.0)
+- `src/lib/rgpd.ts` — `anonymizeParticipacoes()` e `purgeOldData()` (funções puras testáveis)
+- **Anonimização**: participações com `createdAt > 365 dias` → `nomeCliente`/`telefoneCliente`/`emailCliente` ficam `null` (idempotente) + `AuditLog` `RGPD_ANONIMIZACAO`
+- **Purga**: `WebhookEvent` completed > 365 dias + `Notificacao` lidas > 180 dias (nunca toca webhooks `failed`/`processing`) + `AuditLog` `RGPD_PURGA`
+- Cron jobs em `vercel.json`: `/api/rgpd/anonimizacao` (seg 03:00 UTC) e `/api/rgpd/purga` (seg 04:00 UTC), autenticados com `CRON_SECRET` (header `x-cron-secret`)
+- Política de retenção: `docs/DPA.md` (períodos por categoria; 365d clientes, 10 anos fiscal, 180d notificações)
 
 ### Vault PIN System (Segurança do Cofre)
 - Campos no model `User`: `vaultPin` (String, hashed), `vaultPinEnabled` (Boolean)
@@ -423,7 +431,7 @@ Pages:
 - Config: `vitest.config.ts` — setup file em `src/__tests__/setup.ts`, path alias `@/*`
 - Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
 - Typecheck: `npm run typecheck` (`tsc --noEmit`) — CI falha se tipos não compilarem
-- **382 testes** em **31 ficheiros** (unit + integration + API + lib + real-db)
+- **385 testes** em **32 ficheiros** (unit + integration + API + lib + real-db)
 - **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test-<pid>-<random>.db`, ficheiro único por ficheiro de teste → seguro em execução paralela) via `prisma db push`, sem mocks. Importante: libs que importam `@/lib/db` (ex.: webhooks, RBAC) devem ser importadas dinamicamente DEPOIS de `setupTestDatabase()` para que `DATABASE_URL` já aponte para o ficheiro de teste
 - **Playwright E2E** (2 specs em `e2e/`): `npx playwright test` (requer `npx playwright install` primeiro)
   - `login-compra-raspadinha.spec.ts` — login + compra raspadinha com saldo + verificação
@@ -453,6 +461,7 @@ Pages:
 | `integration/real-db/pending-changes.test.ts` | 4 | Pending Changes real: aprovar aplica IBAN + auditoria mascarada (`****XXXX`), rejeitar com observações + notificação, auto-aprovação super admin, sem re-decisão |
 | `integration/real-db/webhook-replay.test.ts` | 4 | Webhook replay real: entrega repetida deduplicada, replay com novo eventId não duplica crédito (guard `referencia`), sessões independentes |
 | `integration/real-db/verificacao-publica.test.ts` | 4 | Verificação pública real: hash autêntico valida, hash adulterado falha, sem_premio consistente, hash desconhecido não encontrado |
+| `integration/real-db/rgpd.test.ts` | 3 | RGPD real: anonimização >365 dias (null + audit log), idempotência, purga de webhooks completed e notificações lidas antigas |
 | `api/business-logic.test.ts` | 9 | Stock race conditions, cashback, vendas externas |
 | `lib/rate-limit.test.ts` | 4 | Rate limiting com Prisma |
 | `lib/validations.test.ts` | 12 | Telefone PT, password, email |
