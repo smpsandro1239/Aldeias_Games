@@ -6,18 +6,12 @@ import { useAdminDashboardData } from "./hooks/use-admin-dashboard-data";
 import useAdminCrudHandlers from "./hooks/use-admin-crud-handlers";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { NotificationBell } from "@/components/notification-bell";
 
-import { QuickAction } from "@/components/dashboard/quick-action";
 import { StatsDetailPanels } from "./components/stats-detail-panels";
 import {
-  Plus, Building2, Calendar, Wallet, Globe, RotateCcw,
-  Users, Gamepad2, Trophy, CreditCard,
-  Shield, TrendingUp, ArrowRight, BarChart3, Hash, Ticket, ClipboardList,
-  Receipt, ArrowUpRight, ArrowDownRight, Clock,
+  Trophy, CreditCard, Shield, TrendingUp, BarChart3, Hash,
+  Calendar, Gamepad2, Building2, Users,
 } from "lucide-react";
 import { usePendingChangesCount } from "@/hooks/use-pending-changes-count";
 
@@ -26,11 +20,13 @@ import {
   OverviewTab, EventosTab, JogosTab, VencedoresTab,
   UsersTab, VerificarTab,
 } from "./components";
+import { SuperHeader } from "@/components/dashboard/super-header";
+import { SuperQuickActions } from "@/components/dashboard/super-quick-actions";
+import { SuperRecentActivity } from "@/components/dashboard/super-recent-activity";
 import type { Evento, Jogo, Vencedor, Aldeia } from "./components/types";
 import type { JogoData } from "@/components/modals/create-jogo-types";
 import type { AldeiaData } from "@/components/modals/aldeia-modal";
 import type { UserData } from "@/components/modals/user-modal";
-import { formatCurrency } from "@/lib/utils";
 
 const DashboardAnalytics = lazy(() =>
   import("./analytics-dashboard").then((m) => ({ default: m.DashboardAnalytics }))
@@ -134,20 +130,9 @@ export default function SuperAdminDashboard({
   return (
     <div className="min-h-screen bg-background">
       {/* ===== HEADER ===== */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-primary/10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="font-serif text-2xl font-bold text-accent">Painel Global</h1>
-            <p className="text-sm text-muted-foreground">Gestão de todas as aldeias</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <Button size="sm" onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> Aldeia
-            </Button>
-          </div>
-        </div>
-      </div>
+      <SuperHeader
+        onNovaAldeia={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}
+      />
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
         {/* ===== STATS GRID + DETAILS ===== */}
@@ -165,165 +150,28 @@ export default function SuperAdminDashboard({
         />
 
         {/* ===== QUICK ACTIONS ===== */}
-        <div>
-          <h2 className="font-serif text-lg font-semibold text-accent mb-3">Ações Rápidas</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <QuickAction
-              icon={<Building2 className="h-5 w-5" />}
-              label="Nova Aldeia"
-              onClick={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}
-              color="violet"
-            />
-            <QuickAction
-              icon={<Calendar className="h-5 w-5" />}
-              label="Novo Evento"
-              onClick={() => { setSelectedEvento(null); setEventoModalOpen(true); }}
-              color="blue"
-            />
-            <QuickAction
-              icon={<Gamepad2 className="h-5 w-5" />}
-              label="Novo Jogo"
-              onClick={() => { setSelectedJogo(null); setJogoModalOpen(true); }}
-              color="green"
-            />
-            <QuickAction
-              icon={<Wallet className="h-5 w-5" />}
-              label="Cofre Global"
-              onClick={() => router.push("/superadmindashboard/cofre")}
-              color="emerald"
-            />
-            <QuickAction
-              icon={<Ticket className="h-5 w-5" />}
-              label="Números"
-              onClick={() => router.push("/numeros-jogados")}
-              color="pink"
-            />
-            <QuickAction
-              icon={<BarChart3 className="h-5 w-5" />}
-              label="Financeiro"
-              onClick={() => router.push("/superadmindashboard/financeiro")}
-              color="amber"
-            />
-            <QuickAction
-              icon={<Globe className="h-5 w-5" />}
-              label="Lotaria Externa"
-              onClick={() => setResultadosExternosOpen(true)}
-              color="pink"
-            />
-            <QuickAction
-              icon={<RotateCcw className="h-5 w-5" />}
-              label="Recorrentes"
-              onClick={handleProcessRecurringEvents}
-              color="orange"
-            />
-            <QuickAction
-              icon={<Users className="h-5 w-5" />}
-              label="Utilizadores"
-              onClick={() => setActiveTab("users")}
-              color="blue"
-            />
-            <QuickAction
-              icon={<ClipboardList className="h-5 w-5" />}
-              label="Pedidos Pendentes"
-              onClick={() => router.push("/pending-changes")}
-              color="amber"
-              badge={pendingCount}
-            />
-            <QuickAction
-              icon={<Shield className="h-5 w-5" />}
-              label="Auditoria"
-              onClick={() => setActiveTab("auditoria")}
-              color="violet"
-            />
-          </div>
-        </div>
+        <SuperQuickActions
+          pendingCount={pendingCount}
+          onNovaAldeia={() => { setSelectedAldeia(null); setAldeiaModalOpen(true); }}
+          onNovoEvento={() => { setSelectedEvento(null); setEventoModalOpen(true); }}
+          onNovoJogo={() => { setSelectedJogo(null); setJogoModalOpen(true); }}
+          onCofreGlobal={() => router.push("/superadmindashboard/cofre")}
+          onNumeros={() => router.push("/numeros-jogados")}
+          onFinanceiro={() => router.push("/superadmindashboard/financeiro")}
+          onLotariaExterna={() => setResultadosExternosOpen(true)}
+          onRecorrentes={handleProcessRecurringEvents}
+          onUtilizadores={() => setActiveTab("users")}
+          onPedidosPendentes={() => router.push("/pending-changes")}
+          onAuditoria={() => setActiveTab("auditoria")}
+        />
 
         {/* ===== RECENT ACTIVITY ===== */}
-        {(transacoes.length > 0 || eventos.length > 0) && (
-          <div>
-            <h2 className="font-serif text-lg font-semibold text-accent mb-3 flex items-center gap-2">
-              <Clock className="h-5 w-5" /> Atividade Recente
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {transacoes.length > 0 && (
-                <Card className="bg-surface-container-low border-outline-variant/10 overflow-hidden">
-                  <div className="bg-gradient-to-r from-primary/5 to-transparent px-4 py-3 flex items-center justify-between border-b border-outline-variant/5">
-                    <div className="flex items-center gap-2">
-                      <Receipt className="h-4 w-4 text-primary" />
-                      <h3 className="text-sm font-semibold">Últimas Transações</h3>
-                    </div>
-                    <button onClick={() => setActiveTab("transacoes")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 font-medium">
-                      Ver tudo <ArrowRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <CardContent className="p-3">
-                    <div className="space-y-1">
-                      {transacoes.slice(0, 5).map((t) => {
-                        const isCredit = t.tipo === 'carregamento' || t.tipo === 'deposito';
-                        return (
-                          <div key={t.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-container transition-colors">
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isCredit ? 'bg-emerald-500/15' : 'bg-red-500/15'}`}>
-                                {isCredit
-                                  ? <ArrowUpRight className={`h-4 w-4 ${isCredit ? 'text-emerald-500' : 'text-red-500'}`} />
-                                  : <ArrowDownRight className="h-4 w-4 text-red-500" />
-                                }
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-accent truncate">{t.user?.nome || "Sistema"}</p>
-                                <p className="text-xs text-muted-foreground truncate">{t.descricao || t.tipo}</p>
-                              </div>
-                            </div>
-                            <div className="text-right ml-3 shrink-0">
-                              <span className={`text-sm font-bold ${isCredit ? 'text-emerald-500' : 'text-red-500'}`}>
-                                {isCredit ? '+' : '-'}{formatCurrency(Math.abs(t.valor))}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              {eventos.length > 0 && (
-                <Card className="bg-surface-container-low border-outline-variant/10 overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-500/5 to-transparent px-4 py-3 flex items-center justify-between border-b border-outline-variant/5">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-blue-500" />
-                      <h3 className="text-sm font-semibold">Últimos Eventos</h3>
-                    </div>
-                    <button onClick={() => setActiveTab("eventos")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 font-medium">
-                      Ver tudo <ArrowRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <CardContent className="p-3">
-                    <div className="space-y-1">
-                      {eventos.slice(0, 5).map((e) => (
-                        <div key={e.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-container transition-colors">
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <Calendar className="h-4 w-4 text-primary" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-accent truncate">{e.nome}</p>
-                              <p className="text-xs text-muted-foreground">{e.aldeia?.nome || "—"}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Badge variant={e.estado === "ativo" ? "default" : "secondary"} className={`text-xs capitalize ${e.estado === "ativo" ? "bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/20" : ""}`}>
-                              {e.estado}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        )}
+        <SuperRecentActivity
+          transacoes={transacoes}
+          eventos={eventos}
+          onVerTudoTransacoes={() => setActiveTab("transacoes")}
+          onVerTudoEventos={() => setActiveTab("eventos")}
+        />
 
         {/* ===== TABS (deep dive) ===== */}
         <div>
