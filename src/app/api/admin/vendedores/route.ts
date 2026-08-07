@@ -152,7 +152,17 @@ export async function PATCH(request: NextRequest) {
     // Buscar venda
     const venda = await prisma.transacao.findUnique({
       where: { id: vendaId },
-      include: { user: true }
+      include: {
+        user: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            comissaoPercentual: true,
+            comissaoTotal: true,
+          },
+        },
+      },
     });
 
     if (!venda) {

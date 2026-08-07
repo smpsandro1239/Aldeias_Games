@@ -73,7 +73,10 @@ export async function PATCH(request: NextRequest) {
 
     const pedido = await prisma.pedidoCarregamento.findUnique({
       where: { id: pedidoId },
-      include: { user: true, vendedor: true }
+      include: {
+        user: { select: { id: true, nome: true, telefone: true } },
+        vendedor: { select: { id: true, nome: true, telefone: true } },
+      },
     });
 
     if (!pedido) {

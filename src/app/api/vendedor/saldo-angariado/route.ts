@@ -20,10 +20,16 @@ export async function GET(request: NextRequest) {
         vendedorId: user.id,
         estado: 'confirmado'
       },
-      include: { user: true }
+      include: {
+        user: { select: { id: true, nome: true, email: true } }
+      }
     });
 
-    const totalAngariado = pedidosConfirmados.reduce((acc: number, p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => acc + p.valor, 0);
+    type PedidoComUser = Prisma.PedidoCarregamentoGetPayload<{
+      include: { user: { select: { id: true; nome: true; email: true } } }
+    }>;
+
+    const totalAngariado = pedidosConfirmados.reduce((acc: number, p: PedidoComUser) => acc + p.valor, 0);
 
     // Obter entregas
     const entregas = await prisma.entregaSaldo.findMany({
@@ -49,7 +55,7 @@ export async function GET(request: NextRequest) {
         totalEntregue,
         totalSolicitado,
         saldoAEntregar,
-        historicoPedidos: pedidosConfirmados.map((p: Prisma.PedidoCarregamentoGetPayload<{ include: { user: true } }>) => ({
+        historicoPedidos: pedidosConfirmados.map((p: PedidoComUser) => ({
           id: p.id,
           valor: p.valor,
           usuario: p.user?.nome,

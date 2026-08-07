@@ -41,7 +41,9 @@ export async function PUT(request: NextRequest) {
     const { ip, dispositivo } = getClientInfo(request);
     const pedido = await prisma.pedidoCarregamento.findUnique({
       where: { id: pedidoId },
-      include: { user: true }
+      include: {
+        user: { select: { id: true, nome: true, email: true, telefone: true } }
+      }
     });
 
     if (!pedido) {

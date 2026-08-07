@@ -54,7 +54,10 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{i
         aldeiaId,
         userId: targetUserId
       },
-      include: { role: true, user: true }
+      include: {
+        role: true,
+        user: { select: { id: true, nome: true, email: true } }
+      }
     })
 
     if (!targetUserRole) {

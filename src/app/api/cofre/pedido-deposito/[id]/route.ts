@@ -26,7 +26,9 @@ export async function PUT(
 
     const pedido = await prisma.pedidoDepositoCofre.findUnique({
       where: { id },
-      include: { vendedor: true }
+      include: {
+        vendedor: { select: { id: true, nome: true, email: true, telefone: true } }
+      }
     });
 
     if (!pedido) {

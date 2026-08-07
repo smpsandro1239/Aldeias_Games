@@ -85,8 +85,8 @@ export async function PATCH(request: NextRequest) {
     const entrega = await prisma.entregaSaldo.findUnique({
       where: { id: entregaId },
       include: {
-        vendedor: true,
-        admin: true
+        vendedor: { select: { id: true, nome: true, email: true, telefone: true } },
+        admin: { select: { id: true, nome: true, email: true } }
       }
     });
 

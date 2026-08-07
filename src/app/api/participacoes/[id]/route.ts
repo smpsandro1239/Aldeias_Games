@@ -20,7 +20,18 @@ export async function GET(request: NextRequest, { params }: Context) {
       where: { id },
       include: {
         jogo: { include: { evento: { include: { aldeia: true } } } },
-        user: true,
+        user: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            telefone: true,
+            role: true,
+            fotoUrl: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 

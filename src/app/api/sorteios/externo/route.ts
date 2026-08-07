@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
         evento: true,
         participacoes: {
           where: { estadoPagamento: 'concluido' },
-          include: { user: true },
+          include: {
+            user: { select: { id: true, nome: true, email: true, telefone: true } },
+          },
         },
       },
     });

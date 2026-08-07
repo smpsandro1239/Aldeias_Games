@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
     const participacao = await prisma.participacao.findUnique({
       where: { id: participacaoId },
       include: {
-        user: true,
+        user: {
+          select: { id: true, nome: true, email: true, telefone: true },
+        },
         jogo: {
           include: {
             premios: true,
