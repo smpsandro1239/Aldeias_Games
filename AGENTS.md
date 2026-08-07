@@ -136,6 +136,25 @@ API Endpoints:
 - Tipos partilhados continuam em `admin-cofre-types.ts` (importados pelos widgets)
 - Diálogos `CofreDepositDialog`/`CofreWithdrawalDialog` e `CofreTransactionHistory` já viviam em `src/features/admin/`
 
+### Super Admin Cofre + Reconciliação — Widgets Extraídos (Refactor)
+- Mesmo padrão aplicado a `superadmin-cofre.tsx` (386→~200 linhas) e `reconciliacao-cofre.tsx` (428→~160 linhas)
+- Widgets super admin (em `src/components/dashboard/`):
+  - `super-cofre-header.tsx` — banner azul da visão global
+  - `super-cofre-stats-cards.tsx` — 3 cards (Total nos Cofres, Pendentes, Média por Aldeia)
+  - `super-cofre-toolbar.tsx` — pesquisa + Visão Financeira + CSV + refresh
+  - `super-cofre-aldeias-tab.tsx` — tab Aldeias (cards por aldeia + últimos movimentos)
+  - `super-cofre-pendentes-tab.tsx` — tab Pendentes (pedidos com botão Confirmar)
+  - `super-cofre-movimentos-tab.tsx` — feed global de movimentos
+- Widgets reconciliação (em `src/components/dashboard/`):
+  - `reconciliacao-header.tsx` — banner âmbar com Exportar CSV + Atualizar
+  - `reconciliacao-summary-cards.tsx` — 4 cards de resumo (Recebido, Depositado, Cashbox, Pendentes)
+  - `reconciliacao-equation.tsx` — equação de verificação Recebido = Depositado + Saldo (badge OK/Discrepância)
+  - `reconciliacao-filters.tsx` — badges de aldeias + pesquisa de vendedor
+  - `reconciliacao-vendedores-table.tsx` — tabela expandível por vendedor (transações); gere `selectedVendedor` localmente
+  - `reconciliacao-pendentes-card.tsx` — pendentes que afetam a reconciliação
+- Tipos partilhados: `superadmin-cofre-types.ts` e `reconciliacao-cofre-types.ts` (em `src/features/admin/`)
+- `reconciliacao-cofre.tsx`: removido dead code `getToken` (retornava `""` sempre)
+
 ### Role-Based Prize Claiming
 Utilizadores normais (`user`) reclamam prémios para a carteira.
 Vendedores e administradores (`vendedor`, `aldeia_admin`, `super_admin`) têm 3 opções:
