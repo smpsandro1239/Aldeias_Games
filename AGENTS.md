@@ -423,7 +423,7 @@ Pages:
 - Config: `vitest.config.ts` — setup file em `src/__tests__/setup.ts`, path alias `@/*`
 - Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
 - Typecheck: `npm run typecheck` (`tsc --noEmit`) — CI falha se tipos não compilarem
-- **338 testes** em **24 ficheiros** (unit + integration + API + lib + real-db)
+- **382 testes** em **31 ficheiros** (unit + integration + API + lib + real-db)
 - **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test-<pid>-<random>.db`, ficheiro único por ficheiro de teste → seguro em execução paralela) via `prisma db push`, sem mocks. Importante: libs que importam `@/lib/db` (ex.: webhooks, RBAC) devem ser importadas dinamicamente DEPOIS de `setupTestDatabase()` para que `DATABASE_URL` já aponte para o ficheiro de teste
 - **Playwright E2E** (2 specs em `e2e/`): `npx playwright test` (requer `npx playwright install` primeiro)
   - `login-compra-raspadinha.spec.ts` — login + compra raspadinha com saldo + verificação
@@ -446,6 +446,13 @@ Pages:
 | `integration/real-db/webhook-idempotency.test.ts` | 5 | Idempotência real contra SQLite: claim/complete, duplicatas, providers distintos |
 | `integration/real-db/rbac-permissions.test.ts` | 5 | RBAC real: roles globais, overrides deny, roles por aldeia |
 | `integration/real-db/seguranca-pagamentos.test.ts` | 12 | Segurança de pagamentos real: auth em participações/apostas, vendedorId do JWT, dinheiro exige EXECUTE_VENDA, transações atómicas (depósito, claim-prémio, stock) |
+| `unit/recurrence.test.ts` | 12 | Recorrência de eventos: `computeFirstRecurrenceDate`, `addRecurrence`, `computeRecurrencePreview` (diária/semanal/mensal) |
+| `integration/real-db/euromilhoes.test.ts` | 14 | Euromilhões real: grelha bloqueada/fechada, numeros 1-50/duplicados/ocupados, preenchida aos 50, cron `processRecorrentes` (401 sem CRON_SECRET, idempotente, numeração, futuro ignorado) |
+| `integration/real-db/cashbox-reconciliacao.test.ts` | 2 | Cashbox real: saldo após +100/-10/-40, histórico desc, invariante contabilístico, paginação |
+| `integration/real-db/vault-pin.test.ts` | 4 | Vault PIN real: setup hashed (bcrypt), verificação (errado/certo), formato 4-6 dígitos, admin-reset (remove PIN + notificação) |
+| `integration/real-db/pending-changes.test.ts` | 4 | Pending Changes real: aprovar aplica IBAN + auditoria mascarada (`****XXXX`), rejeitar com observações + notificação, auto-aprovação super admin, sem re-decisão |
+| `integration/real-db/webhook-replay.test.ts` | 4 | Webhook replay real: entrega repetida deduplicada, replay com novo eventId não duplica crédito (guard `referencia`), sessões independentes |
+| `integration/real-db/verificacao-publica.test.ts` | 4 | Verificação pública real: hash autêntico valida, hash adulterado falha, sem_premio consistente, hash desconhecido não encontrado |
 | `api/business-logic.test.ts` | 9 | Stock race conditions, cashback, vendas externas |
 | `lib/rate-limit.test.ts` | 4 | Rate limiting com Prisma |
 | `lib/validations.test.ts` | 12 | Telefone PT, password, email |

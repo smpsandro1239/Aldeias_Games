@@ -190,20 +190,24 @@ TOTAL: ██████████ 100%
 
 | # | Ficheiro | Linhas | Estratégia | Estado |
 |---|----------|--------|-----------|--------|
-| 7.1 | create-evento-modal.tsx | 833 | Extrair passos (evento + jogos) para componentes; lógica de recorrência para hook | ⏳ |
-| 7.2 | vendedor-dashboard.tsx | 733 | Extrair widgets: cabeçalho com estatísticas, quick actions, tabs content | ⏳ |
-| 7.3 | RbacUserTable.tsx | 613 | Extrair colunas, filtros, modais de edição de roles/permissões | ⏳ |
+| 7.1 | create-evento-modal.tsx | 833 | Extrair passos (evento + jogos) para componentes; lógica de recorrência para hook | ✅ FEITO (323) |
+| 7.2 | vendedor-dashboard.tsx | 733 | Extrair widgets: cabeçalho com estatísticas, quick actions, tabs content | ✅ FEITO (257) |
+| 7.3 | RbacUserTable.tsx | 613 | Extrair colunas, filtros, modais de edição de roles/permissões | ✅ FEITO (188) |
 
 ## 🧪 Fase 8: Cobertura de testes (real-DB + E2E)
 
 | # | Teste | Prioridade | Estado |
 |---|-------|-----------|--------|
-| 8.1 | Euromilhões: grelhas, bloqueio antes do sorteio, processRecorrentes cron | Alta | ⏳ |
-| 8.2 | Cashbox/Vendedor: depósito, levantamento, histórico, reconciliação | Alta | ⏳ |
-| 8.3 | Vault PIN: setup, verificação, rate-limit | Média | ⏳ |
-| 8.4 | Pending Changes: aprovação/rejeição (IBAN, titular) | Média | ⏳ |
-| 8.5 | Webhook replay: reprocessamento failed/processing | Baixa | ⏳ |
-| 8.6 | Verificar público: página /verificar com hash | Baixa | ⏳ |
+| 8.1 | Euromilhões: grelhas, bloqueio antes do sorteio, processRecorrentes cron | Alta | ✅ FEITO (14) |
+| 8.2 | Cashbox/Vendedor: depósito, levantamento, histórico, reconciliação | Alta | ✅ FEITO (2) |
+| 8.3 | Vault PIN: setup, verificação, rate-limit | Média | ✅ FEITO (4) |
+| 8.4 | Pending Changes: aprovação/rejeição (IBAN, titular) | Média | ✅ FEITO (4) |
+| 8.5 | Webhook replay: reprocessamento failed/processing | Baixa | ✅ FEITO (4) |
+| 8.6 | Verificar público: página /verificar com hash | Baixa | ✅ FEITO (4) |
+
+> **Bug encontrado na Fase 8.6 (corrigido)**: `raspadinha.ts` usava dois `new Date().toISOString()` independentes para o hash (`timestamp`) e para `dadosParticipacao.generatedAt` — milissegundos de diferença faziam a verificação pública (`/verificar-publico`, `/prova`, `/verificar`) rejeitar participações autênticas. Agora `generatedAt` reutiliza `timestamp`.
+
+> **Nota**: Fase 8 total = 382 testes / 31 ficheiros (suite completa passa).
 
 ## 🏛️ Fase 9: RGPD e Compliance
 

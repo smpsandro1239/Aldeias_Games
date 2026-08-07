@@ -222,7 +222,7 @@ export const raspadinhaHandler: GameHandler = {
         grid,
         winningPrize: outcome.hasWin ? outcome.winningPrize : null,
         hasWin: outcome.hasWin,
-        generatedAt: new Date().toISOString(),
+        generatedAt: timestamp,
         rngSeed,
         uniqueSalt,
         roll: outcome.roll,
