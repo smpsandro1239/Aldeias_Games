@@ -39,7 +39,7 @@ export async function addExperienceToAldeia(
   oldLevel: number;
   newLevel: number;
 }> {
-  const prisma = require('@/lib/prisma').prisma; // Adjust import based on your setup
+  const prisma = require('@/lib/db').prisma;
   
   // Get current aldeia
   const aldeia = await prisma.aldeia.findUnique({
