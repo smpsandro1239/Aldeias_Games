@@ -29,7 +29,6 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@next-auth/prisma-adapter": "^1.0.7",
-    "@next/swc-wasm-nodejs": "^16.2.10",
     "@prisma/client": "6.19.3",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.0",
@@ -100,6 +99,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
+    "@next/swc-wasm-nodejs": "^16.3.0",
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

@@ -2,6 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Turbopack/SWC not supported on Windows - use webpack for local dev
+  // Vercel (Linux) will use Turbopack automatically
   compiler: {
     removeConsole: process.env.NODE_ENV === "production"
       ? { exclude: ["error"] }

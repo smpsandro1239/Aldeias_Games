@@ -71,6 +71,7 @@ server.log
 server.err
 server_err.txt
 server_log.txt
+build.log
 nul
 
 # playwright
