@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { executeWithRetry } from '@/lib/transaction-retry';
 import { logAudit } from '@/lib/audit';
 import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
 
@@ -43,9 +44,9 @@ export async function PUT(
     }
 
     if (acao === 'confirmar') {
-      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        await tx.pedidoDepositoCofre.update({
-          where: { id },
+      await executeWithRetry(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const updated = await tx.pedidoDepositoCofre.updateMany({
+          where: { id, estado: 'pendente' },
           data: {
             estado: 'confirmado',
             confirmadoPorId: user.id,
@@ -53,6 +54,10 @@ export async function PUT(
             observacoes: observacoes || null,
           }
         });
+
+        if (updated.count === 0) {
+          throw new Error('DEPOSITO_JA_PROCESSADO');
+        }
 
         const cashbox = await tx.vendedorCashbox.findUnique({
           where: { userId: pedido.vendedorId }
@@ -97,7 +102,7 @@ export async function PUT(
             dataAprovacao: new Date(),
           }
         });
-      });
+      }));
 
       // Notify seller
       await prisma.notificacao.create({
@@ -169,6 +174,9 @@ export async function PUT(
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
     console.error('Error processing deposit request:', error);
+    if (error.message === 'DEPOSITO_JA_PROCESSADO') {
+      return NextResponse.json({ error: 'Pedido já foi processado' }, { status: 400 });
+    }
     return NextResponse.json({
       error: error.message || 'Erro interno'
     }, { status: 500 });

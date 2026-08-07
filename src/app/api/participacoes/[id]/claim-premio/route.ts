@@ -203,13 +203,14 @@ export async function POST(
           pedidoId = pedido.id;
         }
 
-        await tx.participacao.update({
-          where: { id: participacao.id },
+        const claiming = await tx.participacao.updateMany({
+          where: { id: participacao.id, premioEntregue: false },
           data: {
             premioEntregue: true,
             ganhador: true,
           },
         });
+        if (claiming.count === 0) throw new Error('PREMIO_JA_RECLAMADO');
 
         await tx.alteracaoParticipacao.create({
           data: {
@@ -289,13 +290,14 @@ export async function POST(
           },
         });
 
-        await tx.participacao.update({
-          where: { id: participacao.id },
+        const claiming = await tx.participacao.updateMany({
+          where: { id: participacao.id, premioEntregue: false },
           data: {
             premioEntregue: true,
             ganhador: true,
           },
         });
+        if (claiming.count === 0) throw new Error('PREMIO_JA_RECLAMADO');
 
         await tx.alteracaoParticipacao.create({
           data: {
@@ -356,13 +358,14 @@ export async function POST(
           },
         });
 
-        await tx.participacao.update({
-          where: { id: participacao.id },
+        const claiming = await tx.participacao.updateMany({
+          where: { id: participacao.id, premioEntregue: false },
           data: {
             premioEntregue: true,
             ganhador: true,
           },
         });
+        if (claiming.count === 0) throw new Error('PREMIO_JA_RECLAMADO');
 
         await tx.alteracaoParticipacao.create({
           data: {
@@ -421,13 +424,14 @@ export async function POST(
         },
       });
 
-      await tx.participacao.update({
-        where: { id: participacao.id },
+      const claiming = await tx.participacao.updateMany({
+        where: { id: participacao.id, premioEntregue: false },
         data: {
           premioEntregue: true,
           ganhador: true,
         },
       });
+      if (claiming.count === 0) throw new Error('PREMIO_JA_RECLAMADO');
 
       await tx.alteracaoParticipacao.create({
         data: {
@@ -467,6 +471,13 @@ export async function POST(
     if (error.message === 'CAIXA_INSUFICIENTE') {
       return NextResponse.json(
         { error: 'Saldo insuficiente na caixa para entregar este prémio ao cofre.' },
+        { status: 400 }
+      );
+    }
+
+    if (error.message === 'PREMIO_JA_RECLAMADO') {
+      return NextResponse.json(
+        { error: 'Este prémio já foi reclamado e entregue.', alreadyClaimed: true },
         { status: 400 }
       );
     }

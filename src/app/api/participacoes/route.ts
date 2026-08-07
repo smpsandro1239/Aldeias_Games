@@ -464,10 +464,11 @@ export async function POST(request: NextRequest) {
           const cashbackValor = valorTotal * cashbackPercent;
 
           if (data.metodoPagamento === 'saldo') {
-            await tx.user.update({
-              where: { id: effectiveUser.id },
+            const debited = await tx.user.updateMany({
+              where: { id: effectiveUser.id, saldo: { gte: valorTotal } },
               data: { saldo: { decrement: valorTotal } },
             });
+            if (debited.count === 0) throw new Error('SALDO_INSUFICIENTE');
             await tx.transacao.create({
               data: {
                 userId: effectiveUser.id,
@@ -493,10 +494,11 @@ export async function POST(request: NextRequest) {
             },
           });
         } else if (data.metodoPagamento === 'saldo' && data.dadosCliente && effectiveUser) {
-          await tx.user.update({
-            where: { id: effectiveUser.id },
+          const debited = await tx.user.updateMany({
+            where: { id: effectiveUser.id, saldo: { gte: valorTotal } },
             data: { saldo: { decrement: valorTotal } },
           });
+          if (debited.count === 0) throw new Error('SALDO_INSUFICIENTE');
           await tx.transacao.create({
             data: {
               userId: effectiveUser.id,
@@ -577,6 +579,9 @@ export async function POST(request: NextRequest) {
     }
     if (error.message && error.message.includes('já foi vendido')) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error.message === 'SALDO_INSUFICIENTE') {
+      return NextResponse.json({ error: 'Saldo insuficiente na carteira' }, { status: 400 });
     }
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }

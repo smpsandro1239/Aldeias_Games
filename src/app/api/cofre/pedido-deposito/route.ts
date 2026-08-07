@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requireAnyOfPermissions } from '@/lib/rbac/checkPermission';
+import { executeWithRetry } from '@/lib/transaction-retry';
 import { logAudit } from '@/lib/audit';
 import { criarDepositoSchema } from '@/lib/validations';
 import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
@@ -46,38 +47,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const pedido = await prisma.pedidoDepositoCofre.create({
-      data: {
-        vendedorId: user.id,
-        aldeiaId,
-        valor,
-        descricao: descricao || `Depósito de ${valor}€`,
-        referencias: referencias ? JSON.stringify(referencias) : null,
-        criadoPorId: user.id,
-        ...(isAdmin ? { estado: 'confirmado' as const, confirmadoPorId: user.id, confirmadoAt: new Date() } : {}),
-      }
-    });
-
-    if (isAdmin) {
-      const vault = await prisma.vault.upsert({
-        where: { aldeiaId },
-        update: { saldo: { increment: valor } },
-        create: { aldeiaId, saldo: valor },
-      });
-
-      await prisma.vaultTransaction.create({
+    // Atomicidade financeira: pedido + crédito do vault + registo em uma única transação
+    const pedido = await executeWithRetry(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const p = await tx.pedidoDepositoCofre.create({
         data: {
-          vaultId: vault.id,
-          tipo: 'deposito',
+          vendedorId: user.id,
+          aldeiaId,
           valor,
           descricao: descricao || `Depósito de ${valor}€`,
-          estado: 'confirmado',
+          referencias: referencias ? JSON.stringify(referencias) : null,
           criadoPorId: user.id,
-          aprovadoPorId: user.id,
-          dataAprovacao: new Date(),
+          ...(isAdmin ? { estado: 'confirmado' as const, confirmadoPorId: user.id, confirmadoAt: new Date() } : {}),
         }
       });
-    }
+
+      if (isAdmin) {
+        const vault = await tx.vault.upsert({
+          where: { aldeiaId },
+          update: { saldo: { increment: valor } },
+          create: { aldeiaId, saldo: valor },
+        });
+
+        await tx.vaultTransaction.create({
+          data: {
+            vaultId: vault.id,
+            tipo: 'deposito',
+            valor,
+            descricao: descricao || `Depósito de ${valor}€`,
+            estado: 'confirmado',
+            criadoPorId: user.id,
+            aprovadoPorId: user.id,
+            dataAprovacao: new Date(),
+          }
+        });
+      }
+
+      return p;
+    }));
 
     // Log audit
     const ip = request.headers.get('x-forwarded-for') || undefined;

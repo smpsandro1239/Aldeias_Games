@@ -179,10 +179,11 @@ export async function POST(request: NextRequest) {
 
       // Pagamento com saldo: debita a carteira DENTRO da transação
       if (isSaldoPayment && user) {
-        await tx.user.update({
-          where: { id: user.id },
+        const debited = await tx.user.updateMany({
+          where: { id: user.id, saldo: { gte: custoTotal } },
           data: { saldo: { decrement: custoTotal } },
         });
+        if (debited.count === 0) throw new Error('SALDO_INSUFICIENTE');
 
         await tx.transacao.create({
           data: {
@@ -240,7 +241,7 @@ export async function POST(request: NextRequest) {
     console.error("Erro ao criar aposta:", error);
     return NextResponse.json(
       { error: error.message || "Erro ao criar aposta" },
-      { status: error.message?.includes("ocupados") ? 409 : 500 }
+      { status: error.message?.includes("ocupados") ? 409 : (error.message === 'SALDO_INSUFICIENTE' ? 400 : 500) }
     );
   }
 }

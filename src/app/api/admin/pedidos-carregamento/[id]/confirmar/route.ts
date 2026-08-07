@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { executeWithRetry } from '@/lib/transaction-retry';
 import { logger } from '@/lib/logger';
 
 export async function POST(
@@ -35,38 +37,45 @@ export async function POST(
       return NextResponse.json({ error: 'Pedido já processado' }, { status: 400 });
     }
 
-    // Confirmar pedido
-    await prisma.pedidoCarregamento.update({
-      where: { id },
-      data: {
-        estado: 'confirmado',
-        pagamentoConfirmado: true,
-        confirmadoPorId: user.id,
-        confirmadoAt: new Date(),
-      },
-    });
-
-    // Adicionar saldo ao utilizador (CORREÇÃO: usar pedido.userId, não pedido.id)
-    await prisma.user.update({
-      where: { id: pedido.userId },
-      data: {
-        saldo: {
-          increment: pedido.valor,
+    // Atomicidade: atualizar pedido + creditar saldo + criar transação numa única
+    // transação. updateMany com estado='pendente' funciona como lock anti-raça.
+    await executeWithRetry(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updated = await tx.pedidoCarregamento.updateMany({
+        where: { id, estado: 'pendente' },
+        data: {
+          estado: 'confirmado',
+          pagamentoConfirmado: true,
+          confirmadoPorId: user.id,
+          confirmadoAt: new Date(),
         },
-      },
-    });
+      });
 
-    // Criar transação (CORREÇÃO: usar pedido.userId, não pedido.id)
-    await prisma.transacao.create({
-      data: {
-        userId: pedido.userId,
-        valor: pedido.valor,
-        tipo: 'carregamento_saldo',
-        descricao: `Carregamento confirmado - ${pedido.metodoPagamento || 'dinheiro'}`,
-        estado: 'concluido',
-        metodoPagamento: pedido.metodoPagamento || 'dinheiro',
-      },
-    });
+      if (updated.count === 0) {
+        throw new Error('PEDIDO_JA_PROCESSADO');
+      }
+
+      // Adicionar saldo ao utilizador (usar pedido.userId, não pedido.id)
+      await tx.user.update({
+        where: { id: pedido.userId },
+        data: {
+          saldo: {
+            increment: pedido.valor,
+          },
+        },
+      });
+
+      // Criar transação (usar pedido.userId, não pedido.id)
+      await tx.transacao.create({
+        data: {
+          userId: pedido.userId,
+          valor: pedido.valor,
+          tipo: 'carregamento_saldo',
+          descricao: `Carregamento confirmado - ${pedido.metodoPagamento || 'dinheiro'}`,
+          estado: 'concluido',
+          metodoPagamento: pedido.metodoPagamento || 'dinheiro',
+        },
+      });
+    }));
 
     logger.info('Carregamento confirmado', {
       pedidoId: id,
@@ -79,7 +88,11 @@ export async function POST(
       success: true, 
       message: 'Pedido confirmado com sucesso',
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg === 'PEDIDO_JA_PROCESSADO') {
+      return NextResponse.json({ error: 'Pedido já processado' }, { status: 400 });
+    }
     logger.error('Erro ao confirmar pedido', { error });
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
