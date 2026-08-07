@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from '@prisma/client';
 import { prisma } from "@/lib/db";
 import { getFullUserFromRequest, verifyToken } from "@/lib/auth";
+import { resolvePermissions } from '@/lib/rbac/resolvePermissions';
+import { executeWithRetry } from '@/lib/transaction-retry';
 import { escapeHtml } from "@/lib/utils";
 
 async function getAuthFromHeader(request: NextRequest) {
@@ -85,7 +87,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { jogoId, numeros, jogador, vendedorId, pago, usarSaldo } = body;
+    const { jogoId, numeros, jogador, pago, usarSaldo } = body;
 
     if (!jogoId || !numeros || !numeros.length || !jogador || !jogador.nome) {
       return NextResponse.json(
@@ -108,14 +110,37 @@ export async function POST(request: NextRequest) {
 
     // Get authenticated user
     const user = await getFullUserFromRequest(request) as any;
+
+    // Todas as apostas exigem sessão autenticada (bloqueia drenagem via API direta)
+    if (!user) {
+      return NextResponse.json(
+        { error: "Deve estar autenticado para registar apostas" },
+        { status: 401 }
+      );
+    }
+
     // Para poio_da_vaca, usar custoQuadrado (preço por quadrado); para outros, usar preco
     const precoJogo = jogo.tipo === 'poio_da_vaca'
       ? (jogo.custoQuadrado || jogo.preco || 5)
       : (jogo.preco || 5);
     const custoTotal = numeros.length * precoJogo;
 
-    // Handle saldo payment
-    if (usarSaldo) {
+    const permResult = user ? await resolvePermissions(user.id, user.aldeiaId ?? undefined) : null;
+    const canExecuteVenda = permResult?.hasPermission('EXECUTE_VENDA' as any) ?? false;
+
+    const isSaldoPayment = Boolean(usarSaldo);
+    const isCashSale = Boolean(pago) && !isSaldoPayment;
+
+    // Segurança: vendas em dinheiro (pago sem saldo) exigem vendedor autenticado.
+    // Impede apostas "pago" sem rasto financeiro e drenagem gratuita do tabuleiro.
+    if (isCashSale && !canExecuteVenda) {
+      return NextResponse.json(
+        { error: "Pagamento em dinheiro apenas disponível para vendedores autenticados." },
+        { status: 403 }
+      );
+    }
+
+    if (isSaldoPayment) {
       if (!user) {
         return NextResponse.json({ error: "Deve estar autenticado para pagar com saldo" }, { status: 401 });
       }
@@ -125,26 +150,11 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-
-      // Deduct from user saldo and create transaction
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { saldo: { decrement: custoTotal } },
-      });
-
-      await prisma.transacao.create({
-        data: {
-          userId: user.id,
-          valor: -custoTotal,
-          tipo: "pagamento_jogo",
-          descricao: `Poio da Vaca - ${numeros.length} números (${jogo.nome})`,
-          referencia: jogoId,
-        },
-      });
     }
 
-    // Verificar se números já estão ocupados (Race condition protection)
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Verificação de números ocupados + dedução de saldo + cashback DENTRO da transação
+    // (atomicidade financeira — evita debitar saldo se a aposta falhar)
+    const result = await executeWithRetry(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const apostasExistentes = await tx.aposta.findMany({
         where: { jogoId },
       });
@@ -167,6 +177,27 @@ export async function POST(request: NextRequest) {
         throw new Error(`Números ocupados: ${numerosIndisponiveis.join(", ")}`);
       }
 
+      // Pagamento com saldo: debita a carteira DENTRO da transação
+      if (isSaldoPayment && user) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { saldo: { decrement: custoTotal } },
+        });
+
+        await tx.transacao.create({
+          data: {
+            userId: user.id,
+            valor: -custoTotal,
+            tipo: "pagamento_jogo",
+            descricao: `Poio da Vaca - ${numeros.length} números (${jogo.nome})`,
+            referencia: jogoId,
+          },
+        });
+      }
+
+      // vendedorId é SEMPRE o utilizador autenticado (não confiar no body)
+      const vendedorAssociado = canExecuteVenda ? user.id : (user?.id || null);
+
       const aposta = await tx.aposta.create({
         data: {
           jogoId,
@@ -174,13 +205,13 @@ export async function POST(request: NextRequest) {
           jogadorNome: escapeHtml(String(jogador.nome)),
           jogadorTelefone: jogador.telefone || null,
           jogadorEmail: jogador.email || null,
-          vendedorId: vendedorId || user?.id || null,
-          pago: pago || usarSaldo || false,
+          vendedorId: vendedorAssociado,
+          pago: isSaldoPayment || (isCashSale && canExecuteVenda),
         },
       });
 
       // Give cashback for saldo payments (5%)
-      if (usarSaldo && user) {
+      if (isSaldoPayment && user) {
         const cashbackPercent = 0.05;
         const cashbackValor = custoTotal * cashbackPercent;
 
@@ -201,7 +232,7 @@ export async function POST(request: NextRequest) {
       }
 
       return aposta;
-    });
+    }));
 
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (err: unknown) {

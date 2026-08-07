@@ -260,6 +260,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Segurança: pagamento em dinheiro exige vendedor autenticado com permissão de venda.
+    // Impede bilhetes "concluido" sem rasto financeiro (stock drenado gratuitamente).
+    if (data.metodoPagamento === 'dinheiro' && (!effectiveUser || !canExecuteVenda)) {
+      return NextResponse.json(
+        { error: 'Pagamento em dinheiro apenas disponível para vendedores autenticados. Faça login ou escolha outro método.' },
+        { status: 403 }
+      );
+    }
+
+    // Segurança: pagamento com saldo exige conta autenticada
+    if (data.metodoPagamento === 'saldo' && !effectiveUser) {
+      return NextResponse.json(
+        { error: 'Deve estar autenticado para pagar com saldo da carteira.' },
+        { status: 401 }
+      );
+    }
+
     let resolvedUserId: string | null = effectiveUser?.id ?? null;
     if (resolvedUserId) {
       const userExists = await prisma.user.findUnique({
