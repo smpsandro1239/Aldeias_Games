@@ -69,6 +69,7 @@ const publicRoutes = [
   '/api/health',
   '/api/stripe/webhook',
   '/api/mbway/webhook',
+  '/api/participacoes',
   '/api/participacoes/verificar',
   '/api/rbac/roles',
   '/api/rbac/user',
@@ -143,6 +144,27 @@ if (!JWT_SECRET_RAW) {
 
 const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW);
 
+// === CORS para API routes ===
+function applyApiCors(request: NextRequest, response: NextResponse): NextResponse {
+  const origin = request.headers.get("origin");
+  const allowedOrigins = [
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    "https://aldeiasgames.pt",
+    "https://www.aldeiasgames.pt",
+  ];
+
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+  }
+
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-csrf-token");
+  response.headers.set("Access-Control-Allow-Credentials", "true");
+  response.headers.set("Access-Control-Max-Age", "86400");
+
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const nonce = generateNonce();
   const response = await proxyInner(request);
@@ -163,73 +185,34 @@ export async function proxy(request: NextRequest) {
 async function proxyInner(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // === RATE LIMITING FOR API ROUTES ===
+  // === AUTHENTICATION, CSRF & RATE LIMITING FOR API ROUTES ===
+  // Ordem crítica: autenticação e CSRF são validados ANTES do rate-limit,
+  // para que rotas protegidas nunca fiquem sem estas verificações.
   if (pathname.startsWith('/api/')) {
-    const config = RATE_LIMIT_CONFIG[pathname];
-    if (config) {
-      const ip =
-        request.headers.get('x-forwarded-for') ||
-        request.headers.get('x-real-ip') ||
-        'anonymous';
-
-      // Create a unique identifier per path and IP to avoid cross-path rate limiting
-      const identifier = `${pathname}:${ip}`;
-
-      const { allowed, remaining, resetTime } = await checkRateLimit(
-        identifier,
-        config
-      );
-
-      const response = NextResponse.next();
-      response.headers.set('X-RateLimit-Limit', config.maxRequests.toString());
-      response.headers.set('X-RateLimit-Remaining', remaining.toString());
-
-      if (resetTime) {
-        response.headers.set(
-          'X-RateLimit-Reset',
-          Math.ceil(resetTime / 1000).toString()
-        );
-      }
-
-      if (!allowed) {
-        return NextResponse.json(
-          { error: 'Demasiadas tentativas. Tente novamente mais tarde.' },
-          { status: 429, headers: response.headers }
-        );
-      }
-
-      return response;
-    }
-  }
-
-  // === AUTHENTICATION & AUTHORIZATION FOR ALL REQUESTS ===
-  // Allow public pages and static assets
-  if (
-    publicPages.includes(pathname) ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/static')
-  ) {
-    return NextResponse.next();
-  }
-
-  // API routes: check authentication for protected endpoints
-  if (pathname.startsWith('/api/')) {
-    // Prova de jogo é acessível a convidados — a route valida permissão internamente (isPublic)
+    // Prova de jogo é acessível a convidados — a route valida permissões internamente (isPublic)
     const isProvaRoute =
       pathname.startsWith('/api/participacoes/') && pathname.endsWith('/prova');
     const isPublicRoute = publicRoutes.some(route =>
       pathname === route || pathname.startsWith(`${route}/`)
     ) || isProvaRoute;
 
-    if (!isPublicRoute && !pathname.startsWith('/api/auth/')) {
-      // Try to get token from Authorization header first
-      let token = null;
-      const authHeader = request.headers.get('authorization');
+    // Preflight CORS: processado antes de auth (nunca transporta credenciais)
+    if (request.method === 'OPTIONS') {
+      return applyApiCors(request, new NextResponse(null, { status: 204 }));
+    }
 
-      if (authHeader?.startsWith('Bearer ')) {
-        token = authHeader.substring(7);
+    let requestHeaders: Headers | null = null;
+    const authHeader = request.headers.get('authorization');
+    const hasAuthCookie = Boolean(request.cookies.get('auth-token')?.value);
+    const usesBearer = Boolean(authHeader?.startsWith('Bearer '));
+
+    // Rotas não públicas exigem autenticação (JWT) antes de prosseguir
+    if (!isPublicRoute && !pathname.startsWith('/api/auth/')) {
+      let token = null;
+
+      if (usesBearer) {
+        token = authHeader!.substring(7);
       } else {
-        // Fallback: try to get from httpOnly cookie
         token = request.cookies.get('auth-token')?.value || null;
       }
 
@@ -250,27 +233,12 @@ async function proxyInner(request: NextRequest) {
           );
         }
 
-        // CSRF validation for cookie-authenticated state-changing requests
-        if (!safeMethods.includes(request.method) && !authHeader?.startsWith('Bearer ')) {
-          if (!validateCsrfOrigin(request)) {
-            return NextResponse.json(
-              { error: 'Pedido CSRF inválido — origem não correspondente' },
-              { status: 403 }
-            );
-          }
-        }
-
-        // Add user info to request headers for downstream consumption
-        const requestHeaders = new Headers(request.headers);
+        requestHeaders = new Headers(request.headers);
         requestHeaders.set('x-user-id', String(payload.userId));
         requestHeaders.set('x-user-role', String(payload.role));
         if (payload.aldeiaId) {
           requestHeaders.set('x-user-aldeia-id', String(payload.aldeiaId));
         }
-
-        return NextResponse.next({
-          request: { headers: requestHeaders },
-        });
       } catch {
         return NextResponse.json(
           { error: 'Token inválido ou expirado' },
@@ -278,6 +246,69 @@ async function proxyInner(request: NextRequest) {
         );
       }
     }
+
+    // CSRF validation para pedidos state-changing autenticados por cookie.
+    // Aplica-se também a rotas públicas (ex.: /api/participacoes) quando o
+    // pedido vai autenticado por cookie — impede CSRF na sessão do utilizador.
+    if (!safeMethods.includes(request.method) && !usesBearer && hasAuthCookie) {
+      if (!validateCsrfOrigin(request)) {
+        return NextResponse.json(
+          { error: 'Pedido CSRF inválido — origem não correspondente' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // === RATE LIMITING PARA API ROUTES ===
+    const config = RATE_LIMIT_CONFIG[pathname];
+    if (config) {
+      const ip =
+        request.headers.get('x-forwarded-for') ||
+        request.headers.get('x-real-ip') ||
+        'anonymous';
+
+      // Identificador único por path e IP (evita rate limiting cruzado)
+      const identifier = `${pathname}:${ip}`;
+
+      const { allowed, remaining, resetTime } = await checkRateLimit(
+        identifier,
+        config
+      );
+
+      const response = applyApiCors(
+        request,
+        NextResponse.next({
+          request: { headers: requestHeaders ?? request.headers },
+        })
+      );
+      response.headers.set('X-RateLimit-Limit', config.maxRequests.toString());
+      response.headers.set('X-RateLimit-Remaining', remaining.toString());
+
+      if (resetTime) {
+        response.headers.set(
+          'X-RateLimit-Reset',
+          Math.ceil(resetTime / 1000).toString()
+        );
+      }
+
+      if (!allowed) {
+        return applyApiCors(
+          request,
+          NextResponse.json(
+            { error: 'Demasiadas tentativas. Tente novamente mais tarde.' },
+            { status: 429, headers: response.headers }
+          )
+        );
+      }
+
+      return response;
+    }
+
+    // Sem rate-limit configurado: passa com headers de auth adicionados (se aplicável)
+    const apiResponse = NextResponse.next({
+      request: { headers: requestHeaders ?? request.headers },
+    });
+    return applyApiCors(request, apiResponse);
   }
 
   // Page routes: protect by role
@@ -336,29 +367,6 @@ async function proxyInner(request: NextRequest) {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-
-  // === CORS para API routes ===
-  if (pathname.startsWith("/api/")) {
-    const origin = request.headers.get("origin");
-    const allowedOrigins = [
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-      "https://aldeiasgames.pt",
-      "https://www.aldeiasgames.pt",
-    ];
-
-    if (origin && allowedOrigins.includes(origin)) {
-      response.headers.set("Access-Control-Allow-Origin", origin);
-    }
-
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-csrf-token");
-    response.headers.set("Access-Control-Allow-Credentials", "true");
-    response.headers.set("Access-Control-Max-Age", "86400");
-
-    if (request.method === "OPTIONS") {
-      return new NextResponse(null, { status: 204, headers: response.headers });
-    }
-  }
 
   return response;
 }
