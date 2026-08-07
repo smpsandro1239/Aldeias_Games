@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const aldeiaId = searchParams.get('aldeiaId');
+    const aldeiaIdParam = searchParams.get('aldeiaId');
     const eventoId = searchParams.get('eventoId');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -260,10 +260,21 @@ export async function GET(request: NextRequest) {
       tipo: 'carregamento_saldo',
     };
 
-    if (user.role === 'aldeia_admin' || user.role === 'vendedor') {
+    if (user.role === 'user') {
+      // Utilizador normal vê apenas os seus próprios carregamentos
+      where.userId = user.id;
+    } else if (user.role === 'aldeia_admin' || user.role === 'vendedor') {
+      // Scoping por aldeia — nunca confiar no parâmetro para roles restritos
+      const scopedAldeiaId = user.aldeiaId || aldeiaIdParam || undefined;
       (where as any).dadosAdicionais = {
         path: ['aldeiaId'],
-        equals: aldeiaId || user.aldeiaId
+        equals: scopedAldeiaId,
+      };
+    } else if (aldeiaIdParam) {
+      // super_admin — pode filtrar por qualquer aldeia
+      (where as any).dadosAdicionais = {
+        path: ['aldeiaId'],
+        equals: aldeiaIdParam,
       };
     }
 
