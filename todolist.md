@@ -228,5 +228,6 @@ TOTAL: ██████████ 100%
 | # | Tarefa | Estado |
 |---|--------|--------|
 | P1 | Resolver vulnerabilidades npm audit (5 moderate, 7 high, 1 critical) | ⏳ |
+| P2 | Bug latente memal `addRecurrence`/cron: ajuste `(target>day?1:-6)` pode recuar para o mês anterior em âncoras com meses de 31 dias — também no POST `/api/eventos` e `process-recurring` (mover para lib `recurrence.ts` partilhada + corrigir + testar) | ⏳ |
 
 *Última actualização: 07/08/2026*

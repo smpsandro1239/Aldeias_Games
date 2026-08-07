@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,100 +10,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Gift, Star, Award, Gamepad2, CheckCircle2, Loader2, CalendarDays } from "lucide-react";
-import { CreateJogoModal } from "@/components/modals/create-jogo-modal";
-import type { GameType, JogoData } from "./create-jogo-types";
-
-const GAME_TYPES = [
-  { id: "raspadinha", nome: "Raspadinha", descricao: "Jogo de raspar instantâneo", icon: Gift },
-  { id: "rifa", nome: "Rifa", descricao: "Sorteio de números", icon: Star },
-  { id: "euromilhoes", nome: "Euromilhões", descricao: "Lotaria tradicional", icon: Award },
-  { id: "poio_da_vaca", nome: "Poio da Vaca", descricao: "Jogo rápido", icon: Gamepad2 },
-] as const;
-
-const EVENT_STATES = {
-  RASCUNHO: 'rascunho',
-  ATIVO: 'ativo',
-  PAUSADO: 'pausado',
-  FINALIZADO: 'finalizado',
-  CANCELADO: 'cancelado'
-} as const;
-
-type EventState = typeof EVENT_STATES[keyof typeof EVENT_STATES];
+import { Loader2, CalendarDays } from "lucide-react";
+import { EventoFormFields, EVENT_STATES } from "./evento-form-fields";
+import type { EventoFormData, EventState } from "./evento-form-fields";
+import { EventoGamesStep } from "./evento-games-step";
+import { useRecurrenceConfig } from "@/features/admin/hooks/use-recurrence-config";
 
 const safeParseFloat = (val: string, fallback: number = 0): number => {
   const parsed = parseFloat(val);
   return isNaN(parsed) ? fallback : parsed;
 };
 
-type RecurrenceFrequency = 'semanal' | 'quinzenal' | 'mensal';
-
-function computeFirstRecurrenceDate(
-  frequency: RecurrenceFrequency,
-  dayOfWeek: number,
-  time: string,
-  from: Date = new Date()
-): Date | null {
-  if (!time) return null;
-  const [hours, minutes] = time.split(':').map(Number);
-  const next = new Date(from);
-  next.setHours(hours, minutes, 0, 0);
-  const currentDay = next.getDay();
-  const targetDay = dayOfWeek;
-  let daysToAdd = targetDay - currentDay;
-
-  if (daysToAdd <= 0) {
-    if (frequency === 'semanal') {
-      daysToAdd += 7;
-    } else if (frequency === 'quinzenal') {
-      daysToAdd += 14;
-    } else if (frequency === 'mensal') {
-      next.setMonth(next.getMonth() + 1);
-      next.setDate(1);
-      while (next.getDay() !== targetDay) next.setDate(next.getDate() + 1);
-    }
-  } else {
-    if (frequency === 'quinzenal') {
-      daysToAdd += 7;
-    } else if (frequency === 'mensal') {
-      next.setMonth(next.getMonth() + 1);
-      next.setDate(1);
-      while (next.getDay() !== targetDay) next.setDate(next.getDate() + 1);
-    }
-  }
-
-  if (frequency !== 'mensal') next.setDate(next.getDate() + daysToAdd);
-  return next;
-}
-
-function addRecurrence(prev: Date, frequency: RecurrenceFrequency, dayOfWeek: number): Date {
-  const next = new Date(prev);
-  if (frequency === 'semanal') {
-    next.setDate(next.getDate() + 7);
-  } else if (frequency === 'quinzenal') {
-    next.setDate(next.getDate() + 14);
-  } else if (frequency === 'mensal') {
-    next.setMonth(next.getMonth() + 1);
-    while (next.getDay() !== dayOfWeek) {
-      next.setDate(next.getDate() + (dayOfWeek > next.getDay() ? 1 : -6));
-    }
-  }
-  return next;
-}
-
-const formatRecDate = (d: Date) => d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" });
-
 interface Aldeia {
   id: string;
   nome: string;
 }
 
-interface EventoData {
+export interface EventoData {
   id?: string;
   nome: string;
   descricao?: string;
@@ -140,62 +63,15 @@ export function CreateEventoModal({
   aldeias,
   onSubmitJogo,
 }: CreateEventoModalProps) {
-  const [formData, setFormData] = useState({
-    nome: "",
-    descricao: "",
-    dataInicio: "",
-    dataFim: "",
-    objectivoAngariacao: "",
-    publico: false,
-    aldeiaId: aldeiaId || "",
-    estado: EVENT_STATES.RASCUNHO as EventState,
-  });
+  const [formData, setFormData] = useState<EventoFormData>(() => buildInitialFormData(aldeiaId));
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [jogosSelecionados, setJogosSelecionados] = useState<string[]>([]);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurrenceFrequency, setRecurrenceFrequency] = useState<'semanal' | 'quinzenal' | 'mensal'>('semanal');
-  const [recurrenceDayOfWeek, setRecurrenceDayOfWeek] = useState<number>(1);
-  const [recurrenceTime, setRecurrenceTime] = useState<string>('08:00');
-  const [maxOccurrences, setMaxOccurrences] = useState<number | undefined>(undefined);
-
-  const freqLabel = recurrenceFrequency === 'semanal' ? 'semana' : recurrenceFrequency === 'quinzenal' ? 'quinzena' : 'mês';
-
-  const recurrencePreview = useMemo(() => {
-    if (!isRecurring) return null;
-    const hasFim = !!formData.dataFim;
-    if (!recurrenceTime) {
-      return { hasFim, countAteFim: 0, effective: 0, lastDate: null as Date | null, limitCompleto: false };
-    }
-    const dataFim = formData.dataFim ? new Date(formData.dataFim) : null;
-    if (!dataFim || isNaN(dataFim.getTime())) {
-      return { hasFim, countAteFim: 0, effective: 0, lastDate: null as Date | null, limitCompleto: false };
-    }
-    const first = computeFirstRecurrenceDate(recurrenceFrequency, recurrenceDayOfWeek, recurrenceTime);
-    if (!first) {
-      return { hasFim, countAteFim: 0, effective: 0, lastDate: null as Date | null, limitCompleto: false };
-    }
-    const max = maxOccurrences && maxOccurrences >= 1 ? maxOccurrences : null;
-    const dates: Date[] = [];
-    let cursor = first;
-    let safety = 0;
-    while (safety++ < 5000) {
-      if (cursor > dataFim) break;
-      dates.push(new Date(cursor));
-      cursor = addRecurrence(cursor, recurrenceFrequency, recurrenceDayOfWeek);
-    }
-    const countAteFim = dates.length;
-    const effective = max ? Math.min(max, countAteFim) : countAteFim;
-    const lastDate = effective > 0 ? dates[effective - 1] : null;
-    const limitCompleto = !!max && countAteFim >= max;
-    return { hasFim, countAteFim, effective, lastDate, limitCompleto };
-  }, [isRecurring, recurrenceTime, recurrenceFrequency, recurrenceDayOfWeek, maxOccurrences, formData.dataFim]);
+  const recurrence = useRecurrenceConfig();
 
   const [step, setStep] = useState<'event' | 'games'>('event');
   const [createdEventoId, setCreatedEventoId] = useState<string | null>(null);
-  const [jogoModalOpen, setJogoModalOpen] = useState(false);
-  const selectedGameTypeRef = useRef<string | null>(null);
-  const [selectedGameType, setSelectedGameType] = useState<string | null>(null);
   const [configuredGames, setConfiguredGames] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -211,51 +87,31 @@ export function CreateEventoModal({
         estado: initialData.estado || EVENT_STATES.RASCUNHO,
       });
       setJogosSelecionados(initialData.jogosSelecionados || []);
-      setIsRecurring(initialData.isRecurring || false);
-      setRecurrenceFrequency(initialData.recurrenceFrequency || 'semanal');
-      setRecurrenceDayOfWeek(initialData.recurrenceDayOfWeek ?? 1);
-      setRecurrenceTime(initialData.recurrenceTime || '08:00');
-      setMaxOccurrences(initialData.maxOccurrences);
-    } else if (!open) {
-      setFormData({
-        nome: "",
-        descricao: "",
-        dataInicio: "",
-        dataFim: "",
-        objectivoAngariacao: "",
-        publico: false,
-        aldeiaId: aldeiaId || "",
-        estado: EVENT_STATES.RASCUNHO,
+      recurrence.reset({
+        isRecurring: initialData.isRecurring || false,
+        frequency: initialData.recurrenceFrequency,
+        dayOfWeek: initialData.recurrenceDayOfWeek,
+        time: initialData.recurrenceTime,
+        maxOccurrences: initialData.maxOccurrences,
       });
-      setErrors({});
-      setJogosSelecionados([]);
-      setIsRecurring(false);
-      setRecurrenceFrequency('semanal');
-      setRecurrenceDayOfWeek(1);
-      setRecurrenceTime('08:00');
-      setMaxOccurrences(undefined);
-      setStep('event');
-      setCreatedEventoId(null);
-      setJogoModalOpen(false);
-      setSelectedGameType(null);
-      selectedGameTypeRef.current = null;
-      setConfiguredGames(new Set());
+    } else if (!open) {
+      resetAll();
     } else if (aldeiaId && !initialData) {
       setFormData(prev => ({ ...prev, aldeiaId }));
-      setJogosSelecionados([]);
-      setIsRecurring(false);
-      setRecurrenceFrequency('semanal');
-      setRecurrenceDayOfWeek(1);
-      setRecurrenceTime('08:00');
-      setMaxOccurrences(undefined);
-      setStep('event');
-      setCreatedEventoId(null);
-      setJogoModalOpen(false);
-      setSelectedGameType(null);
-      selectedGameTypeRef.current = null;
-      setConfiguredGames(new Set());
+      resetAll();
     }
   }, [initialData, open, aldeiaId]);
+
+  const resetAll = () => {
+    setFormData(buildInitialFormData(aldeiaId));
+    setErrors({});
+    setSubmitError(null);
+    setJogosSelecionados([]);
+    recurrence.reset();
+    setStep('event');
+    setCreatedEventoId(null);
+    setConfiguredGames(new Set());
+  };
 
   const handleChange = useCallback((field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -295,20 +151,21 @@ export function CreateEventoModal({
     if (!formData.aldeiaId) {
       newErrors.aldeiaId = "Selecione uma organização";
     }
-    if (isRecurring) {
-      if (!recurrenceTime) {
+    if (recurrence.isRecurring) {
+      if (!recurrence.time) {
         newErrors.recurrenceTime = "Horário é obrigatório para eventos recorrentes";
       }
-      if (maxOccurrences && maxOccurrences < 1) {
+      if (recurrence.maxOccurrences && recurrence.maxOccurrences < 1) {
         newErrors.maxOccurrences = "Número máximo deve ser maior que 0";
       }
     }
 
     return newErrors;
-  }, [formData, isRecurring, recurrenceTime, maxOccurrences]);
+  }, [formData, recurrence.isRecurring, recurrence.time, recurrence.maxOccurrences]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
 
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
@@ -332,11 +189,11 @@ export function CreateEventoModal({
         aldeiaId: formData.aldeiaId,
         estado: formData.estado,
         jogosSelecionados: jogosSelecionados,
-        isRecurring,
-        recurrenceFrequency: isRecurring ? recurrenceFrequency : undefined,
-        recurrenceDayOfWeek: isRecurring ? recurrenceDayOfWeek : undefined,
-        recurrenceTime: isRecurring ? recurrenceTime : undefined,
-        maxOccurrences: isRecurring ? maxOccurrences : undefined,
+        isRecurring: recurrence.isRecurring,
+        recurrenceFrequency: recurrence.isRecurring ? recurrence.frequency : undefined,
+        recurrenceDayOfWeek: recurrence.isRecurring ? recurrence.dayOfWeek : undefined,
+        recurrenceTime: recurrence.isRecurring ? recurrence.time : undefined,
+        maxOccurrences: recurrence.isRecurring ? recurrence.maxOccurrences : undefined,
       };
 
       if (!onSubmit) {
@@ -354,10 +211,11 @@ export function CreateEventoModal({
       setErrors({});
     } catch (error) {
       console.error('Erro ao salvar evento:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Erro ao guardar o evento');
     } finally {
       setLoading(false);
     }
-  }, [formData, jogosSelecionados, initialData, aldeiaId, onSubmit, onOpenChange, validateForm, onSubmitJogo, isRecurring, recurrenceFrequency, recurrenceDayOfWeek, recurrenceTime, maxOccurrences]);
+  }, [formData, jogosSelecionados, initialData, aldeiaId, onSubmit, onOpenChange, validateForm, onSubmitJogo, recurrence]);
 
   const handleErrorClear = useCallback((field: string) => {
     if (errors[field]) {
@@ -365,113 +223,23 @@ export function CreateEventoModal({
     }
   }, [errors]);
 
-  const openGameModal = useCallback((tipoId: string) => {
-    selectedGameTypeRef.current = tipoId;
-    setSelectedGameType(tipoId);
-    setJogoModalOpen(true);
+  const handleConfiguredGame = useCallback((tipoId: string) => {
+    setConfiguredGames(prev => new Set([...prev, tipoId]));
   }, []);
 
-  const handleCreateGame = useCallback(async (data: any) => {
-    if (!onSubmitJogo) return;
-    await onSubmitJogo(data);
-    if (selectedGameTypeRef.current) {
-      setConfiguredGames(prev => new Set([...prev, selectedGameTypeRef.current!]));
-    }
-  }, [onSubmitJogo]);
-
   if (step === 'games' && createdEventoId && onSubmitJogo) {
-    const eventAldeiaId = formData.aldeiaId;
     return (
-      <>
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="sm:max-w-[500px]" aria-describedby="configure-games-description">
-            <DialogHeader className="bg-gradient-to-r from-green-600/10 via-emerald-600/10 to-teal-600/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg border-b border-green-500/20">
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <div className="bg-green-600/20 p-2 rounded-lg">
-                  <Gamepad2 className="h-5 w-5 text-green-600" />
-                </div>
-                Configurar Jogos
-              </DialogTitle>
-              <DialogDescription id="configure-games-description">
-                Configure cada jogo selecionado para o evento &quot;{formData.nome}&quot;.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="grid gap-3 py-4 pr-2">
-              {jogosSelecionados.map((tipoId) => {
-                const jogoType = GAME_TYPES.find(g => g.id === tipoId);
-                if (!jogoType) return null;
-                const Icon = jogoType.icon;
-                const configured = configuredGames.has(tipoId);
-                return (
-                  <div key={tipoId} className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
-                    configured
-                      ? "border-green-500/30 bg-green-500/5"
-                      : "border-outline-variant/20 bg-surface-container-low/50"
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        configured ? "bg-green-500/10" : "bg-primary/10"
-                      }`}>
-                        {configured ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <Icon className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{jogoType.nome}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {configured ? "Configurado" : "Pendente"}
-                        </p>
-                      </div>
-                    </div>
-                    {!configured && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => openGameModal(tipoId)}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                      >
-                        Configurar
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-
-              {configuredGames.size === jogosSelecionados.length && (
-                <div className="p-4 rounded-xl border-2 border-green-500/30 bg-green-500/5 text-center">
-                  <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                    Todos os jogos foram configurados!
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <DialogFooter className="sticky bottom-0 bg-background pt-2 border-t" style={{ zIndex: 1000 }}>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                style={{ position: 'relative', zIndex: 1001 }}
-              >
-                {configuredGames.size > 0 ? "Concluir" : "Depois"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <CreateJogoModal
-          open={jogoModalOpen}
-          onOpenChange={setJogoModalOpen}
-          onSubmit={handleCreateGame}
-          eventoId={createdEventoId}
-          aldeiaId={eventAldeiaId}
-          initialData={selectedGameType ? { tipo: selectedGameType as GameType } as JogoData : undefined}
-        />
-      </>
+      <EventoGamesStep
+        open={open}
+        onClose={() => onOpenChange(false)}
+        eventoNome={formData.nome}
+        tipoIds={jogosSelecionados}
+        configured={configuredGames}
+        onConfigured={handleConfiguredGame}
+        onSubmitJogo={onSubmitJogo}
+        eventoId={createdEventoId}
+        aldeiaId={formData.aldeiaId}
+      />
     );
   }
 
@@ -491,310 +259,25 @@ export function CreateEventoModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} id="event-form">
-          <div className="grid gap-4 py-4 pr-2">
-            {aldeias && aldeias.length > 0 && !initialData && (
-              <div className="grid gap-2">
-                <Label htmlFor="aldeia">Aldeia/Organização *</Label>
-                <Select
-                  value={formData.aldeiaId}
-                  onValueChange={handleAldeiaChange}
-                  required
-                  disabled={!!aldeiaId && !initialData}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma aldeia" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {aldeias.map((al) => (
-                      <SelectItem key={al.id} value={al.id}>
-                        {al.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!!aldeiaId && !initialData && (
-                  <p className="text-xs text-muted-foreground">O evento será criado nesta organização.</p>
-                )}
-                {errors.aldeiaId && <p className="text-sm text-destructive" role="alert">{errors.aldeiaId}</p>}
-              </div>
-            )}
-
-            <div className="grid gap-2">
-              <Label htmlFor="nome">Nome do Evento *</Label>
-              <Input
-                id="nome"
-                placeholder="Ex: Festa de Verão 2024"
-                value={formData.nome}
-                onChange={(e) => {
-                  handleChange("nome", e.target.value);
-                  handleErrorClear("nome");
-                }}
-                required
-                aria-describedby={errors.nome ? "nome-error" : "nome-description"}
-              />
-              <p id="nome-description" className="text-xs text-muted-foreground">Nome que aparecerá nos cartões e materiais</p>
-              {errors.nome && <p id="nome-error" className="text-sm text-destructive" role="alert">{errors.nome}</p>}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                placeholder="Descreva o evento..."
-                value={formData.descricao}
-                onChange={(e) => handleChange("descricao", e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="dataInicio">Data de Início *</Label>
-                <Input
-                  id="dataInicio"
-                  type="datetime-local"
-                  value={formData.dataInicio}
-                  onChange={(e) => {
-                    handleChange("dataInicio", e.target.value);
-                    handleErrorClear("dataInicio");
-                  }}
-                  required
-                  aria-describedby={errors.dataInicio ? "dataInicio-error" : "dataInicio-description"}
-                />
-                <p id="dataInicio-description" className="text-xs text-muted-foreground">Data de inicio do evento</p>
-                {errors.dataInicio && <p id="dataInicio-error" className="text-sm text-destructive" role="alert">{errors.dataInicio}</p>}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="dataFim">Data de Fim *</Label>
-                <Input
-                  id="dataFim"
-                  type="datetime-local"
-                  value={formData.dataFim}
-                  onChange={(e) => {
-                    handleChange("dataFim", e.target.value);
-                    handleErrorClear("dataFim");
-                  }}
-                  required
-                  aria-describedby={errors.dataFim ? "dataFim-error" : "dataFim-description"}
-                />
-                <p id="dataFim-description" className="text-xs text-muted-foreground">Data de fim do evento</p>
-                {errors.dataFim && <p id="dataFim-error" className="text-sm text-destructive" role="alert">{errors.dataFim}</p>}
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="objectivo">Objetivo de Angariação (€)</Label>
-              <Input
-                id="objectivo"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="5000"
-                value={formData.objectivoAngariacao}
-                onChange={(e) => handleChange("objectivoAngariacao", e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                Meta a alcançar com as vendas deste evento. O progresso será mostrado no dashboard do admin.
-                <span className="text-muted-foreground/60">(opcional)</span>
-              </p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Criar Jogos para este Evento</Label>
-              <p className="text-xs text-muted-foreground mb-2">Selecione os tipos de jogos — cada um será configurado depois de criar o evento</p>
-              <div className="grid grid-cols-2 gap-2">
-                {GAME_TYPES.map((jogo) => {
-                  const Icon = jogo.icon;
-                  const selecionado = jogosSelecionados.includes(jogo.id);
-                  return (
-                    <button
-                      key={jogo.id}
-                      type="button"
-                      onClick={() => toggleJogoSelecionado(jogo.id)}
-                      className={`p-3 rounded-xl border-2 flex items-center gap-2 transition-all ${
-                        selecionado
-                          ? "border-primary bg-primary/10"
-                          : "border-outline-variant/20 bg-surface-container hover:border-primary/30"
-                      }`}
-                      aria-label={`${selecionado ? 'Remover' : 'Adicionar'} jogo ${jogo.nome}`}
-                      aria-pressed={selecionado}
-                    >
-                      <Icon className={`w-5 h-5 ${selecionado ? "text-primary" : "text-muted-foreground"}`} aria-hidden="true" />
-                      <span className={`text-sm font-medium ${selecionado ? "text-primary" : "text-muted-foreground"}`}>
-                        {jogo.nome}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {jogosSelecionados.length > 0 && (
-                <p className="text-xs text-primary mt-2" aria-live="polite">
-                  {jogosSelecionados.length} jogo(s) será(ão) configurado(s) depois de criar o evento
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="estado">Estado do Evento</Label>
-              <Select
-                value={formData.estado}
-                onValueChange={handleEstadoChange}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                   <SelectItem value={EVENT_STATES.RASCUNHO}>Rascunho</SelectItem>
-                   <SelectItem value={EVENT_STATES.ATIVO}>Ativo</SelectItem>
-                   <SelectItem value={EVENT_STATES.PAUSADO}>Pausado</SelectItem>
-                   <SelectItem value={EVENT_STATES.FINALIZADO}>Finalizado</SelectItem>
-                   <SelectItem value={EVENT_STATES.CANCELADO}>Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Evento ativo fica visível para participantes</p>
-            </div>
-
-            <div className="grid gap-2">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="recurring">Evento Recorrente</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Criar automaticamente novos eventos neste horário
-                  </p>
-                </div>
-                <Switch
-                  id="recurring"
-                  checked={isRecurring}
-                  onCheckedChange={setIsRecurring}
-                />
-              </div>
-
-              {isRecurring && (
-                <div className="bg-surface-container-low/50 rounded-2xl p-4 border border-outline-variant/20 space-y-4">
-                  <h4 className="text-sm font-semibold flex items-center gap-2">
-                    Configuração da Recorrência
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="frequency">Frequência</Label>
-                      <Select
-                        value={recurrenceFrequency}
-                        onValueChange={(value: 'semanal' | 'quinzenal' | 'mensal') => setRecurrenceFrequency(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="semanal">Semanal</SelectItem>
-                          <SelectItem value="quinzenal">Quinzenal</SelectItem>
-                          <SelectItem value="mensal">Mensal</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="dayOfWeek">Dia da Semana</Label>
-                      <Select
-                        value={String(recurrenceDayOfWeek)}
-                        onValueChange={(value) => setRecurrenceDayOfWeek(Number(value))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">Domingo</SelectItem>
-                          <SelectItem value="1">Segunda-feira</SelectItem>
-                          <SelectItem value="2">Terça-feira</SelectItem>
-                          <SelectItem value="3">Quarta-feira</SelectItem>
-                          <SelectItem value="4">Quinta-feira</SelectItem>
-                          <SelectItem value="5">Sexta-feira</SelectItem>
-                          <SelectItem value="6">Sábado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="time">Horário</Label>
-                      <Input
-                        id="time"
-                        type="time"
-                        value={recurrenceTime}
-                        onChange={(e) => setRecurrenceTime(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="maxOccurrences">Máx. Ocorrências (opcional)</Label>
-                      <Input
-                        id="maxOccurrences"
-                        type="number"
-                        min="1"
-                        placeholder="Ilimitado"
-                        value={maxOccurrences || ""}
-                        onChange={(e) => setMaxOccurrences(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-3 space-y-1.5">
-                    <p className="text-xs text-accent font-medium">
-                      As ocorrências serão criadas automaticamente às {recurrenceTime} de cada {freqLabel}.
-                      {maxOccurrences && maxOccurrences >= 1 ? ` Máximo de ${maxOccurrences} ocorrências.` : " Sem limite de ocorrências."}
-                    </p>
-
-                    {recurrencePreview?.hasFim ? (
-                      recurrencePreview.countAteFim === 0 ? (
-                        <p className="text-xs text-amber-600 font-medium">
-                          Nenhuma ocorrência cabe antes da data de fim ({formatRecDate(new Date(formData.dataFim))}). Aumenta a data de fim ou reduz a frequência.
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          {recurrencePreview.effective} ocorrência{recurrencePreview.effective === 1 ? "" : "s"} até {formatRecDate(new Date(formData.dataFim))}
-                          {recurrencePreview.lastDate ? ` — última a ${formatRecDate(recurrencePreview.lastDate)}.` : "."}
-                          {recurrencePreview.limitCompleto
-                            ? " O limite definido cabe no período."
-                            : " O período da festa limita o nº de ocorrências."}
-                        </p>
-                      )
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Define a data de fim para ver o calendário de ocorrências.
-                      </p>
-                    )}
-
-                    {recurrencePreview?.hasFim && recurrencePreview.countAteFim > 0 && !recurrencePreview.limitCompleto && maxOccurrences && maxOccurrences >= 1 && (
-                      <p className="text-xs text-amber-600 font-medium">
-                        Aviso: o limite de {maxOccurrences} ocorrências ultrapassa a data de fim — só cabem {recurrencePreview.countAteFim} até {formatRecDate(new Date(formData.dataFim))}. Reduz o nº ou aumenta a data de fim.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="publico">Evento Público</Label>
-                <p className="text-sm text-muted-foreground">
-                  Visível para todos os utilizadores
-                </p>
-              </div>
-              <Switch
-                id="publico"
-                checked={formData.publico}
-                onCheckedChange={(checked) => handleChange("publico", checked)}
-                aria-describedby="publico-description"
-              />
-              <p id="publico-description" className="sr-only">Ativar ou desativar visibilidade pública do evento</p>
-            </div>
-          </div>
+          <EventoFormFields
+            formData={formData}
+            errors={errors}
+            aldeias={aldeias}
+            aldeiaId={aldeiaId}
+            initialData={initialData}
+            jogosSelecionados={jogosSelecionados}
+            recurrence={recurrence}
+            onChange={handleChange}
+            onErrorClear={handleErrorClear}
+            onEstadoChange={handleEstadoChange}
+            onAldeiaChange={handleAldeiaChange}
+            onToggleJogo={toggleJogoSelecionado}
+          />
 
           <DialogFooter className="sticky bottom-0 bg-background pt-2 border-t" style={{ zIndex: 1000 }}>
+            {submitError && (
+              <p className="text-sm text-destructive w-full text-right" role="alert">{submitError}</p>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -804,18 +287,8 @@ export function CreateEventoModal({
               Cancelar
             </Button>
             <Button
-              type="button"
+              type="submit"
               disabled={loading}
-              onClick={(e) => {
-                e.preventDefault();
-                try {
-                  handleSubmit(e as any);
-                } catch (error) {
-                  console.error('Erro no handleSubmit:', error);
-                  const errorMessage = error instanceof Error ? error.message : String(error);
-                alert('Erro ao guardar: ' + errorMessage);
-                }
-              }}
               style={{
                 position: 'relative',
                 zIndex: 1001,
@@ -823,11 +296,29 @@ export function CreateEventoModal({
                 border: loading ? undefined : '1px solid #2563eb'
               }}
             >
-              {loading ? "A guardar..." : (initialData ? "Guardar Alterações" : "Criar Evento")}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  A guardar...
+                </>
+              ) : (initialData ? "Guardar Alterações" : "Criar Evento")}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+function buildInitialFormData(aldeiaId?: string): EventoFormData {
+  return {
+    nome: "",
+    descricao: "",
+    dataInicio: "",
+    dataFim: "",
+    objectivoAngariacao: "",
+    publico: false,
+    aldeiaId: aldeiaId || "",
+    estado: EVENT_STATES.RASCUNHO,
+  };
 }
