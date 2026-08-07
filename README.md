@@ -776,6 +776,32 @@ Para questões técnicas, sugestões ou relatos de bugs, por favor:
 
 ---
 
+## 📋 Changelog v3.13.0
+
+### Segurança (P0)
+- Proxy: auth JWT + CSRF (origin) validados ANTES do rate-limit — rotas protegidas já não "fail-open"
+- CSRF por cookie aplicado também em rotas públicas autenticadas (ex.: `POST /api/participacoes`)
+- `GET /api/wallet/carregar` filtra PII por role e aldeia (param `aldeiaId` já não é confiado)
+- Removido `include: { user: true }` em 10 endpoints (selects sem `password`/`vaultPin`)
+- `POST /api/participacoes`: pagamento em dinheiro exige sessão com `EXECUTE_VENDA`; saldo exige sessão
+- `POST /api/apostas`: exige sessão; `vendedorId` vem do JWT (body ignorado); dinheiro exige `EXECUTE_VENDA`
+
+### Integridade Financeira (R5)
+- `cofre/pedido-deposito` POST e confirmar: `$transaction` + guard `estado='pendente'` (anti duplo crédito)
+- Confirmação de carregamento: transação + lock atómico; removido route legacy com bug `pedido.id`
+- `claim-premio`: guard `premioEntregue=false` nos 4 branches (anti double-claim)
+- Debits de saldo com guard `saldo >= valor` em participações e apostas (nunca negativo)
+- Webhooks Stripe/MBWay: todo o processamento em `$transaction` + guard de stock
+
+### Testes e CI
+- 12 novos testes real-DB (`seguranca-pagamentos.test.ts`) — 338 no total
+- Teste de rate-limit corrigido (DB real SQLite temporária)
+- Script `typecheck` e CI sem `continue-on-error` (lint, typecheck, tests, e2e, build são gating)
+
+### Higiene e UX
+- Removidos 30+ ficheiros de backup e código morto (`require-role.ts`, `api-helpers.ts`, `prisma.ts` duplicado)
+- `SuperAdminDashboard` 474→322 linhas; `AdminDashboard` 357→303 (widgets em `src/components/dashboard/`)
+
 ## 📋 Changelog v3.12.0
 
 ### Segurança (P1)

@@ -65,6 +65,18 @@ npx next build --webpack
 - Flow: `claimWebhookEvent(provider, eventId)` → returns `true` if first time → process → `completeWebhookEvent(provider, eventId, "completed")`
 - Unique constraint violation (`P2002`) = duplicate event → skip
 
+### Regras de Segurança & Atomicidade (v3.13.0)
+- **Proxy auth-first**: valida JWT + CSRF (origin) ANTES do rate-limit. Nunca reposicionar — rotas protegidas falham open sem auth
+- **CSRF também em rotas públicas autenticadas** (`POST /api/participacoes` inclui verificador de cookie)
+- **Nunca usar `include: { user: true }`** — usar `select` sem `password`/`vaultPin` (feito em 10 endpoints)
+- **IDs sensíveis vêm do JWT/sessão, nunca do body**: `vendedorId` em participações/apostas, `userId` em wallet/carregamento. Body pode ser forjado
+- **Dinheiro exige `EXECUTE_VENDA`** (role vendedor/admin) — user normal não pode vender em dinheiro
+- **Debits de saldo**: guard `saldo >= valor` dentro de `$transaction` (nunca saldo negativo)
+- **Claim de prémio**: guard `premioEntregue=false` nos 4 branches (pagar_cliente/cofre/jogar_novamente/carteira) — anti double-claim
+- **Depósitos/levantamentos/confirmações**: `$transaction` + guard `estado='pendente'` — anti duplo crédito
+- **Webhooks**: processar toda a lógica dentro da `$transaction` do claim + guard de stock
+- Route legacy `PUT /api/cofre/pedido-deposito/[id]` (com bug `pedido.id`) foi substituída por `confirmar-deposito` — não reutilizar
+
 ### Super Admin Cofre (Visão Global)
 - `GET /api/superadmin/cofre` — consolidated data across all villages (vault balances, pending deposits, recent movements)
 - `/superadmindashboard/cofre` — Super Admin page with global overview, per-village cards, pending deposits tab, global movements feed
@@ -410,7 +422,8 @@ Pages:
 - Framework: **Vitest** (v4.1.10) com `jsdom` environment, globals habilitados
 - Config: `vitest.config.ts` — setup file em `src/__tests__/setup.ts`, path alias `@/*`
 - Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
-- **326 testes** em **23 ficheiros** (unit + integration + API + lib + real-db)
+- Typecheck: `npm run typecheck` (`tsc --noEmit`) — CI falha se tipos não compilarem
+- **338 testes** em **24 ficheiros** (unit + integration + API + lib + real-db)
 - **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test-<pid>-<random>.db`, ficheiro único por ficheiro de teste → seguro em execução paralela) via `prisma db push`, sem mocks. Importante: libs que importam `@/lib/db` (ex.: webhooks, RBAC) devem ser importadas dinamicamente DEPOIS de `setupTestDatabase()` para que `DATABASE_URL` já aponte para o ficheiro de teste
 - **Playwright E2E** (2 specs em `e2e/`): `npx playwright test` (requer `npx playwright install` primeiro)
   - `login-compra-raspadinha.spec.ts` — login + compra raspadinha com saldo + verificação
@@ -432,6 +445,7 @@ Pages:
 | `integration/real-db/cofre-flow.test.ts` | 4 | Fluxo real do cofre: depósito (cashbox→vault), rejeição, levantamento, saldo insuficiente |
 | `integration/real-db/webhook-idempotency.test.ts` | 5 | Idempotência real contra SQLite: claim/complete, duplicatas, providers distintos |
 | `integration/real-db/rbac-permissions.test.ts` | 5 | RBAC real: roles globais, overrides deny, roles por aldeia |
+| `integration/real-db/seguranca-pagamentos.test.ts` | 12 | Segurança de pagamentos real: auth em participações/apostas, vendedorId do JWT, dinheiro exige EXECUTE_VENDA, transações atómicas (depósito, claim-prémio, stock) |
 | `api/business-logic.test.ts` | 9 | Stock race conditions, cashback, vendas externas |
 | `lib/rate-limit.test.ts` | 4 | Rate limiting com Prisma |
 | `lib/validations.test.ts` | 12 | Telefone PT, password, email |
