@@ -1,14 +1,35 @@
-import { prisma } from "@/lib/db";
+// @vitest-environment node
+import { describe, beforeAll, afterAll, it, expect } from "vitest";
 import {
-  checkRateLimit,
-  getClientIdentifier,
-  createRateLimitResponse,
-  rateLimitConfigs,
-} from "@/lib/rate-limit";
+  setupTestDatabase,
+  teardownTestDatabase,
+} from "../helpers/test-db";
 
 describe("Rate Limiting", () => {
+  let prisma: any;
+  let checkRateLimit: any;
+  let getClientIdentifier: any;
+  let createRateLimitResponse: any;
+  let rateLimitConfigs: any;
+
   beforeAll(async () => {
+    // A lib de rate-limit importa @/lib/db em módulo — importar DEPOIS de
+    // apontar DATABASE_URL para a DB de teste (SQLite temporária)
+    setupTestDatabase();
+    const db = await import("@/lib/db");
+    const rl = await import("@/lib/rate-limit");
+    prisma = db.prisma;
+    checkRateLimit = rl.checkRateLimit;
+    getClientIdentifier = rl.getClientIdentifier;
+    createRateLimitResponse = rl.createRateLimitResponse;
+    rateLimitConfigs = rl.rateLimitConfigs;
+
     await prisma.rateLimit.deleteMany();
+  });
+
+  afterAll(async () => {
+    await prisma?.$disconnect?.();
+    teardownTestDatabase();
   });
 
   describe("checkRateLimit", () => {
@@ -18,7 +39,7 @@ describe("Rate Limiting", () => {
       expect(result.remaining).toBe(4); // 5 max - 1 used
     });
 
-    it("deve bloqueir após exceder limite", async () => {
+    it("deve bloquear após exceder limite", async () => {
       const identifier = "test-ip-block-v2";
       const config = { maxRequests: 2, windowMs: 60000 };
 

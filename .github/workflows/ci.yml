@@ -2,14 +2,14 @@ name: CI — Lint, Typecheck & Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -25,23 +25,22 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npx --yes prisma@6.19.3 generate
 
       - name: Lint (ESLint)
-        run: npx next lint || true
-        continue-on-error: true
+        run: npx next lint
 
       - name: Typecheck (tsc)
-        run: npx tsc --noEmit || true
-        continue-on-error: true
+        run: npm run typecheck
 
       - name: Unit Tests (Vitest)
         run: npx vitest run --reporter=verbose
-        continue-on-error: true
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
       - name: E2E Tests (Playwright)
         run: npx playwright test --project=chromium --reporter=list
-        continue-on-error: true
 
       - name: Build
         run: npx next build --webpack
