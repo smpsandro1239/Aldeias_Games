@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/stripe";
 import { sanitizeObject } from "@/lib/sanitization";
@@ -88,7 +89,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
-
 async function processParticipacao(
   session: Stripe.Checkout.Session,
   event: Stripe.Event,
@@ -97,136 +97,143 @@ async function processParticipacao(
   numeros: string | undefined
 ) {
   const valorTotal = session.amount_total ? session.amount_total / 100 : 0;
-  const jogo = await prisma.jogo.findUnique({ where: { id: jogoId } });
-  if (!jogo) throw new Error(`Jogo ${jogoId} not found`);
 
-  const numerosArray = numeros
-    ? typeof numeros === "string"
-      ? JSON.parse(numeros)
-      : numeros
-    : [];
-  const qty =
-    Array.isArray(numerosArray) && numerosArray.length > 0
-      ? numerosArray.length
-      : 1;
-  const precoUnitario = valorTotal / qty;
+  // Atomicidade: participações + stock + evento + cashback numa única transação
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const jogo = await tx.jogo.findUnique({ where: { id: jogoId } });
+    if (!jogo) throw new Error(`Jogo ${jogoId} not found`);
 
-  for (let i = 0; i < qty; i++) {
-    const timestamp = new Date().toISOString();
-    const seed = crypto.randomBytes(16).toString("hex");
-    const uniqueSalt = crypto.randomBytes(16).toString("hex");
-    let resultadoRaspe: string | null = null;
-    let hashParticipacao: string | null = null;
-    let grid: Array<{
-      nome: string;
-      valorDinheiroAlternative?: number;
-    }> | null = null;
-    let dadosExtra: Record<string, unknown> = {};
+    const numerosArray = numeros
+      ? typeof numeros === "string"
+        ? JSON.parse(numeros)
+        : numeros
+      : [];
+    const qty =
+      Array.isArray(numerosArray) && numerosArray.length > 0
+        ? numerosArray.length
+        : 1;
+    const precoUnitario = valorTotal / qty;
 
-    if (jogo.tipo === "raspadinha") {
-      const config: RaspadinhaConfig =
-        typeof jogo.configuracao === "string"
-          ? JSON.parse(jogo.configuracao)
-          : (jogo.configuracao as RaspadinhaConfig);
-      const outcome = determineRaspadinhaOutcome(config);
-      grid = buildGridFromOutcome(outcome, config);
-      resultadoRaspe = outcome.hasWin
-        ? outcome.winningPrize?.nome || "sem_premio"
-        : "sem_premio";
-      hashParticipacao = generateHash(seed, resultadoRaspe, uniqueSalt, timestamp);
-      dadosExtra = {
-        hasWin: outcome.hasWin,
-        winningPrize: outcome.winningPrize,
-        roll: outcome.roll,
-      };
-    } else if (jogo.tipo === "rifa") {
-      const num = Array.isArray(numerosArray) ? numerosArray[i] : null;
-      resultadoRaspe = num ? num.toString() : null;
-      hashParticipacao = generateHash(
-        seed,
-        resultadoRaspe || "rifa",
-        uniqueSalt,
-        timestamp
-      );
-    }
-
-    const p = await prisma.participacao.create({
+    // Guard anti-stock (raça com vendas diretas / outros checkouts concorrentes)
+    const stockUpdated = await tx.jogo.updateMany({
+      where: { id: jogoId, stockAtual: { gte: qty } },
       data: {
-        jogoId,
-        userId: userId || null,
-        valorPago: precoUnitario,
-        metodoPagamento: "stripe",
-        estadoPagamento: "concluido",
-        dataPagamento: new Date(),
-        seedRaspe: seed,
-        hashRaspe: hashParticipacao,
-        resultadoRaspe,
-        hashParticipacao,
-        dadosParticipacao: JSON.stringify(
-          sanitizeObject({
-            stripeSessionId: session.id,
-            stripePaymentIntent: session.payment_intent,
-            stripeEventId: event.id,
-            index: i,
-            grid,
-            numeros:
-              jogo.tipo !== "raspadinha" ? [numerosArray[i]] : undefined,
-            ...dadosExtra,
-          })
-        ),
-      },
-    });
-
-    if (
-      jogo.tipo === "rifa" &&
-      Array.isArray(numerosArray) &&
-      numerosArray[i]
-    ) {
-      await prisma.numeroVendido.create({
-        data: {
-          jogoId,
-          numero: parseInt(numerosArray[i]),
-          participacaoId: p.id,
-        },
-      });
-    }
-  }
-
-  await prisma.jogo.update({
-    where: { id: jogoId },
-    data: {
-      stockAtual: { decrement: qty },
-      totalParticipacoes: { increment: qty },
-      totalAngariado: { increment: valorTotal },
-    },
-  });
-
-  if (jogo.eventoId) {
-    await prisma.evento.update({
-      where: { id: jogo.eventoId },
-      data: {
+        stockAtual: { decrement: qty },
         totalParticipacoes: { increment: qty },
         totalAngariado: { increment: valorTotal },
       },
     });
-  }
+    if (stockUpdated.count === 0) throw new Error(`Stock insuficiente (${jogoId})`);
 
-  if (userId) {
-    const cashbackValor = valorTotal * 0.05;
-    await prisma.user.update({
-      where: { id: userId },
-      data: { saldo: { increment: cashbackValor } },
-    });
-    await prisma.transacao.create({
-      data: {
-        userId,
-        valor: cashbackValor,
-        tipo: "cashback",
-        descricao: `Cashback Stripe: ${jogo.nome}`,
-        referencia: session.id,
-      },
-    });
-  }
+    for (let i = 0; i < qty; i++) {
+      const timestamp = new Date().toISOString();
+      const seed = crypto.randomBytes(16).toString("hex");
+      const uniqueSalt = crypto.randomBytes(16).toString("hex");
+      let resultadoRaspe: string | null = null;
+      let hashParticipacao: string | null = null;
+
+      let grid: Array<{
+        nome: string;
+        valorDinheiroAlternative?: number;
+      }> | null = null;
+      let dadosExtra: Record<string, unknown> = {};
+
+      if (jogo.tipo === "raspadinha") {
+        const config: RaspadinhaConfig =
+          typeof jogo.configuracao === "string"
+            ? JSON.parse(jogo.configuracao)
+            : (jogo.configuracao as RaspadinhaConfig);
+        const outcome = determineRaspadinhaOutcome(config);
+        grid = buildGridFromOutcome(outcome, config);
+        resultadoRaspe = outcome.hasWin
+          ? outcome.winningPrize?.nome || "sem_premio"
+          : "sem_premio";
+        hashParticipacao = generateHash(seed, resultadoRaspe, uniqueSalt, timestamp);
+        dadosExtra = {
+          hasWin: outcome.hasWin,
+          winningPrize: outcome.winningPrize,
+          roll: outcome.roll,
+        };
+      } else if (jogo.tipo === "rifa") {
+        const num = Array.isArray(numerosArray) ? numerosArray[i] : null;
+        resultadoRaspe = num ? num.toString() : null;
+        hashParticipacao = generateHash(
+          seed,
+          resultadoRaspe || "rifa",
+          uniqueSalt,
+          timestamp
+        );
+      }
+
+      const p = await tx.participacao.create({
+        data: {
+          jogoId,
+          userId: userId || null,
+          valorPago: precoUnitario,
+          metodoPagamento: "stripe",
+          estadoPagamento: "concluido",
+          dataPagamento: new Date(),
+          seedRaspe: seed,
+          hashRaspe: hashParticipacao,
+          resultadoRaspe,
+          hashParticipacao,
+          dadosParticipacao: JSON.stringify(
+            sanitizeObject({
+              stripeSessionId: session.id,
+              stripePaymentIntent: session.payment_intent,
+              stripeEventId: event.id,
+              index: i,
+              grid,
+              numeros:
+                jogo.tipo !== "raspadinha" ? [numerosArray[i]] : undefined,
+              ...dadosExtra,
+            })
+          ),
+        },
+      });
+
+      if (
+        jogo.tipo === "rifa" &&
+        Array.isArray(numerosArray) &&
+        numerosArray[i]
+      ) {
+        await tx.numeroVendido.create({
+          data: {
+            jogoId,
+            numero: parseInt(numerosArray[i]),
+            participacaoId: p.id,
+          },
+        });
+      }
+    }
+
+    if (jogo.eventoId) {
+      await tx.evento.update({
+        where: { id: jogo.eventoId },
+        data: {
+          totalParticipacoes: { increment: qty },
+          totalAngariado: { increment: valorTotal },
+        },
+      });
+    }
+
+    if (userId) {
+      const cashbackValor = valorTotal * 0.05;
+      await tx.user.update({
+        where: { id: userId },
+        data: { saldo: { increment: cashbackValor } },
+      });
+      await tx.transacao.create({
+        data: {
+          userId,
+          valor: cashbackValor,
+          tipo: "cashback",
+          descricao: `Cashback Stripe: ${jogo.nome}`,
+          referencia: session.id,
+        },
+      });
+    }
+  });
 }
 
 async function processCarregamento(
@@ -235,25 +242,27 @@ async function processCarregamento(
 ) {
   const valor = session.amount_total ? session.amount_total / 100 : 0;
 
-  // Additional idempotency: check if this session was already processed
-  const existing = await prisma.transacao.findFirst({
-    where: { referencia: session.id, tipo: "carregamento_saldo" },
-  });
-  if (existing) return;
+  // Atomicidade: credita saldo + cria transação numa só operação
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const existing = await tx.transacao.findFirst({
+      where: { referencia: session.id, tipo: "carregamento_saldo" },
+    });
+    if (existing) return;
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { saldo: { increment: valor } },
-  });
-  await prisma.transacao.create({
-    data: {
-      userId,
-      valor,
-      tipo: "carregamento_saldo",
-      descricao: "Carregamento Stripe",
-      referencia: session.id,
-      dadosAdicionais: { stripeSessionId: session.id },
-    },
+    await tx.user.update({
+      where: { id: userId },
+      data: { saldo: { increment: valor } },
+    });
+    await tx.transacao.create({
+      data: {
+        userId,
+        valor,
+        tipo: "carregamento_saldo",
+        descricao: "Carregamento Stripe",
+        referencia: session.id,
+        dadosAdicionais: { stripeSessionId: session.id },
+      },
+    });
   });
 }
 

@@ -135,30 +135,35 @@ async function processParticipacao(transactionId: string) {
     return; // already processed
   }
 
-  await prisma.participacao.update({
-    where: { id: participacao.id },
-    data: {
-      estadoPagamento: "concluido",
-      dataPagamento: new Date(),
-    },
-  });
-
-  if (participacao.userId) {
-    const cashbackValor = participacao.valorPago * 0.05;
-
-    await prisma.user.update({
-      where: { id: participacao.userId },
-      data: { saldo: { increment: cashbackValor } },
-    });
-
-    await prisma.transacao.create({
+  // Atomicidade: marca pagamento + credita cashback numa única transação
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const updated = await tx.participacao.updateMany({
+      where: { id: participacao.id, estadoPagamento: { not: "concluido" } },
       data: {
-        userId: participacao.userId,
-        valor: cashbackValor,
-        tipo: "cashback",
-        descricao: `Cashback de compra: ${participacao.id}`,
-        referencia: participacao.jogoId,
+        estadoPagamento: "concluido",
+        dataPagamento: new Date(),
       },
     });
-  }
+
+    if (updated.count === 0) return; // já processada em paralelo
+
+    if (participacao.userId) {
+      const cashbackValor = participacao.valorPago * 0.05;
+
+      await tx.user.update({
+        where: { id: participacao.userId },
+        data: { saldo: { increment: cashbackValor } },
+      });
+
+      await tx.transacao.create({
+        data: {
+          userId: participacao.userId,
+          valor: cashbackValor,
+          tipo: "cashback",
+          descricao: `Cashback de compra: ${participacao.id}`,
+          referencia: participacao.jogoId,
+        },
+      });
+    }
+  });
 }
