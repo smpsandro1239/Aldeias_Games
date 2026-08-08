@@ -1,6 +1,6 @@
 # 🎮 Aldeias Games 2026 - Digital Fundraising Platform
 
-![Version](https://img.shields.io/badge/version-3.12.0-indigo)
+![Version](https://img.shields.io/badge/version-3.15.0-indigo)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Next.js](https://img.shields.io/badge/Framework-Next.js%2016-black)
 ![Tailwind](https://img.shields.io/badge/CSS-Tailwind%204-blue)
@@ -365,8 +365,8 @@ O sistema foi desenhado para que **cada euro seja rastreável em pelo menos dois
 - **Backend**: Next.js API Routes, Prisma ORM.
 - **Base de Dados**: SQLite (Dev) / PostgreSQL (Prod - Neon).
 - **Pagamentos**: Stripe API + MBWay (integração real).
-- **Rate Limiting**: Upstash Redis (produção) / In-Memory (desenvolvimento).
-- **Testes**: Vitest (232 unit/integration) + Playwright (32 E2E).
+- **Rate Limiting**: Prisma (tabela `RateLimit` com janelas deslizantes; cron de limpeza diário).
+- **Testes**: Vitest (412 unit/integration/API/real-DB em 35 ficheiros) + Playwright (10 specs E2E).
 - **Docs**: OpenAPI 3.0 + Swagger UI em `/docs`.
 - **Infra**: Vercel (deploy), Docker (local).
 
@@ -394,12 +394,13 @@ src/
 │   ├── rate-limit.ts             # Rate limiting Redis/in-memory
 │   ├── validations.ts            # Zod schemas para todas as rotas
 │   └── email.ts                  # Envio de emails (bilhetes, etc.)
-├── __tests__/                    # Testes Vitest (232 testes)
-│   ├── unit/                     # Testes unitários (game-logic, game-handlers)
+├── __tests__/                    # Testes Vitest (412 testes / 35 ficheiros)
+│   ├── unit/                     # Testes unitários (game-logic, game-handlers, rbac, segurança)
 │   ├── integration/              # Testes de integração (game-lifecycle)
-│   └── lib/                      # Testes de bibliotecas (validations, rate-limit, etc.)
+│   ├── integration/real-db/      # Integração contra SQLite real (cofre, pagamentos, RGPD, SAF-T...)
+│   └── lib/                      # Testes de bibliotecas (validations, rate-limit, i18n, etc.)
 ├── types/                        # Tipagem centralizada
-└── middleware.ts                  # CSRF, autenticação, rate limiting global
+└── proxy.ts                      # Proxy: CSRF, autenticação, rate limiting, headers de segurança
 ```
 
 ## ⚙️ Instalação e Execução
@@ -437,24 +438,15 @@ src/
    bun run dev
    ```
 
-### Upstash Redis (Rate Limiting em Produção)
+### Rate Limiting (Prisma)
 
-O rate limiting usa **Upstash Redis** em produção com fallback automático para in-memory em desenvolvimento.
+O rate limiting é persistido na base de dados (`RateLimit` model, janela deslizante por chave). Não requer infraestrutura externa (Upstash Redis foi substituído).
 
-#### Configurar no Upstash:
-1. Criar conta em [upstash.com](https://upstash.com)
-2. Criar um banco de dados Redis
-3. Copiar o **REST URL** e **REST Token**
+Limpeza automática de entradas expiradas via cron (todos os dias às 02:30 UTC):
 
-#### Adicionar ao Vercel:
-No dashboard do Vercel → Settings → Environment Variables, adicionar:
-
-| Variável | Descrição |
-|----------|-----------|
-| `UPSTASH_REDIS_REST_URL` | URL do banco Redis (ex: `https://xxx.upstash.io`) |
-| `UPSTASH_REDIS_REST_TOKEN` | Token de autenticação |
-
-> **Nota**: Sem estas variáveis, o rate limiting funciona em modo in-memory (adequado para dev/teste, mas ineficaz em serverless com múltiplas instâncias).
+```json
+{ "path": "/api/rate-limits/cleanup", "schedule": "30 2 * * *" }
+```
 
 #### Configurações de Rate Limiting:
 
@@ -569,15 +561,16 @@ MIT License - ver [LICENSE](LICENSE) para detalhes.
 - [x] Autenticação 2FA (TOTP) completa
 - [x] Cookie consent RGPD com preferências granulares
 - [x] Refresh token rotation
-- [x] CSRF protection (Origin/Referer validation)
-- [x] Rate limiting com Upstash Redis
+- [x] CSRF protection (Origin/Referer validation) + headers de segurança (CSP `object-src 'none'`, `COOP: same-origin`)
+- [x] Rate limiting com Prisma (substituiu Upstash Redis; cron de limpeza diário)
 - [x] Audit logging consolidado
-- [x] Testes unitários (232) + E2E (32)
+- [x] Testes unitários (412 em 35 ficheiros) + Playwright E2E (10 specs)
 - [x] OpenAPI docs com Swagger UI
 - [x] Handlers modulares por tipo de jogo
 - [x] Migração `middleware.ts` → `proxy.ts` (Next.js 16)
 - [x] Eliminação de 287 erros TypeScript (`: any` → tipos concretos)
-- [ ] Configurar Upstash Redis no Vercel (env vars)
+- [x] Cobertura mínima 70% por ficheiro (thresholds glob por glob)
+- [x] Backup real da base de dados em `@vercel/blob` (criar/descarregar/eliminar)
 - [ ] Remover `ignoreBuildErrors: true` (SWC bug Node.js v24)
 
 ## 🔄 Account Linking (Vinculação de Contas)
@@ -730,14 +723,15 @@ Qualquer pessoa pode usar este endpoint para:
 3. Confirmar que o resultado corresponde ao seed revelado
 4. Verificar que o sorteio não foi manipulado após o início das vendas
 
-## 🧪 Testes (232 testes)
+## 🧪 Testes (412 testes em 35 ficheiros)
 
-| Tipo | Framework | Testes | Ficheiros |
-|------|-----------|--------|-----------|
-| Unitários | Vitest | 152 | game-logic, game-handlers, validations, utils |
-| Integração | Vitest | 35 | game-lifecycle |
-| Bibliotecas | Vitest | 45 | rate-limit, i18n, financial-validations |
-| E2E | Playwright | 32 | auth, navigation, mobile, accessibility |
+| Tipo | Framework | Ficheiros | Descrição |
+|------|-----------|-----------|-----------|
+| Unitários | Vitest | 14 | game-logic, game-handlers, raspadinha, recurrence, proxy/JWT lazy, segurança |
+| Integração | Vitest | 5+ | game-lifecycle, cofre, pagamentos, euromilhões, cashbox |
+| Real-DB (SQLite) | Vitest | 10 | cofre, webhooks, RBAC, RGPD, SAF-T, vault PIN, pending changes... |
+| API / Lib | Vitest | 6 | business-logic, rate-limit, validations, utils, i18n, financial |
+| E2E | Playwright | 10 specs | login, compra, cofre, verificação pública... (produção: `next start`)
 
 ```bash
 # Todos os testes
@@ -775,6 +769,35 @@ Para questões técnicas, sugestões ou relatos de bugs, por favor:
     - Versão do Node.js/Bun e Next.js sendo usada
 
 ---
+
+## 📋 Changelog v3.15.0
+
+### Segurança e Integridade (Tarefas 6–11)
+- Limites de raspadinha (`maxGanhadores`/`maxPremioTotal`) validados **dentro da `$transaction`** (`validateInTransaction`), após o lock de stock — eliminada race condition entre participações concorrentes
+- `cofre/levantamento` confirmar/rejeitar: claim atómico com `updateMany` + guard de estado (`LEVANTAMENTO_JA_PROCESSADO`) e guard de saldo (`SALDO_INSUFICIENTE_COFRE`) — anti duplo processamento
+- `JWT_SECRET` lazy no proxy (`getJwtSecret()` em request time) — o build já não parte quando a variável falta ao gerar páginas estáticas
+- Cron de limpeza de rate-limits expirados (`/api/rate-limits/cleanup`, autenticado com `CRON_SECRET`)
+- CSP com `object-src 'none'` (dev + prod) e header `Cross-Origin-Opener-Policy: same-origin`
+- Fix `addRecurrence` mensal: `setDate(1)` + walk até ao dia-alvo — fim-de-mês já não salta nem overflow (ex.: 30/31 jan → fev)
+
+### Refactors e Higiene (P1)
+- Página da aldeia (`/aldeia/[id]`) reescrita de 1165 → 430 linhas com widgets extraídos (`aldeia-overview`, `aldeia-members`, `aldeia-events`, `aldeia-settings`, `aldeia-add-member-dialog`, `aldeia-header`)
+
+### Testes e CI
+- 412 testes em 35 ficheiros (novos: race cofre, `validateInTransaction`, proxy lazy secret, cleanup rate-limit, headers CSP/COOP, mensal recurrence)
+- Cobertura mínima por ficheiro via thresholds por glob (linhas/funções/ramos/statements a 70%)
+- Backup real de BD local em `@vercel/blob` (via downloads, sem API `download` na v2.7)
+
+## 📋 Changelog v3.14.0
+
+### RGPD — Anonimização e Purga Automática
+- `src/lib/rgpd.ts`: `anonymizeParticipacoes()` (participações > 365 dias → campos cliente `null`, idempotente) e `purgeOldData()` (webhooks completed > 365 dias, notificações lidas > 180 dias)
+- Cron jobs autenticados com `CRON_SECRET`: seg 03:00 UTC (`/api/rgpd/anonimizacao`) e seg 04:00 UTC (`/api/rgpd/purga`)
+- Política de retenção documentada em `docs/DPA.md`
+
+### SAF-T PT (Exportação Fiscal)
+- `src/lib/saf-t.ts`: XML v1.04_01 (Header + MasterFiles + SalesInvoices), escape XML, NIF default 999999999
+- `GET /api/admin/saf-t?inicio&fim&aldeiaId&nif` — super_admin (qualquer aldeia) / aldeia_admin (só a sua)
 
 ## 📋 Changelog v3.13.0
 
