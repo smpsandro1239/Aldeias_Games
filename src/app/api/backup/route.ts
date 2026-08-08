@@ -3,8 +3,11 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { put, list, get } from '@vercel/blob';
 import fs from 'fs';
 import path from 'path';
+
+const BLOB_PREFIX = 'backups/';
 
 // Sanitizar filename para prevenir path traversal
 function sanitizeFilename(filename: string): string {
@@ -15,6 +18,133 @@ function sanitizeFilename(filename: string): string {
     throw new Error('Nome de ficheiro inválido');
   }
   return sanitized;
+}
+
+function hasBlobToken(): boolean {
+  return typeof process.env.BLOB_READ_WRITE_TOKEN === 'string' && process.env.BLOB_READ_WRITE_TOKEN.length > 0;
+}
+
+function localBackupsDir(): string {
+  return path.join(process.cwd(), 'backups');
+}
+
+async function storeBackup(filename: string, dados: unknown): Promise<{ location: string; storage: 'blob' | 'local' }> {
+  const payload = JSON.stringify(dados, null, 2);
+  if (hasBlobToken()) {
+    const blob = await put(BLOB_PREFIX + filename, payload, {
+      access: 'private',
+      addRandomSuffix: false,
+      contentType: 'application/json',
+    });
+    return { location: blob.url, storage: 'blob' };
+  }
+  const backupsDir = localBackupsDir();
+  fs.mkdirSync(backupsDir, { recursive: true });
+  fs.writeFileSync(path.join(backupsDir, filename), payload);
+  return { location: `/backups/${filename}`, storage: 'local' };
+}
+
+async function readBackup(filename: string): Promise<string | null> {
+  if (hasBlobToken()) {
+    const { blobs } = await list({ prefix: BLOB_PREFIX });
+    const item = blobs.find((b) => b.pathname === BLOB_PREFIX + filename);
+    if (!item) return null;
+    const res = await get(item.url, { access: 'private' });
+    if (!res || res.statusCode !== 200 || !res.stream) return null;
+    return await new Response(res.stream).text();
+  }
+  // fallback local — com verificação de path traversal
+  const backupsDir = localBackupsDir();
+  const resolved = path.resolve(backupsDir, filename);
+  if (!resolved.startsWith(path.resolve(backupsDir) + path.sep) && resolved !== path.resolve(backupsDir)) {
+    return null;
+  }
+  if (!fs.existsSync(resolved)) return null;
+  return fs.readFileSync(resolved, 'utf-8');
+}
+
+async function listBackups(): Promise<Array<{ filename: string; size: number; createdAt: string }>> {
+  if (hasBlobToken()) {
+    const { blobs } = await list({ prefix: BLOB_PREFIX });
+    return blobs
+      .filter((b) => b.pathname.startsWith(BLOB_PREFIX) && b.pathname.endsWith('.json'))
+      .map((b) => ({
+        filename: b.pathname.slice(BLOB_PREFIX.length),
+        size: b.size,
+        createdAt: b.uploadedAt.toISOString(),
+      }))
+      .sort((a, b) => b.filename.localeCompare(a.filename));
+  }
+  const backupsDir = localBackupsDir();
+  if (!fs.existsSync(backupsDir)) return [];
+  return fs
+    .readdirSync(backupsDir)
+    .filter((f) => f.endsWith('.json'))
+    .map((filename) => {
+      const stats = fs.statSync(path.join(backupsDir, filename));
+      return { filename, size: stats.size, createdAt: stats.birthtime.toISOString() };
+    })
+    .sort((a, b) => b.filename.localeCompare(a.filename));
+}
+
+interface BackupPayload {
+  aldeias?: unknown[];
+  users?: unknown[];
+  eventos?: unknown[];
+  jogos?: unknown[];
+  premios?: unknown[];
+  participacoes?: unknown[];
+  transacoes?: unknown[];
+  logs?: unknown[];
+}
+
+const PRISMA_MODELS: Record<keyof BackupPayload, string> = {
+  aldeias: 'aldeia',
+  users: 'user',
+  eventos: 'evento',
+  jogos: 'jogo',
+  premios: 'premio',
+  participacoes: 'participacao',
+  transacoes: 'transacao',
+  logs: 'logAcesso',
+};
+
+async function performRestore(dados: BackupPayload) {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Eliminar na ordem inversa das dependências (FK)
+    const tables: Array<keyof BackupPayload> = [
+      'logs',
+      'transacoes',
+      'participacoes',
+      'premios',
+      'jogos',
+      'eventos',
+      'aldeias',
+      'users',
+    ];
+    for (const table of tables) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (tx as any)[PRISMA_MODELS[table]].deleteMany({});
+    }
+    // Recriar na ordem direta das dependências
+    for (const table of [...tables].reverse()) {
+      const rows = dados[table];
+      if (Array.isArray(rows) && rows.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (tx as any)[PRISMA_MODELS[table]].createMany({ data: rows, skipDuplicates: true });
+      }
+    }
+  });
+  return {
+    aldeias: dados.aldeias?.length || 0,
+    users: dados.users?.length || 0,
+    eventos: dados.eventos?.length || 0,
+    jogos: dados.jogos?.length || 0,
+    premios: dados.premios?.length || 0,
+    participacoes: dados.participacoes?.length || 0,
+    transacoes: dados.transacoes?.length || 0,
+    logs: dados.logs?.length || 0,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -33,20 +163,15 @@ export async function POST(request: NextRequest) {
     const { acao } = body;
 
     if (acao === 'backup') {
-      const backupsDir = path.join(process.cwd(), 'backups');
-      
-      if (!fs.existsSync(backupsDir)) {
-        fs.mkdirSync(backupsDir, { recursive: true });
-      }
-
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `backup-${timestamp}.json`;
-      const filepath = path.join(backupsDir, filename);
 
       const dados = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const aldeias = await tx.aldeia.findMany({ include: { users: true } });
-        // Remover passwords dos utilizadores no backup
-        const users = (await tx.user.findMany()).map(({ password: _pw, ...rest }: { password?: string | null; [key: string]: unknown }) => rest);
+        const aldeias = await tx.aldeia.findMany({ include: { users: { select: { id: true } } } });
+        // Sem passwords dos utilizadores no backup
+        const users = await tx.user.findMany({
+          select: { id: true, nome: true, email: true, telefone: true, role: true },
+        });
         const eventos = await tx.evento.findMany();
         const jogos = await tx.jogo.findMany();
         const participacoes = await tx.participacao.findMany();
@@ -54,26 +179,17 @@ export async function POST(request: NextRequest) {
         const transacoes = await tx.transacao.findMany();
         const logs = await tx.logAcesso.findMany({ take: 1000 });
 
-        return {
-          aldeias,
-          users,
-          eventos,
-          jogos,
-          participacoes,
-          premios,
-          transacoes,
-          logs,
-          exportadoEm: new Date().toISOString(),
-        };
+        return { aldeias, users, eventos, jogos, participacoes, premios, transacoes, logs, exportadoEm: new Date().toISOString() };
       });
 
-      fs.writeFileSync(filepath, JSON.stringify(dados, null, 2));
+      const { location, storage } = await storeBackup(filename, dados);
 
       return NextResponse.json({
         success: true,
         message: 'Backup criado com sucesso',
         filename,
-        filepath: `/backups/${filename}`,
+        filepath: location,
+        storage,
       });
     }
 
@@ -92,31 +208,24 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Nome de ficheiro inválido' }, { status: 400 });
       }
 
-      const backupsDir = path.join(process.cwd(), 'backups');
-      const filepath = path.resolve(backupsDir, safeFilename);
-
-      // Verificar que o caminho final está dentro da pasta de backups
-      if (!filepath.startsWith(path.resolve(backupsDir))) {
-        return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
+      if (safeFilename !== filename) {
+        return NextResponse.json({ error: 'Nome de ficheiro inválido' }, { status: 400 });
       }
 
-      if (!fs.existsSync(filepath)) {
+      const content = await readBackup(safeFilename);
+      if (content === null) {
         return NextResponse.json({ error: 'Ficheiro de backup não encontrado' }, { status: 404 });
       }
 
-      const content = fs.readFileSync(filepath, 'utf-8');
-      const dados = JSON.parse(content);
+      const dados = JSON.parse(content) as BackupPayload;
+
+      const restaurado = await performRestore(dados);
 
       return NextResponse.json({
         success: true,
-        message: 'Backup carregado — preview apenas. Restauro real não implementado.',
-        dadosPreview: {
-          aldeias: dados.aldeias?.length || 0,
-          users: dados.users?.length || 0,
-          eventos: dados.eventos?.length || 0,
-          jogos: dados.jogos?.length || 0,
-          participacoes: dados.participacoes?.length || 0,
-        },
+        message: 'Backup restaurado com sucesso',
+        restaurado,
+        aviso: 'Restauro substitui os dados atuais. Passwords não são restauradas (removidas no backup por segurança).',
       });
     }
 
@@ -139,28 +248,9 @@ export async function GET(request: NextRequest) {
     const denied = await requirePermission(user.id, 'MANAGE_USERS');
     if (denied) return denied;
 
-    const backupsDir = path.join(process.cwd(), 'backups');
-    
-    let files: string[] = [];
-    
-    if (fs.existsSync(backupsDir)) {
-      files = fs.readdirSync(backupsDir)
-        .filter(f => f.endsWith('.json') && !f.includes('..'))
-        .sort()
-        .reverse();
-    }
+    const backups = await listBackups();
 
-    const backups = files.map(filename => {
-      const filepath = path.join(backupsDir, filename);
-      const stats = fs.statSync(filepath);
-      return {
-        filename,
-        size: stats.size,
-        createdAt: stats.birthtime.toISOString(),
-      };
-    });
-
-    return NextResponse.json({ success: true, backups });
+    return NextResponse.json({ success: true, backups, storage: hasBlobToken() ? 'blob' : 'local' });
   } catch (error) {
     console.error('Erro ao listar backups:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
