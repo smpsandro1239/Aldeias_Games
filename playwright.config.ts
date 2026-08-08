@@ -26,9 +26,12 @@ export default defineConfig({
   webServer: {
     // Produção (next start) — modo dev (next dev) é instável neste projeto local:
     // Fast Refresh invalida chunks a meio das navegações → ChunkLoadError aleatório.
-    // Correr antes: DATABASE_URL="file:./prisma/dev.db" npx next build --webpack
+    // Correr antes: DATABASE_URL="file:./dev.db" npx next build --webpack
     command: 'npx next start -p ' + PORT,
-    env: { DATABASE_URL: 'file:./prisma/dev.db' },
+    // O path SQLite é relativo ao diretório do schema (prisma/): "file:./dev.db" → prisma/dev.db.
+    // "file:./prisma/dev.db" criaria prisma/prisma/dev.db (errado).
+    // E2E_TEST=1 relaxa o rate-limit no proxy (a suite faz ~8 logins por run).
+    env: { DATABASE_URL: 'file:./dev.db', E2E_TEST: '1' },
     port: Number(PORT),
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

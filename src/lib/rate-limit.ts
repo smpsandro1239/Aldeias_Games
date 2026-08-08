@@ -63,6 +63,12 @@ export async function checkRateLimit(
   identifier: string,
   config: typeof rateLimitConfigs.api
 ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  // E2E (webServer local/CI): limites relaxados para a suite não se auto-bloquear
+  // (a suite faz ~8 logins consecutivos no mesmo IP)
+  if (process.env.E2E_TEST === '1') {
+    config = { ...config, maxRequests: 100000 };
+  }
+
   // Development: relaxed limits (10x) + in-memory
   if (process.env.NODE_ENV === 'development') {
     return checkRateLimitMemory(identifier, { ...config, maxRequests: config.maxRequests * 10 });

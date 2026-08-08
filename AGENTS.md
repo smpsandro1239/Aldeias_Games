@@ -440,16 +440,16 @@ Pages:
 - **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test-<pid>-<random>.db`, ficheiro único por ficheiro de teste → seguro em execução paralela) via `prisma db push`, sem mocks. Importante: libs que importam `@/lib/db` (ex.: webhooks, RBAC) devem ser importadas dinamicamente DEPOIS de `setupTestDatabase()` para que `DATABASE_URL` já aponte para o ficheiro de teste
 - **Playwright E2E** (10 specs em `e2e/`): `npx playwright test` (requer `npx playwright install` primeiro)
   - **IMPORTANTE — webServer usa produção**: `playwright.config.ts` arranca `npx next start` (NÃO `next dev`). O modo dev deste projeto é instável para E2E: Fast Refresh invalida chunks a meio das navegações → `ChunkLoadError`/`SyntaxError` aleatórios (reproduzido ~50% dos runs). Antes de correr Playwright:
-    1. `DATABASE_URL="file:./prisma/dev.db" npx next build --webpack` (Turbopack não funciona em win32)
+    1. `DATABASE_URL="file:./dev.db" npx next build --webpack` (Turbopack não funciona em win32; o path SQLite é relativo ao diretório do schema, `file:./dev.db` → `prisma/dev.db`)
     2. `npx playwright test`
-  - `env` do webServer: `DATABASE_URL=file:./prisma/dev.db` (SQLite local; o `.env` aponta postgres que não existe nesta máquina)
+  - `env` do webServer: `DATABASE_URL=file:./dev.db` (SQLite local; o `.env` aponta postgres que não existe nesta máquina)
   - **API calls no E2E**: `page.request`/`request` (APIRequestContext) NÃO envia `Origin`/`Referer` → o proxy devolve 403 CSRF (`Pedido CSRF inválido — origem não correspondente`) em POST autenticado por cookie. Fix: enviar `Authorization: Bearer <token>` no request (o proxy salta o CSRF quando há Bearer). O cookie `auth-token` ainda é preciso para páginas UI.
   - `login-compra-raspadinha.spec.ts` — login + compra raspadinha com saldo + verificação
   - `cofre-cashbox-flow.spec.ts` — vendedor deposita cashbox + admin confirma depósito
   - `verificacao-publica.spec.ts` — compra raspadinha + verificação pública do hash (autêntico/adulterado/desconhecido)
   - + specs legacy (api-endpoints, csrf, fluxo-completo, game-lifecycle, login-flow, navigation, public-pages) — estado misto em full run (alguns com selectors desatualizados); correr por spec individualmente
   - Suite completa: 59 pass / 8 fail / 3 skip em modo produção (16.9m) — os 8 fail são specs legacy pré-existentes, não regressões
-- **Base de dados local persistente**: `prisma/dev.db` (gitignored) — seed corrido com admin/123456. `.env.local` (gitignored) define `DATABASE_URL="file:./prisma/dev.db"` + `JWT_SECRET` + `CRON_SECRET`. Nota: a CLI do Prisma NÃO lê `.env.local` — usar `DATABASE_URL="file:./prisma/dev.db" npx prisma@6.19.3 <cmd>` explicitamente
+- **Base de dados local persistente**: `prisma/dev.db` (gitignored) — seed corrido com admin/123456. `.env.local` (gitignored) define `DATABASE_URL="file:./dev.db"` + `JWT_SECRET` + `CRON_SECRET`. **ATENÇÃO**: paths SQLite relativos resolvem contra o diretório do schema — `file:./dev.db` → `prisma/dev.db`; `file:./prisma/dev.db` criaria `prisma/prisma/dev.db` (bug já corrigido). Nota: a CLI do Prisma NÃO lê `.env.local` — usar `DATABASE_URL="file:./dev.db" npx prisma@6.19.3 <cmd>` explicitamente
 
 #### Ficheiros de teste
 | Ficheiro | Testes | Descrição |

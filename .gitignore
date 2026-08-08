@@ -77,3 +77,4 @@ nul
 # playwright
 /test-results/
 /playwright-report/
+prisma/prisma/

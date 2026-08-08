@@ -39,12 +39,15 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: E2E Tests (Playwright)
-        run: npx playwright test --project=chromium --reporter=list
-
-      - name: Build
+      - name: Build (antes do E2E — webServer usa next start)
         run: npx next build --webpack
         env:
           DATABASE_URL: "file:./dev.db"
           JWT_SECRET: "ci-test-secret-key-for-testing-only"
           NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+
+      - name: E2E Tests (Playwright)
+        run: npx playwright test --project=chromium --reporter=list
+        env:
+          DATABASE_URL: "file:./dev.db"
+          JWT_SECRET: "ci-test-secret-key-for-testing-only"
