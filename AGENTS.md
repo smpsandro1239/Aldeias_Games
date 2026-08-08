@@ -213,7 +213,7 @@ Pages:
 - `vercel.json` — build command (includes `rm -rf .next` for cache cleanup)
 - `prisma/schema.prisma` — database schema
 - `prisma/seed-full.ts` — comprehensive seed
-- `next.config.js` — Next.js config (no Sentry config exists)
+- `next.config.js` — Next.js config; Sentry está integrado no client (`sentry-init.tsx`) e no server (`src/instrument.ts`, guardado por DSN — sem DSN o build não falha)
 - `src/lib/auth.ts` — JWT auth with lazy `getSecret()` validation
 - `src/lib/csrf.ts` — CSRF with lazy `getSecret()` validation
 

@@ -86,6 +86,12 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Stripe webhook error:", error);
+    if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+      try {
+        const Sentry = await import("@sentry/nextjs");
+        Sentry.captureException(error, { tags: { area: "stripe-webhook" } });
+      } catch {}
+    }
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

@@ -227,7 +227,7 @@ TOTAL: ██████████ 100%
 | 10.2 | Backup real para storage externo (Blob/S3) com restore | ⏳ |
 | 10.3 | SAF-T PT (exportação fiscal) | ✅ FEITO (`src/lib/saf-t.ts` + `GET /api/admin/saf-t` + 3 testes real-DB) |
 | 10.4 | OpenAPI formal com zod-to-openapi (109 endpoints) | ⏳ |
-| 10.5 | Sentry server-side (instrument.ts + alerts) | ⏳ |
+| 10.5 | Sentry server-side (instrument.ts + alerts) | ✅ FEITO (`src/instrument.ts` guarded por DSN + `captureException` no webhook Stripe; client já existia em `sentry-init.tsx`) |
 
 ## 🔒 Pendente (depois das fases)
 
