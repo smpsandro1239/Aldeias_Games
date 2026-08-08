@@ -330,4 +330,57 @@ describe("Real DB: Cofre e Cashbox (fluxo completo)", () => {
     const vaultFinal = await prisma.vault.findUnique({ where: { aldeiaId } });
     expect(vaultFinal.saldo).toBe(25);
   });
+
+  it("não deve creditar duas vezes com confirmações concorrentes (race)", async () => {
+    const vault = await prisma.vault.findUnique({ where: { aldeiaId } });
+    const saldoAntes = vault.saldo;
+
+    const levantamento = await prisma.vaultTransaction.create({
+      data: {
+        vaultId: vault.id,
+        tipo: "levantamento",
+        valor: 10,
+        descricao: "Race test",
+        estado: "pendente",
+        criadoPorId: adminId,
+      },
+    });
+
+    const confirmar = async () => {
+      await prisma.$transaction(async (tx: any) => {
+        const claimed = await tx.vaultTransaction.updateMany({
+          where: { id: levantamento.id, estado: "pendente" },
+          data: {
+            estado: "confirmado",
+            aprovadoPorId: adminId,
+            dataAprovacao: new Date(),
+            observacoes: "Aprovado por: Admin Cofre",
+          },
+        });
+        if (claimed.count === 0) {
+          throw new Error("LEVANTAMENTO_JA_PROCESSADO");
+        }
+        const debited = await tx.vault.updateMany({
+          where: { id: vault.id, saldo: { gte: levantamento.valor } },
+          data: { saldo: { decrement: levantamento.valor } },
+        });
+        if (debited.count === 0) {
+          throw new Error("SALDO_INSUFICIENTE_COFRE");
+        }
+      });
+    };
+
+    const sucesso = await Promise.allSettled([confirmar(), confirmar()]);
+
+    expect(sucesso.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(sucesso.filter((r) => r.status === "rejected")).toHaveLength(1);
+
+    const final = await prisma.vaultTransaction.findUnique({
+      where: { id: levantamento.id },
+    });
+    expect(final.estado).toBe("confirmado");
+
+    const vaultFinal = await prisma.vault.findUnique({ where: { aldeiaId } });
+    expect(vaultFinal.saldo).toBe(saldoAntes - 10);
+  });
 });

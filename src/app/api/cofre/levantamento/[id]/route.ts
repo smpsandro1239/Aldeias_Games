@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { executeWithRetry } from '@/lib/transaction-retry';
 import { logAudit } from '@/lib/audit';
 import { processarLevantamentoSchema } from '@/lib/validations';
 import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
@@ -71,9 +72,10 @@ export async function PUT(
         }, { status: 400 });
       }
 
-      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        await tx.vaultTransaction.update({
-          where: { id },
+      await executeWithRetry(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        // Claim atómico: só um confirmador consegue passar 'pendente' → 'confirmado'
+        const claimed = await tx.vaultTransaction.updateMany({
+          where: { id, estado: 'pendente' },
           data: {
             estado: 'confirmado',
             aprovadoPorId: user.id,
@@ -85,12 +87,19 @@ export async function PUT(
             ].filter(Boolean).join('\n'),
           }
         });
+        if (claimed.count === 0) {
+          throw new Error('LEVANTAMENTO_JA_PROCESSADO');
+        }
 
-        await tx.vault.update({
-          where: { id: levantamento.vaultId },
+        // Guard atómico do saldo: decrementa só se saldo >= valor
+        const debited = await tx.vault.updateMany({
+          where: { id: levantamento.vaultId, saldo: { gte: levantamento.valor } },
           data: { saldo: { decrement: levantamento.valor } }
         });
-      });
+        if (debited.count === 0) {
+          throw new Error('SALDO_INSUFICIENTE_COFRE');
+        }
+      }));
 
       const ip = request.headers.get('x-forwarded-for') || undefined;
       const userAgent = request.headers.get('user-agent') || undefined;
@@ -144,8 +153,8 @@ export async function PUT(
     }
 
     if (acao === 'rejeitar') {
-      await prisma.vaultTransaction.update({
-        where: { id },
+      const rejected = await prisma.vaultTransaction.updateMany({
+        where: { id, estado: 'pendente' },
         data: {
           estado: 'rejeitado',
           aprovadoPorId: user.id,
@@ -157,6 +166,10 @@ export async function PUT(
           ].filter(Boolean).join('\n'),
         }
       });
+
+      if (rejected.count === 0) {
+        return NextResponse.json({ error: 'Levantamento já foi processado' }, { status: 400 });
+      }
 
       const ip = request.headers.get('x-forwarded-for') || undefined;
       const userAgent = request.headers.get('user-agent') || undefined;
@@ -190,7 +203,14 @@ export async function PUT(
 
     return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error('Error processing withdrawal:', error);
+    if (err.message === 'LEVANTAMENTO_JA_PROCESSADO') {
+      return NextResponse.json({ error: 'Levantamento já foi processado' }, { status: 400 });
+    }
+    if (err.message === 'SALDO_INSUFICIENTE_COFRE') {
+      return NextResponse.json({ error: 'Saldo insuficiente no cofre' }, { status: 400 });
+    }
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
