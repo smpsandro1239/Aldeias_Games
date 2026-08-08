@@ -225,7 +225,7 @@ TOTAL: ██████████ 100%
 |---|--------|--------|
 | 10.1 | Migrar logoBase64/imagemBase64 para Vercel Blob; remover campos do schema | ⏳ |
 | 10.2 | Backup real para storage externo (Blob/S3) com restore | ⏳ |
-| 10.3 | SAF-T PT (exportação fiscal) | ⏳ |
+| 10.3 | SAF-T PT (exportação fiscal) | ✅ FEITO (`src/lib/saf-t.ts` + `GET /api/admin/saf-t` + 3 testes real-DB) |
 | 10.4 | OpenAPI formal com zod-to-openapi (109 endpoints) | ⏳ |
 | 10.5 | Sentry server-side (instrument.ts + alerts) | ⏳ |
 

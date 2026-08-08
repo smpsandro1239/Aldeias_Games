@@ -255,6 +255,11 @@ Pages:
 - Cron jobs em `vercel.json`: `/api/rgpd/anonimizacao` (seg 03:00 UTC) e `/api/rgpd/purga` (seg 04:00 UTC), autenticados com `CRON_SECRET` (header `x-cron-secret`)
 - Política de retenção: `docs/DPA.md` (períodos por categoria; 365d clientes, 10 anos fiscal, 180d notificações)
 
+### SAF-T PT (Exportação Fiscal)
+- `src/lib/saf-t.ts` — `buildSafeTXml()` (função pura, XML v1.04_01 com Header + MasterFiles + SalesInvoices) e `buildSafTFromDb()` (consulta vendas `estadoPagamento: 'concluido'` no período, por aldeia; `cliente` = `nomeCliente` ou `user.nome`)
+- `GET /api/admin/saf-t?inicio=YYYY-MM-DD&fim=YYYY-MM-DD&aldeiaId=&nif=` — super_admin (qualquer aldeia) ou aldeia_admin (só a sua); devolve XML com headers `Content-Disposition` + `X-SafT-Count`/`X-SafT-Total`
+- Escape XML (`&amp;`, `&lt;`...); NIF default `999999999` se não fornecido (aldeias sem NIF no schema)
+
 ### Vault PIN System (Segurança do Cofre)
 - Campos no model `User`: `vaultPin` (String, hashed), `vaultPinEnabled` (Boolean)
 - PIN serve para aceder ao saldo do cofre — vendedores e admins configuram o PIN próprio
@@ -431,7 +436,7 @@ Pages:
 - Config: `vitest.config.ts` — setup file em `src/__tests__/setup.ts`, path alias `@/*`
 - Comando: `npx vitest run` (todos os testes) ou `npx vitest run src/__tests__/unit/<file>.test.ts` (individual)
 - Typecheck: `npm run typecheck` (`tsc --noEmit`) — CI falha se tipos não compilarem
-- **385 testes** em **32 ficheiros** (unit + integration + API + lib + real-db)
+- **388 testes** em **33 ficheiros** (unit + integration + API + lib + real-db)
 - **Real DB tests**: `src/__tests__/helpers/test-db.ts` cria SQLite temporário (`prisma/test-<pid>-<random>.db`, ficheiro único por ficheiro de teste → seguro em execução paralela) via `prisma db push`, sem mocks. Importante: libs que importam `@/lib/db` (ex.: webhooks, RBAC) devem ser importadas dinamicamente DEPOIS de `setupTestDatabase()` para que `DATABASE_URL` já aponte para o ficheiro de teste
 - **Playwright E2E** (2 specs em `e2e/`): `npx playwright test` (requer `npx playwright install` primeiro)
   - `login-compra-raspadinha.spec.ts` — login + compra raspadinha com saldo + verificação
@@ -462,6 +467,7 @@ Pages:
 | `integration/real-db/webhook-replay.test.ts` | 4 | Webhook replay real: entrega repetida deduplicada, replay com novo eventId não duplica crédito (guard `referencia`), sessões independentes |
 | `integration/real-db/verificacao-publica.test.ts` | 4 | Verificação pública real: hash autêntico valida, hash adulterado falha, sem_premio consistente, hash desconhecido não encontrado |
 | `integration/real-db/rgpd.test.ts` | 3 | RGPD real: anonimização >365 dias (null + audit log), idempotência, purga de webhooks completed e notificações lidas antigas |
+| `integration/real-db/saf-t.test.ts` | 3 | SAF-T PT real: XML v1.04_01 com header/master files/faturas, só vendas concluídas do período, escape de caracteres XML |
 | `api/business-logic.test.ts` | 9 | Stock race conditions, cashback, vendas externas |
 | `lib/rate-limit.test.ts` | 4 | Rate limiting com Prisma |
 | `lib/validations.test.ts` | 12 | Telefone PT, password, email |
