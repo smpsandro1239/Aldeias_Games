@@ -11,6 +11,7 @@ describe("Rate Limiting", () => {
   let getClientIdentifier: any;
   let createRateLimitResponse: any;
   let rateLimitConfigs: any;
+  let cleanupExpiredRateLimits: any;
 
   beforeAll(async () => {
     // A lib de rate-limit importa @/lib/db em módulo — importar DEPOIS de
@@ -23,6 +24,7 @@ describe("Rate Limiting", () => {
     getClientIdentifier = rl.getClientIdentifier;
     createRateLimitResponse = rl.createRateLimitResponse;
     rateLimitConfigs = rl.rateLimitConfigs;
+    cleanupExpiredRateLimits = rl.cleanupExpiredRateLimits;
 
     await prisma.rateLimit.deleteMany();
   });
@@ -67,6 +69,31 @@ describe("Rate Limiting", () => {
 
       expect(response.status).toBe(429);
       expect(response.headers.get("Content-Type")).toBe("application/json");
+    });
+  });
+
+  describe("cleanupExpiredRateLimits", () => {
+    it("deve limpar apenas entradas expiradas", async () => {
+      await prisma.rateLimit.createMany({
+        data: [
+          { key: "rl:expired-key:60000", count: 5, expiresAt: new Date(Date.now() - 1000) },
+          { key: "rl:active-key:60000", count: 2, expiresAt: new Date(Date.now() + 60000) },
+        ],
+      });
+
+      const deleted = await cleanupExpiredRateLimits();
+
+      expect(deleted).toBe(1);
+
+      const remaining = await prisma.rateLimit.findMany({ select: { key: true } });
+      expect(remaining.map((r: { key: string }) => r.key)).toContain("rl:active-key:60000");
+      expect(remaining.map((r: { key: string }) => r.key)).not.toContain("rl:expired-key:60000");
+    });
+
+    it("deve devolver 0 sem erros quando a tabela está vazia", async () => {
+      await prisma.rateLimit.deleteMany();
+      const deleted = await cleanupExpiredRateLimits();
+      expect(deleted).toBe(0);
     });
   });
 });
