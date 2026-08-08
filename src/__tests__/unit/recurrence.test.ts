@@ -48,6 +48,22 @@ describe("addRecurrence", () => {
     const next = addRecurrence(d, "mensal", 1);
     expect(next.getDay()).toBe(1);
   });
+
+  it("mensal avança para a primeira 6.ª feira do mês seguinte (sem saltar mês)", () => {
+    const d = new Date(2026, 9, 30); // 6.ª feira, fim do mês
+    const next = addRecurrence(d, "mensal", 5);
+    expect(next.getMonth()).toBe(10); // novembro
+    expect(next.getDate()).toBe(6); // primeira 6.ª feira de novembro 2026
+    expect(next.getDay()).toBe(5);
+  });
+
+  it("mensal com dia cedo no mês mantém mês correto (sem overflow)", () => {
+    const d = new Date(2026, 0, 5); // 2.ª feira, 5 jan
+    const next = addRecurrence(d, "mensal", 5);
+    expect(next.getMonth()).toBe(1); // fevereiro
+    expect(next.getDate()).toBe(6); // primeira 6.ª feira de fevereiro 2026
+    expect(next.getDay()).toBe(5);
+  });
 });
 
 describe("computeRecurrencePreview", () => {

@@ -60,9 +60,13 @@ export function addRecurrence(prev: Date, frequency: RecurrenceFrequency, dayOfW
   } else if (frequency === 'quinzenal') {
     next.setDate(next.getDate() + 14);
   } else if (frequency === 'mensal') {
+    // Primeira ocorrência do dia da semana no mês seguinte (consistente com
+    // computeFirstRecurrenceDate). setDate(1) antes de setMonth(+1) evita
+    // overflow de dias (ex.: 31 → mês seguinte) e saltos de mês indevidos.
+    next.setDate(1);
     next.setMonth(next.getMonth() + 1);
     while (next.getDay() !== dayOfWeek) {
-      next.setDate(next.getDate() + (dayOfWeek > next.getDay() ? 1 : -6));
+      next.setDate(next.getDate() + 1);
     }
   }
   return next;
