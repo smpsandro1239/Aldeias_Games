@@ -16,6 +16,7 @@ function buildCspHeader(nonce: string): string {
     return [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com",
+      "object-src 'none'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://fonts.gstatic.com https://www.google.com",
       "font-src 'self' data: https://fonts.gstatic.com",
@@ -30,6 +31,7 @@ function buildCspHeader(nonce: string): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' https://js.stripe.com`,
+    "object-src 'none'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://fonts.gstatic.com https://www.google.com",
     "font-src 'self' data: https://fonts.gstatic.com",
@@ -179,6 +181,7 @@ export async function proxy(request: NextRequest) {
 
   finalResponse.headers.set("Content-Security-Policy", buildCspHeader(nonce));
   finalResponse.headers.set("x-nonce", nonce);
+  finalResponse.headers.set("Cross-Origin-Opener-Policy", "same-origin");
 
   return finalResponse;
 }
@@ -368,6 +371,7 @@ async function proxyInner(request: NextRequest) {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
 
   return response;
 }

@@ -64,6 +64,16 @@ describe('Proxy', () => {
       expect(res.status).not.toBe(401);
     });
 
+    it('deve incluir security headers (CSP object-src none + COOP same-origin)', async () => {
+      const req = createRequest('/');
+      const res = await proxy(req);
+
+      const csp = res.headers.get('Content-Security-Policy') || '';
+      expect(csp).toContain("object-src 'none'");
+      expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+      expect(res.headers.get('X-Frame-Options')).toBe('DENY');
+    });
+
     it('deve permitir acesso a /login', async () => {
       const req = createRequest('/login');
       const res = await proxy(req);
