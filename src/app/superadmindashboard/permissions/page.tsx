@@ -1,9 +1,9 @@
 'use client';
 
 import { DashboardShell } from '@/components/dashboard-shell';
-import { PermissionsMatrix } from '@/components/PermissionsMatrix';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { Shield, ArrowLeft, UserCog, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function PermissionsPage() {
   const router = useRouter();
@@ -24,14 +24,30 @@ export default function PermissionsPage() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-[var(--text)]">Permissões do Sistema</h1>
               <p className="mt-2 text-sm text-[var(--text-muted)]">
-                Visualize a matriz completa de permissões por papel. Esta página ajuda a entender
-                quais operações cada tipo de utilizador pode realizar no sistema.
+                A gestão de papéis (RBAC) é feita na página de Administração. As permissões
+                são aplicadas no backend via papéis globais e por aldeia.
               </p>
             </div>
           </div>
         </div>
         <div className="card-m3 p-6">
-          <PermissionsMatrix />
+          <Link
+            href="/admin/rbac"
+            className="flex items-center justify-between rounded-xl border border-[var(--card-alt)] bg-surface-container-low hover:bg-surface-container-high p-6 transition-colors group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="rounded-xl bg-[var(--secondary)]/15 p-3">
+                <UserCog className="h-6 w-6 text-[var(--secondary)]" />
+              </div>
+              <div>
+                <p className="font-semibold text-[var(--text)]">Gestão de Permissões (RBAC)</p>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Atribuir papéis globais e por aldeia, permissões e acesso de utilizadores.
+                </p>
+              </div>
+            </div>
+            <ExternalLink className="h-5 w-5 text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors" />
+          </Link>
         </div>
       </div>
     </DashboardShell>
