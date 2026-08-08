@@ -5,6 +5,7 @@ vi.mock('@/lib/db', () => ({
   prisma: {
     participacao: {
       count: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -88,43 +89,77 @@ describe('Raspadinha Handler — Unit Tests', () => {
       expect(data).not.toHaveProperty('_limiteAtingido');
     });
 
-    it('deve NÃO rejeitar quando maxGanhadores já foi atingido', async () => {
-      (prisma.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(5);
+    it('deve NÃO rejeitar quando maxGanhadores já foi atingido (validate mantém permissivo)', async () => {
       const jogo = makeJogo({
         configuracao: JSON.stringify(configComMaxGanhadores),
       });
       const data = { quantidade: 1 } as Record<string, unknown>;
       await expect(raspadinhaHandler.validate!(data, jogo)).resolves.toBeUndefined();
     });
+  });
+
+  describe('validateInTransaction()', () => {
+    function makeTx(overrides: Record<string, unknown> = {}) {
+      return {
+        participacao: {
+          count: vi.fn(),
+          findMany: vi.fn(),
+        },
+        ...overrides,
+      };
+    }
 
     it('deve marcar _limiteAtingido quando maxGanhadores atingido', async () => {
-      (prisma.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(3);
+      const tx = makeTx();
+      (tx.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(3);
       const jogo = makeJogo({
         configuracao: JSON.stringify(configComMaxGanhadores),
       });
       const data = { quantidade: 1 } as Record<string, unknown>;
-      await raspadinhaHandler.validate!(data, jogo);
+      await raspadinhaHandler.validateInTransaction!(tx as never, data, jogo);
       expect(data._limiteAtingido).toBe(true);
     });
 
     it('NÃO deve marcar _limiteAtingido quando ganhadores < max', async () => {
-      (prisma.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(1);
+      const tx = makeTx();
+      (tx.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(1);
       const jogo = makeJogo({
         configuracao: JSON.stringify(configComMaxGanhadores),
       });
       const data = { quantidade: 1 } as Record<string, unknown>;
-      await raspadinhaHandler.validate!(data, jogo);
+      await raspadinhaHandler.validateInTransaction!(tx as any, data, jogo);
       expect(data._limiteAtingido).toBeUndefined();
     });
 
-    it('deve chamar prisma.participacao.count com filtros corretos', async () => {
-      (prisma.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
+    it('deve marcar _limiteAtingido quando pool de prémios esgotado', async () => {
+      const tx = makeTx();
+      (tx.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
+      (tx.participacao.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
+        { dadosParticipacao: JSON.stringify({ winningPrize: { valorDinheiroAlternative: 100 } }) },
+      ]);
+      const jogo = makeJogo({
+        configuracao: JSON.stringify({
+          maxPremioTotal: 50,
+          premios: [
+            { nome: 'Euro', valorDinheiroAlternative: 100, percentagem: 30 },
+            { nome: 'Nada', valorDinheiroAlternative: 0, percentagem: 70 },
+          ],
+        }),
+      });
+      const data = { quantidade: 1 } as Record<string, unknown>;
+      await raspadinhaHandler.validateInTransaction!(tx as any, data, jogo);
+      expect(data._limiteAtingido).toBe(true);
+    });
+
+    it('deve fazer count com filtros corretos dentro da transação', async () => {
+      const tx = makeTx();
+      (tx.participacao.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
       const jogo = makeJogo({
         configuracao: JSON.stringify(configComMaxGanhadores),
       });
       const data = { quantidade: 1 };
-      await raspadinhaHandler.validate!(data, jogo);
-      expect(prisma.participacao.count).toHaveBeenCalledWith({
+      await raspadinhaHandler.validateInTransaction!(tx as any, data, jogo);
+      expect(tx.participacao.count).toHaveBeenCalledWith({
         where: {
           jogoId: 'jogo-1',
           ganhador: true,
@@ -316,6 +351,10 @@ describe('Raspadinha Handler — Unit Tests', () => {
 
     it('deve ter postCreate definido', () => {
       expect(typeof raspadinhaHandler.postCreate).toBe('function');
+    });
+
+    it('deve ter validateInTransaction definido', () => {
+      expect(typeof raspadinhaHandler.validateInTransaction).toBe('function');
     });
   });
 });

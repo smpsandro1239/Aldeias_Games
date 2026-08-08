@@ -408,6 +408,13 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Validação atómica dentro da transação (ex.: limites de prémios da raspadinha).
+        // Executa APÓS o lock de stock (updateMany) para serializar vendas concorrentes
+        // do mesmo jogo — os counts vêem as participações das transações já commitadas.
+        if (handler?.validateInTransaction) {
+          await handler.validateInTransaction(tx, data, jogo);
+        }
+
         const participacoes: any[] = [];
         for (let i = 0; i < data.quantidade; i++) {
           const dados: Record<string, unknown> = {

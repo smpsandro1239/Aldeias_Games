@@ -2,7 +2,6 @@ import crypto from 'crypto';
 import { GameHandler, JogoWithEvento, ParticipacaoRequestData } from './types';
 // @ts-ignore - @prisma/client types generated at build time
 import { Prisma } from '@prisma/client';
-import { prisma } from '@/lib/db';
 
 interface RaspadinhaPremio {
   nome: string;
@@ -150,7 +149,13 @@ export const raspadinhaHandler: GameHandler = {
     if (jogo.stockAtual < (data.quantidade || 1)) {
       throw new Error('Stock insuficiente');
     }
+  },
 
+  async validateInTransaction(
+    tx: Prisma.TransactionClient,
+    data: ParticipacaoRequestData,
+    jogo: JogoWithEvento
+  ) {
     const config = parseConfig(jogo);
     const maxGanhadores =
       typeof config.maxGanhadores === 'number' && config.maxGanhadores > 0
@@ -158,7 +163,7 @@ export const raspadinhaHandler: GameHandler = {
         : null;
 
     if (maxGanhadores !== null) {
-      const ganhadoresCount = await prisma.participacao.count({
+      const ganhadoresCount = await tx.participacao.count({
         where: {
           jogoId: jogo.id,
           ganhador: true,
@@ -176,7 +181,7 @@ export const raspadinhaHandler: GameHandler = {
         : null;
 
     if (maxPremioTotal !== null && !(data as Record<string, unknown>)._limiteAtingido) {
-      const winningParticipacoes = await prisma.participacao.findMany({
+      const winningParticipacoes = await tx.participacao.findMany({
         where: {
           jogoId: jogo.id,
           ganhador: true,
