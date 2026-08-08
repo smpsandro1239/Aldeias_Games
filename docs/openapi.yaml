@@ -1,0 +1,2980 @@
+openapi: 3.0.3
+info:
+  title: Aldeias Games API
+  description: API da plataforma de angariação de fundos em comunidades locais portuguesas (especificação gerada por scripts/gen-openapi.ts)
+  version: "3.14.0"
+servers:
+  - url: https://aldeiasgames.vercel.app
+    description: Produção
+  - url: http://localhost:3000
+    description: Desenvolvimento local
+paths:
+  "/api/admin/audit-logs":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/convert-prize":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/entregas-saldo":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/logs":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/pedidos-carregamento":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/pedidos-carregamento/{id}/confirmar":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/saf-t":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/transacoes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/vendedores":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/admin/vendedores-stats":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "admin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeia/{aldeiaId}/dashboard":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "aldeia"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias/{id}/entrar":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias/{id}/membros":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias/{id}/membros/{userId}/role":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias/{id}/membros/{userId}":
+    delete:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias/{id}/pending-changes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias/{id}/pending-changes/{changeId}":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/aldeias/{id}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "aldeias"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/analytics/dashboard":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "analytics"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/analytics/game-events":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "analytics"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/analytics/predictiva":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "analytics"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/apostas":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "apostas"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "apostas"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/2fa":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/apple/callback":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/apple":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/forgot-password":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/google/callback":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/google":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/login":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/logout":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/mfa/setup":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/mfa/verify":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/refresh":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/register":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/reset-password/confirm":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/reset-password":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/auth/verify-email":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/backup":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "backup"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "backup"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/carregamento":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "carregamento"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "carregamento"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/carregamento/{id}":
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "carregamento"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/cofre/historico":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/cofre/levantamento":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/cofre/levantamento/{id}":
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/cofre/pedido-deposito":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/cofre/pedido-deposito/{id}":
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/cofre/reconciliacao":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/cofre/resumo":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "cofre"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/comissoes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "comissoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "comissoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/dashboard/stats":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "dashboard"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/dashboard/vendedor":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "dashboard"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/euromilhoes/grelhas":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "euromilhoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "euromilhoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/euromilhoes/grelhas/{id}/fechar":
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "euromilhoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/euromilhoes/grelhas/{id}/sortear":
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "euromilhoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/euromilhoes/recorrentes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "euromilhoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "euromilhoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "euromilhoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/eventos/process-recurring":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/eventos":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/eventos/templates":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/eventos/{id}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    delete:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "eventos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/export/participacoes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "export"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/export/relatorio":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "export"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/export":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "export"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/export/vendas":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "export"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/financeiro":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "financeiro"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/health":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "health"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos/eliminar-antigos":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos/recorrentes":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos/{id}/detail":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos/{id}/numeros/{numero}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos/{id}/numeros-ocupados":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos/{id}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    delete:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/jogos/{id}/verificar-sorteio":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "jogos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/mbway/payment":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "mbway"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/mbway/status":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "mbway"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/mbway/webhook":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "mbway"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/me":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "me"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "me"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/notificacoes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "notificacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "notificacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "notificacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/notificacoes/{id}":
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "notificacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    delete:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "notificacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/numeros-jogados":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "numeros-jogados"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/pagamentos/mbway":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "pagamentos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "pagamentos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/pagamentos/stripe":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "pagamentos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "pagamentos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/participacoes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/participacoes/verificar":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/participacoes/{id}/claim-premio":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/participacoes/{id}/prova":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/participacoes/{id}/revelar":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/participacoes/{id}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    delete:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "participacoes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/pedidos-carregamento":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "pedidos-carregamento"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "pedidos-carregamento"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/pending-changes":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "pending-changes"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/planos":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "planos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "planos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/planos/upgrade":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "planos"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/public/aldeia/{slug}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "public"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/public/stats":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "public"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/push/vapid-keys":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "push"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/ranking":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "ranking"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rbac/permissions":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "rbac"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rbac/roles":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "rbac"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rbac/user/{id}/permissions":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "rbac"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rbac/user/{id}/roles":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "rbac"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rbac/user/{id}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "rbac"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rgpd/anonimizacao":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rgpd/consentimento":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rgpd/direito-esquecimento":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/rgpd/purga":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "rgpd"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/seed":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "seed"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "seed"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/setup-status":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "setup-status"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "setup-status"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/sorteios/externo":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "sorteios"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "sorteios"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/sorteios":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "sorteios"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "sorteios"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/sorteios/teste":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "sorteios"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/stripe/checkout":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "stripe"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/stripe/refund":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "stripe"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/stripe/webhook":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "stripe"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/superadmin/cofre":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "superadmin"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/users/password":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/users/perfil":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    patch:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/users":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/users/vault-pin":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/users/{id}":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    put:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    delete:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "users"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/vendedor/cashbox":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "vendedor"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/vendedor/entrega-saldo":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "vendedor"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "vendedor"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/vendedor/saldo-angariado":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "vendedor"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/vendedores":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "vendedores"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/verificar-publico":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "verificar-publico"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/wallet/adjust":
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "wallet"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/wallet/carregar":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "wallet"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+    post:
+      summary: "Escrever/alterar recurso"
+      tags:
+        - "wallet"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
+  "/api/wallet":
+    get:
+      summary: "Obter recurso(s)"
+      tags:
+        - "wallet"
+      responses:
+        "200":
+          description: Sucesso
+        "400":
+          description: Pedido inválido
+        "401":
+          description: Não autorizado
+        "403":
+          description: Proibido
+        "500":
+          description: Erro interno
+
