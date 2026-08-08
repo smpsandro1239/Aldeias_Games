@@ -135,14 +135,15 @@ function validateCsrfOrigin(request: NextRequest): boolean {
   return false;
 }
 
-// JWT secret — throw if not set (never use fallback)
-const JWT_SECRET_RAW = process.env.JWT_SECRET;
-
-if (!JWT_SECRET_RAW) {
-  throw new Error('JWT_SECRET is required. Set it in Vercel environment variables.');
+// JWT secret — lazy validation no request time (nunca throw em module scope:
+// o build de páginas estáticas importa este ficheiro sem env var disponível)
+function getJwtSecret(): Uint8Array {
+  const raw = process.env.JWT_SECRET;
+  if (!raw) {
+    throw new Error('JWT_SECRET is required. Set it in Vercel environment variables.');
+  }
+  return new TextEncoder().encode(raw);
 }
-
-const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW);
 
 // === CORS para API routes ===
 function applyApiCors(request: NextRequest, response: NextResponse): NextResponse {
@@ -224,7 +225,7 @@ async function proxyInner(request: NextRequest) {
       }
 
       try {
-        const { payload } = await jwtVerify(token, JWT_SECRET);
+        const { payload } = await jwtVerify(token, getJwtSecret());
 
         if (!payload.userId || !payload.role) {
           return NextResponse.json(
@@ -332,7 +333,7 @@ async function proxyInner(request: NextRequest) {
     }
 
     try {
-      const { payload } = await jwtVerify(token, JWT_SECRET);
+      const { payload } = await jwtVerify(token, getJwtSecret());
       const userRole = String(payload.role);
 
       if (!requiredRoles.includes(userRole)) {
