@@ -14,6 +14,28 @@ const S3_PUBLIC_URL = process.env.S3_PUBLIC_URL || process.env.R2_PUBLIC_URL;
 
 const useObjectStorage = !!(S3_BUCKET && S3_ENDPOINT && S3_ACCESS_KEY && S3_SECRET_KEY);
 
+// Vercel Blob (opcional — usa se BLOB_READ_WRITE_TOKEN estiver definido)
+const useVercelBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
+
+/**
+ * Upload para Vercel Blob (storage persistente, fora do filesystem efémero).
+ * Fallback para storage local se o token não estiver configurado (dev/CI).
+ */
+async function uploadToVercelBlob(
+  buffer: Buffer,
+  filename: string,
+  folder: string,
+  mimeType: string
+): Promise<{ url: string; filename: string }> {
+  const { put } = await import('@vercel/blob');
+  const blob = await put(`uploads/${folder}/${filename}`, buffer, {
+    contentType: mimeType,
+    access: 'public',
+    addRandomSuffix: true,
+  });
+  return { url: blob.url, filename: blob.pathname };
+}
+
 /**
  * Garantir que o diretório de uploads existe (apenas para storage local)
  */
@@ -104,6 +126,15 @@ export async function saveImage(
   const filename = `${uuidv4()}.${ext}`;
   const mimeType = `image/${ext}`;
 
+  // Vercel Blob primeiro se configurado (mais simples e recomendado)
+  if (useVercelBlob) {
+    try {
+      return await uploadToVercelBlob(buffer, filename, folder, mimeType);
+    } catch (error) {
+      console.warn('Vercel Blob upload falhou, usando storage local:', error);
+    }
+  }
+
   // Tentar S3/R2 primeiro se configurado
   if (useObjectStorage) {
     try {
@@ -139,6 +170,13 @@ export async function saveImage(
  */
 export async function deleteImage(url: string): Promise<boolean> {
   try {
+    // URL do Vercel Blob
+    if (url.includes('public.blob.vercel-storage.com')) {
+      const { del } = await import('@vercel/blob');
+      await del(url);
+      return true;
+    }
+
     // Se for URL S3/R2, usar API correspondente
     if (useObjectStorage && S3_PUBLIC_URL && url.startsWith(S3_PUBLIC_URL)) {
       // TODO: Implementar delete S3/R2

@@ -223,7 +223,7 @@ TOTAL: ██████████ 100%
 
 | # | Tarefa | Estado |
 |---|--------|--------|
-| 10.1 | Migrar logoBase64/imagemBase64 para Vercel Blob; remover campos do schema | ⏳ |
+| 10.1 | Migrar logoBase64/imagemBase64 para Vercel Blob; remover campos do schema | 🟡 PARCIAL — `saveImage`/`deleteImage` em `src/lib/storage.ts` suportam Vercel Blob (`@vercel/blob`, token `BLOB_READ_WRITE_TOKEN`) com fallback local; campos do schema **mantidos** (remoção requer coordenação com produção — fazer em tarefa própria com data-migration) |
 | 10.2 | Backup real para storage externo (Blob/S3) com restore | ⏳ |
 | 10.3 | SAF-T PT (exportação fiscal) | ✅ FEITO (`src/lib/saf-t.ts` + `GET /api/admin/saf-t` + 3 testes real-DB) |
 | 10.4 | OpenAPI formal com zod-to-openapi (109 endpoints) | ✅ FEITO — via `scripts/gen-openapi.ts` (`npm run gen:openapi`): enumera os route handlers reais e gera `docs/openapi.yaml` com 127 paths (métodos inferidos dos exports) |
@@ -233,7 +233,7 @@ TOTAL: ██████████ 100%
 
 | # | Tarefa | Estado |
 |---|--------|--------|
-| P1 | Resolver vulnerabilidades npm audit (5 moderate, 7 high, 1 critical) | ⏳ |
+| P1 | Resolver vulnerabilidades npm audit (5 moderate, 7 high, 1 critical) | ✅ FEITO — `npm audit fix` + nodemailer@9; **0 vulnerabilidades** |
 | P2 | Bug latente memal `addRecurrence`/cron: ajuste `(target>day?1:-6)` pode recuar para o mês anterior em âncoras com meses de 31 dias — também no POST `/api/eventos` e `process-recurring` (mover para lib `recurrence.ts` partilhada + corrigir + testar) | ⏳ |
 
 *Última actualização: 07/08/2026*
