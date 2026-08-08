@@ -26,7 +26,8 @@
     "db:generate": "prisma generate",
     "postinstall": "npx --yes prisma@6.19.3 generate",
     "db:seed:full": "tsx prisma/seed-full.ts",
-    "gen:openapi": "tsx scripts/gen-openapi.ts"
+    "gen:openapi": "tsx scripts/gen-openapi.ts",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -109,6 +110,7 @@
     "@types/node": "^22.0.0",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^6.0.3",
+    "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
     "eslint-config-next": "^16.0.0",

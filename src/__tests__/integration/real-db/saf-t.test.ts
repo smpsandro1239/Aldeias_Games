@@ -108,7 +108,7 @@ describe("Real SAF-T: exportação fiscal", () => {
       },
     });
 
-    return { aldeia, jogo, noPeriodo };
+    return { aldeia, jogo, noPeriodo, user };
   }
 
   it("gera XML SAF-T válido com cabeçalho, master files e vendas", () => {
@@ -166,5 +166,32 @@ describe("Real SAF-T: exportação fiscal", () => {
 
     expect(result.xml).toContain("Rifa &amp; Mega &lt;Sorteio&gt;");
     expect(result.xml).not.toContain("Rifa & Mega <Sorteio>");
+  });
+
+  it("usa fallbacks de cliente (user) e de hash na exportação", async () => {
+    const { aldeia, jogo, user } = await seedAldeiaComVendas();
+
+    // Sem nomeCliente → cliente vem do user.nome (não deve aparecer "Particular")
+    await prisma.participacao.create({
+      data: {
+        jogoId: jogo.id,
+        userId: user.id,
+        valorPago: 1,
+        metodoPagamento: "saldo",
+        estadoPagamento: "concluido",
+        dataPagamento: new Date("2026-01-18T10:00:00Z"),
+        dadosParticipacao: "{}",
+        hashRaspe: "raspe-hash-xyz",
+      },
+    });
+
+    const result = await buildSafTFromDb(prisma, aldeia.id, empresa, {
+      dataInicio: new Date("2026-01-01T00:00:00Z"),
+      dataFim: new Date("2026-01-31T23:59:59Z"),
+    });
+
+    expect(result.xml).toContain("Comprador SAFT");
+    expect(result.xml).not.toContain(">Particular<");
+    expect(result.xml).toContain("raspe-hash-xyz");
   });
 });
