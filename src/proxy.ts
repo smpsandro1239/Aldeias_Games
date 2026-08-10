@@ -30,7 +30,7 @@ function buildCspHeader(nonce: string): string {
   }
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://js.stripe.com`,
+    `script-src 'self' 'nonce-${nonce}' 'sha256-zjP2BXYgSCCnXNMXI2IL1yRydoQdsGR/uCCr6kyKsD0=' https://js.stripe.com https://vercel.live`,
     "object-src 'none'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://fonts.gstatic.com https://www.google.com",
