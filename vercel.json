@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma@6.19.3 generate && rm -rf .next && next build",
+  "buildCommand": "node scripts/gen-postgres-schema.js && npx prisma@6.19.3 generate --schema=prisma/schema.postgres.prisma && rm -rf .next && next build",
   "installCommand": "npm install",
   "crons": [
     {

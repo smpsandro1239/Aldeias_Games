@@ -78,3 +78,8 @@ nul
 /test-results/
 /playwright-report/
 prisma/prisma/
+
+.env*
+
+# Schema Postgres gerado no build (Vercel)
+prisma/schema.postgres.prisma

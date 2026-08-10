@@ -679,6 +679,7 @@ enum TipoJogo {
   rifa
   raspadinha
   euromilhoes
+  tombola // legacy: jogos antigos de tombola antes do rename para euromilhoes
 }
 
 enum EstadoJogo {
