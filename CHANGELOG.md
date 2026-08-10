@@ -5,6 +5,17 @@ Todas as alterações relevantes do projeto estão documentadas neste ficheiro.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-PT/1.1.0/).
 O projeto segue [SemVer](https://semver.org/lang/pt-PT/).
 
+## [3.15.1] — 2026-08-10
+
+### Correção crítica em produção (500s + Google OAuth)
+
+- **Causa raiz**: o build da Vercel gerava o Prisma Client com `provider = "sqlite"` (schema do repo), que recusa ligar ao Postgres/Neon (`the URL must start with the protocol file:`) — todas as queries falhavam (500s nas APIs públicas, `unexpected_error` no login com Google, crons 401).
+- **Fix**: `scripts/gen-postgres-schema.js` deriva `prisma/schema.postgres.prisma` (provider postgresql, gitignored) e o `buildCommand` da Vercel passou a gerar o client com `--schema=prisma/schema.postgres.prisma`.
+- **BD de produção sincronizada**: `db push` na Neon criou 9 tabelas em falta (Vault, VendedorCashbox, RefreshToken, WebhookEvent, PendingAldeiaChange, GrelhaEuromilhoes...) e colunas recentes (maxOcorrencias, maxGanhadores, vaultPin...).
+- **`TipoJogo.tombola` mantido** no enum (dados legacy na prod; o drop falhava e o código já não o usa).
+- **Filtro JSON provider-agnóstico** no webhook MBWay (`JsonFilter.path` é `string[]` no postgres e `string` no sqlite).
+- **Env vars Vercel**: `CRON_SECRET` criada (faltava — crons todos falhavam); `NEXT_PUBLIC_APP_URL`/`NEXT_PUBLIC_BASE_URL` corrigidos para `https://aldeiasgames.vercel.app` (apontavam para o domínio antigo `aldeias-games.vercel.app`); `GOOGLE_REDIRECT_URI` recriada com o valor de produção.
+
 ## [3.15.0] — 2026-08-08
 
 ### Segurança e Integridade (Tarefas 6–11)

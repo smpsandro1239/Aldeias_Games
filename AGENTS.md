@@ -5,7 +5,7 @@
 ### Pre-deploy Checklist
 1. **Prisma versions pinned**: `package.json` must have exact versions `"prisma": "6.19.3"` and `"@prisma/client": "6.19.3"` (no caret).
 2. **postinstall script**: `npx --yes prisma@6.19.3 generate` (NOT `node node_modules/.bin/prisma generate` — `.bin/prisma` does not exist on Vercel).
-3. **vercel.json buildCommand**: `npx prisma@6.19.3 generate && rm -rf .next && next build` (must include `rm -rf .next` to clear stale build cache).
+3. **vercel.json buildCommand**: `node scripts/gen-postgres-schema.js && npx prisma@6.19.3 generate --schema=prisma/schema.postgres.prisma && rm -rf .next && next build` (gera client **postgresql** — o schema do repo é sqlite, que não liga à Neon; `rm -rf .next` limpa cache stale).
 4. **TypeScript/React types** in `dependencies` (not `devDependencies`) — Vercel cannot find them in devDependencies.
 5. **Git author**: `git config user.name sandropereira` / `git config user.email 94222305+smpsandro1239@users.noreply.github.com` — must match GitHub account for Vercel author identification.
 6. **No module-scope throws in lib files**: `src/lib/auth.ts` and `src/lib/csrf.ts` use lazy validation (`getSecret()` function) — NEVER `throw` at module scope for env vars, otherwise the build crashes during page data collection.
@@ -49,6 +49,15 @@ Wait for Vercel build (~2 min). If it fails, read the error, fix, commit again.
 3. If adding a relation field, ensure both sides of the relation exist
 4. If the seed file references new fields, update `prisma/seed-full.ts`
 5. Test seed: `npx tsx prisma/seed-full.ts`
+
+### Dual Schema — SQLite (dev) / Postgres (Vercel)
+- `prisma/schema.prisma` tem `provider = "sqlite"` (dev local + testes Vitest com `prisma/dev.db`)
+- A Vercel usa **Postgres/Neon**: o build deriva `prisma/schema.postgres.prisma` (gitignored) via `scripts/gen-postgres-schema.js` (só troca o provider) e faz `prisma generate --schema=...`
+- **Alterar o schema** implica correr `db push` também na BD de produção (Neon):
+  `DATABASE_URL="<neon>" npx prisma@6.19.3 db push --schema=prisma/schema.postgres.prisma --skip-generate`
+- **Cuidado com tipos provider-dependentes**: `JsonFilter.path` é `string` no sqlite e `string[]` no postgres — o typecheck da Vercel falha se usares `path: "$.x"` (filtra em JS, como no webhook MBWay)
+- `TipoJogo.tombola` é legacy (dados antigos na prod antes do rename para euromilhoes) — **não remover** do enum sem migrar/limpar dados
+- Endpoints Neon: o pooler liga com `?sslmode=require` (sem `channel_binding=require` no Prisma CLI); o endpoint direto pode dar P1001 de outras redes
 
 ### Local Build (Windows)
 Turbopack does not work on Windows. Use instead:
