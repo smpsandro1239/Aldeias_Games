@@ -8,6 +8,7 @@ import { getPaginationFromRequest, createPaginatedResponse } from '@/lib/paginat
 import { createHash } from 'crypto';
 import { logJogoWrite } from '@/lib/audit';
 import { createLogger, extractRequestContext } from '@/lib/logger';
+import { getOfficialTime, getNextFriday, getBloqueioData } from '@/lib/time';
 
 function gerarHashVerificacao(dados: {
   tipo: string;
@@ -390,9 +391,37 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const jogo = await prisma.jogo.create({
-      data: createData as Prisma.JogoCreateInput,
-      include: includeData,
+    const jogo = await prisma.$transaction(async (tx) => {
+      const created = await tx.jogo.create({
+        data: createData as Prisma.JogoCreateInput,
+        include: includeData,
+      });
+
+      // Jogos de Euromilhões precisam de pelo menos uma grelha aberta para
+      // serem jogáveis — criada automaticamente na criação do jogo.
+      if (data.tipo === 'euromilhoes') {
+        const config = data.configuracao as Record<string, unknown>;
+        const horaOficial = await getOfficialTime();
+        const sorteioData = getNextFriday(horaOficial);
+        const premioValor = config?.recorrentePremioValor != null || config?.premioValor != null
+          ? Number(config?.recorrentePremioValor ?? config?.premioValor)
+          : null;
+        const premioDescricao = config?.recorrentePremioDescricao || config?.premioDescricao || null;
+        await tx.grelhaEuromilhoes.create({
+          data: {
+            jogoId: created.id,
+            numero: 1,
+            estado: 'aberta',
+            numerosOcupados: '[]',
+            premioDescricao: premioDescricao ? String(premioDescricao) : null,
+            premioValor,
+            sorteioData,
+            bloqueioData: getBloqueioData(sorteioData),
+          },
+        });
+      }
+
+      return created;
     });
 
      // Log de auditoria: criação de jogo

@@ -129,6 +129,31 @@ describe("Real DB: Euromilhões — grelhas, bloqueio e processRecorrentes", () 
         handler.validate({ grelhaId: grelha.id, numerosSelecionados: [3, 12] }, {})
       ).resolves.toBeUndefined();
     });
+
+    it("auto-cria grelha aberta quando o jogo não tem nenhuma", async () => {
+      const { jogo } = await seedBase(prisma);
+      const data: any = { numerosSelecionados: [3, 12] };
+      await expect(handler.validate(data, jogo)).resolves.toBeUndefined();
+
+      expect(data.grelhaId).toBeTruthy();
+      const criada = await prisma.grelhaEuromilhoes.findUnique({ where: { id: data.grelhaId } });
+      expect(criada).toBeDefined();
+      expect(criada.jogoId).toBe(jogo.id);
+      expect(criada.estado).toBe("aberta");
+      expect(criada.numero).toBe(1);
+    });
+
+    it("não duplica grelha quando já existe uma aberta", async () => {
+      const { jogo } = await seedBase(prisma);
+      const data: any = { numerosSelecionados: [3, 12] };
+      await handler.validate(data, jogo);
+      await handler.validate({ grelhaId: "outro-id-ficticio", numerosSelecionados: [4] }, jogo).catch(() => {});
+
+      const data2: any = { numerosSelecionados: [8] };
+      await handler.validate(data2, jogo);
+      expect(data2.grelhaId).toBe(data.grelhaId);
+      expect(await prisma.grelhaEuromilhoes.count({ where: { jogoId: jogo.id } })).toBe(1);
+    });
   });
 
   describe("postCreate — ocupação da grelha", () => {

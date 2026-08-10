@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { Prisma } from '@prisma/client';
 import { GameHandler, JogoWithEvento } from './types';
-import { getOfficialTime } from '@/lib/time';
+import { getOfficialTime, getNextFriday, getBloqueioData } from '@/lib/time';
 import { prisma } from '@/lib/db';
 
 function generateSeed(): string {
@@ -17,6 +17,36 @@ function generateHash(seed: string, resultado: string, salt: string, timestamp?:
 
 export const euromilhoesHandler: GameHandler = {
   async validate(data: any, _jogo: JogoWithEvento) {
+    if (!data.grelhaId && _jogo?.id) {
+      const existente = await prisma.grelhaEuromilhoes.findFirst({
+        where: { jogoId: _jogo.id, estado: 'aberta' },
+        orderBy: { numero: 'asc' },
+      });
+      if (existente) {
+        data.grelhaId = existente.id;
+      } else {
+        const [ultima] = await prisma.grelhaEuromilhoes.findMany({
+          where: { jogoId: _jogo.id },
+          orderBy: { numero: 'desc' },
+          take: 1,
+          select: { numero: true },
+        });
+        const horaOficial = await getOfficialTime();
+        const sorteioData = getNextFriday(horaOficial);
+        const nova = await prisma.grelhaEuromilhoes.create({
+          data: {
+            jogoId: _jogo.id,
+            numero: (ultima?.numero ?? 0) + 1,
+            estado: 'aberta',
+            numerosOcupados: '[]',
+            sorteioData,
+            bloqueioData: getBloqueioData(sorteioData),
+          },
+        });
+        data.grelhaId = nova.id;
+      }
+    }
+
     if (!data.grelhaId) {
       throw new Error('Grelha ID é obrigatório para Euromilhões');
     }

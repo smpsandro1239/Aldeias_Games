@@ -6,12 +6,17 @@ vi.mock('@/lib/db', () => ({
   prisma: {
     grelhaEuromilhoes: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
     },
   },
 }));
 
 vi.mock('@/lib/time', () => ({
   getOfficialTime: vi.fn().mockResolvedValue(new Date('2026-07-14T18:00:00Z')),
+  getNextFriday: vi.fn((ref: Date) => new Date(ref.getTime() + 86400000)),
+  getBloqueioData: vi.fn((ref: Date) => new Date(ref.getTime() - 7200000)),
 }));
 
 import { raspadinhaHandler } from '@/app/api/participacoes/_lib/raspadinha';
@@ -289,9 +294,27 @@ describe('Euromilhões Handler', () => {
       await expect(euromilhoesHandler.validate!(data, jogo)).resolves.not.toThrow();
     });
 
-    it('deve rejeitar sem grelhaId', async () => {
+    it('deve rejeitar sem grelhaId quando o jogo não tem id', async () => {
       const data = { numerosSelecionados: [1, 25] };
-      await expect(euromilhoesHandler.validate!(data, jogo)).rejects.toThrow('Grelha ID é obrigatório');
+      await expect(euromilhoesHandler.validate!(data, {} as any)).rejects.toThrow('Grelha ID é obrigatório');
+    });
+
+    it('deve usar grelha aberta existente quando grelhaId não é enviado', async () => {
+      (prisma.grelhaEuromilhoes.findFirst as any).mockResolvedValue(mockGrelha);
+      const data = { numerosSelecionados: [1, 25] };
+      await euromilhoesHandler.validate!(data, jogo);
+      expect(data.grelhaId).toBe('grelha-1');
+    });
+
+    it('deve auto-criar grelha quando o jogo não tem nenhuma', async () => {
+      (prisma.grelhaEuromilhoes.findFirst as any).mockResolvedValue(null);
+      (prisma.grelhaEuromilhoes.findMany as any).mockResolvedValue([]);
+      (prisma.grelhaEuromilhoes.create as any).mockResolvedValue({ id: 'grelha-nova', estado: 'aberta', numerosOcupados: '[]' });
+      (prisma.grelhaEuromilhoes.findUnique as any).mockResolvedValue({ ...mockGrelha, id: 'grelha-nova' });
+      const data = { numerosSelecionados: [1, 25] };
+      await euromilhoesHandler.validate!(data, jogo);
+      expect(data.grelhaId).toBe('grelha-nova');
+      expect(prisma.grelhaEuromilhoes.create).toHaveBeenCalled();
     });
 
     it('deve rejeitar grelha inexistente', async () => {
