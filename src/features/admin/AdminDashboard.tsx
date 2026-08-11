@@ -96,6 +96,13 @@ export default function AdminDashboard({
   const [testJogoTotalParticipacoes, setTestJogoTotalParticipacoes] = useState(0);
   const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
   const [toggleJogoData, setToggleJogoData] = useState<{ jogo: Jogo; novoEstado: 'aberto' | 'fechado' } | null>(null);
+  const [eliminacaoModal, setEliminacaoModal] = useState<{ tipo: "jogo" | "evento" | "aldeia"; recursoId: string; recursoNome: string } | null>(null);
+  const [eliminacoesListOpen, setEliminacoesListOpen] = useState(false);
+  const [jogoDetalhes, setJogoDetalhes] = useState<{ id: string; nome: string } | null>(null);
+
+  const handleRequestEliminacao = useCallback((tipo: "jogo" | "evento" | "aldeia", recursoId: string, recursoNome: string) => {
+    setEliminacaoModal({ tipo, recursoId, recursoNome });
+  }, []);
 
   // ==================== HANDLERS (extracted to hook) ====================
   const {
@@ -242,6 +249,9 @@ export default function AdminDashboard({
           handleVerJogos={handleVerJogos}
           handleLimparFiltroJogos={handleLimparFiltroJogos}
           requestDelete={requestDelete}
+          onRequestEliminacao={handleRequestEliminacao}
+          onOpenEliminacoesList={() => setEliminacoesListOpen(true)}
+          onOpenJogoDetalhes={(jogo: Jogo) => setJogoDetalhes({ id: jogo.id, nome: jogo.nome })}
           getEstadoBadge={getEstadoBadge}
         />
       </Tabs>
@@ -260,6 +270,9 @@ export default function AdminDashboard({
         selectedEventoIdParaJogo={selectedEventoIdParaJogo}
         deleteData={deleteData}
         toggleJogoData={toggleJogoData}
+        eliminacaoModal={eliminacaoModal}
+        eliminacoesListOpen={eliminacoesListOpen}
+        jogoDetalhes={jogoDetalhes}
         qrCodeData={qrCodeData}
         testJogo={testJogo}
         testJogoTotalParticipacoes={testJogoTotalParticipacoes}
@@ -286,6 +299,9 @@ export default function AdminDashboard({
         setConfirmEntregaOpen={setConfirmEntregaOpen}
         setDeleteData={setDeleteData}
         setToggleJogoData={setToggleJogoData}
+        setEliminacaoModal={setEliminacaoModal}
+        setEliminacoesListOpen={setEliminacoesListOpen}
+        setJogoDetalhes={setJogoDetalhes}
         setSelectedAldeia={handleSetSelectedAldeia}
         setSelectedPremio={setSelectedPremio}
         setConvertValor={setConvertValor}

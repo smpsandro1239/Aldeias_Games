@@ -75,6 +75,9 @@ interface DashboardTabContentProps {
   handleVerJogos: (eventoId: string) => void;
   handleLimparFiltroJogos: () => void;
   requestDelete: (type: string, id: string) => void;
+  onRequestEliminacao?: (tipo: "jogo" | "evento" | "aldeia", recursoId: string, recursoNome: string) => void;
+  onOpenEliminacoesList?: () => void;
+  onOpenJogoDetalhes?: (jogo: Jogo) => void;
   getEstadoBadge: (estado: string) => React.ReactNode;
   focusAldeiaId?: string | null;
   onFocusConsumed?: () => void;
@@ -116,6 +119,9 @@ export function DashboardTabContent({
   handleVerJogos,
   handleLimparFiltroJogos,
   requestDelete,
+  onRequestEliminacao,
+  onOpenEliminacoesList,
+  onOpenJogoDetalhes,
   getEstadoBadge,
   focusAldeiaId,
   onFocusConsumed,
@@ -156,6 +162,7 @@ export function DashboardTabContent({
             setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
             onToggleJogoEstado={handleToggleJogoEstado}
             requestDelete={requestDelete}
+            onRequestEliminacao={onRequestEliminacao}
           />
         ) : (
           <EventosTab
@@ -164,6 +171,7 @@ export function DashboardTabContent({
             setEventoModalOpen={setEventoModalOpen}
             setJogoModalOpen={setJogoModalOpen}
             requestDelete={requestDelete}
+            onRequestEliminacao={onRequestEliminacao}
             getEstadoBadge={getEstadoBadge}
             onVerJogos={handleVerJogos}
           />
@@ -184,6 +192,9 @@ export function DashboardTabContent({
           handleTestarJogo={handleTestarJogo}
           setTestJogoOpen={setTestJogoOpen}
           requestDelete={requestDelete}
+          onRequestEliminacao={onRequestEliminacao}
+          onOpenEliminacoesList={onOpenEliminacoesList}
+          onOpenJogoDetalhes={onOpenJogoDetalhes}
           getEstadoBadge={getEstadoBadge}
           onToggleEstado={handleToggleJogoEstado}
           filtroEventoId={filtroEventoId}
@@ -239,6 +250,7 @@ export function DashboardTabContent({
               setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
               onToggleJogoEstado={handleToggleJogoEstado}
               requestDelete={requestDelete}
+              onRequestEliminacao={onRequestEliminacao}
               focusAldeiaId={focusAldeiaId}
               onFocusConsumed={onFocusConsumed}
             />

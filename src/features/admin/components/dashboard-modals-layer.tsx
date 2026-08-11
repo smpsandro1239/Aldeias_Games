@@ -18,6 +18,9 @@ import {
   SorteioModal,
 } from "@/components/modals";
 import { VerificarHashModal } from "@/components/verificar-hash-modal";
+import { EliminacaoModal } from "@/components/modals/eliminacao-modal";
+import { EliminacoesListModal } from "@/components/modals/eliminacoes-list-modal";
+import { JogoDetalhesModal } from "@/components/modals/jogo-detalhes-modal";
 
 import type {
   Jogo,
@@ -43,6 +46,9 @@ interface DashboardModalsLayerProps {
   selectedEventoIdParaJogo: string;
   deleteData: { type: string; id: string } | null;
   toggleJogoData: { jogo: Jogo; novoEstado: "aberto" | "fechado" } | null;
+  eliminacaoModal: { tipo: "jogo" | "evento" | "aldeia"; recursoId: string; recursoNome: string } | null;
+  eliminacoesListOpen: boolean;
+  jogoDetalhes: { id: string; nome: string } | null;
   qrCodeData: { jogoId?: string; eventoId?: string; aldeiaSlug?: string; type: "jogo" | "evento" | "aldeia" } | null;
   testJogo: Jogo | null;
   testJogoTotalParticipacoes: number;
@@ -69,6 +75,9 @@ interface DashboardModalsLayerProps {
   setConfirmEntregaOpen: (open: boolean) => void;
   setDeleteData: (data: { type: string; id: string } | null) => void;
   setToggleJogoData: (data: { jogo: Jogo; novoEstado: "aberto" | "fechado" } | null) => void;
+  setEliminacaoModal: (data: { tipo: "jogo" | "evento" | "aldeia"; recursoId: string; recursoNome: string } | null) => void;
+  setEliminacoesListOpen: (open: boolean) => void;
+  setJogoDetalhes: (data: { id: string; nome: string } | null) => void;
   setSelectedAldeia: (aldeia: Aldeia | null) => void;
   setSelectedPremio: (premio: Vencedor | null) => void;
   setConvertValor: (valor: string) => void;
@@ -98,6 +107,9 @@ export function DashboardModalsLayer({
   selectedEventoIdParaJogo,
   deleteData,
   toggleJogoData,
+  eliminacaoModal,
+  eliminacoesListOpen,
+  jogoDetalhes,
   qrCodeData,
   testJogo,
   testJogoTotalParticipacoes,
@@ -124,6 +136,9 @@ export function DashboardModalsLayer({
   setConfirmEntregaOpen,
   setDeleteData,
   setToggleJogoData,
+  setEliminacaoModal,
+  setEliminacoesListOpen,
+  setJogoDetalhes,
   setSelectedAldeia,
   setSelectedPremio,
   setConvertValor,
@@ -208,6 +223,30 @@ export function DashboardModalsLayer({
         title="Confirmar Eliminação"
         description="Esta ação não pode ser desfeita. Tem a certeza que deseja eliminar?"
         onConfirm={executeDelete}
+      />
+
+      <EliminacaoModal
+        open={!!eliminacaoModal}
+        onOpenChange={() => setEliminacaoModal(null)}
+        tipo={eliminacaoModal?.tipo ?? null}
+        recursoId={eliminacaoModal?.recursoId ?? null}
+        recursoNome={eliminacaoModal?.recursoNome ?? null}
+        userRole={userRole}
+        onSuccess={fetchData}
+      />
+
+      <EliminacoesListModal
+        open={eliminacoesListOpen}
+        onOpenChange={setEliminacoesListOpen}
+        userRole={userRole}
+        onSuccess={fetchData}
+      />
+
+      <JogoDetalhesModal
+        open={!!jogoDetalhes}
+        onOpenChange={() => setJogoDetalhes(null)}
+        jogoId={jogoDetalhes?.id ?? null}
+        jogoNome={jogoDetalhes?.nome ?? null}
       />
 
       <ConfirmModal

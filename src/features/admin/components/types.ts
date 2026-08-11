@@ -68,6 +68,8 @@ export interface Jogo {
   };
   configuracao?: string;
   stockInicial?: number;
+  stockAtual?: number;
+  eliminado?: boolean;
   // ... outros campos
 }
 
@@ -210,5 +212,38 @@ export interface Premio {
   jogoId?: string;
   aldeia?: Aldeia;
   jogo?: Jogo;
+}
+
+export type EliminacaoTipoUI = "jogo" | "evento" | "aldeia";
+
+export interface PedidoEliminacao {
+  id: string;
+  tipo: EliminacaoTipoUI;
+  recursoId: string;
+  recursoNome: string;
+  aldeiaId?: string | null;
+  aldeia?: { id: string; nome: string } | null;
+  motivo: string;
+  estado: "pendente" | "aprovado" | "rejeitado";
+  observacoes?: string | null;
+  requestedById: string;
+  requestedBy?: { id: string; nome: string; email: string };
+  decidedById?: string | null;
+  decidedBy?: { id: string; nome: string } | null;
+  decidedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JogoDetalhes extends Jogo {
+  totalParticipacoes: number;
+  totalAngariado: number;
+  vendidos: number;
+  pendentes: number;
+  ganhadores: number;
+  premiosEntregues: number;
+  premiosPendentes: number;
+  poolRestante: Array<{ nome: string; qtd: number }>;
+  premios?: Array<{ id: string; nome: string; descricao?: string; valorDinheiroAlternative?: number; ordem: number }>;
 }
 

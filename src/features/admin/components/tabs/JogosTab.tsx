@@ -13,7 +13,9 @@ import {
   Power,
   PowerOff,
   Eye,
-  QrCode
+  QrCode,
+  BarChart3,
+  ClipboardList,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Jogo, Evento } from "../types";
@@ -31,6 +33,9 @@ interface JogosTabProps {
   handleTestarJogo: (jogo: Jogo) => void;
   setTestJogoOpen: (open: boolean) => void;
   requestDelete: (type: string, id: string) => void;
+  onRequestEliminacao?: (tipo: "jogo" | "evento" | "aldeia", recursoId: string, recursoNome: string) => void;
+  onOpenEliminacoesList?: () => void;
+  onOpenJogoDetalhes?: (jogo: Jogo) => void;
   getEstadoBadge: (estado: string) => React.ReactNode;
   onToggleEstado: (jogo: Jogo) => void;
   filtroEventoId?: string | null;
@@ -50,6 +55,9 @@ export function JogosTab({
   handleTestarJogo,
   setTestJogoOpen,
   requestDelete,
+  onRequestEliminacao,
+  onOpenEliminacoesList,
+  onOpenJogoDetalhes,
   getEstadoBadge,
   onToggleEstado,
   filtroEventoId,
@@ -101,12 +109,23 @@ export function JogosTab({
     <div className="space-y-4">
       <div className="flex justify-between">
         <h2 className="text-xl font-semibold">Jogos Criados</h2>
-        <Button
-          onClick={() => handleOpenJogoModal()}
-          disabled={!eventos.length}
-        >
-          <Plus className="h-4 w-4 mr-2" /> Novo Jogo
-        </Button>
+        <div className="flex gap-2">
+          {onOpenEliminacoesList && (
+            <Button
+              variant="outline"
+              onClick={onOpenEliminacoesList}
+              title="Ver pedidos de eliminação de jogos, eventos e aldeias"
+            >
+              <ClipboardList className="h-4 w-4 mr-2" /> Pedidos de Eliminação
+            </Button>
+          )}
+          <Button
+            onClick={() => handleOpenJogoModal()}
+            disabled={!eventos.length}
+          >
+            <Plus className="h-4 w-4 mr-2" /> Novo Jogo
+          </Button>
+        </div>
       </div>
 
        {/* Filtros */}
@@ -187,15 +206,33 @@ export function JogosTab({
                     className="flex flex-wrap gap-2 items-center"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {jg.estado === 'aberto' && (
+                    {jg.estado === 'aberto' && !(jg as any).eliminado && (
                       <span className="flex items-center gap-1 text-primary text-xs font-medium">
                         <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                         Ativo
                       </span>
                     )}
                     {getEstadoBadge(jg.estado)}
+                    {(jg as any).eliminado && (
+                      <span className="flex items-center gap-1 text-destructive text-xs font-medium border border-destructive/40 rounded-full px-2 py-0.5">
+                        <Trash2 className="h-3 w-3" />
+                        Eliminado
+                      </span>
+                    )}
 
-                    {userRole === "super_admin" && (
+                    {onOpenJogoDetalhes && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Ver métricas e detalhes do jogo"
+                        className="text-secondary hover:text-primary"
+                        onClick={() => onOpenJogoDetalhes(jg)}
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                      </Button>
+                    )}
+
+                    {userRole === "super_admin" && !(jg as any).eliminado && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -207,57 +244,77 @@ export function JogosTab({
                       </Button>
                     )}
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Gerar QR Code para partilha"
-                      className="text-secondary hover:text-primary"
-                      onClick={() => {
-                        setQrCodeData({ jogoId: jg.id, type: "jogo" });
-                        setQrCodeOpen(true);
-                      }}
-                    >
-                      <QrCode className="h-4 w-4" />
-                    </Button>
+                    {!(jg as any).eliminado && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Gerar QR Code para partilha"
+                          className="text-secondary hover:text-primary"
+                          onClick={() => {
+                            setQrCodeData({ jogoId: jg.id, type: "jogo" });
+                            setQrCodeOpen(true);
+                          }}
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={jg.estado === 'aberto' ? 'Desativar jogo' : 'Ativar jogo'}
-                      className={
-                        jg.estado === 'aberto'
-                          ? 'text-primary hover:text-destructive'
-                          : 'text-muted-foreground hover:text-primary'
-                      }
-                      onClick={() => onToggleEstado(jg)}
-                    >
-                      {jg.estado === 'aberto' ? (
-                        <PowerOff className="h-4 w-4" />
-                      ) : (
-                        <Power className="h-4 w-4" />
-                      )}
-                    </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={jg.estado === 'aberto' ? 'Desativar jogo' : 'Ativar jogo'}
+                          className={
+                            jg.estado === 'aberto'
+                              ? 'text-primary hover:text-destructive'
+                              : 'text-muted-foreground hover:text-primary'
+                          }
+                          onClick={() => onToggleEstado(jg)}
+                        >
+                          {jg.estado === 'aberto' ? (
+                            <PowerOff className="h-4 w-4" />
+                          ) : (
+                            <Power className="h-4 w-4" />
+                          )}
+                        </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setSelectedJogo(jg);
-                        setSelectedEventoIdParaJogo(jg.eventoId);
-                        setJogoModalOpen(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedJogo(jg);
+                            setSelectedEventoIdParaJogo(jg.eventoId);
+                            setJogoModalOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => requestDelete("jogo", jg.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                        {onRequestEliminacao ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            title={
+                              userRole === "super_admin"
+                                ? "Eliminar jogo (super admin pode eliminar sozinho)"
+                                : "Pedir eliminação (requer aprovação de 2ª pessoa)"
+                            }
+                            onClick={() => onRequestEliminacao("jogo", jg.id, jg.nome)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            onClick={() => requestDelete("jogo", jg.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>

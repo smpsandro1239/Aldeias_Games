@@ -95,7 +95,14 @@ export default function SuperAdminDashboard({
   const [testJogoTotalParticipacoes, setTestJogoTotalParticipacoes] = useState(0);
   const [deleteData, setDeleteData] = useState<{ type: string; id: string } | null>(null);
   const [toggleJogoData, setToggleJogoData] = useState<{ jogo: Jogo; novoEstado: 'aberto' | 'fechado' } | null>(null);
+  const [eliminacaoModal, setEliminacaoModal] = useState<{ tipo: "jogo" | "evento" | "aldeia"; recursoId: string; recursoNome: string } | null>(null);
+  const [eliminacoesListOpen, setEliminacoesListOpen] = useState(false);
+  const [jogoDetalhes, setJogoDetalhes] = useState<{ id: string; nome: string } | null>(null);
   const [focusAldeiaId, setFocusAldeiaId] = useState<string | null>(null);
+
+  const handleRequestEliminacao = useCallback((tipo: "jogo" | "evento" | "aldeia", recursoId: string, recursoNome: string) => {
+    setEliminacaoModal({ tipo, recursoId, recursoNome });
+  }, []);
 
   const handleAbrirAldeia = useCallback((aldeia: Aldeia) => {
     setFocusAldeiaId(aldeia.id);
@@ -226,6 +233,7 @@ export default function SuperAdminDashboard({
                 <EventosTab eventos={eventos} setSelectedEvento={setSelectedEvento}
                   setEventoModalOpen={setEventoModalOpen} setJogoModalOpen={setJogoModalOpen}
                   requestDelete={requestDelete} getEstadoBadge={getEstadoBadge}
+                  onRequestEliminacao={handleRequestEliminacao}
                   onVerJogos={handleVerJogos}
                 />
               </TabsContent>
@@ -237,6 +245,9 @@ export default function SuperAdminDashboard({
                   setQrCodeData={setQrCodeData} setQrCodeOpen={setQrCodeOpen}
                   handleTestarJogo={handleTestarJogo} setTestJogoOpen={setTestJogoOpen}
                   requestDelete={requestDelete} getEstadoBadge={getEstadoBadge}
+                  onRequestEliminacao={handleRequestEliminacao}
+                  onOpenEliminacoesList={() => setEliminacoesListOpen(true)}
+                  onOpenJogoDetalhes={(jogo: Jogo) => setJogoDetalhes({ id: jogo.id, nome: jogo.nome })}
                   onToggleEstado={handleToggleJogoEstado} filtroEventoId={filtroEventoId}
                   onLimparFiltro={handleLimparFiltroJogos}
                 />
@@ -264,6 +275,7 @@ export default function SuperAdminDashboard({
                     setSelectedEventoIdParaJogo={setSelectedEventoIdParaJogo}
                     onToggleJogoEstado={handleToggleJogoEstado}
                     requestDelete={requestDelete}
+                    onRequestEliminacao={handleRequestEliminacao}
                     focusAldeiaId={focusAldeiaId}
                     onFocusConsumed={() => setFocusAldeiaId(null)}
                   />
@@ -295,6 +307,8 @@ export default function SuperAdminDashboard({
         selectedAldeia={selectedAldeia} selectedUser={selectedUser}
         selectedPremio={selectedPremio} selectedEventoIdParaJogo={selectedEventoIdParaJogo}
         deleteData={deleteData} toggleJogoData={toggleJogoData}
+        eliminacaoModal={eliminacaoModal} eliminacoesListOpen={eliminacoesListOpen}
+        jogoDetalhes={jogoDetalhes}
         qrCodeData={qrCodeData} testJogo={testJogo}
         testJogoTotalParticipacoes={testJogoTotalParticipacoes}
         convertValor={convertValor} eventoModalOpen={eventoModalOpen}
@@ -309,7 +323,9 @@ export default function SuperAdminDashboard({
         setVerificarHashOpen={setVerificarHashOpen} setQrCodeOpen={setQrCodeOpen}
         setTestJogoOpen={setTestJogoOpen} setConvertPrizeOpen={setConvertPrizeOpen}
         setConfirmEntregaOpen={setConfirmEntregaOpen} setDeleteData={setDeleteData}
-        setToggleJogoData={setToggleJogoData} setSelectedAldeia={handleSetSelectedAldeia} setSelectedPremio={setSelectedPremio}
+        setToggleJogoData={setToggleJogoData} setEliminacaoModal={setEliminacaoModal}
+        setEliminacoesListOpen={setEliminacoesListOpen} setJogoDetalhes={setJogoDetalhes}
+        setSelectedAldeia={handleSetSelectedAldeia} setSelectedPremio={setSelectedPremio}
         setConvertValor={setConvertValor}         handleSaveEvento={handleSaveEvento}
         handleSaveJogo={handleSaveJogo} handleSaveAldeia={handleSaveAldeia}
         handleSaveUser={handleSaveUser} handleConvertPrize={handleConvertPrize}

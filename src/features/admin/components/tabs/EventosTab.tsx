@@ -25,6 +25,7 @@ interface EventosTabProps {
   setEventoModalOpen: (open: boolean) => void;
   setJogoModalOpen: (open: boolean) => void;
   requestDelete: (type: string, id: string) => void;
+  onRequestEliminacao?: (tipo: "jogo" | "evento" | "aldeia", recursoId: string, recursoNome: string) => void;
   getEstadoBadge: (estado: string) => React.ReactNode;
   onVerJogos?: (eventoId: string) => void;
 }
@@ -35,6 +36,7 @@ export function EventosTab({
   setEventoModalOpen,
   setJogoModalOpen,
   requestDelete,
+  onRequestEliminacao,
   getEstadoBadge,
   onVerJogos,
 }: EventosTabProps) {
@@ -173,7 +175,12 @@ export function EventosTab({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => requestDelete("evento", ev.id)}
+                        onClick={() =>
+                          onRequestEliminacao
+                            ? onRequestEliminacao("evento", ev.id, ev.nome)
+                            : requestDelete("evento", ev.id)
+                        }
+                        title="Pedir eliminação (requer aprovação de 2ª pessoa)"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

@@ -5,6 +5,7 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { updateJogoSchema } from '@/lib/validations';
 import { logCRUD as logAudit } from '@/lib/audit';
+import { notifyJogoEditado } from '@/lib/jogo-audit-notify';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -115,6 +116,20 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         request.headers.get('user-agent') || 'unknown'
       );
 
+      // Transparência: notificar admins da aldeia sobre edição
+      if (jogo.estado !== updated.estado || jogo.nome !== updated.nome || jogo.preco !== updated.preco) {
+        const campos: string[] = [];
+        if (jogo.nome !== updated.nome) campos.push('nome');
+        if (jogo.preco !== updated.preco) campos.push('preço');
+        if (jogo.estado !== updated.estado) campos.push('estado');
+        await notifyJogoEditado({
+          jogoNome: updated.nome,
+          aldeiaId: jogo.evento.aldeiaId,
+          autorNome: user.nome || 'Administrador',
+          campos,
+        });
+      }
+
      return NextResponse.json({ success: true, data: updated });
   } catch (err: unknown) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
@@ -137,6 +152,17 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
+    // Hard-delete só é permitido se não existirem participações (histórico preservado).
+    // Com participações, a eliminação é feita via pedido de eliminação (soft-delete,
+    // aprovação de 2 pessoas, exceto super admin que auto-aprova).
+    const totalParticipacoes = await prisma.participacao.count({ where: { jogoId: id } });
+    if (totalParticipacoes > 0) {
+      return NextResponse.json(
+        { error: 'Este jogo já tem participações. Use o pedido de eliminação (soft-delete) para o arquivar, ou o super administrador pode eliminar diretamente.' },
+        { status: 400 }
+      );
+    }
+
      await prisma.jogo.delete({ where: { id } });
 
       // Audit log
@@ -145,7 +171,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         'delete',
         'jogo',
         id,
-        { nome: jogo.nome, tipo: jogo.tipo, eventoId: jogo.eventoId },
+        { nome: jogo.nome, tipo: jogo.tipo, eventoId: jogo.eventoId, modo: 'hard' },
         request.headers.get('x-forwarded-for') || 'unknown',
         request.headers.get('user-agent') || 'unknown'
       );

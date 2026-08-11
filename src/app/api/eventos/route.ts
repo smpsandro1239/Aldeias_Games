@@ -17,9 +17,11 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const aldeiaId = url.searchParams.get('aldeiaId');
     const publico = url.searchParams.get('publico');
+    const incluirEliminados = url.searchParams.get('incluirEliminados') === 'true';
 
     // Construir where
-    let where: Record<string, unknown> = {};
+    // Eventos eliminados (soft-delete) nunca aparecem em listas públicas
+    let where: Record<string, unknown> = incluirEliminados ? {} : { eliminado: false };
 
     if (aldeiaId) {
       where.aldeiaId = aldeiaId;

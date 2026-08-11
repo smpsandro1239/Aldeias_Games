@@ -26,6 +26,7 @@ interface MinhaAldeiaTabProps {
   setSelectedEventoIdParaJogo: (id: string) => void;
   onToggleJogoEstado: (jogo: Jogo) => void;
   requestDelete: (type: string, id: string) => void;
+  onRequestEliminacao?: (tipo: "jogo" | "evento" | "aldeia", recursoId: string, recursoNome: string) => void;
 }
 
 function getEstadoBadge(estado: string) {
@@ -67,6 +68,7 @@ export function MinhaAldeiaTab({
   setSelectedEventoIdParaJogo,
   onToggleJogoEstado,
   requestDelete,
+  onRequestEliminacao,
 }: MinhaAldeiaTabProps) {
   const [expandedEventos, setExpandedEventos] = useState<Set<string>>(new Set());
   const [jogoDetailOpen, setJogoDetailOpen] = useState(false);
@@ -305,7 +307,7 @@ export function MinhaAldeiaTab({
                                           size="icon"
                                           className="h-7 w-7 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                                           title="Eliminar"
-                                          onClick={() => requestDelete("jogo", jg.id)}
+                                          onClick={() => onRequestEliminacao ? onRequestEliminacao("jogo", jg.id, jg.nome) : requestDelete("jogo", jg.id)}
                                         >
                                           <Trash2 className="h-3.5 w-3.5" />
                                         </Button>

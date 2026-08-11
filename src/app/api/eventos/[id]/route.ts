@@ -290,6 +290,17 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
+    // Hard-delete só sem jogos com participações; caso contrário, usar pedido de eliminação (soft-delete)
+    const jogosComParticipacoes = await prisma.jogo.count({
+      where: { eventoId: id, participacoes: { some: {} } },
+    });
+    if (jogosComParticipacoes > 0) {
+      return NextResponse.json(
+        { error: 'Este evento tem jogos com participações. Use o pedido de eliminação (soft-delete) para o arquivar, ou o super administrador pode eliminar diretamente.' },
+        { status: 400 }
+      );
+    }
+
      await prisma.evento.delete({ where: { id } });
 
      // Audit log

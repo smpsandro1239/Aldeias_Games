@@ -23,10 +23,13 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
     const search = searchParams.get('search') || ''
     const tipoOrganizacao = searchParams.get('tipoOrganizacao') || undefined
+    const incluirEliminados = searchParams.get('incluirEliminados') === 'true'
 
     // Build where clause
     const where: Prisma.AldeiaWhereInput = {
       ativo: true,
+      // Aldeias eliminadas (soft-delete) nunca aparecem em listas públicas
+      ...(incluirEliminados ? {} : { eliminado: false }),
     }
 
     // Non-admins only see verified aldeias
