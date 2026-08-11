@@ -249,6 +249,16 @@ Pages:
 - Configuração no modal admin: toggle "Limitar valor total de prémios (pool)" + input numérico em euros (guardado em `configuracao.maxPremioTotal`)
 - Pode ser combinado com `maxGanhadores` (ambos os limites funcionam independentemente)
 
+### Raspadinha — Pool de Prémios (Sorteio sem Reposição)
+- **Objetivo**: garantir que saem EXATAMENTE os prémios configurados na criação (`round(stock × percentagem/100)` de cada prémio), em posições aleatórias — nem mais, nem menos (o modelo estatístico antigo podia dar mais/menos em stocks pequenos)
+- **Geração** (`POST /api/jogos`): `buildRaspadinhaPool(premios, stock)` cria o array de nomes (cópias de cada prémio + "Sem prémio" até perfazer o stock), baralhado com Fisher-Yates criptográfico (`crypto.randomInt`), guardado em `configuracao.pool` (só para tipo `raspadinha`; trim se arredondamento exceder o stock)
+- **Consumo** (`validateInTransaction` do handler raspadinha): dentro da `$transaction` (linha do jogo já locked pelo `updateMany` de stock → serializado), lê a config **fresca** via `tx.jogo.findUnique`, sorteia `quantidade` itens com `drawFromPool` (`crypto.randomInt(0, pool.length)` + `splice`), guarda os resultados em `data._poolResults` e grava o pool restante em `configuracao` antes de criar a participação
+- **`prepareData`**: usa `_poolResults[existing.length]` por bilhete (suporta `quantidade > 1`)
+- **Fallback**: jogos antigos sem `pool` → comportamento estatístico antigo (`determineRaspadinhaOutcome` com probabilidade independente) — mantido para compatibilidade
+- **Limites**: com `maxGanhadores`/`maxPremioTotal` atingidos, perde-se SEM consumir o pool (os prémios não sorteados ficam no pool; nunca se ultrapassa a config)
+- **Nota**: o pool NÃO é regenerado no edit (PUT) do jogo — regerar perderia o estado consumido (risco de prémios duplicados)
+- Testes: `unit/raspadinha-critical.test.ts` (contagens do pool, draw, exatidão pós-stock) + `integration/real-db/raspadinha-pool.test.ts` (100 bilhetes → exatamente 8×"2 Euro" + 2×"5 Euro", pool a 0, perdas após esgotamento, distribuição não sequencial)
+
 ### Verificação Pública de Raspadinhas
 - `/verificar-raspadinha` — página pública para qualquer pessoa verificar o resultado de uma raspadinha
 - Não requer autenticação — basta introduzir o hash da participação

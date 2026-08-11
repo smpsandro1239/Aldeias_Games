@@ -9,6 +9,7 @@ import { createHash } from 'crypto';
 import { logJogoWrite } from '@/lib/audit';
 import { createLogger, extractRequestContext } from '@/lib/logger';
 import { getOfficialTime, getNextFriday, getBloqueioData } from '@/lib/time';
+import { buildRaspadinhaPool } from '@/app/api/participacoes/_lib/raspadinha';
 
 function gerarHashVerificacao(dados: {
   tipo: string;
@@ -332,11 +333,19 @@ export async function POST(request: NextRequest) {
     }
     
     // Preparar dados para Prisma (sem os campos novos que ainda não existem na BD)
+    // Raspadinha: gerar o pool de prémios (sorteio sem reposição) — garante que
+    // saem exatamente round(stock * %/100) de cada prémio, em posições aleatórias.
+    let configData = data.configuracao as Record<string, unknown>;
+    if (data.tipo === 'raspadinha') {
+      const premiosPool = (data.premios && data.premios.length > 0 ? data.premios : (configData.premios as any[]) || []) as Array<{ nome: string; percentagem?: number }>;
+      configData = { ...configData, pool: buildRaspadinhaPool(premiosPool, data.stockInicial) };
+    }
+
     const jogoData: Record<string, unknown> = {
       nome: data.nome,
       tipo: data.tipo,
       descricao: data.descricao,
-      configuracao: JSON.stringify(data.configuracao),
+      configuracao: JSON.stringify(configData),
       preco: data.preco,
       stockInicial: data.stockInicial,
       stockAtual: data.stockInicial,

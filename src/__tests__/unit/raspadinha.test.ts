@@ -100,13 +100,18 @@ describe('Raspadinha Handler — Unit Tests', () => {
 
   describe('validateInTransaction()', () => {
     function makeTx(overrides: Record<string, unknown> = {}) {
-      return {
+      const tx = {
         participacao: {
           count: vi.fn(),
           findMany: vi.fn(),
         },
+        jogo: {
+          findUnique: vi.fn().mockResolvedValue(null),
+          update: vi.fn(),
+        },
         ...overrides,
       };
+      return tx;
     }
 
     it('deve marcar _limiteAtingido quando maxGanhadores atingido', async () => {

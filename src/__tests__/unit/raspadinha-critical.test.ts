@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { determineRaspadinhaOutcome, buildGridFromOutcome } from "@/app/api/participacoes/_lib/raspadinha";
+import { determineRaspadinhaOutcome, buildGridFromOutcome, buildRaspadinhaPool, drawFromPool } from "@/app/api/participacoes/_lib/raspadinha";
 
 describe("Raspadinha Game Logic - Critical", () => {
   describe("determineRaspadinhaOutcome", () => {
@@ -179,6 +179,82 @@ describe("Raspadinha Game Logic - Critical", () => {
           }
         }
       }
+    });
+  });
+
+  describe("buildRaspadinhaPool", () => {
+    const premios = [
+      { nome: "2 Euro", valorDinheiroAlternative: 2, percentagem: 30 },
+      { nome: "5 Euro", valorDinheiroAlternative: 5, percentagem: 10 },
+    ];
+
+    it("contém exatamente round(stock × %/100) cópias de cada prémio e completa com Sem prémio", () => {
+      const pool = buildRaspadinhaPool(premios, 10);
+      expect(pool).toHaveLength(10);
+      expect(pool.filter((n) => n === "2 Euro")).toHaveLength(3);
+      expect(pool.filter((n) => n === "5 Euro")).toHaveLength(1);
+      expect(pool.filter((n) => n === "Sem prémio")).toHaveLength(6);
+    });
+
+    it("não excede o stock quando o arredondamento soma mais que 100%", () => {
+      const over = [
+        { nome: "A", valorDinheiroAlternative: 1, percentagem: 50 },
+        { nome: "B", valorDinheiroAlternative: 1, percentagem: 50 },
+      ];
+      const pool = buildRaspadinhaPool(over, 5);
+      expect(pool).toHaveLength(5);
+      expect(pool.every((n) => n === "A" || n === "B")).toBe(true);
+    });
+
+    it("é baralhado (não fica tudo no início)", () => {
+      const pool = buildRaspadinhaPool([{ nome: "Prize", valorDinheiroAlternative: 1, percentagem: 20 }], 100);
+      const prizeIdx = pool.map((n, i) => (n === "Prize" ? i : -1)).filter((i) => i >= 0);
+      const spread = Math.max(...prizeIdx) - Math.min(...prizeIdx);
+      expect(spread).toBeGreaterThan(10);
+    });
+  });
+
+  describe("drawFromPool", () => {
+    it("consome um item (sem reposição) e devolve o prémio correspondente", () => {
+      const pool = ["Sem prémio", "Sem prémio", "Sem prémio", "2 Euro", "5 Euro"];
+      const premios = [
+        { nome: "2 Euro", valorDinheiroAlternative: 2 },
+        { nome: "5 Euro", valorDinheiroAlternative: 5 },
+      ];
+      const before = pool.length;
+      const outcome = drawFromPool(pool, premios);
+      expect(pool).toHaveLength(before - 1);
+      expect(typeof outcome.hasWin).toBe("boolean");
+      if (outcome.hasWin) {
+        expect(outcome.winningPrize).not.toBeNull();
+        expect(pool.includes(outcome.winningPrize!.nome)).toBe(false);
+      }
+    });
+
+    it("devolve perda quando o pool está vazio", () => {
+      const outcome = drawFromPool([], []);
+      expect(outcome.hasWin).toBe(false);
+      expect(outcome.winningPrize).toBeNull();
+    });
+
+    it("após stock sorteios o pool fica vazio e o número de ganhadores é exato", () => {
+      const premios = [
+        { nome: "2 Euro", valorDinheiroAlternative: 2, percentagem: 30 },
+        { nome: "5 Euro", valorDinheiroAlternative: 5, percentagem: 10 },
+      ];
+      const pool = buildRaspadinhaPool(premios, 10);
+      let wins2 = 0;
+      let wins5 = 0;
+      for (let i = 0; i < 10; i++) {
+        const outcome = drawFromPool(pool, premios);
+        if (outcome.hasWin && outcome.winningPrize) {
+          if (outcome.winningPrize.nome === "2 Euro") wins2++;
+          if (outcome.winningPrize.nome === "5 Euro") wins5++;
+        }
+      }
+      expect(pool).toHaveLength(0);
+      expect(wins2).toBe(3);
+      expect(wins5).toBe(1);
     });
   });
 });

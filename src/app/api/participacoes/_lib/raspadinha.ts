@@ -42,6 +42,49 @@ export function determineRaspadinhaOutcome(config: RaspadinhaConfig, forceLoss =
   return { hasWin: false, winningPrize: null, roll };
 }
 
+// Pool de prémios — sorteio sem reposição.
+// O pool contém exatamente round(stock * percentagem / 100) cópias de cada
+// prémio, preenchido com "Sem prémio" até perfazer o stock, e é baralhado
+// com Fisher-Yates criptográfico. Garante que saem exatamente os prémios
+// configurados (nem mais, nem menos), em posições aleatórias.
+export function buildRaspadinhaPool(premios: RaspadinhaPremio[], stock: number): string[] {
+  const pool: string[] = [];
+  for (const premio of premios) {
+    const qtd = Math.max(0, Math.round((premio.percentagem || 0) * stock / 100));
+    for (let i = 0; i < qtd; i++) {
+      pool.push(premio.nome);
+    }
+  }
+  if (pool.length > stock) {
+    pool.length = stock;
+  }
+  while (pool.length < stock) {
+    pool.push('Sem prémio');
+  }
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
+// Consome um item aleatório do pool (sem reposição). "Sem prémio" → perde;
+// nome de prémio → ganha o prémio correspondente da lista configurada.
+export function drawFromPool(pool: string[], premios: RaspadinhaPremio[]): RaspadinhaOutcome {
+  if (!Array.isArray(pool) || pool.length === 0) {
+    return { hasWin: false, winningPrize: null, roll: 0 };
+  }
+  const len = pool.length;
+  const idx = crypto.randomInt(0, len);
+  const [item] = pool.splice(idx, 1);
+  const winningPrize = premios.find((p) => p.nome === item) || null;
+  return {
+    hasWin: winningPrize !== null,
+    winningPrize,
+    roll: len > 0 ? idx / len : 0,
+  };
+}
+
 export function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: RaspadinhaConfig): RaspadinhaPremio[] {
   const premios = config.premios || [];
   const grid: RaspadinhaPremio[] = [];
@@ -200,14 +243,55 @@ export const raspadinhaHandler: GameHandler = {
         (data as Record<string, unknown>)._limiteAtingido = true;
       }
     }
+
+    // Sorteio sem reposição: consome itens do pool de prémios configurado na
+    // criação do jogo. A leitura é feita DENTRO da transação (a linha do jogo
+    // está locked pelo updateMany de stock), garantindo atomicidade.
+    const fresh = await tx.jogo.findUnique({
+      where: { id: jogo.id },
+      select: { configuracao: true },
+    });
+    const freshConfig = fresh
+      ? (typeof fresh.configuracao === 'string' ? JSON.parse(fresh.configuracao) : fresh.configuracao) as RaspadinhaConfig
+      : config;
+    const pool = Array.isArray(freshConfig.pool) ? [...(freshConfig.pool as string[])] : null;
+
+    if (pool) {
+      const results: RaspadinhaOutcome[] = [];
+      const qtd = data.quantidade || 1;
+      const limiteAtingido = (data as Record<string, unknown>)._limiteAtingido === true;
+      for (let i = 0; i < qtd; i++) {
+        if (limiteAtingido) {
+          // Limite de ganhadores/pool atingido — perde sem consumir o pool.
+          results.push({ hasWin: false, winningPrize: null, roll: 0 });
+        } else {
+          results.push(drawFromPool(pool, freshConfig.premios || []));
+        }
+      }
+      (data as Record<string, unknown>)._poolResults = results;
+      await tx.jogo.update({
+        where: { id: jogo.id },
+        data: { configuracao: JSON.stringify({ ...freshConfig, pool }) },
+      });
+    }
   },
 
-  prepareData(data: ParticipacaoRequestData, jogo: JogoWithEvento) {
+  prepareData(data: ParticipacaoRequestData, jogo: JogoWithEvento, existing: any[] = []) {
     const config: RaspadinhaConfig = typeof jogo.configuracao === 'string'
       ? JSON.parse(jogo.configuracao)
       : jogo.configuracao as RaspadinhaConfig;
     const forceLoss = (data as Record<string, unknown>)._limiteAtingido === true;
-    const outcome = determineRaspadinhaOutcome(config, forceLoss);
+
+    let outcome: RaspadinhaOutcome;
+    const poolResults = (data as Record<string, unknown>)._poolResults as RaspadinhaOutcome[] | undefined;
+    if (Array.isArray(poolResults) && poolResults.length > 0) {
+      // Jogos com pool: cada bilhete usa o resultado já sorteado na transação.
+      outcome = poolResults[existing.length] || determineRaspadinhaOutcome(config, forceLoss);
+    } else {
+      // Jogos antigos sem pool: fallback estatístico (probabilidade independente).
+      outcome = determineRaspadinhaOutcome(config, forceLoss);
+    }
+
     const grid = buildGridFromOutcome(outcome, config);
     const rngSeed = crypto.randomBytes(32).toString('hex');
     const uniqueSalt = crypto.randomBytes(32).toString('hex');
