@@ -155,5 +155,30 @@ describe("Raspadinha Game Logic - Critical", () => {
       const specialCount = grid.filter((item) => item.nome === "Special").length;
       expect(specialCount).toBeLessThan(3);
     });
+
+    it("never creates 3+ symbols of a prize with value on losing grids", () => {
+      const config = {
+        premios: [
+          { nome: "Presunto", valorDinheiroAlternative: 50, percentagem: 2 },
+          { nome: "Queijos", valorDinheiroAlternative: 25, percentagem: 5 },
+          { nome: "Valor da Raspadinha", valorDinheiroAlternative: 2, percentagem: 10 },
+        ],
+      };
+
+      for (let i = 0; i < 500; i++) {
+        const outcome = { hasWin: false, winningPrize: null, roll: 0.99 };
+        const grid = buildGridFromOutcome(outcome, config);
+        expect(grid).toHaveLength(9);
+
+        const counts = new Map<string, number>();
+        grid.forEach((p) => counts.set(p.nome, (counts.get(p.nome) || 0) + 1));
+        for (const [nome, count] of counts) {
+          if (count >= 3) {
+            const premio = config.premios.find((p) => p.nome === nome);
+            expect(premio?.valorDinheiroAlternative ?? 0).toBe(0);
+          }
+        }
+      }
+    });
   });
 });

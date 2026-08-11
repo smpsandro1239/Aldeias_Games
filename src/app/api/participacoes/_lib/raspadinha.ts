@@ -90,10 +90,7 @@ export function buildGridFromOutcome(outcome: RaspadinhaOutcome, config: Raspadi
         attempts++;
       }
       if (i >= grid.length) {
-        const sorted = [...premios].sort((a, b) =>
-          (a.valorDinheiroAlternative || 0) - (b.valorDinheiroAlternative || 0)
-        );
-        grid.push({ ...sorted[0] });
+        grid.push({ nome: 'Sem prémio', valorDinheiroAlternative: 0 });
       }
     }
   }
