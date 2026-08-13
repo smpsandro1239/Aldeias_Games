@@ -22,6 +22,7 @@ import { AldeiaMembers } from "./aldeia-members"
 import { AldeiaEvents } from "./aldeia-events"
 import { AldeiaSettings } from "./aldeia-settings"
 import { AddMemberDialog } from "./aldeia-add-member-dialog"
+import { EditMemberDialog } from "./aldeia-edit-member-dialog"
 
 function AldeiaDetailContent() {
   const params = useParams()
@@ -41,6 +42,8 @@ function AldeiaDetailContent() {
   const [saving, setSaving] = useState(false)
 
   const [showAddMember, setShowAddMember] = useState(false)
+
+  const [editingMembro, setEditingMembro] = useState<{ userId: string; nome: string } | null>(null)
 
   const [expandedEventos, setExpandedEventos] = useState<Set<string>>(new Set())
 
@@ -261,6 +264,30 @@ function AldeiaDetailContent() {
     }
   }
 
+  const handleEditMember = (userId: string, nome: string) => {
+    setEditingMembro({ userId, nome })
+  }
+
+  const handleSaveMembro = async (data: { nome: string; email: string }) => {
+    const membro = editingMembro
+    if (!membro) return
+    try {
+      const res = await apiRequest(`/api/aldeias/${aldeiaId}/membros/${membro.userId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro ao editar membro")
+      }
+      toast.success("Membro atualizado com sucesso")
+      setEditingMembro(null)
+      fetchAldeia()
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao editar membro")
+    }
+  }
+
   const handleCreateEvento = async (data: any) => {
     try {
       const res = await apiRequest("/api/eventos", {
@@ -414,6 +441,7 @@ function AldeiaDetailContent() {
               onChangeRole={changeRole}
               onRemoveMember={removeMember}
               onAddMember={() => setShowAddMember(true)}
+              onEditMember={handleEditMember}
             />
           </TabsContent>
 
@@ -456,6 +484,13 @@ function AldeiaDetailContent() {
         onAdd={handleAddMember}
         onRegistar={handleRegistarMembro}
         aldeiaId={aldeiaId}
+      />
+
+      <EditMemberDialog
+        open={!!editingMembro}
+        onOpenChange={(o) => !o && setEditingMembro(null)}
+        membro={editingMembro}
+        onSave={handleSaveMembro}
       />
 
       <CreateJogoModal

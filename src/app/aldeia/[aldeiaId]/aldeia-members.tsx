@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { UserPlus, Trash2, Users, Search } from "lucide-react"
+import { UserPlus, Trash2, Pencil, Users, Search } from "lucide-react"
 import { ALL_ROLES, AldeiaData } from "./aldeia-types"
 
 interface AldeiaMembersProps {
@@ -16,6 +16,7 @@ interface AldeiaMembersProps {
   onChangeRole: (userId: string, newRole: string) => void
   onRemoveMember: (userId: string, nome: string) => void
   onAddMember: () => void
+  onEditMember: (userId: string, nome: string) => void
 }
 
 function getRoleBadge(roleName: string) {
@@ -24,7 +25,7 @@ function getRoleBadge(roleName: string) {
   return <Badge variant="secondary">{roleName}</Badge>
 }
 
-export function AldeiaMembers({ aldeia, isAdmin, currentUserId, onChangeRole, onRemoveMember, onAddMember }: AldeiaMembersProps) {
+export function AldeiaMembers({ aldeia, isAdmin, currentUserId, onChangeRole, onRemoveMember, onAddMember, onEditMember }: AldeiaMembersProps) {
   const [search, setSearch] = useState("")
   const [filterRole, setFilterRole] = useState("all")
 
@@ -110,6 +111,15 @@ export function AldeiaMembers({ aldeia, isAdmin, currentUserId, onChangeRole, on
                               ))}
                             </SelectContent>
                           </Select>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => onEditMember(membro.userId, membro.user.nome)}
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
