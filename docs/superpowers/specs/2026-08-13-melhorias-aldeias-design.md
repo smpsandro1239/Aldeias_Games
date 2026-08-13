@@ -62,11 +62,34 @@ Tornar o fluxo de gestão de aldeias mais completo: cada item dos cards da lista
 - `src/app/aldeias/page.tsx`: quando `aldeia.localidade` existir, mostrar "· Localidade" junto ao tipo; manter o resto do card inalterado.
 - A interface `Aldeia` do page.tsx ganha `localidade?: string` e a API `/api/aldeias` deve devolver o campo (verificar no select; adicionar se faltar).
 
+### 6. Pagamentos por aldeia (tab Config) — aditamento aprovado 13/08
+
+Contexto: o fluxo de carregamento já consome `telefoneMBWay` da aldeia (`carregar-saldo-hooks.ts` lê `data.data.telefoneMBWay`), mas o campo **não existe** no schema — os requisitos de cada método de pagamento nunca são preenchidos.
+
+**Schema (model Aldeia)** — novos campos:
+- `telefoneMBWay String?` — telemóvel para MBWay/WhatsApp (exigido quando MBWay está ativo)
+- `emailPagamentos String?` — email de referência para pagamentos (transferência/MBWay)
+
+**Tab Config (`aldeia-settings.tsx`)** — duas novas secções:
+- "Métodos de Pagamento Aceites": toggles no padrão ToggleRow da página `/configuracoes` — dinheiro e saldo sempre ligados; mbway, stripe, transferencia, vendedor alternáveis → guardaredo em `metodosPagamentoAceites` (JSON string, mesmo formato já existente).
+- "Dados para Pagamentos": IBAN + Titular (secção "Dados Bancários" existente, mantida sempre visível — usada por transferência e SAF-T), Telemóvel MBWay/WhatsApp (`telefoneMBWay`), Email de Pagamentos (`emailPagamentos`).
+- `saveEdits` no `page.tsx`: incluir `telefoneMBWay`/`emailPagamentos` no payload; `metodosPagamentoAceites` apenas quando mudar.
+
+**Sensibilidade (2ª aprovação)**: API `PATCH /api/aldeias/[id]` — `sensitiveFields = ['iban', 'nomeTitularConta', 'telefoneMBWay', 'emailPagamentos']` (os campos de pagamento passam pelo fluxo pending-changes para não-super-admins).
+
+**Uso efetivo (completar requisitos)**:
+- `carregar-saldo-hooks.ts`: dadosConta ganha `emailPagamentos` (telefoneMBWay já lido).
+- `carregar-saldo-form.tsx`: bloco transferência mostra IBAN + titular + email de pagamentos; bloco MBWay mostra o telemóvel WhatsApp como contacto de referência (quando preenchidos).
+- `carregar-saldo-types.ts`: `DadosConta` ganha `emailPagamentos?: string`.
+
+**Migração**: `db push` local (sqlite) + Neon (regenerar `schema.postgres.prisma` via `scripts/gen-postgres-schema.js` e push) antes do deploy.
+
 ## Fora de âmbito
 
 - Vendedores/utilizadores normais não veem a tab Participações (RGPD).
 - Sem alterações ao wizard de criação, nem ao módulo de eliminações, nem a gráficos.
 - Sem alterações ao SAF-T.
+- `metodosPagamentoDefault` (métodos padrão por jogo) não é alterado nesta iteração.
 
 ## Riscos
 
@@ -83,10 +106,15 @@ Tornar o fluxo de gestão de aldeias mais completo: cada item dos cards da lista
 ## Ficheiros afetados
 
 - `src/app/aldeias/page.tsx` — cards clicáveis + localidade
-- `src/app/aldeia/[aldeiaId]/page.tsx` — ler/sincronizar `tab` da URL
+- `src/app/aldeia/[aldeiaId]/page.tsx` — ler/sincronizar `tab` da URL + saveEdits com novos campos
 - `src/app/aldeia/[aldeiaId]/aldeia-participacoes.tsx` — novo
 - `src/app/aldeia/[aldeiaId]/aldeia-overview.tsx` — contactos + conformidade + checklist
 - `src/app/aldeia/[aldeiaId]/aldeia-members.tsx` — pesquisa + agrupamento
+- `src/app/aldeia/[aldeiaId]/aldeia-settings.tsx` — secções de pagamentos
+- `src/app/aldeia/[aldeiaId]/aldeia-types.ts` — tipos novos
 - `src/app/api/participacoes/route.ts` — filtro `aldeiaId`
 - `src/app/api/aldeias/route.ts` — garantir `localidade` no select da listagem
+- `src/app/api/aldeias/[id]/route.ts` — sensitiveFields + devolver novos campos
+- `prisma/schema.prisma` — `telefoneMBWay`, `emailPagamentos` na Aldeia
+- `src/components/modals/carregar-saldo-hooks.ts`, `carregar-saldo-form.tsx`, `carregar-saldo-types.ts` — usar os novos dados
 - Testes: `src/__tests__/` (novo caso para filtro aldeiaId)
