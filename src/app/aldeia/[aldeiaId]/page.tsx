@@ -160,10 +160,17 @@ function AldeiaDetailContent() {
       // IBAN and titular are sensitive — only include if changed
       if (editForm.iban !== aldeia?.iban) payload.iban = editForm.iban
       if (editForm.nomeTitularConta !== aldeia?.nomeTitularConta) payload.nomeTitularConta = editForm.nomeTitularConta
+      if (editForm.telefoneMBWay !== aldeia?.telefoneMBWay) payload.telefoneMBWay = editForm.telefoneMBWay
+      if (editForm.emailPagamentos !== aldeia?.emailPagamentos) payload.emailPagamentos = editForm.emailPagamentos
       // School fields
       if (editForm.nomeEscola !== aldeia?.nomeEscola) payload.nomeEscola = editForm.nomeEscola
       if (editForm.codigoEscola !== aldeia?.codigoEscola) payload.codigoEscola = editForm.codigoEscola
       if (editForm.nivelEnsino !== aldeia?.nivelEnsino) payload.nivelEnsino = editForm.nivelEnsino
+
+      if ((editForm as any).metodosPagamentoAceites !== (aldeia as any)?.metodosPagamentoAceites) {
+        payload.metodosPagamentoAceites = (editForm as any).metodosPagamentoAceites
+      }
+      if (payload.metodosPagamentoAceites === null) delete payload.metodosPagamentoAceites
 
       if (Object.keys(payload).length === 0) {
         toast.info("Nenhuma alteração detected")

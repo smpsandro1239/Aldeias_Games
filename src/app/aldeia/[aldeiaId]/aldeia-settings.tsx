@@ -11,6 +11,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Edit, Loader2 } from "lucide-react"
 import { AldeiaData } from "./aldeia-types"
 
+const PAYMENT_OPTIONS = [
+  { key: "mbway", label: "MBWay", desc: "Recebido via MBWay" },
+  { key: "dinheiro", label: "Dinheiro", desc: "Recebido presencialmente" },
+  { key: "stripe", label: "Cartão (Stripe)", desc: "Pagamento online por cartão" },
+  { key: "transferencia", label: "Transferência bancária", desc: "Depósito/transferência para o IBAN da aldeia" },
+  { key: "saldo", label: "Saldo da carteira", desc: "Utilização do saldo digital do jogador" },
+]
+
+function ToggleRow({ label, desc, enabled, onToggle, disabled }: {
+  label: string
+  desc: string
+  enabled: boolean
+  onToggle: (v: boolean) => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between py-3">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+      <Switch checked={enabled} onCheckedChange={onToggle} disabled={disabled} />
+    </div>
+  )
+}
+
+function parseMetodos(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 interface AldeiaSettingsProps {
   editForm: Partial<AldeiaData>
   editMode: boolean
@@ -176,6 +212,54 @@ export function AldeiaSettings(props: AldeiaSettingsProps) {
                 value={editForm.nomeTitularConta || ""}
                 onChange={e => onUpdateField('nomeTitularConta', e.target.value)}
                 disabled={!editMode}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Métodos de Pagamento Aceites */}
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-1">Métodos de Pagamento Aceites</p>
+          <p className="text-xs text-muted-foreground mb-3">Os clientes só veem os métodos ativos no carregamento de saldo</p>
+          <div className="divide-y rounded-xl border px-4">
+            {PAYMENT_OPTIONS.map(opt => (
+              <ToggleRow
+                key={opt.key}
+                label={opt.label}
+                desc={opt.desc}
+                disabled={!editMode}
+                enabled={parseMetodos(editForm.metodosPagamentoAceites).includes(opt.key)}
+                onToggle={checked => {
+                  const current = parseMetodos(editForm.metodosPagamentoAceites)
+                  const next = checked ? [...current, opt.key] : current.filter(k => k !== opt.key)
+                  onUpdateField('metodosPagamentoAceites', next.length > 0 ? JSON.stringify(next) : null)
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Dados para Pagamentos */}
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-3">Dados para Pagamentos</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label>Telemóvel MBWay</Label>
+              <Input
+                value={editForm.telefoneMBWay || ""}
+                onChange={e => onUpdateField('telefoneMBWay', e.target.value)}
+                disabled={!editMode}
+                placeholder="912345678"
+              />
+            </div>
+            <div>
+              <Label>Email de Pagamentos</Label>
+              <Input
+                type="email"
+                value={editForm.emailPagamentos || ""}
+                onChange={e => onUpdateField('emailPagamentos', e.target.value)}
+                disabled={!editMode}
+                placeholder="pagamentos@aldeia.pt"
               />
             </div>
           </div>
