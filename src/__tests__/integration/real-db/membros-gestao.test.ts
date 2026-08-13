@@ -52,6 +52,15 @@ describe("Real DB: Gestão de membros da aldeia", () => {
       const r = await prisma.role.create({ data: { name, description: name } });
       roles[name] = r.id;
     }
+
+    // Fixtures para o teste de pesquisa global
+    await prisma.user.create({ data: { nome: "Alice Silva", email: "alice@teste.pt", password: "hashed:x", role: "user", saldo: 0 } });
+    await prisma.user.create({ data: { nome: "Bruno Costa", email: "bruno@teste.pt", password: "hashed:x", role: "vendedor", saldo: 0 } });
+    await prisma.user.create({ data: { nome: "Super Global", email: "super@teste.pt", password: "hashed:x", role: "super_admin", saldo: 0 } });
+    await prisma.user.create({ data: { nome: "Membro A", email: "membroa@teste.pt", password: "hashed:x", role: "user", saldo: 0 } });
+    // membro a da aldeia:
+    const membroA = await prisma.user.findUnique({ where: { email: "membroa@teste.pt" } });
+    await prisma.userAldeiaRole.create({ data: { userId: membroA.id, aldeiaId: aldeia.id, roleId: roles.MEMBRO } });
   });
 
   afterAll(async () => {
@@ -126,6 +135,53 @@ describe("Real DB: Gestão de membros da aldeia", () => {
         ),
         { params: Promise.resolve({ id: aldeia.id }) },
       );
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe("GET /membros/search", () => {
+    let searchGET: any;
+
+    beforeAll(async () => {
+      const route = await import("@/app/api/aldeias/[id]/membros/search/route");
+      searchGET = route.GET;
+    });
+
+    const reqGET = (q: string | null, params: Record<string, string>) => {
+      const url = new URL(`http://test/api/aldeias/${params.id}/membros/search`);
+      if (q !== null) url.searchParams.set("q", q);
+      return { url: url.toString(), headers: new Headers() } as any;
+    };
+
+    it("devolve utilizadores globais que não são membros, por nome", async () => {
+      mocks.user = { id: "super1", role: "super_admin", aldeiaId: null };
+      const res = await searchGET(reqGET("alice", { id: aldeia.id }), { params: Promise.resolve({ id: aldeia.id }) });
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.users.length).toBe(1);
+      expect(body.users[0].email).toBe("alice@teste.pt");
+    });
+
+    it("procurar por email; não devolve já-membros nem super_admins", async () => {
+      mocks.user = { id: "super1", role: "super_admin", aldeiaId: null };
+      const res = await searchGET(reqGET("membroa", { id: aldeia.id }), { params: Promise.resolve({ id: aldeia.id }) });
+      const body = await res.json();
+      expect(body.users.some((u: any) => u.email === "membroa@teste.pt")).toBe(false);
+
+      const resSuper = await searchGET(reqGET("super@teste.pt", { id: aldeia.id }), { params: Promise.resolve({ id: aldeia.id }) });
+      const bodySuper = await resSuper.json();
+      expect(bodySuper.users.some((u: any) => u.email === "super@teste.pt")).toBe(false);
+    });
+
+    it("q com menos de 2 caracteres devolve 400", async () => {
+      mocks.user = { id: "super1", role: "super_admin", aldeiaId: null };
+      const res = await searchGET(reqGET("a", { id: aldeia.id }), { params: Promise.resolve({ id: aldeia.id }) });
+      expect(res.status).toBe(400);
+    });
+
+    it("devolve 403 para utilizador normal", async () => {
+      mocks.user = { id: "u1", role: "user", aldeiaId: null };
+      const res = await searchGET(reqGET("alice", { id: aldeia.id }), { params: Promise.resolve({ id: aldeia.id }) });
       expect(res.status).toBe(403);
     });
   });
