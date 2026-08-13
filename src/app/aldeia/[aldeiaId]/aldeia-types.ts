@@ -16,6 +16,8 @@ export interface AldeiaData {
   responsavel: string | null
   iban: string | null
   nomeTitularConta: string | null
+  telefoneMBWay: string | null
+  emailPagamentos: string | null
   nomeEscola: string | null
   codigoEscola: string | null
   nivelEnsino: string | null

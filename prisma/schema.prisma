@@ -269,6 +269,8 @@ model Aldeia {
   metodosPagamentoAceites String?               @default("[\"dinheiro\",\"saldo\",\"mbway\",\"stripe\",\"transferencia\",\"vendedor\"]") // JSON array com todos os métodos aceites (null = todos)
   iban                    String?
   nomeTitularConta        String?
+  telefoneMBWay           String?
+  emailPagamentos         String?
   avisoPagamentosEnviado  Boolean               @default(false)
   nomeEscola              String?
   codigoEscola            String?
