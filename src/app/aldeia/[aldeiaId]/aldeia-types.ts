@@ -36,7 +36,7 @@ export interface AldeiaData {
   }>
   admins: Array<{ id: string; nome: string }>
   vendedores: Array<{ id: string; nome: string }>
-  _count: { userAldeiaRoles: number; eventos: number; jogos: number; premios: number }
+  _count: { userAldeiaRoles: number; eventos: number; jogos: number; premios: number; participacoes: number }
   eventos?: Array<{
     id: string
     nome: string

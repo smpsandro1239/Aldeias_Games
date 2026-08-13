@@ -97,8 +97,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{id: 
       )
     }
 
+    const participacoesCount = await prisma.participacao.count({
+      where: { jogo: { evento: { aldeiaId: id } } },
+    })
+
     return NextResponse.json({
       ...aldeia,
+      _count: { ...aldeia._count, participacoes: participacoesCount },
       membrosAtivos: aldeia._count.userAldeiaRoles,
       totalEventos: aldeia._count.eventos,
       totalJogos: aldeia._count.jogos,
