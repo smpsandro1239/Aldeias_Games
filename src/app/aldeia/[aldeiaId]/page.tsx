@@ -219,6 +219,20 @@ function AldeiaDetailContent() {
     }
   }
 
+  const handleRegistarMembro = async (data: { nome: string; email: string; password: string; role: string }) => {
+    const res = await apiRequest(`/api/aldeias/${aldeiaId}/membros/registar`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || "Erro ao registar membro")
+    }
+    toast.success("Utilizador criado e adicionado à aldeia")
+    setShowAddMember(false)
+    fetchAldeia()
+  }
+
   const removeMember = async (userId: string, nome: string) => {
     if (!confirm(`Remover ${nome} desta aldeia?`)) return
     try {
@@ -440,6 +454,8 @@ function AldeiaDetailContent() {
         open={showAddMember}
         onOpenChange={setShowAddMember}
         onAdd={handleAddMember}
+        onRegistar={handleRegistarMembro}
+        aldeiaId={aldeiaId}
       />
 
       <CreateJogoModal
