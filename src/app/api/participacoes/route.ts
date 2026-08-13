@@ -50,6 +50,36 @@ export async function GET(request: NextRequest) {
        where.ganhador = true;
      }
 
+     const aldeiaId = url.searchParams.get('aldeiaId');
+
+     if (aldeiaId) {
+       if (user.role === 'super_admin') {
+         // Global: filtra participações dos jogos da aldeia pedida
+         const jogosData = await prisma.jogo.findMany({
+           where: { evento: { aldeiaId } },
+           select: { id: true },
+         });
+         where = {
+           ...where,
+           jogoId: { in: jogosData.map((j: { id: string }) => j.id) },
+         };
+       } else if (user.role === 'aldeia_admin') {
+         // Admin só pode filtrar a própria aldeia (o branch de role já estreita para a sua)
+         if (aldeiaId !== user.aldeiaId) {
+           return NextResponse.json(
+             { error: 'Não autorizado a consultar participações de outra aldeia' },
+             { status: 403 }
+           );
+         }
+       } else {
+         // vendedor / user normal não consultam participações de aldeias
+         return NextResponse.json(
+           { error: 'Não autorizado' },
+           { status: 403 }
+         );
+       }
+     }
+
     // Filtrar por permissões
     if (user.role === 'super_admin') {
       // Super admin vê todas
