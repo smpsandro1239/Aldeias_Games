@@ -11,12 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CreateEventoModal } from "@/components/modals/create-evento-modal"
 import { CreateJogoModal } from "@/components/modals/create-jogo-modal"
 import type { JogoData } from "@/components/modals/create-jogo-types"
-import { ArrowLeft, Users, Calendar, Settings, Eye } from "lucide-react"
+import { ArrowLeft, Users, Calendar, Settings, Eye, Ticket } from "lucide-react"
 import { toast } from "sonner"
 import { apiRequest } from "@/lib/api-client"
 import { AldeiaData } from "./aldeia-types"
 import { AldeiaHeader } from "./aldeia-header"
 import { AldeiaOverview } from "./aldeia-overview"
+import { AldeiaParticipacoes } from "./aldeia-participacoes"
 import { AldeiaMembers } from "./aldeia-members"
 import { AldeiaEvents } from "./aldeia-events"
 import { AldeiaSettings } from "./aldeia-settings"
@@ -358,6 +359,9 @@ function AldeiaDetailContent() {
         >
           <TabsList className="mb-6">
             <TabsTrigger value="overview"><Eye className="h-4 w-4 mr-2" /> Geral</TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="participacoes"><Ticket className="h-4 w-4 mr-2" /> Participações</TabsTrigger>
+            )}
             <TabsTrigger value="members"><Users className="h-4 w-4 mr-2" /> Membros</TabsTrigger>
             <TabsTrigger value="events"><Calendar className="h-4 w-4 mr-2" /> Eventos</TabsTrigger>
             {isAdmin && (
@@ -374,6 +378,12 @@ function AldeiaDetailContent() {
               onToggleAtivo={toggleAtivo}
             />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="participacoes">
+              <AldeiaParticipacoes aldeiaId={aldeiaId} />
+            </TabsContent>
+          )}
 
           <TabsContent value="members">
             <AldeiaMembers
