@@ -49,7 +49,8 @@ export function useDadosConta(aldeiaId?: string) {
           setDadosConta({
             iban: data.data.iban,
             nomeTitularConta: data.data.nomeTitularConta,
-            telefoneMBWay: data.data.telefoneMBWay
+            telefoneMBWay: data.data.telefoneMBWay,
+            emailPagamentos: data.data.emailPagamentos
           });
           // Parse metodosPagamentoAceites
           if (data.data.metodosPagamentoAceites) {

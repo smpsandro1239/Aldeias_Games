@@ -24,6 +24,7 @@ export interface DadosConta {
   iban?: string;
   nomeTitularConta?: string;
   telefoneMBWay?: string;
+  emailPagamentos?: string;
 }
 
 export interface Vendedor {

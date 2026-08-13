@@ -219,6 +219,22 @@ export function CarregarSaldoForm({
               {state.dadosConta.nomeTitularConta && (
                 <p className="text-xs text-on-surface-variant">Titular: {state.dadosConta.nomeTitularConta}</p>
               )}
+              {state.dadosConta.emailPagamentos && (
+                <p className="text-xs text-on-surface-variant">Email: {state.dadosConta.emailPagamentos}</p>
+              )}
+            </div>
+          )}
+
+          {state.metodoCarregamento === PAYMENT_METHODS.MBWAY && state.dadosConta.telefoneMBWay && (
+            <div className="bg-purple-600/10 border border-purple-600/20 rounded-xl p-3 space-y-2">
+              <p className="text-xs text-primary font-medium">Dados para MBWay:</p>
+              <p className="text-xs text-on-surface-variant">Envie para o telemóvel:</p>
+              <div className="flex items-center justify-between bg-surface-container-low p-2 rounded-lg">
+                <span className="text-xs font-mono">{state.dadosConta.telefoneMBWay}</span>
+                <button onClick={onCopiarIBAN} className="p-1 hover:bg-surface-container-high rounded" aria-label="Copiar telemóvel MBWay">
+                  <Copy className="w-4 h-4 text-primary" aria-hidden="true" />
+                </button>
+              </div>
             </div>
           )}
 
