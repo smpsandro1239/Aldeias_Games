@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,7 +13,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   Users, Building2, ChevronRight, Loader2, CheckCircle2, Calendar, Gamepad2,
-  MapPin, Search, Plus, Download, Landmark, ClipboardCheck, Pencil, Eye,
+  MapPin, Search, Plus, Download, Landmark, ClipboardCheck, Pencil,
   Euro, Ticket, Filter,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -31,6 +30,7 @@ interface Aldeia {
   ativo: boolean
   telefone?: string
   email?: string
+  localidade?: string
   membrosAtivos?: number
   totalEventos?: number
   totalJogos?: number
@@ -378,7 +378,11 @@ export default function AldeiasPage() {
                 {aldeias.map((aldeia) => {
                   const Icon = TIPO_ICON[aldeia.tipoOrganizacao] || Building2
                   return (
-                    <Card key={aldeia.id} className="group overflow-hidden h-full transition-all hover:shadow-lg hover:border-primary/50 flex flex-col">
+                    <Card
+                      key={aldeia.id}
+                      className="group overflow-hidden h-full transition-all hover:shadow-lg hover:border-primary/50 flex flex-col cursor-pointer"
+                      onClick={() => router.push(`/aldeia/${aldeia.id}`)}
+                    >
                       <div className={`h-1 bg-gradient-to-r ${TIPO_ACCENT[aldeia.tipoOrganizacao] || "from-primary/60 to-primary/10"}`} />
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
@@ -388,6 +392,11 @@ export default function AldeiasPage() {
                             </div>
                             <div className="min-w-0">
                               <CardTitle className="text-base font-semibold text-foreground truncate">{aldeia.nome}</CardTitle>
+                              {aldeia.localidade && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                  <MapPin className="h-3 w-3" /> {aldeia.localidade}
+                                </p>
+                              )}
                               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                 <Badge variant="outline" className={`text-[10px] font-bold ${TIPO_COLOR[aldeia.tipoOrganizacao] || ""}`}>
                                   {TIPO_LABEL[aldeia.tipoOrganizacao] || aldeia.tipoOrganizacao}
@@ -444,15 +453,10 @@ export default function AldeiasPage() {
                               variant="ghost"
                               size="sm"
                               className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                              onClick={() => { setEditingAldeia(aldeia); setIsCreateModalOpen(true); }}
+                              onClick={(e) => { e.stopPropagation(); setEditingAldeia(aldeia); setIsCreateModalOpen(true); }}
                               title="Editar"
                             >
                               <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button asChild variant="outline" size="sm" className="h-7 text-xs">
-                              <Link href={`/aldeia/${aldeia.id}`}>
-                                <Eye className="h-3.5 w-3.5 mr-1" /> Ver
-                              </Link>
                             </Button>
                           </div>
                         </div>
