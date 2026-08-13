@@ -18,6 +18,8 @@ const updateAldeiaSchema = z.object({
   metodosPagamentoAceites: z.string().optional(),
   iban: z.string().optional(),
   nomeTitularConta: z.string().optional(),
+  telefoneMBWay: z.string().optional(),
+  emailPagamentos: z.string().optional(),
   nomeEscola: z.string().optional(),
   codigoEscola: z.string().optional(),
   nivelEnsino: z.enum(['pre_escolar', 'primeiro_ciclo', 'segundo_ciclo', 'terceiro_ciclo', 'secundario', 'superior']).optional(),
@@ -158,7 +160,7 @@ async function updateAldeia(request: NextRequest, context: { params: Promise<{id
     }
 
     // Sensitive fields (IBAN, nomeTitularConta) require special handling
-    const sensitiveFields = ['iban', 'nomeTitularConta']
+    const sensitiveFields = ['iban', 'nomeTitularConta', 'telefoneMBWay', 'emailPagamentos']
     const hasSensitiveChanges = sensitiveFields.some(f => updateData[f as keyof typeof updateData] !== undefined)
 
     if (hasSensitiveChanges) {
