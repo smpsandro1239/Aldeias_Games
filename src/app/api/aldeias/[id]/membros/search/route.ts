@@ -50,14 +50,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         ],
       },
       select: { id: true, nome: true, email: true, role: true, telefone: true, aldeiaId: true },
-      take: limit,
+      take: limit * 3,
       orderBy: { nome: 'asc' },
     })
 
+    // Postgres é case-sensitive no `contains` — o filtro JS normaliza (SQLite já é insensitive)
     const qLower = q.toLowerCase()
-    const filtered = users.filter(
-      (u) => u.nome.toLowerCase().includes(qLower) || u.email.toLowerCase().includes(qLower),
-    )
+    const filtered = users
+      .filter(
+        (u) => u.nome.toLowerCase().includes(qLower) || u.email.toLowerCase().includes(qLower),
+      )
+      .slice(0, limit)
 
     return NextResponse.json({ users: filtered })
   } catch (error) {
