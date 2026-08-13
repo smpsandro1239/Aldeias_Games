@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { Suspense, useEffect, useState, useCallback } from "react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { LayoutHeader } from "@/components/layout-header"
 import { BottomNav } from "@/components/bottom-nav"
@@ -22,15 +22,18 @@ import { AldeiaEvents } from "./aldeia-events"
 import { AldeiaSettings } from "./aldeia-settings"
 import { AddMemberDialog } from "./aldeia-add-member-dialog"
 
-export default function AldeiaDetailPage() {
+function AldeiaDetailContent() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
   const { user } = useAuth()
   const aldeiaId = params.aldeiaId as string
 
   const [aldeia, setAldeia] = useState<AldeiaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
+  const VALID_TABS = ["overview", "participacoes", "members", "events", "settings"]
 
   const [editMode, setEditMode] = useState(false)
   const [editForm, setEditForm] = useState<Partial<AldeiaData>>({})
@@ -102,6 +105,12 @@ export default function AldeiaDetailPage() {
   useEffect(() => {
     fetchAldeia()
   }, [fetchAldeia])
+
+  useEffect(() => {
+    if (tabParam && VALID_TABS.includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
 
   const toggleVerificado = async (verificado: boolean) => {
     if (!isSuperAdmin) return
@@ -340,7 +349,13 @@ export default function AldeiaDetailPage() {
           onNewEvento={() => setShowCreateEvento(true)}
         />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            setActiveTab(value)
+            router.replace(`/aldeia/${aldeiaId}?tab=${value}`, { scroll: false })
+          }}
+        >
           <TabsList className="mb-6">
             <TabsTrigger value="overview"><Eye className="h-4 w-4 mr-2" /> Geral</TabsTrigger>
             <TabsTrigger value="members"><Users className="h-4 w-4 mr-2" /> Membros</TabsTrigger>
@@ -427,5 +442,13 @@ export default function AldeiaDetailPage() {
 
       <BottomNav />
     </LayoutHeader>
+  )
+}
+
+export default function AldeiaDetailPage() {
+  return (
+    <Suspense fallback={<LoaderScreen message="A carregar aldeia..." />}>
+      <AldeiaDetailContent />
+    </Suspense>
   )
 }
