@@ -37,6 +37,7 @@ interface Aldeia {
   totalPremios?: number
   totalParticipacoes?: number
   totalAngariado?: number
+  bannerUrl?: string | null
 }
 
 const TIPO_LABEL: Record<string, string> = {
@@ -80,6 +81,7 @@ export default function AldeiasPage() {
   const [wizardOpen, setWizardOpen] = useState(false)
   const [newAldeiaId, setNewAldeiaId] = useState("")
   const [newAldeiaNome, setNewAldeiaNome] = useState("")
+  const [bannerErro, setBannerErro] = useState<Set<string>>(new Set())
   const router = useRouter()
 
   const fetchAldeias = useCallback(async () => {
@@ -383,7 +385,33 @@ export default function AldeiasPage() {
                       className="group overflow-hidden h-full transition-all hover:shadow-lg hover:border-primary/50 flex flex-col cursor-pointer"
                       onClick={() => router.push(`/aldeia/${aldeia.id}`)}
                     >
-                      <div className={`h-1 bg-gradient-to-r ${TIPO_ACCENT[aldeia.tipoOrganizacao] || "from-primary/60 to-primary/10"}`} />
+                      {aldeia.bannerUrl && !bannerErro.has(aldeia.id) ? (
+                        <div className="relative h-32 overflow-hidden">
+                          <img
+                            src={aldeia.bannerUrl}
+                            alt=""
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                            onError={() => setBannerErro((prev) => new Set(prev).add(aldeia.id))}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="outline" className="bg-black/40 backdrop-blur-sm text-white border-white/25 text-[10px] font-bold">
+                              {TIPO_LABEL[aldeia.tipoOrganizacao] || aldeia.tipoOrganizacao}
+                            </Badge>
+                            {aldeia.verificado ? (
+                              <Badge className="bg-green-500/80 text-white border-transparent text-[10px]">
+                                <CheckCircle2 className="h-3 w-3 mr-1" /> Verificada
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-orange-500/80 text-white border-transparent text-[10px]">
+                                Pendente
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={`h-1 bg-gradient-to-r ${TIPO_ACCENT[aldeia.tipoOrganizacao] || "from-primary/60 to-primary/10"}`} />
+                      )}
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3 min-w-0">
