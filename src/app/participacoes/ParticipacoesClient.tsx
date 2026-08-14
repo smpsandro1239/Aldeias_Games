@@ -38,6 +38,7 @@ interface Participacao {
 
 interface ParsedDados {
   numeros?: number[];
+  numero?: number;
   coordenadas?: { letra: string; numero: number }[];
 }
 
@@ -187,7 +188,7 @@ export default function ParticipacoesClient() {
           const hash = getHash(participacao);
           const dados = parseDadosParticipacao(participacao.dadosParticipacao);
           const verificacao = parseDadosVerificacao(participacao.dadosVerificacao);
-          const numeros = dados?.numeros;
+          const numeros = dados?.numeros || (dados?.numero !== undefined ? [dados.numero] : undefined);
           const coordenadas = dados?.coordenadas;
           const isRaspadinha = participacao.jogo.tipo === 'raspadinha';
           const isConcluido = participacao.estadoPagamento === 'concluido';

@@ -102,6 +102,14 @@ export async function POST(request: NextRequest) {
             .update(`${seed}:${resultado}:${uniqueSalt}:${timestamp}`)
             .digest('hex');
           hashCorresponde = novoHash === hash;
+        } else if (typeof dadosVerificacao.numero === 'number') {
+          // Rifa: formato novo (1 participação = 1 número)
+          const resultado = JSON.stringify([dadosVerificacao.numero]);
+          const novoHash = crypto
+            .createHash('sha256')
+            .update(`${seed}:${resultado}:${uniqueSalt}:${timestamp}`)
+            .digest('hex');
+          hashCorresponde = novoHash === hash;
         }
       } catch (e) {
         console.error('Erro ao verificar dados:', e);
@@ -139,7 +147,7 @@ export async function POST(request: NextRequest) {
         valorPago: participacao.valorPago,
         createdAt: participacao.createdAt,
         dadosVerificacao: dadosVerificacao,
-        resultado: participacao.resultadoRaspe || (dadosVerificacao?.numeros || dadosVerificacao?.coordenadas),
+        resultado: participacao.resultadoRaspe || (dadosVerificacao?.numeros || dadosVerificacao?.coordenadas || (typeof dadosVerificacao?.numero === 'number' ? [dadosVerificacao.numero] : undefined)),
         cliente: participacao.nomeCliente || participacao.user?.nome,
         telefone: participacao.telefoneCliente || participacao.user?.email,
         premioEntregue: participacao.premioEntregue,

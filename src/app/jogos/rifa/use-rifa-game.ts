@@ -236,27 +236,36 @@ export function useRifaGame(gamePage: ReturnType<typeof useGamePage<JogoRifa>>) 
       if (response.ok) {
         const data = await response.json();
         const p = data.participacao || data.data;
+        const primeira = Array.isArray(p) ? p[0] : p;
+        const dadosPart = (() => {
+          try {
+            return typeof primeira?.dadosParticipacao === "string"
+              ? JSON.parse(primeira.dadosParticipacao)
+              : (primeira?.dadosParticipacao || {});
+          } catch {
+            return {};
+          }
+        })();
         const novos = numerosSelecionados.filter((n) => !numerosOcupados.includes(n));
         if (novos.length > 0) {
           setNumerosOcupados((prev) => [...new Set([...prev, ...novos])]);
           setNumerosJogados((prev) => [...new Set([...prev, ...novos])]);
         }
-        setNumeroSorte(p?.numero || numerosSelecionados[0].toString().padStart(5, "0"));
+        setNumeroSorte(dadosPart?.numero?.toString().padStart(5, "0") || numerosSelecionados[0].toString().padStart(5, "0"));
         setPaymentModalOpen(false);
-        setParticipacaoCriada(p);
+        setParticipacaoCriada(primeira);
         await fetchNumerosOcupados();
         await fetchJogo();
         setParticipacaoConfirmada(true);
 
+        const hash = primeira?.hashParticipacao || primeira?.hashRaspe || data.data?.hashParticipacao || data.data?.hashRaspe;
         if (participante.notificacao === "whatsapp" && participante.telefone) {
           const tel = participante.telefone.replace(/\D/g, "");
-          const hash = data.data?.hashParticipacao || data.data?.hashRaspe;
           const msg = encodeURIComponent(
             `🎉 Participação Confirmada!\n\nRifa: ${jogo.nome}\nNúmeros: ${numerosSelecionados.join(", ")}\n\nCódigo: ${hash ? hash.substring(0, 16) + "..." : "Consulte o seu perfil"}\n\nObrigado por apoiar!`
           );
           window.open(`https://wa.me/351${tel}?text=${msg}`, "_blank");
         } else if (participante.notificacao === "email" && participante.email) {
-          const hash = data.data?.hashParticipacao || data.data?.hashRaspe;
           const subject = encodeURIComponent(`Confirmação - ${jogo.nome}`);
           const body = encodeURIComponent(`Números: ${numerosSelecionados.join(", ")}\nCódigo: ${hash || "Consulte o seu perfil"}`);
           window.open(`mailto:${participante.email}?subject=${subject}&body=${body}`);

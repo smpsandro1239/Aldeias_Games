@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
           let resultadoStr = 'sem_premio';
           if (dadosPart?.numeros) resultadoStr = JSON.stringify(dadosPart.numeros);
           else if (dadosPart?.coordenadas) resultadoStr = JSON.stringify(dadosPart.coordenadas);
+          else if (dadosPart?.numero) resultadoStr = JSON.stringify([dadosPart.numero]);
 
           const novoHash = crypto.createHash('sha256')
             .update(`${seed}:${resultadoStr}:${uniqueSalt}:${timestamp}`)

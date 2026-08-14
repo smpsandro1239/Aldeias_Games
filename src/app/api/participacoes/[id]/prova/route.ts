@@ -83,6 +83,10 @@ export async function GET(
           } else if (dadosPart.coordenadas) {
             resultadoStr = JSON.stringify(dadosPart.coordenadas);
             coordenadas = dadosPart.coordenadas as { letra: string; numero: number }[];
+          } else if (dadosPart.numero) {
+            // Rifa: formato novo (1 participação = 1 número)
+            resultadoStr = JSON.stringify([dadosPart.numero]);
+            numerosSelecionados = [dadosPart.numero as number];
           }
 
           const novoHash = crypto.createHash('sha256')

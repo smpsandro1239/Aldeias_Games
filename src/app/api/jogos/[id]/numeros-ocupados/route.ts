@@ -10,14 +10,12 @@ export async function GET(
   try {
     const { id: jogoId } = await context.params;
 
-    // Buscar participações com estado de pagamento concluído
+    // Buscar participações com estado de pagamento concluído ou pendente
+    // (MBWay) — um número pendente fica ocupado até confirmação ou timeout.
     const participacoes = await prisma.participacao.findMany({
       where: {
         jogoId,
-        OR: [
-          { estadoPagamento: 'concluido' },
-          { metodoPagamento: { in: ['saldo', 'dinheiro'] } },
-        ],
+        estadoPagamento: { in: ['concluido', 'pendente'] },
       },
       select: {
         userId: true,
