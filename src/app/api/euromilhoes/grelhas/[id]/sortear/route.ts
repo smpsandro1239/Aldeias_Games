@@ -82,6 +82,13 @@ export async function PUT(
 
       const participacao = allParticipacoes.find((p: any) => {
         try {
+          const dados = typeof p.dadosParticipacao === "string"
+            ? JSON.parse(p.dadosParticipacao)
+            : p.dadosParticipacao;
+          // Novas participações unitárias: dadosParticipacao = {numero: N}
+          if (dados && typeof dados.numero === "number") {
+            return dados.numero === numeroSorteado;
+          }
           const numeros: number[] = JSON.parse(p.numerosSelecionados || "[]");
           return numeros.includes(numeroSorteado);
         } catch {

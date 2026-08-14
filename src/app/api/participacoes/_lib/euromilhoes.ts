@@ -15,6 +15,32 @@ function generateHash(seed: string, resultado: string, salt: string, timestamp?:
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+function parseConfig(jogo: JogoWithEvento): Record<string, unknown> {
+  if (typeof jogo.configuracao === 'string') {
+    try {
+      return JSON.parse(jogo.configuracao) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  if (jogo?.configuracao && typeof jogo.configuracao === 'object') {
+    return jogo.configuracao as Record<string, unknown>;
+  }
+  return {};
+}
+
+function readNumeros(data: any): number[] {
+  const raw = data.dadosParticipacao?.numeros ?? data.numerosSelecionados;
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(raw) ? raw : [];
+}
+
 export const euromilhoesHandler: GameHandler = {
   async validate(data: any, _jogo: JogoWithEvento) {
     if (!data.grelhaId && _jogo?.id) {
@@ -62,9 +88,15 @@ export const euromilhoesHandler: GameHandler = {
       throw new Error('Grelha bloqueada — o prazo de participação terminou');
     }
 
-    const numeros = data.dadosParticipacao?.numeros || data.numerosSelecionados;
-    if (!Array.isArray(numeros) || numeros.length < 1 || numeros.length > 50) {
-      throw new Error('Selecione entre 1 a 50 números para o Euromilhões');
+    const numeros = readNumeros(data);
+    const config = parseConfig(_jogo);
+    const maxNumeros =
+      typeof config.maxNumeros === 'number' && config.maxNumeros > 0
+        ? Math.min(config.maxNumeros, 50)
+        : 50;
+
+    if (!Array.isArray(numeros) || numeros.length < 1 || numeros.length > maxNumeros) {
+      throw new Error(`Selecione entre 1 a ${maxNumeros} números para o Euromilhões`);
     }
     for (const num of numeros) {
       if (num < 1 || num > 50) {
@@ -78,14 +110,47 @@ export const euromilhoesHandler: GameHandler = {
     const ocupados: number[] = JSON.parse(grelhaAtual.numerosOcupados || '[]');
     for (const num of numeros) {
       if (ocupados.includes(num)) {
-        throw new Error(`O número ${num} já foi selecionado nesta grelha`);
+        throw new Error(`O número ${num} já foi vendido nesta grelha`);
       }
     }
   },
 
-  prepareData(data: any) {
-    const numerosSelecionados = data.dadosParticipacao?.numeros || data.numerosSelecionados || [];
-    const resultado = JSON.stringify(numerosSelecionados);
+  // Verificação atómica da grelha DENTRO da transação (após o lock de stock do
+  // updateMany). Vendas concorrentes do mesmo número na mesma grelha não passam
+  // (o erro contém "já foi vendido" para o route devolver 400).
+  async validateInTransaction(
+    tx: Prisma.TransactionClient,
+    data: any,
+    _jogo: JogoWithEvento
+  ) {
+    const numeros = readNumeros(data);
+    if (numeros.length === 0 || !data.grelhaId) return;
+
+    const grelha = await tx.grelhaEuromilhoes.findUnique({
+      where: { id: data.grelhaId },
+      select: { numerosOcupados: true },
+    });
+    if (!grelha) return;
+
+    const ocupados: number[] = JSON.parse(grelha.numerosOcupados || '[]');
+    for (const num of numeros) {
+      if (ocupados.includes(num)) {
+        throw new Error(`O número ${num} já foi vendido nesta grelha`);
+      }
+    }
+  },
+
+  // 1 participação = 1 número. O route chama prepareData uma vez por
+  // participação; `existing.length` dá o índice do número desta participação.
+  prepareData(data: any, _jogo: JogoWithEvento, existing: any[] = []) {
+    const numerosSelecionados = readNumeros(data);
+    const index = existing.length;
+    const numero = numerosSelecionados[index];
+    if (numero === undefined) {
+      throw new Error('Número inválido na seleção');
+    }
+
+    const resultado = JSON.stringify([numero]);
     const uniqueSalt = crypto.randomBytes(32).toString('hex');
     const seed = generateSeed();
     const timestamp = new Date().toISOString();
@@ -93,15 +158,15 @@ export const euromilhoesHandler: GameHandler = {
 
     return {
       hashParticipacao: hash,
-      dadosVerificacao: JSON.stringify({ seed, timestamp, numeros: numerosSelecionados, uniqueSalt, hash }),
-      numerosSelecionados: resultado,
+      dadosParticipacao: JSON.stringify({ numero }),
+      dadosVerificacao: JSON.stringify({ seed, timestamp, numero, uniqueSalt, hash }),
+      numerosSelecionados: JSON.stringify([numero]),
       grelhaId: data.grelhaId,
     };
   },
 
   async postCreate(tx, data, _jogo, _participacoes) {
-    const numsRaw = data.dadosParticipacao?.numeros || data.numerosSelecionados;
-    const nums: number[] = typeof numsRaw === 'string' ? JSON.parse(numsRaw) : (Array.isArray(numsRaw) ? numsRaw : []);
+    const nums = readNumeros(data);
     if (data.grelhaId && nums.length > 0) {
       const grelha = await tx.grelhaEuromilhoes.findUnique({
         where: { id: data.grelhaId },

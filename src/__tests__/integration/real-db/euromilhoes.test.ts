@@ -121,7 +121,7 @@ describe("Real DB: Euromilhões — grelhas, bloqueio e processRecorrentes", () 
     it("rejeita número já ocupado na grelha", async () => {
       await expect(
         handler.validate({ grelhaId: grelha.id, numerosSelecionados: [7] }, {})
-      ).rejects.toThrow("já foi selecionado");
+      ).rejects.toThrow("já foi vendido");
     });
 
     it("aceita seleção válida", async () => {

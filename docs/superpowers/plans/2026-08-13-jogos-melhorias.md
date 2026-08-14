@@ -198,22 +198,33 @@
 
 ### M4 — Euromilhões: rasto financeiro + contexto de grelha + vencedor no admin
 
+**Decisão tomada**: adotar o mesmo modelo da M1 — **1 participação = 1 número** (frontend envia `quantidade = numeros.length`). Corrige `valorPago`, cashbox, stock e `totalParticipacoes` em bloco; a grelha continua a ser a autoridade de ocupação.
+
 **Ficheiros**:
-- `src/app/api/participacoes/_lib/euromilhoes.ts` — `valorPago = numeros.length × preco`; cashbox idem (verificar `validate`/`prepareData`)
-- `src/app/api/participacoes/numeros-ocupados` — aceitar `grelhaId` opcional; filtrar por grelha
-- `src/app/api/jogos/[id]` / admin — join vencedor (`participacao.user.nome`) no detalhe
-- `src/app/api/euromilhoes/...` — fechar grelha visualmente na `bloqueioData` (estado `bloqueado` na UI)
-- Alinhar limite de números entre página (50) e POS (5) — decidir com o utilizador (proposta: 10 máximo, configurável)
+- `src/app/api/participacoes/_lib/euromilhoes.ts` — `prepareData` por número (`{numero:N}` + `numerosSelecionados:"[N]"` + `grelhaId`); `validateInTransaction` rejeita número ocupado dentro da transação; `maxNumeros` configurável em `configuracao.maxNumeros` (default 50)
+- `src/app/api/participacoes/numeros-ocupados` — aceita `grelhaId` opcional; filtra por grelha
+- `src/app/jogos/euromilhoes/use-euromilhoes-game.ts` — `quantidade = numerosSelecionados.length`, resposta em array → primeira participação, `maxNumeros` na UI, `grelhaId` no fetch de ocupados
+- `src/app/api/euromilhoes/grelhas/[id]/sortear` — lookup do vencedor lê primeiro `dadosParticipacao.numero` (novo formato), fallback `numerosSelecionados` (legacy)
+- `src/app/api/participacoes/route.ts` — GET com join `user` + `vendedor` (nome do vencedor no admin)
 
 **Testes**:
-1. Compra 3 números em dinheiro → `valorPago = 3 × preco`, cashbox = 3 × preco
-2. `numeros-ocupados?grelhaId=X` → só números da grelha X
-3. Detalhe do jogo no admin mostra nome do vencedor (sem password)
-4. UI mostra grelha como bloqueada na `bloqueioData`
+1. Compra 5 números → 5 participações unitárias, rasto financeiro completo (valorPago, stock, totais, saldo, grelha ocupada)
+2. Venda em dinheiro → cashbox = 3 × preço
+3. `numeros-ocupados?grelhaId=X` → só números da grelha X (sem sobreposição entre grelhas)
+4. Guard atómico `validateInTransaction` rejeita número vendido; POST → 400 com reversão total
+5. Sorteio da grelha → vencedor corresponde à participação unitária
+6. GET participações → `user`/`vendedor` com nome
 
-**Critérios de aceitação**: rasto financeiro correto em dinheiro; ocupados por grelha; vencedor visível; limite consensual.
+**Critérios de aceitação**: rasto financeiro correto em dinheiro; ocupados por grelha; vencedor visível; limite configurável por jogo.
 
 **Esforço**: M (meio dia).
+
+**NOTA (Pendente — executar pelo utilizador)**: o `@@unique([jogoId, numero])` da M1 foi aplicado apenas na dev.db. Aplicar em produção (Neon), regenerando o schema postgres primeiro:
+```bash
+node scripts/gen-postgres-schema.js
+DATABASE_URL="postgresql://neondb_owner:npg_OY1W3DZkTUGH@ep-patient-haze-abnxdpma-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require" npx prisma@6.19.3 db push --schema=prisma/schema.postgres.prisma --skip-generate
+```
+Expected: `Now using PostgreSQL`; a constraint `numeros_vendidos_jogoId_numero_key` é criada (retry 2-4x se P1001 transitório).
 
 ---
 

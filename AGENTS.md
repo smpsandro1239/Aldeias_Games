@@ -571,3 +571,15 @@ URL: https://console.cloud.google.com/apis/credentials (project: aldeiasgames)
 - Requer **plano Pro** da Vercel (cron jobs não existem no Hobby).
 - Nota: `POST` mantém-se para criar jogo recorrente manualmente (admin autenticado).
 
+
+### Euromilhões — 1 Participação = 1 Número (Correção Financeira, M4)
+- **Regra**: cada número comprado é uma **participação separada** — `dadosParticipacao = { numero: N }` (como a rifa); o frontend envia `quantidade = numerosSelecionados.length`
+- **`prepareData`** usa `existing.length` como índice — o route chama `prepareData` uma vez por participação → cada uma recebe o SEU número, `numerosSelecionados: "[N]"`, `grelhaId` e `dadosVerificacao { seed, timestamp, numero, uniqueSalt, hash }`
+- **Rasto financeiro**: valorPago por participação, stock −N, `totalParticipacoes` +N, `totalAngariado` +N×preço, cashbox +N×preço (dinheiro)
+- **Guard atómico**: `validateInTransaction` (após lock de stock, dentro da `$transaction`) relê a grelha via `tx.grelhaEuromilhoes.findUnique` e rejeita número ocupado com "já foi vendido" (o route mapeia para 400)
+- **Grelha é a autoridade de ocupação** (50 números); `postCreate` marca ocupados e fecha (`estado: 'preenchida'`) aos 50 — sem constraint única (números vivem dentro de JSON)
+- **maxNumeros configurável**: `configuracao.maxNumeros` (default 50, clamp 1-50) — validado no handler e respeitado na UI (`use-euromilhoes-game.ts` limita seleção/aleatórios)
+- **numeros-ocupados**: aceita `?grelhaId=` — filtra participações por grelha (evita sobreposição entre grelhas do mesmo jogo); a UI passa `grelhaId` da grelha aberta
+- **Sorteio da grelha** (`/api/euromilhoes/grelhas/[id]/sortear`): lookup do vencedor lê primeiro `dadosParticipacao.numero` (novo formato), fallback para `numerosSelecionados` (legacy)
+- **Vencedor no admin**: `GET /api/participacoes` agora inclui `user` e `vendedor` no select (nome real em vez de "Anónimo" no VencedoresTab)
+- Testes: `unit/game-handlers.test.ts` (prepareData unitário, maxNumeros) + `integration/real-db/euromilhoes-correcao.test.ts` (7: rasto financeiro 5 números, cashbox dinheiro, ocupados por grelha, guard atómico, 400 concorrente com reversão, sorteio vencedor unitário, GET com user/vendedor)

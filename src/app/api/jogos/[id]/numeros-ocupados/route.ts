@@ -9,17 +9,23 @@ export async function GET(
 ) {
   try {
     const { id: jogoId } = await context.params;
+    const grelhaId = request.nextUrl.searchParams.get('grelhaId');
 
     // Buscar participações com estado de pagamento concluído ou pendente
     // (MBWay) — um número pendente fica ocupado até confirmação ou timeout.
+    // Para Euromilhões, filtra por grelha: cada participação unitária tem
+    // `numerosSelecionados: "[N]"` + `grelhaId`, evitando sobreposição com
+    // outras grelhas do mesmo jogo.
     const participacoes = await prisma.participacao.findMany({
       where: {
         jogoId,
         estadoPagamento: { in: ['concluido', 'pendente'] },
+        ...(grelhaId ? { grelhaId } : {}),
       },
       select: {
         userId: true,
         dadosParticipacao: true,
+        numerosSelecionados: true,
         metodoPagamento: true,
         estadoPagamento: true,
       },

@@ -149,6 +149,20 @@ export async function GET(request: NextRequest) {
           resultadoRaspe: true,
           revelado: true,
           dataRevelacao: true,
+          grelhaId: true,
+          user: {
+            select: {
+              id: true,
+              nome: true,
+              email: true,
+            },
+          },
+          vendedor: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
           jogo: {
             select: {
               id: true,

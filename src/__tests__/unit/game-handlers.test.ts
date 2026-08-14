@@ -369,17 +369,59 @@ describe('Euromilhões Handler', () => {
       expect(result).toHaveProperty('numerosSelecionados');
       expect(result).toHaveProperty('grelhaId');
       expect(result.grelhaId).toBe('grelha-1');
-      expect(result.numerosSelecionados).toBe(JSON.stringify([5, 10, 15]));
+      expect(JSON.parse(result.dadosParticipacao as string)).toEqual({ numero: 5 });
+      expect(result.numerosSelecionados).toBe(JSON.stringify([5]));
     });
 
-    it('dadosVerificacao deve conter numeros', () => {
+    it('dadosVerificacao deve conter o numero, seed e hash', () => {
       const data = { grelhaId: 'grelha-1', numerosSelecionados: [1, 2, 3] };
       const result = euromilhoesHandler.prepareData(data, jogo, []);
       const verificacao = JSON.parse(result.dadosVerificacao as string);
 
-      expect(verificacao.numeros).toEqual([1, 2, 3]);
+      expect(verificacao.numero).toBe(1);
       expect(verificacao).toHaveProperty('seed');
       expect(verificacao).toHaveProperty('uniqueSalt');
+      expect(verificacao).toHaveProperty('hash');
+    });
+
+    it('participações múltiplas: 1 participação = 1 número sequencial', () => {
+      const data = { grelhaId: 'grelha-1', numerosSelecionados: [7, 14, 21] };
+      const primeira = euromilhoesHandler.prepareData(data, jogo, []);
+      const segunda = euromilhoesHandler.prepareData(data, jogo, [{}]);
+      const terceira = euromilhoesHandler.prepareData(data, jogo, [{}, {}]);
+
+      expect(JSON.parse(primeira.dadosParticipacao as string)).toEqual({ numero: 7 });
+      expect(JSON.parse(segunda.dadosParticipacao as string)).toEqual({ numero: 14 });
+      expect(JSON.parse(terceira.dadosParticipacao as string)).toEqual({ numero: 21 });
+      expect(segunda.hashParticipacao).not.toBe(primeira.hashParticipacao);
+    });
+  });
+
+  describe('validate — maxNumeros configurável', () => {
+    const mockGrelha = {
+      id: 'grelha-1',
+      estado: 'aberta',
+      bloqueioData: new Date('2026-07-17T15:00:00Z'),
+      numerosOcupados: '[]',
+    };
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      (prisma.grelhaEuromilhoes.findUnique as any).mockResolvedValue(mockGrelha);
+      (getOfficialTime as any).mockResolvedValue(new Date('2026-07-14T18:00:00Z'));
+    });
+
+    it('respeita maxNumeros configurado no jogo', async () => {
+      const jogoConfig = makeJogo({
+        tipo: 'euromilhoes',
+        configuracao: JSON.stringify({ maxNumeros: 5 }),
+      });
+      await expect(
+        euromilhoesHandler.validate!({ grelhaId: 'grelha-1', numerosSelecionados: [1, 2, 3, 4, 5] }, jogoConfig)
+      ).resolves.toBeUndefined();
+      await expect(
+        euromilhoesHandler.validate!({ grelhaId: 'grelha-1', numerosSelecionados: [1, 2, 3, 4, 5, 6] }, jogoConfig)
+      ).rejects.toThrow('Selecione entre 1 a 5');
     });
   });
 });

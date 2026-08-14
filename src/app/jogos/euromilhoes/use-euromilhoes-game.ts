@@ -25,6 +25,11 @@ export function useEuromilhoesGame(gamePage: ReturnType<typeof useGamePage<JogoE
   const [submetendo, setSubmetendo] = useState(false);
   const [provaModalOpen, setProvaModalOpen] = useState(false);
 
+  const maxNumeros =
+    typeof jogo?.configuracao?.maxNumeros === "number" && (jogo.configuracao.maxNumeros as number) > 0
+      ? Math.min(jogo.configuracao.maxNumeros as number, MAX_NUMEROS)
+      : MAX_NUMEROS;
+
   useEffect(() => {
     if (grelha) {
       try {
@@ -45,13 +50,17 @@ export function useEuromilhoesGame(gamePage: ReturnType<typeof useGamePage<JogoE
           setJogo(jogoData as JogoEuromilhoes);
           const grelhasRes = await fetch(`/api/euromilhoes/grelhas?jogoId=${jogoData.id}`);
           const grelhasData = await grelhasRes.json();
+          let openId: string | null = null;
           if (grelhasData.success && grelhasData.data) {
             const allGrelhas: Grelha[] = grelhasData.data;
             const open = allGrelhas.find((g) => g.estado === "aberta");
+            openId = open?.id || null;
             setGrelha(open || allGrelhas[0] || null);
           }
           try {
-            const ocupRes = await fetch(`/api/jogos/${jogoData.id}/numeros-ocupados`);
+            const ocupRes = await fetch(
+              `/api/jogos/${jogoData.id}/numeros-ocupados${openId ? `?grelhaId=${openId}` : ""}`
+            );
             if (ocupRes.ok) {
               const ocupData = await ocupRes.json();
               if (ocupData.numerosOcupados) setNumerosOcupados(ocupData.numerosOcupados.map(Number));
@@ -71,12 +80,12 @@ export function useEuromilhoesGame(gamePage: ReturnType<typeof useGamePage<JogoE
     if (numerosOcupados.includes(num)) { toast.warning("Número já adquirido."); return; }
     if (numerosSelecionados.includes(num)) {
       setNumerosSelecionados((prev) => prev.filter((n) => n !== num));
-    } else if (numerosSelecionados.length < MAX_NUMEROS) {
+    } else if (numerosSelecionados.length < maxNumeros) {
       setNumerosSelecionados((prev) => [...prev, num].sort((a, b) => a - b));
     } else {
-      toast.warning(`Máximo de ${MAX_NUMEROS} números.`);
+      toast.warning(`Máximo de ${maxNumeros} números.`);
     }
-  }, [numerosSelecionados, numerosOcupados]);
+  }, [numerosSelecionados, numerosOcupados, maxNumeros]);
 
   const selectRandomNumbers = useCallback((count: number) => {
     const available = Array.from({ length: TOTAL_NUMEROS }, (_, i) => i + 1).filter(
@@ -84,9 +93,9 @@ export function useEuromilhoesGame(gamePage: ReturnType<typeof useGamePage<JogoE
     );
     if (available.length === 0) { toast.warning("Sem números disponíveis"); return; }
     const shuffled = available.sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, Math.min(count, MAX_NUMEROS - numerosSelecionados.length));
+    const selected = shuffled.slice(0, Math.min(count, maxNumeros - numerosSelecionados.length));
     setNumerosSelecionados([...numerosSelecionados, ...selected]);
-  }, [numerosSelecionados, numerosOcupados]);
+  }, [numerosSelecionados, numerosOcupados, maxNumeros]);
 
   const handleParticipar = () => {
     if (!participante.nome.trim()) { toast.error("Insira o seu nome."); return; }
@@ -105,7 +114,7 @@ export function useEuromilhoesGame(gamePage: ReturnType<typeof useGamePage<JogoE
     const payload: Record<string, unknown> = {
       jogoId: jogo.id,
       dadosParticipacao: { numeros: numerosSelecionados },
-      quantidade: 1,
+      quantidade: numerosSelecionados.length,
       metodoPagamento: metodo,
       dadosCliente: { nome: participante.nome, telefone: participante.telefone || undefined, email: participante.email || undefined },
     };
@@ -120,7 +129,10 @@ export function useEuromilhoesGame(gamePage: ReturnType<typeof useGamePage<JogoE
       if (response.ok) {
         const data = await response.json();
         setNumerosOcupados((prev) => [...new Set([...prev, ...numerosSelecionados])]);
-        setParticipacaoCriada(data.participacao || data.data || data);
+        const participacao = Array.isArray(data.participacao)
+          ? data.participacao[0]
+          : data.participacao || data.data || data;
+        setParticipacaoCriada(participacao);
         setConfirmacaoModalOpen(true);
         setPaymentModalOpen(false);
         setParticipacaoConfirmada(true);
