@@ -33,6 +33,7 @@ const updateAldeiaSchema = z.object({
   numeroAlvara: z.string().optional(),
   documentosVerificados: z.boolean().optional(),
   ativo: z.boolean().optional(),
+  eliminado: z.boolean().optional(),
   verificado: z.boolean().optional(),
 })
 
@@ -162,6 +163,20 @@ async function updateAldeia(request: NextRequest, context: { params: Promise<{id
     if (updateData.verificado !== undefined) {
       const deniedVerificado = await requirePermission(user.userId, 'MANAGE_USERS')
       if (deniedVerificado) return deniedVerificado
+    }
+
+    // Only super_admin can restore a soft-deleted aldeia
+    if (updateData.eliminado !== undefined) {
+      const deniedEliminado = await requirePermission(user.userId, 'MANAGE_USERS')
+      if (deniedEliminado) return deniedEliminado
+      if (updateData.eliminado === true) {
+        return NextResponse.json(
+          { error: 'Eliminação deve ser feita pelo fluxo de eliminação com dupla confirmação' },
+          { status: 400 }
+        )
+      }
+      // Restaurar: reativa também, para voltar a aparecer nas listas públicas
+      updateData.ativo = true
     }
 
     // Sensitive fields (IBAN, nomeTitularConta) require special handling

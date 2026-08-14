@@ -26,14 +26,16 @@ export async function GET(request: NextRequest) {
     const incluirEliminados = searchParams.get('incluirEliminados') === 'true'
 
     // Build where clause
+    const isSuperAdmin = user?.role === 'super_admin'
+    const showEliminadas = incluirEliminados && isSuperAdmin
     const where: Prisma.AldeiaWhereInput = {
-      ativo: true,
-      // Aldeias eliminadas (soft-delete) nunca aparecem em listas públicas
-      ...(incluirEliminados ? {} : { eliminado: false }),
+      // Super admin com incluirEliminados vê TUDO (ativas e inativas, eliminadas e não)
+      ...(showEliminadas ? {} : { ativo: true }),
+      ...(showEliminadas ? {} : { eliminado: false }),
     }
 
     // Non-admins only see verified aldeias
-    if (!user || user.role !== 'super_admin') {
+    if (!isSuperAdmin) {
       where.verificado = true
     }
 

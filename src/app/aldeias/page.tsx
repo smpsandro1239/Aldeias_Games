@@ -14,7 +14,7 @@ import { toast } from "sonner"
 import {
   Users, Building2, ChevronRight, Loader2, CheckCircle2, Calendar, Gamepad2,
   MapPin, Search, Plus, Download, Landmark, ClipboardCheck, Pencil,
-  Euro, Ticket, Filter,
+  Euro, Ticket, Filter, RotateCcw,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { AldeiaCreationWizard } from "@/components/modals/aldeia-creation-wizard"
@@ -28,6 +28,7 @@ interface Aldeia {
   tipoOrganizacao: string
   verificado: boolean
   ativo: boolean
+  eliminado?: boolean
   telefone?: string
   email?: string
   localidade?: string
@@ -72,6 +73,7 @@ export default function AldeiasPage() {
   const [search, setSearch] = useState("")
   const [tipoOrganizacao, setTipoOrganizacao] = useState("all")
   const [estadoVerificado, setEstadoVerificado] = useState("all")
+  const [incluirEliminadas, setIncluirEliminadas] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingAldeia, setEditingAldeia] = useState<Aldeia | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -90,6 +92,7 @@ export default function AldeiasPage() {
       const params = new URLSearchParams()
       if (search) params.set("search", search)
       if (tipoOrganizacao && tipoOrganizacao !== "all") params.set("tipoOrganizacao", tipoOrganizacao)
+      if (incluirEliminadas) params.set("incluirEliminados", "true")
       params.set("limit", "50")
 
       const res = await fetch(`/api/aldeias?${params.toString()}`)
@@ -107,11 +110,30 @@ export default function AldeiasPage() {
     } finally {
       setIsLoadingAldeias(false)
     }
-  }, [search, tipoOrganizacao, estadoVerificado])
+  }, [search, tipoOrganizacao, estadoVerificado, incluirEliminadas])
 
   useEffect(() => {
     fetchAldeias()
   }, [fetchAldeias])
+
+  const handleRestaurarAldeia = async (aldeia: Aldeia) => {
+    if (!confirm(`Restaurar a organização "${aldeia.nome}"? Ela voltará a ficar ativa e visível.`)) return
+    try {
+      const res = await fetch(`/api/aldeias/${aldeia.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eliminado: false }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Erro ao restaurar")
+      }
+      toast.success("Organização restaurada com sucesso!")
+      fetchAldeias()
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao restaurar organização")
+    }
+  }
 
   const handleSubmitAldeia = async (data: {
     id?: string
@@ -347,6 +369,15 @@ export default function AldeiasPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <label className="flex items-center gap-2 mt-3 text-xs text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={incluirEliminadas}
+                    onChange={(e) => setIncluirEliminadas(e.target.checked)}
+                    className="h-4 w-4 rounded border-outline-variant/30 accent-primary"
+                  />
+                  Incluir organizações eliminadas ou desativadas (apenas super admin)
+                </label>
               </CardContent>
             </Card>
 
@@ -438,6 +469,16 @@ export default function AldeiasPage() {
                                     Pendente
                                   </Badge>
                                 )}
+                                {aldeia.eliminado && (
+                                  <Badge className="bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25 text-[10px]">
+                                    Eliminada
+                                  </Badge>
+                                )}
+                                {!aldeia.ativo && !aldeia.eliminado && (
+                                  <Badge variant="outline" className="text-muted-foreground text-[10px]">
+                                    Desativada
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -477,6 +518,17 @@ export default function AldeiasPage() {
                             <span className="text-xs text-muted-foreground">angariados</span>
                           </div>
                           <div className="flex gap-1">
+                            {aldeia.eliminado && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-green-600 dark:text-green-400 hover:text-green-700"
+                                onClick={(e) => { e.stopPropagation(); handleRestaurarAldeia(aldeia); }}
+                                title="Restaurar"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
