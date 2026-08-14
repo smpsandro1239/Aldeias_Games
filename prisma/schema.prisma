@@ -1095,6 +1095,7 @@ model NumeroVendido {
   jogo         Jogo          @relation("NumeroVendidoJogo", fields: [jogoId], references: [id])
   participacao Participacao? @relation(fields: [participacaoId], references: [id])
 
+  @@unique([jogoId, numero])
   @@index([jogoId])
   @@index([numero])
   @@map("numeros_vendidos")

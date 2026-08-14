@@ -190,49 +190,44 @@ describe('Rifa Handler', () => {
       expect((result.hashParticipacao as string).length).toBe(64);
     });
 
-    it('dadosVerificacao deve conter numeros e seed', () => {
+    it('cada participação fica com UM número (1 participação = 1 número)', () => {
+      const data = { dadosParticipacao: { numeros: [7, 14, 21] } };
+      const primeira = rifaHandler.prepareData(data, jogo, []);
+      expect(JSON.parse(primeira.dadosParticipacao as string)).toEqual({ numero: 7 });
+
+      const segunda = rifaHandler.prepareData(data, jogo, [{ id: 'p0' }]);
+      expect(JSON.parse(segunda.dadosParticipacao as string)).toEqual({ numero: 14 });
+
+      const terceira = rifaHandler.prepareData(data, jogo, [{ id: 'p0' }, { id: 'p1' }]);
+      expect(JSON.parse(terceira.dadosParticipacao as string)).toEqual({ numero: 21 });
+    });
+
+    it('dadosVerificacao deve conter o número, seed e hash', () => {
       const data = { dadosParticipacao: { numeros: [7, 14, 21] } };
       const result = rifaHandler.prepareData(data, jogo, []);
       const verificacao = JSON.parse(result.dadosVerificacao as string);
 
-      expect(verificacao.numeros).toEqual([7, 14, 21]);
+      expect(verificacao.numero).toBe(7);
       expect(verificacao).toHaveProperty('seed');
       expect(verificacao).toHaveProperty('timestamp');
       expect(verificacao).toHaveProperty('uniqueSalt');
       expect(verificacao).toHaveProperty('hash');
+      expect(verificacao.hash).toBe(result.hashParticipacao);
     });
 
-    it('deve rejeitar números já vendidos', () => {
-      const existing = [
-        { dadosParticipacao: JSON.stringify({ numeros: [5, 10] }) },
-      ];
-      const data = { dadosParticipacao: { numeros: [5, 15] } };
-      expect(() => rifaHandler.prepareData(data, jogo, existing)).toThrow('O número 5 já foi vendido');
+    it('hash cobre o número exato da participação', () => {
+      const data = { dadosParticipacao: { numeros: [42] } };
+      const result = rifaHandler.prepareData(data, jogo, []);
+      const v = JSON.parse(result.dadosVerificacao as string);
+      const recomputado = crypto.createHash('sha256')
+        .update(`${v.seed}:${JSON.stringify([42])}:${v.uniqueSalt}:${v.timestamp}`)
+        .digest('hex');
+      expect(recomputado).toBe(result.hashParticipacao);
     });
 
-    it('deve aceitar quando existing tem dadosParticipacao como objeto', () => {
-      const existing = [
-        { dadosParticipacao: { numeros: [5, 10] } },
-      ];
-      const data = { dadosParticipacao: { numeros: [15, 20] } };
-      expect(() => rifaHandler.prepareData(data, jogo, existing)).not.toThrow();
-    });
-
-    it('deve ignorar existing com dadosParticipacao inválido', () => {
-      const existing = [
-        { dadosParticipacao: 'invalid json {{{' },
-        { dadosParticipacao: null },
-      ];
-      const data = { dadosParticipacao: { numeros: [1, 2] } };
-      expect(() => rifaHandler.prepareData(data, jogo, existing)).not.toThrow();
-    });
-
-    it('deve aceitar números diferentes dos já vendidos', () => {
-      const existing = [
-        { dadosParticipacao: JSON.stringify({ numeros: [1, 2, 3] }) },
-      ];
-      const data = { dadosParticipacao: { numeros: [4, 5, 6] } };
-      expect(() => rifaHandler.prepareData(data, jogo, existing)).not.toThrow();
+    it('quantidade > numeros existentes -> número inválido', () => {
+      const data = { quantidade: 3, dadosParticipacao: { numeros: [1, 2] } };
+      expect(() => rifaHandler.prepareData(data, jogo, [{ id: 'p0' }, { id: 'p1' }])).toThrow('Número inválido');
     });
   });
 });

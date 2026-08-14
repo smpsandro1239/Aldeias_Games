@@ -617,6 +617,14 @@ export async function POST(request: NextRequest) {
     if (error.message && error.message.includes('já foi vendido')) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+    // Constraint @@unique([jogoId, numero]) — venda concorrente do mesmo número
+    // de rifa: a transação inteira reverte (stock, saldo, cashbox).
+    if ((error as { code?: string })?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'O número já foi vendido (venda concorrente). Tente novamente.' },
+        { status: 400 }
+      );
+    }
     if (error.message === 'SALDO_INSUFICIENTE') {
       return NextResponse.json({ error: 'Saldo insuficiente na carteira' }, { status: 400 });
     }

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
-import { GameHandler, JogoWithEvento } from './types';
-import { prisma } from '@/lib/db';
+import { GameHandler, JogoWithEvento, ParticipacaoRequestData } from './types';
+// @ts-ignore - @prisma/client types generated at build time
+import { Prisma } from '@prisma/client';
 
 function generateSeed(): string {
   return crypto.randomBytes(32).toString('hex');
@@ -14,7 +15,7 @@ function generateHash(seed: string, resultado: string, salt: string, timestamp?:
 }
 
 export const rifaHandler: GameHandler = {
-  async validate(data: any, jogo: JogoWithEvento) {
+  async validate(data: ParticipacaoRequestData, _jogo: JogoWithEvento) {
     const numeros = data.dadosParticipacao?.numeros;
     if (!Array.isArray(numeros) || numeros.length !== data.quantidade) {
       throw new Error('Quantidade deve corresponder ao número de números selecionados');
@@ -22,57 +23,45 @@ export const rifaHandler: GameHandler = {
     if (new Set(numeros).size !== numeros.length) {
       throw new Error('Números duplicados na seleção');
     }
-
-    try {
-      const existing = await prisma.participacao.findMany({
-        where: { jogoId: jogo.id },
-        select: { dadosParticipacao: true },
-      });
-
-      const ocupados = new Set<number>();
-      for (const p of existing) {
-        try {
-          const dados = typeof p.dadosParticipacao === 'string'
-            ? JSON.parse(p.dadosParticipacao)
-            : p.dadosParticipacao;
-          if (dados?.numeros && Array.isArray(dados.numeros)) {
-            dados.numeros.forEach((n: number) => ocupados.add(n));
-          }
-        } catch { /* ignore */ }
-      }
-
-      for (const num of numeros) {
-        if (ocupados.has(num)) {
-          throw new Error(`O número ${num} já foi vendido`);
-        }
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes('já foi vendido')) throw err;
-      // If prisma is unavailable (unit tests), skip DB uniqueness check
-    }
   },
 
-  prepareData(data: any, _jogo: JogoWithEvento, existing: any[]) {
-    const numerosSelecionados = data.dadosParticipacao?.numeros || [];
-    const numerosOcupados = new Set<number>();
-    for (const p of existing) {
-      try {
-        const dados = typeof p.dadosParticipacao === 'string'
-          ? JSON.parse(p.dadosParticipacao)
-          : p.dadosParticipacao;
-        if (dados?.numeros) {
-          dados.numeros.forEach((n: number) => numerosOcupados.add(n));
-        }
-      } catch { /* ignore parse errors */ }
-    }
+  // Verificação atómica de unicidade DENTRO da transação, após o lock de stock
+  // (updateMany no route). A leitura de NumeroVendido é serializada pela linha
+  // do jogo locked — vendas concorrentes do mesmo número não passam. O
+  // constraint @@unique([jogoId, numero]) é o backstop final (P2002).
+  async validateInTransaction(
+    tx: Prisma.TransactionClient,
+    data: ParticipacaoRequestData,
+    jogo: JogoWithEvento
+  ) {
+    const numeros = (data.dadosParticipacao?.numeros as number[] | undefined) || [];
+    if (numeros.length === 0) return;
 
-    for (const num of numerosSelecionados) {
-      if (numerosOcupados.has(num)) {
+    const vendidos = await tx.numeroVendido.findMany({
+      where: { jogoId: jogo.id, numero: { in: numeros } },
+      select: { numero: true },
+    });
+    const ocupados = new Set(vendidos.map((v) => v.numero));
+    for (const num of numeros) {
+      if (ocupados.has(num)) {
         throw new Error(`O número ${num} já foi vendido`);
       }
     }
+  },
 
-    const resultado = JSON.stringify(numerosSelecionados);
+  // 1 participação = 1 número. O route chama prepareData uma vez por
+  // participação; `existing.length` dá o índice do número desta participação.
+  // Cada participação fica com o SEU número, hash e dadosVerificacao próprios —
+  // todos os números comprados têm chance de ganhar (odds corretas).
+  prepareData(data: ParticipacaoRequestData, _jogo: JogoWithEvento, existing: any[] = []) {
+    const numerosSelecionados = (data.dadosParticipacao?.numeros as number[] | undefined) || [];
+    const index = existing.length;
+    const numero = numerosSelecionados[index];
+    if (numero === undefined) {
+      throw new Error('Número inválido na seleção');
+    }
+
+    const resultado = JSON.stringify([numero]);
     const uniqueSalt = crypto.randomBytes(32).toString('hex');
     const timestamp = new Date().toISOString();
     const seed = generateSeed();
@@ -80,19 +69,29 @@ export const rifaHandler: GameHandler = {
 
     return {
       hashParticipacao: hash,
-      dadosVerificacao: JSON.stringify({ seed, timestamp, numeros: numerosSelecionados, uniqueSalt, hash }),
+      dadosParticipacao: JSON.stringify({ numero }),
+      dadosVerificacao: JSON.stringify({ seed, timestamp, numero, uniqueSalt, hash }),
     };
   },
 
-  async postCreate(tx, data, _jogo, participacoes) {
-    const numerosSelecionados: number[] = Array.isArray(data.dadosParticipacao?.numeros) ? data.dadosParticipacao!.numeros as number[] : [];
-    if (numerosSelecionados.length > 0 && participacoes.length > 0) {
-      await tx.numeroVendido.createMany({
-        data: numerosSelecionados.map((num: number) => ({
-          jogoId: data.jogoId!,
-          numero: num,
-        })) as any,
-      });
-    }
+  async postCreate(
+    tx: Prisma.TransactionClient,
+    data: ParticipacaoRequestData,
+    _jogo: JogoWithEvento,
+    participacoes: any[]
+  ) {
+    const numeros = (data.dadosParticipacao?.numeros as number[] | undefined) || [];
+    if (numeros.length === 0 || participacoes.length === 0) return;
+
+    // Liga cada participação ao seu número; @@unique([jogoId, numero]) garante
+    // que um número só é vendido uma vez (falha a transação inteira se houver
+    // conflito de corrida — o stock e o saldo debitados revertem).
+    await tx.numeroVendido.createMany({
+      data: participacoes.map((p, i) => ({
+        jogoId: data.jogoId!,
+        numero: numeros[i],
+        participacaoId: p.id,
+      })),
+    });
   },
 };
