@@ -355,6 +355,21 @@ Pages:
 - Inclui `premios` com `valorDinheiroAlternative` para rifa mostrar prémios configurados
 - **IMPORTANTE**: Este endpoint é usado pelas páginas de jogo (rifa, raspadinha, etc.) para mostrar dados do jogo ao utilizador
 
+### Rifa — 1 Participação = 1 Número (Odds Corretas + Unicidade)
+- **Regra**: cada número comprado é uma **participação separada** — `dadosParticipacao = { numero: N }` (nunca arrays)
+- `rifaHandler.prepareData` usa `existing.length` como índice — o route chama `prepareData` uma vez por participação → cada uma recebe o SEU número, hash e `dadosVerificacao { seed, timestamp, numero, uniqueSalt, hash }`
+- Hash cobre o número exato: `sha256(seed:JSON.stringify([numero]):salt:timestamp)`
+- **Unicidade**: `validateInTransaction` (depois do lock de stock, dentro da `$transaction`) consulta `NumeroVendido`; o constraint **`@@unique([jogoId, numero])`** é o backstop — P2002 reverte a transação inteira (stock/saldo/cashbox)
+- Route `/api/participacoes` mapeia `P2002` → 400 "O número já foi vendido (venda concorrente)"
+- **Pendentes (MBWay)**: `GET /api/jogos/[id]/numeros-ocupados` inclui `estadoPagamento: 'pendente'` — número pendente fica ocupado até confirmação/timeout
+- Consumidores do formato `{numero}` (resolver SEMPRE os 2 formatos — legacy `{numeros: [...]}` e novo `{numero}`):
+  - `src/app/api/participacoes/verificar/route.ts` (branch `typeof numero === 'number'`)
+  - `src/app/api/verificar-publico/route.ts` e `src/app/api/participacoes/[id]/prova/route.ts` (branch `dadosPart.numero`)
+  - `src/app/participacoes/ParticipacoesClient.tsx` (`dados?.numero !== undefined ? [dados.numero] : dados?.numeros`)
+- Webhook Stripe já criava 1 participação/número (`numeros: [numerosArray[i]]`) — agora protegido pela constraint
+- Sorteio (`/api/sorteios`) já lê `dadosPart.numero ?? dadosPart.numeros?.[0]` — com participações unitárias as odds são corretas
+- Testes: `integration/real-db/rifa-correcao.test.ts` (6: divisão por número, P2002, concorrência, sorteio, prova, pendente ocupado)
+
 ### Rifa — Fluxo de Confirmação (Corrigido)
 - **Bug corrigido**: Após criar participação, `jogo` não era re-fetched → stats (vendidos, angariado, participações) mostravam 0
 - **Correção**: `fetchJogo()` é chamado ANTES de `setParticipacaoConfirmada(true)` para garantir dados atualizados
