@@ -270,7 +270,8 @@ Pages:
 - **Estatísticas** (`GET /api/jogos/[id]/estatisticas`): `topNumeros` (frequência, top 10), `topCoordenadas` (poio, normaliza `{x,y}` legacy → letra), `poolRestante` (raspadinha), `vendasPorDia` (data → {quantidade, total}); acesso: super_admin + aldeia_admin/vendedor **da aldeia do jogo** (403 cross-aldeia)
 - **CSV export** (`GET /api/jogos/[id]/exportar?inicio=&fim=`): participações do jogo com BOM (`\uFEFF` + `generateCSV`) para Excel, filtro de datas (valida `YYYY-MM-DD`), header `X-SafT-Count`; mesmo scope de permissões
 - **NOTA para testes**: `res.text()` descodifica e REMOVE o BOM UTF-8 — verificar BOM via `arrayBuffer()` (bytes `ef bb bf`)
-- Testes: `integration/real-db/jogos-estatisticas.test.ts` (7: top números, pool restante, 403 cross-aldeia, CSV+BOM+filtro datas, safeConfig GET individual+lista, detail com poolRestante sem pool)
+- **EDIT de raspadinha (PUT /api/jogos/[id])**: a API pública não devolve o pool → o PUT **preserva o pool existente** quando os prémios não mudaram; se os prémios mudarem (nome/percentagem/valor/ordem ou quantidade), **regenera** via `buildRaspadinhaPool(premios, stockInicial||novo)` e notifica admins da aldeia (`notifyPoolRedefinido`, in-app `jogo_editado` + email); pool enviado explicitamente no body é respeitado; toggle de estado não toca na `configuracao` (guard `poolMudou || configuracao !== undefined`)
+- Testes: `integration/real-db/jogos-estatisticas.test.ts` (7: top números, pool restante, 403 cross-aldeia, CSV+BOM+filtro datas, safeConfig GET individual+lista, detail com poolRestante sem pool) + `integration/real-db/jogos-pool-patch.test.ts` (6: pool preservado, prémios iguais, regeneração + notificação, pool explícito, toggle estado, rifa inalterada)
 
 ### Verificação Pública de Raspadinhas
 - `/verificar-raspadinha` — página pública para qualquer pessoa verificar o resultado de uma raspadinha

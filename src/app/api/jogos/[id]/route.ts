@@ -5,10 +5,30 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { updateJogoSchema } from '@/lib/validations';
 import { logCRUD as logAudit } from '@/lib/audit';
-import { notifyJogoEditado } from '@/lib/jogo-audit-notify';
+import { notifyJogoEditado, notifyPoolRedefinido } from '@/lib/jogo-audit-notify';
+import { buildRaspadinhaPool } from '@/app/api/participacoes/_lib/raspadinha';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
+}
+
+// Compara os prémios enviados com os existentes na BD. Devolve true apenas
+// quando há alterações relevantes (nome, percentagem, valor, ordem) ou
+// mudança no número de prémios. Se nenhuma lista for enviada, assume
+// "sem alteração".
+function premiosMudaram(
+  novos: Array<{ nome: string; percentagem?: number; valorDinheiroAlternative?: number; ordem?: number }> | undefined,
+  atuais: Array<{ nome: string; percentagem?: number | null; valorDinheiroAlternative?: number | null; ordem?: number }> | undefined
+): boolean {
+  if (!novos) return false;
+  const atuaisArr = atuais || [];
+  if (novos.length !== atuaisArr.length) return true;
+
+  const normalizar = (p: { nome: string; percentagem?: number | null; valorDinheiroAlternative?: number | null; ordem?: number }) =>
+    `${p.ordem ?? 0}|${p.nome ?? ''}|${p.percentagem ?? 0}|${p.valorDinheiroAlternative ?? 0}`;
+  const a = novos.map(normalizar).sort().join(';;');
+  const b = atuaisArr.map(normalizar).sort().join(';;');
+  return a !== b;
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
@@ -54,7 +74,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
-    const jogo = await prisma.jogo.findUnique({ where: { id }, include: { evento: true } });
+    const jogo = await prisma.jogo.findUnique({
+      where: { id },
+      include: {
+        evento: true,
+        premios: { select: { id: true, nome: true, percentagem: true, valorDinheiroAlternative: true, ordem: true } },
+      },
+    });
     if (!jogo) return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 });
 
     if (user.role === 'aldeia_admin' && user.aldeiaId !== jogo.evento.aldeiaId) {
@@ -69,7 +95,57 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { premios: premiosData, ...otherData } = validation.data;
     const updateData = { ...otherData } as Prisma.JogoUpdateInput;
-    if (updateData.configuracao) updateData.configuracao = JSON.stringify(updateData.configuracao);
+
+    // ---- Raspadinha: preservar/regenerar o pool de prémios ----
+    // A API pública já não devolve `configuracao.pool` (M5) — se o admin
+    // editar o jogo sem alterar prémios, o pool existente tem de ser
+    // preservado, senão o jogo deixa de sortear prémios.
+    if (jogo.tipo === 'raspadinha') {
+      const configAtual = (() => {
+        try { return JSON.parse(jogo.configuracao || '{}'); } catch { return {}; }
+      })() as Record<string, any>;
+      const poolAtual = Array.isArray(configAtual.pool) ? (configAtual.pool as string[]) : null;
+
+      const bodyConfig = (validation.data.configuracao || {}) as Record<string, any>;
+      const premiosNovos = (premiosData && premiosData.length > 0
+        ? premiosData
+        : Array.isArray(bodyConfig.premios)
+          ? (bodyConfig.premios as Array<{ nome: string; percentagem?: number; valorDinheiroAlternative?: number; ordem?: number }>)
+          : undefined) as Array<{ nome: string; percentagem?: number; valorDinheiroAlternative?: number; ordem?: number }> | undefined;
+
+      let pool: string[] | null = poolAtual;
+      let poolMudou = false;
+
+      if (Array.isArray(bodyConfig.pool)) {
+        // Caso 3 — pool enviado explicitamente: respeitar a decisão do admin
+        pool = bodyConfig.pool as string[];
+        poolMudou = true;
+      } else if (premiosMudaram(premiosNovos, jogo.premios)) {
+        // Caso 2 — prémios alterados: regenerar o pool a partir dos novos
+        const stock = typeof validation.data.stockInicial === 'number'
+          ? validation.data.stockInicial
+          : jogo.stockInicial;
+        pool = buildRaspadinhaPool((premiosNovos || []) as Array<{ nome: string; percentagem?: number }>, stock);
+        poolMudou = true;
+        try {
+          await notifyPoolRedefinido({
+            jogoNome: jogo.nome,
+            aldeiaId: jogo.evento.aldeiaId,
+            autorNome: user.nome || 'Administrador',
+          });
+        } catch (notifyError) {
+          console.error('[jogos/PUT] Erro ao notificar pool redefinido:', notifyError);
+        }
+      }
+      // Caso 1 — sem alterações: poolAtual é preservado
+
+      if (poolMudou || validation.data.configuracao !== undefined) {
+        const configNova = { ...configAtual, ...bodyConfig, pool };
+        updateData.configuracao = JSON.stringify(configNova);
+      }
+    } else if (updateData.configuracao) {
+      updateData.configuracao = JSON.stringify(updateData.configuracao);
+    }
 
     if (updateData.estado === 'fechado' && jogo.estado !== 'fechado') {
       const participacoesAtivas = await prisma.participacao.count({

@@ -178,3 +178,31 @@ export async function notifyJogoEditado(params: {
     emailUsers(targets, subject, html),
   ]);
 }
+
+// ============ Pool de raspadinha redefinido ============
+// Avisa os admins da aldeia quando os prémios de uma raspadinha são alterados
+// e o pool de prémios é regenerado (os prémios por sortear foram repostos).
+export async function notifyPoolRedefinido(params: {
+  jogoNome: string;
+  aldeiaId?: string;
+  autorNome: string;
+}) {
+  const { jogoNome, aldeiaId, autorNome } = params;
+  const aldeia = aldeiaId
+    ? await prisma.aldeia.findUnique({ where: { id: aldeiaId }, select: { nome: true } })
+    : null;
+  const aldeiaNome = aldeia?.nome;
+  const titulo = 'Pool de prémios redefinido';
+  const mensagem = `${autorNome} alterou os prémios da raspadinha "${jogoNome}"${aldeiaNome ? ` da aldeia "${aldeiaNome}"` : ''}. O pool de prémios foi regenerado — os prémios por sortear foram repostos.`;
+
+  const targets = aldeiaId ? await getAldeiaAdmins(aldeiaId) : [];
+  if (!targets.length) return;
+
+  const subject = `${titulo}: ${jogoNome}`;
+  const html = emailShell(titulo, `<p style="font-size: 16px;">${escapeHtml(mensagem)}</p>`);
+
+  await Promise.all([
+    ...targets.map((t) => notifyUser(t.id, 'jogo_editado', titulo, mensagem)),
+    emailUsers(targets, subject, html),
+  ]);
+}
