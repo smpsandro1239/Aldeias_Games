@@ -5,8 +5,12 @@ import { requirePermission } from '@/lib/rbac/checkPermission'
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit'
 import { logSorteio } from '@/lib/audit'
 import { createLogger, extractRequestContext } from '@/lib/logger'
+import { hashClientSeed, computeFinalHash, isValidSha256Hash, hashToIndex } from '@/lib/lottery-utils'
 import crypto from 'crypto'
+// @ts-ignore - @prisma/client types generated at build time
+import { TipoNotificacao } from '@prisma/client'
 
+// PATCH — commit do sorteio (passo 1 do fluxo provably-fair)
 export async function PATCH(request: NextRequest) {
   const log = createLogger(extractRequestContext(request));
   try {
@@ -34,13 +38,30 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Não autorizado para este jogo' }, { status: 403 });
       }
 
+      // Compromisso opcional da client seed: o revelador compromete-se
+      // ANTES de conhecer a server seed; o reveal só passa se comprovar
+      // que conhece a seed original (sha256(clientSeed) === commit).
+      const clientSeedCommit: string | undefined = body.clientSeedCommit;
+      if (clientSeedCommit !== undefined) {
+        if (typeof clientSeedCommit !== 'string' || !isValidSha256Hash(clientSeedCommit)) {
+          return NextResponse.json(
+            { error: 'clientSeedCommit deve ser um hash sha256 (64 hex)' },
+            { status: 400 }
+          );
+        }
+      }
+
       const serverSeed = crypto.randomBytes(64).toString('hex');
       const commitSalt = crypto.randomBytes(32).toString('hex');
       const hashSorteio = crypto.createHash('sha256').update(`${commitSalt}:${jogoId}:${new Date().toISOString()}`).digest('hex');
 
       await prisma.jogo.update({
         where: { id: jogoId },
-        data: { seedSorteio: serverSeed, hashSorteio }
+        data: {
+          seedSorteio: serverSeed,
+          hashSorteio,
+          clientSeedCommit: clientSeedCommit ?? null,
+        }
       });
 
       // Create Sorteio in commit phase for public verification
@@ -52,6 +73,7 @@ export async function PATCH(request: NextRequest) {
           fase: 'pendente',
           preCommitHash: hashSorteio,
           commitSalt,
+          clientSeedCommit: clientSeedCommit ?? null,
           jogoId,
         }
       });
@@ -64,6 +86,8 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+// POST — reveal do sorteio (passo 2): determina o vencedor e finaliza o jogo.
+// `dryRun: true` simula sem persistir nada (variante sandbox).
 export async function POST(request: NextRequest) {
   const log = createLogger(extractRequestContext(request));
   try {
@@ -76,12 +100,19 @@ export async function POST(request: NextRequest) {
     const rateLimit = await checkRateLimit(user.id, rateLimitConfigs.sorteios);
     if (!rateLimit.allowed) return createRateLimitResponse(rateLimit.resetTime)
 
-    const { jogoId, clientSeed } = await request.json()
+    const { jogoId, clientSeed, dryRun = false } = await request.json()
     const jogo = await prisma.jogo.findUnique({
       where: { id: jogoId },
       include: {
         evento: { select: { aldeiaId: true } },
-        participacoes: { where: { estadoPagamento: 'concluido' }, orderBy: { createdAt: 'asc' } }
+        participacoes: {
+          where: { estadoPagamento: 'concluido' },
+          orderBy: { createdAt: 'asc' },
+          include: {
+            user: { select: { nome: true } },
+            vendedor: { select: { nome: true } },
+          },
+        }
       }
     })
 
@@ -92,24 +123,37 @@ export async function POST(request: NextRequest) {
     if (!jogo.seedSorteio) return NextResponse.json({ error: 'Commit necessário' }, { status: 400 })
     if (jogo.participacoes.length === 0) return NextResponse.json({ error: 'Sem participações' }, { status: 400 })
 
+    // Verificar o compromisso da client seed (se foi feito no commit):
+    // o revelador tem de provar que conhece a seed original.
+    const seedCliente = typeof clientSeed === 'string' ? clientSeed : '';
+    if (jogo.clientSeedCommit) {
+      if (!seedCliente) {
+        return NextResponse.json({ error: 'Client seed é obrigatória (compromisso realizado no commit)' }, { status: 400 });
+      }
+      if (hashClientSeed(seedCliente) !== jogo.clientSeedCommit) {
+        return NextResponse.json(
+          { error: 'Client seed não corresponde ao compromisso (adulterada)' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Find existing pendente Sorteio (from commit phase)
     const existingSorteio = await prisma.sorteio.findFirst({
       where: { jogoId, fase: 'pendente' },
       orderBy: { createdAt: 'desc' },
     });
 
-    let winningNumber: number | null = null;
-    let combinedSeed = `${jogo.seedSorteio}:${clientSeed || 'no-client-seed'}`;
-
-    const finalHash = crypto.createHash('sha256').update(combinedSeed).digest('hex');
     let vencedorId: string;
     let winningCoord: string | null = null;
     let numeroSorteado: number | null = null;
 
+    const finalHash = computeFinalHash(jogo.seedSorteio, seedCliente || 'no-client-seed');
+
     if (jogo.tipo === 'poio_da_vaca') {
       const config = JSON.parse(jogo.configuracao);
       const totalCells = config.letras.length * config.numerosPorLetra;
-      const roll = Number(BigInt('0x' + finalHash.substring(0, 12)) % BigInt(totalCells));
+      const roll = hashToIndex(finalHash, totalCells);
       const letraIdx = Math.floor(roll / config.numerosPorLetra);
       const num = (roll % config.numerosPorLetra) + 1;
       const letra = config.letras[letraIdx];
@@ -117,18 +161,50 @@ export async function POST(request: NextRequest) {
 
       const vencedor = jogo.participacoes.find((p: (typeof jogo.participacoes)[number]) => {
         const d = JSON.parse(p.dadosParticipacao);
-        return d.letra === letra && d.numero === num;
+        if (d.letra === letra && d.numero === num) return true;
+        if (Array.isArray(d.coordenadas)) {
+          return d.coordenadas.some((c: any) => c.y === num && config.letras[c.x - 1] === letra);
+        }
+        return false;
       });
       if (!vencedor) return NextResponse.json({ success: true, message: 'Ninguém ganhou', resultado: winningCoord });
       vencedorId = vencedor.id;
+    } else if (jogo.tipo === 'euromilhoes') {
+      // Um número 1-50 é sorteado; com 1 participação = 1 número (M4),
+      // o vencedor é a participação que contém exatamente esse número.
+      numeroSorteado = hashToIndex(finalHash, 50) + 1;
+      const vencedor = jogo.participacoes.find((p: (typeof jogo.participacoes)[number]) => {
+        const d = JSON.parse(p.dadosParticipacao);
+        if (typeof d.numero === 'number') return d.numero === numeroSorteado;
+        const nums: number[] = JSON.parse(p.numerosSelecionados || '[]');
+        return Array.isArray(nums) && nums.includes(numeroSorteado as number);
+      });
+      if (!vencedor) return NextResponse.json({ success: true, message: 'Ninguém ganhou', resultado: String(numeroSorteado) });
+      vencedorId = vencedor.id;
     } else {
-      const index = Number(BigInt('0x' + finalHash.substring(0, 12)) % BigInt(jogo.participacoes.length));
+      const index = hashToIndex(finalHash, jogo.participacoes.length);
       vencedorId = jogo.participacoes[index].id;
       const dadosPart = JSON.parse(jogo.participacoes[index].dadosParticipacao);
       numeroSorteado = dadosPart.numeros?.[0] ?? (dadosPart.numero ?? null);
     }
 
-    const resultado = winningCoord || String(numeroSorteado || winningNumber || '');
+    const resultado = winningCoord || String(numeroSorteado || '');
+
+    // SANDBOX — dryRun não persiste vencedores nem finaliza o jogo
+    if (dryRun === true) {
+      const vencedor = jogo.participacoes.find((p: any) => p.id === vencedorId);
+      const ipDry: string | undefined = request.headers.get('x-forwarded-for') ?? undefined;
+      const uaDry: string | undefined = request.headers.get('user-agent') ?? undefined;
+      logSorteio(user.id, jogoId, jogo.nome ?? '', 'teste', jogo.seedSorteio ?? undefined, jogo.hashSorteio ?? undefined, 1, ipDry, uaDry);
+      return NextResponse.json({
+        success: true,
+        dryRun: true,
+        vencedorId,
+        vencedorNome: vencedor?.user?.nome || vencedor?.nomeCliente || 'Desconhecido',
+        seedRevelada: jogo.seedSorteio,
+        resultado: winningCoord || numeroSorteado,
+      });
+    }
 
     // Upsert sorteio to get ID, then create vencedor in transaction
     let sorteioId: string;
@@ -166,7 +242,7 @@ export async function POST(request: NextRequest) {
           sorteado: numeroSorteado,
           dataSorteio: new Date(),
           isFinalizado: true,
-          dadosVerificacao: JSON.stringify({ clientSeed, combinedSeed, finalHash, winningNumber, winningCoord })
+          dadosVerificacao: JSON.stringify({ clientSeed: seedCliente, finalHash, winningCoord, numeroSorteado })
         }
       }),
       prisma.vencedorSorteio.create({
@@ -178,12 +254,35 @@ export async function POST(request: NextRequest) {
       })
     ]);
 
+    // Notificar todos os participantes (conta criada) quando o sorteio conclui
+    const participantesComUser = jogo.participacoes.filter((p: any) => p.userId);
+    if (participantesComUser.length > 0) {
+      const nomeJogo = jogo.nome ?? '';
+      const resultadoLegivel = winningCoord || `número ${numeroSorteado}`;
+      await prisma.notificacao.createMany({
+        data: participantesComUser.map((p: any) => ({
+          userId: p.userId,
+          tipo: TipoNotificacao.sorteio,
+          titulo: 'Sorteio concluído',
+          mensagem: `O sorteio de "${nomeJogo}" terminou — resultado: ${resultadoLegivel}. Verificá-lo na página de participações.`,
+        })),
+      });
+    }
+
     // Audit log for reveal
     const ip: string | undefined = request.headers.get('x-forwarded-for') ?? undefined;
     const userAgent: string | undefined = request.headers.get('user-agent') ?? undefined;
     logSorteio(user.id, jogoId, jogo.nome ?? '', 'reveal', jogo.seedSorteio ?? undefined, jogo.hashSorteio ?? undefined, 1, ip, userAgent);
 
-    return NextResponse.json({ success: true, vencedorId, seedRevelada: jogo.seedSorteio, resultado: winningCoord || winningNumber });
+    const vencedorRow = jogo.participacoes.find((p: any) => p.id === vencedorId);
+    return NextResponse.json({
+      success: true,
+      vencedorId,
+      vencedorNome: vencedorRow?.user?.nome || vencedorRow?.nomeCliente || 'Desconhecido',
+      seedRevelada: jogo.seedSorteio,
+      resultado: winningCoord || numeroSorteado,
+      notificados: participantesComUser.length,
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }

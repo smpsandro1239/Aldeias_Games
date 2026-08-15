@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -425,64 +422,17 @@ export function DashboardModalsLayer({
         }}
       />
 
-      <Dialog open={testJogoOpen} onOpenChange={setTestJogoOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-secondary" />
-              Testar Jogo: {testJogo?.nome}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground mb-4">
-              Esta funcionalidade permite testar o jogo em modo fictício, sem afectar dados reais.
-              O sorteio será executado usando as participações existentes e os vencedores serão determinados aleatoriamente.
-            </p>
-            {testJogoTotalParticipacoes === 0 && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Não há participações para este jogo. Cria participações primeiro para testar.
-                </AlertDescription>
-              </Alert>
-            )}
-            {testJogo && testJogoTotalParticipacoes > 0 && (
-              <SorteioModal
-                open={testJogoOpen}
-                onOpenChange={setTestJogoOpen}
-                jogoNome={testJogo.nome}
-                totalParticipacoes={testJogoTotalParticipacoes}
-                onExecutarSorteio={async (observacoes?: string) => {
-                  try {
-                    const res = await fetch("/api/sorteios/teste", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ jogoId: testJogo.id, observacoes }),
-                    });
-                    const json = await res.json();
-                    if (!res.ok) {
-                      return { success: false, error: json.error || "Erro ao executar teste" };
-                    }
-                    fetchData();
-                    return {
-                      success: true,
-                      data: {
-                        resultado: json.data.resultado,
-                        vencedores: json.data.vencedores,
-                        hash: json.data.hash,
-                        seed: json.data.seed,
-                      },
-                    };
-                  } catch (error) {
-                    console.error("Erro no teste de sorteio:", error);
-                    return { success: false, error: "Erro interno do servidor" };
-                  }
-                }}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {testJogo && testJogoTotalParticipacoes > 0 && (
+        <SorteioModal
+          open={testJogoOpen}
+          onOpenChange={setTestJogoOpen}
+          jogoNome={testJogo.nome}
+          jogoId={testJogo.id}
+          jogoTipo={testJogo.tipo}
+          totalParticipacoes={testJogoTotalParticipacoes}
+          onSorteado={() => fetchData()}
+        />
+      )}
     </>
   );
 }

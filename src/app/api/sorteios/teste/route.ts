@@ -96,17 +96,22 @@ export async function POST(request: NextRequest) {
 
       resultado = { letraVencedora: letra, numeroVencedor: numero };
 
-      // Encontrar vencedores entre as participações reais
+      // Encontrar vencedores entre as participações reais (formato handler
+      // `coordenadas` OU formato legacy `letra`+`numero`)
       const vencedoresPoio = jogo.participacoes.filter((p: (typeof jogo.participacoes)[number]) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
-        return dados.letra === letra && dados.numero === numero;
+        if (dados.letra === letra && dados.numero === numero) return true;
+        if (Array.isArray(dados.coordenadas)) {
+          return dados.coordenadas.some((c: any) => c.y === numero && config.letras[c.x - 1] === letra);
+        }
+        return false;
       });
 
       vencedores = vencedoresPoio.map((v: (typeof vencedoresPoio)[number], index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.id,
+          userId: v.user?.id ?? v.userId,
           userNome: v.user?.nome || v.nomeCliente,
           userEmail: v.user?.email || v.emailCliente,
           userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -117,7 +122,7 @@ export async function POST(request: NextRequest) {
 
       vencedoresDetalhes = vencedores.map(v => ({
         posicao: v.posicao,
-        userId: (v.dados as any).id,
+        userId: (v.dados as any).userId,
         userNome: (v.dados as any).userNome,
         userEmail: (v.dados as any).userEmail,
         userTelefone: (v.dados as any).userTelefone,
@@ -131,17 +136,20 @@ export async function POST(request: NextRequest) {
 
       resultado = { numeroVencedor };
 
-      // Encontrar vencedores entre as participações reais
+      // Encontrar vencedores entre as participações reais (formato novo
+      // `{numero: N}` da M1 + legacy `{numeros: [...]}`)
       const vencedoresRifa = jogo.participacoes.filter((p: (typeof jogo.participacoes)[number]) => {
         const dados = JSON.parse(p.dadosParticipacao as string);
-        return dados.numero === numeroVencedor;
+        if (dados.numero === numeroVencedor) return true;
+        if (Array.isArray(dados.numeros)) return dados.numeros.includes(numeroVencedor);
+        return false;
       });
 
       vencedores = vencedoresRifa.map((v: (typeof vencedoresRifa)[number], index: number) => ({
         posicao: index + 1,
         participacaoId: v.id,
         dados: {
-          userId: v.id,
+          userId: v.user?.id ?? v.userId,
           userNome: v.user?.nome || v.nomeCliente,
           userEmail: v.user?.email || v.emailCliente,
           userTelefone: v.user?.telefone || v.telefoneCliente,
@@ -151,11 +159,45 @@ export async function POST(request: NextRequest) {
 
       vencedoresDetalhes = vencedores.map(v => ({
         posicao: v.posicao,
-        userId: (v.dados as any).id,
+        userId: (v.dados as any).userId,
         userNome: (v.dados as any).userNome,
         userEmail: (v.dados as any).userEmail,
         userTelefone: (v.dados as any).userTelefone,
-        letra: (v.dados as any).letra,
+        numero: (v.dados as any).numero,
+      }));
+    } else if (jogo.tipo === 'euromilhoes') {
+      // Sorteia um número 1-50; com 1 participação = 1 número (M4) o vencedor
+      // é a participação com `dadosParticipacao.numero` exatamente esse.
+      const numeroVencedor = (parseInt(seed.slice(0, 8), 16) % 50) + 1;
+
+      resultado = { numeroVencedor };
+
+      const vencedoresEuro = jogo.participacoes.filter((p: (typeof jogo.participacoes)[number]) => {
+        const dados = JSON.parse(p.dadosParticipacao as string);
+        if (dados.numero === numeroVencedor) return true;
+        if (Array.isArray(dados.numeros)) return dados.numeros.includes(numeroVencedor);
+        const nums: number[] = JSON.parse((p as any).numerosSelecionados || '[]');
+        return Array.isArray(nums) && nums.includes(numeroVencedor);
+      });
+
+      vencedores = vencedoresEuro.map((v: (typeof vencedoresEuro)[number], index: number) => ({
+        posicao: index + 1,
+        participacaoId: v.id,
+        dados: {
+          userId: v.user?.id ?? v.userId,
+          userNome: v.user?.nome || v.nomeCliente,
+          userEmail: v.user?.email || v.emailCliente,
+          userTelefone: v.user?.telefone || v.telefoneCliente,
+          numero: numeroVencedor,
+        },
+      }));
+
+      vencedoresDetalhes = vencedores.map(v => ({
+        posicao: v.posicao,
+        userId: (v.dados as any).userId,
+        userNome: (v.dados as any).userNome,
+        userEmail: (v.dados as any).userEmail,
+        userTelefone: (v.dados as any).userTelefone,
         numero: (v.dados as any).numero,
       }));
     } else {

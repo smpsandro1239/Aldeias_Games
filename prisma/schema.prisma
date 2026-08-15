@@ -439,6 +439,7 @@ model Jogo {
   dataSorteio            DateTime?
   hashSorteio            String? // Hash commitado antes do sorteio
   seedSorteio            String? // Seed usada no sorteio
+  clientSeedCommit       String? // Hash sha256 da client seed (compromisso do revelador)
   dadosVerificacao       String? // Dados de verificação do sorteio
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
@@ -564,6 +565,7 @@ model Sorteio {
   observacoes   String?
   preCommitHash String?
   commitSalt    String?
+  clientSeedCommit String? // Hash sha256 da client seed (compromisso do revelador)
   revealedAt    DateTime?
   fase          String            @default("pendente")
   createdAt     DateTime          @default(now())

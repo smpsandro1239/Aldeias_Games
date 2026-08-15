@@ -583,3 +583,17 @@ URL: https://console.cloud.google.com/apis/credentials (project: aldeiasgames)
 - **Sorteio da grelha** (`/api/euromilhoes/grelhas/[id]/sortear`): lookup do vencedor lê primeiro `dadosParticipacao.numero` (novo formato), fallback para `numerosSelecionados` (legacy)
 - **Vencedor no admin**: `GET /api/participacoes` agora inclui `user` e `vendedor` no select (nome real em vez de "Anónimo" no VencedoresTab)
 - Testes: `unit/game-handlers.test.ts` (prepareData unitário, maxNumeros) + `integration/real-db/euromilhoes-correcao.test.ts` (7: rasto financeiro 5 números, cashbox dinheiro, ocupados por grelha, guard atómico, 400 concorrente com reversão, sorteio vencedor unitário, GET com user/vendedor)
+
+### Sorteios — Provably-Fair Commit + Reveal (Correção M3)
+- **Schema**: `Jogo.clientSeedCommit String?` + `Sorteio.clientSeedCommit String?` (ambos opcionais — compatibilidade legacy)
+- **Commit** (`PATCH /api/sorteios` com `action: 'commit'`): gera `serverSeed`, aceita `clientSeedCommit` opcional (sha256 hex de 64 chars, validado com `isValidSha256Hash`), cria `Sorteio` fase `pendente` com `preCommitHash` + `commitSalt`
+- **Reveal** (`POST /api/sorteios`): se o jogo tem `clientSeedCommit`, o `clientSeed` é OBRIGATÓRIO e `hashClientSeed(clientSeed)` tem de bater com o compromisso — senão 400 "não corresponde ao compromisso (adulterada)" / "obrigatória"
+- **hashClientSeed** (`src/lib/lottery-utils.ts`): sha256 com prefixo `clientSeed:` — implementação duplicada no cliente (Web Crypto `crypto.subtle` no `SorteioModal`) e no servidor (`crypto` node); têm de coincidir
+- **Vencedor por tipo** (POST reveal): euromilhões → número 1-50 via `hashToIndex`, vencedor = participação com `dadosParticipacao.numero` (fallback `numerosSelecionados`); poio → `winningCoord` letra+num, match `c.y === num && config.letras[c.x-1] === letra` (fallback legacy `letra`/`numero`); rifa/outros → índice aleatório
+- **dryRun:true** (sandbox): devolve `vencedorId`/`vencedorNome`/`notificados: 0` sem persistir nada (audit via `logSorteio` tipo `teste`) — usado pelo modal "Testar Jogo"
+- **Notificações**: reveal real cria notificações `tipo: 'sorteio'` via createMany para participantes com `userId` (resposta inclui `notificados`)
+- **VencedorNome**: o include de participações no reveal inclui `user { nome }` + `vendedor { nome }` (nome real no admin)
+- **Rate limit**: `sorteios: maxRequests 5/min` por user (prisma-backed) — testes limpam `prisma.rateLimit.deleteMany({})` no beforeEach
+- **Não existe `/api/sorteios/[id]`** — commit e reveal são no `/api/sorteios` (PATCH/POST); `/api/sorteios/teste` (branches modernos: rifa `{numero}`+legacy `{numeros}`, euromilhões 1-50, poio coordenadas) e `/api/sorteios/externo` (legacy) continuam para compat
+- **UI**: `SorteioModal` v2 (`src/components/modals/sorteio-modal.tsx`) — 3 fases (commit → reveal → done), seed gerada no cliente, toggle dryRun (default true), integrado em `dashboard-modals-layer.tsx` (wrapper Dialog removido)
+- Testes: `integration/real-db/sorteios-correcao.test.ts` (8: teste rifa novo/legacy/euromilhões 1..N determinístico, commit+reveal real com notificações, seed adulterada→400, sem seed→400, dryRun sem persistência, commit legacy sem clientSeedCommit)

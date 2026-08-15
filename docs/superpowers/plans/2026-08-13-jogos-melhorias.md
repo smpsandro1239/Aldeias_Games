@@ -162,7 +162,9 @@
 
 ---
 
-### M3 — Sorteios: simulação correta + UI commit/reveal + notificações
+### M3 — Sorteios: simulação correta + UI commit/reveal + notificações ✅ CONCLUÍDO
+
+**Implementado (2026-08-15)**: `SorteioModal` v2 (3 fases commit→reveal→done, seed no cliente, toggle dryRun default true), `PATCH/POST /api/sorteios` reescritos (commit guarda `serverSeed`+`clientSeedCommit` opcional; reveal verifica `hashClientSeed(clientSeed)` contra o compromisso, `dryRun:true` sem persistência, notificações `tipo:'sorteio'` via createMany), `sorteios/teste` com branches modernos (rifa `{numero}`/legacy `{numeros}`, euromilhões 1-50, poio coordenadas+legacy), schema com `Jogo.clientSeedCommit`+`Sorteio.clientSeedCommit`. **Nota**: não existe `/api/sorteios/[id]` — commit/reveal são no `/api/sorteios` (PATCH/POST). Euromilhões já é sorteável pelo fluxo genérico. 464/464 testes verdes, typecheck limpo, build OK.
 
 **Problema**: o único sorteio que os admins conseguem correr (`/sorteios/teste`, `/sorteios/externo`) usa formato legacy e nunca encontra vencedores; o sorteio provably-fair (commit + reveal) não tem UI.
 
@@ -219,12 +221,12 @@
 
 **Esforço**: M (meio dia).
 
-**NOTA (Pendente — executar pelo utilizador)**: o `@@unique([jogoId, numero])` da M1 foi aplicado apenas na dev.db. Aplicar em produção (Neon), regenerando o schema postgres primeiro:
+**NOTA (Pendente — executar pelo utilizador)**: o `@@unique([jogoId, numero])` da M1 e as colunas `Jogo.clientSeedCommit`/`Sorteio.clientSeedCommit` da M3 foram aplicados apenas na dev.db. Aplicar em produção (Neon), regenerando o schema postgres primeiro:
 ```bash
 node scripts/gen-postgres-schema.js
 DATABASE_URL="postgresql://neondb_owner:npg_OY1W3DZkTUGH@ep-patient-haze-abnxdpma-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require" npx prisma@6.19.3 db push --schema=prisma/schema.postgres.prisma --skip-generate
 ```
-Expected: `Now using PostgreSQL`; a constraint `numeros_vendidos_jogoId_numero_key` é criada (retry 2-4x se P1001 transitório).
+Expected: `Now using PostgreSQL`; a constraint `numeros_vendidos_jogoId_numero_key` é criada + 2 colunas `clientSeedCommit` adicionadas (retry 2-4x se P1001 transitório).
 
 ---
 
