@@ -259,6 +259,19 @@ Pages:
 - **Nota**: o pool NÃO é regenerado no edit (PUT) do jogo — regerar perderia o estado consumido (risco de prémios duplicados)
 - Testes: `unit/raspadinha-critical.test.ts` (contagens do pool, draw, exatidão pós-stock) + `integration/real-db/raspadinha-pool.test.ts` (100 bilhetes → exatamente 8×"2 Euro" + 2×"5 Euro", pool a 0, perdas após esgotamento, distribuição não sequencial)
 
+### Pool Secreto — API Pública Nunca Expõe o Pool (M5)
+- **Regra de segurança**: `configuracao.pool` (e `probabilidadeVitoria`/`odds`) são removidos de QUALQUER resposta pública — revelaria exatamente que prémios ainda faltam sair
+- **Onde é removido** (destructuring `{ pool, probabilidadeVitoria, odds, ...safe }`):
+  - `GET /api/jogos/[id]` (`src/app/api/jogos/[id]/route.ts`) — jogo individual (páginas de jogo)
+  - `GET /api/jogos` (lista, `src/app/api/jogos/route.ts`) — listagens públicas
+  - `GET /api/jogos/[id]/detail` (`detail/route.ts`) — config safe, MAS mantém `poolRestante` (soma por prémio, computada a partir do pool ANTES de o remover — nunca o array em si)
+- **Badge "Prémios restantes: X/Y"** (`/jogos/raspadinha-premium`): visível só para `super_admin`/`aldeia_admin`/`vendedor`; lê `GET /api/jogos/[id]/detail` → `poolRestante` (soma `qtd`) + `stockInicial` como total; estado `poolInfo` + `useEffect` próprios na page (não no hook)
+- **CUIDADO**: no `detail/route.ts` o `poolRestante` é calculado a partir de `poolRaw` capturado ANTES do destructuring — nunca de `config.pool` (já removido), senão devolve `[]` sempre
+- **Estatísticas** (`GET /api/jogos/[id]/estatisticas`): `topNumeros` (frequência, top 10), `topCoordenadas` (poio, normaliza `{x,y}` legacy → letra), `poolRestante` (raspadinha), `vendasPorDia` (data → {quantidade, total}); acesso: super_admin + aldeia_admin/vendedor **da aldeia do jogo** (403 cross-aldeia)
+- **CSV export** (`GET /api/jogos/[id]/exportar?inicio=&fim=`): participações do jogo com BOM (`\uFEFF` + `generateCSV`) para Excel, filtro de datas (valida `YYYY-MM-DD`), header `X-SafT-Count`; mesmo scope de permissões
+- **NOTA para testes**: `res.text()` descodifica e REMOVE o BOM UTF-8 — verificar BOM via `arrayBuffer()` (bytes `ef bb bf`)
+- Testes: `integration/real-db/jogos-estatisticas.test.ts` (7: top números, pool restante, 403 cross-aldeia, CSV+BOM+filtro datas, safeConfig GET individual+lista, detail com poolRestante sem pool)
+
 ### Verificação Pública de Raspadinhas
 - `/verificar-raspadinha` — página pública para qualquer pessoa verificar o resultado de uma raspadinha
 - Não requer autenticação — basta introduzir o hash da participação

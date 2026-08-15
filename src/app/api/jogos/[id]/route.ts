@@ -28,7 +28,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (rawConfig) {
       try {
         const parsed = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
-        const { probabilidadeVitoria, odds, ...safeFields } = parsed;
+        // Campos sensíveis que nunca saem na API pública:
+        // probabilidadeVitoria/odds (manipulação de odds) e pool
+        // (raspadinha — revelaria exatamente que prémios ainda faltam sair).
+        const { probabilidadeVitoria, odds, pool, ...safeFields } = parsed;
         safeConfig = safeFields;
       } catch {
         safeConfig = null;

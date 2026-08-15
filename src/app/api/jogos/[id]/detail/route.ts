@@ -44,17 +44,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
     ]);
 
     let config = null;
+    let poolRaw: unknown[] = [];
     try {
-      config = jogo.configuracao ? JSON.parse(jogo.configuracao) : null;
+      const parsed = jogo.configuracao ? JSON.parse(jogo.configuracao) : null;
+      // Nunca expor o pool (revelaria exatamente os prémios por sair)
+      if (parsed) {
+        if (Array.isArray(parsed.pool)) poolRaw = parsed.pool;
+        const { pool, probabilidadeVitoria, odds, ...safe } = parsed;
+        config = safe;
+      }
     } catch {}
 
     // Métricas do pool de raspadinha (prémios restantes por sortear)
     let poolRestante: Array<{ nome: string; qtd: number }> = [];
-    if (jogo.tipo === 'raspadinha' && config?.pool) {
-      const pool = Array.isArray(config.pool) ? config.pool : [];
+    if (jogo.tipo === 'raspadinha' && poolRaw.length > 0) {
       const contagem = new Map<string, number>();
-      for (const item of pool) {
-        contagem.set(item, (contagem.get(item) || 0) + 1);
+      for (const item of poolRaw) {
+        contagem.set(String(item), (contagem.get(String(item)) || 0) + 1);
       }
       poolRestante = Array.from(contagem.entries())
         .map(([nome, qtd]) => ({ nome, qtd }))

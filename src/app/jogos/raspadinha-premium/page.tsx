@@ -54,6 +54,24 @@ function RaspadinhaPremiumContent() {
     setPaymentModalOpen, setParticipacaoCriada,
   );
 
+  // Pool de prémios restantes (só admin/vendedor — público não vê detalhe)
+  const [poolInfo, setPoolInfo] = useState<{ restante: number; total: number } | null>(null);
+  useEffect(() => {
+    if (!jogoId) return;
+    if (!(userRole === "super_admin" || userRole === "aldeia_admin" || userRole === "vendedor")) return;
+    let ativo = true;
+    fetch(`/api/jogos/${jogoId}/detail`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!ativo || !data?.poolRestante) return;
+        const restante = (data.poolRestante as Array<{ qtd: number }>).reduce((s, p) => s + p.qtd, 0);
+        const total = typeof data.stockInicial === "number" ? data.stockInicial : restante;
+        setPoolInfo({ restante, total });
+      })
+      .catch(() => {});
+    return () => { ativo = false; };
+  }, [jogoId, userRole]);
+
   const {
     slots, showWin, winningPrize, winningSlotIds, totalRevealed,
     participacaoId, gamePhase, premioClaimed, creditedAmount, claiming,
@@ -132,6 +150,14 @@ function RaspadinhaPremiumContent() {
           <HelpCircle className="w-4 h-4" />
           Como Funciona
         </button>
+
+        {poolInfo && (userRole === "super_admin" || userRole === "aldeia_admin" || userRole === "vendedor") && (
+          <div className="flex items-center justify-center gap-2 text-xs bg-surface-container/40 border border-outline-variant/20 rounded-full px-3 py-1.5 w-fit mx-auto">
+            <Trophy className="w-3.5 h-3.5 text-secondary" />
+            <span className="text-muted-foreground">Prémios restantes:</span>
+            <span className="font-bold text-primary">{poolInfo.restante}/{poolInfo.total}</span>
+          </div>
+        )}
 
         {gamePhase === "not_paid" && (
           <motion.div

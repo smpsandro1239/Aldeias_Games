@@ -186,13 +186,14 @@ where.evento = {
       prisma.jogo.count({ where }),
     ]);
 
-    // Adicionar configuracao a cada jogo
-    const jogosComConfig = jogos.map((jogo: (typeof jogos)[number]) => ({
-      ...jogo,
-      configuracao: typeof jogo.configuracao === 'string' 
-        ? JSON.parse(jogo.configuracao) 
-        : jogo.configuracao,
-    }));
+    // Adicionar configuracao a cada jogo (sem campos sensíveis)
+    const jogosComConfig = jogos.map((jogo: (typeof jogos)[number]) => {
+      const raw = typeof jogo.configuracao === 'string'
+        ? (() => { try { return JSON.parse(jogo.configuracao); } catch { return {}; } })()
+        : jogo.configuracao;
+      const { probabilidadeVitoria, odds, pool, ...safeConfig } = (raw as Record<string, unknown>) || {};
+      return { ...jogo, configuracao: safeConfig };
+    });
 
     return NextResponse.json(
       createPaginatedResponse(jogosComConfig, total, page, limit)
