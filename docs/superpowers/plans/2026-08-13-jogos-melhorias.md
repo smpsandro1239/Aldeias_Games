@@ -127,7 +127,9 @@
 
 ---
 
-### M2 — Poio da Vaca: unificação total no fluxo de participações
+### M2 — Poio da Vaca: unificação total no fluxo de participações ✅ CONCLUÍDO
+
+**Implementado (2026-08-15)**: handler v2 (aceita `{letra,numero}` + `{x,y}` legacy, valida contra campo, guard atómico `validateInTransaction`, 1 participação = 1 quadrado com `existing.length`), route com `precoEfetivo` = custoQuadrado e `quantidade` forçada a `coordenadas.length`, `src/lib/poio-utils.ts` (normalizePoioConfig/squareIdToCoord/coordToSquareId — column-major), `numeros-ocupados` com branch poio, sorteios com fallback `normalizePoioConfig`, `POST /api/jogos` gera `letras`/`numerosPorLetra` na criação, página migrada para `/api/participacoes`, script `scripts/migrate-apostas-poio.ts` (idempotente, não apaga Apostas). 474/474 testes verdes, typecheck, build OK. Nota: venda externa (dadosCliente) não recebe cashback — igual rifa/euromilhões.
 
 **Decisão de design** (recomendada): **migrar a página pública e o handler para `POST /api/participacoes`** com tipo `poio_da_vaca`, e manter `/api/apostas` como legacy/leitura até migração completa. Alternativa (mais rápida mas pior): fazer o sorteio ler `Aposta` — cria segundo modelo de dados com cashbox/reconciliação partidos.
 

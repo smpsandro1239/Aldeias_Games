@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { normalizePoioConfig, normalizeCoordenada, coordToSquareId } from '@/lib/poio-utils';
 
 // GET público - Retorna números ocupados de um jogo (rifa)
 // Não requer autenticação - apenas retorna números, sem dados sensíveis
@@ -31,6 +32,20 @@ export async function GET(
       },
     });
 
+    // Config de poio (letras/numerosPorLetra/dimensoesCampo) para converter
+    // coordenadas em ids de quadrado como a página os apresenta.
+    const jogoInfo = await prisma.jogo.findUnique({
+      where: { id: jogoId },
+      select: { tipo: true, configuracao: true, dimensoesCampo: true },
+    });
+    const isPoio = jogoInfo?.tipo === 'poio_da_vaca';
+    const cfgPoio = isPoio
+      ? normalizePoioConfig(
+          jogoInfo?.configuracao ? JSON.parse(jogoInfo.configuracao) : {},
+          jogoInfo?.dimensoesCampo
+        )
+      : null;
+
     const numerosOcupados: number[] = [];
     const numerosDoUtilizador: number[] = [];
 
@@ -56,6 +71,14 @@ export async function GET(
           numeros = parsed.numeros;
         } else if (parsed.numero) {
           numeros = [parsed.numero];
+        } else if (isPoio && cfgPoio && Array.isArray(parsed.coordenadas)) {
+          // Poio da Vaca: coordenadas {letra, numero} ou {x, y} → ids
+          for (const c of parsed.coordenadas) {
+            const norm = normalizeCoordenada(c);
+            if (!norm) continue;
+            const id = coordToSquareId(norm, cfgPoio);
+            if (id !== null && !numeros.includes(id)) numeros.push(id);
+          }
         }
       } catch {
         numeros = [];

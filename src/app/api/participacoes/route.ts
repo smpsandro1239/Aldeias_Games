@@ -330,15 +330,26 @@ export async function POST(request: NextRequest) {
       if (!userExists) resolvedUserId = null;
     }
 
-    if (jogo.stockAtual < data.quantidade) {
-      return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 });
-    }
-
     const dadosPart = data.dadosParticipacao || {};
     const numerosArr: number[] = (dadosPart as any).numeros || data.numerosSelecionados || [];
+    // Poio da Vaca: 1 quadrado = 1 participação; o preço efetivo é o
+    // custoQuadrado (fallback para preco) e a quantidade é SEMPRE o número
+    // de coordenadas (nunca confiar na quantidade do body).
+    const isPoio = jogo.tipo === 'poio_da_vaca';
+    let quantidade = data.quantidade;
+    if (isPoio) {
+      const coords = (dadosPart as any).coordenadas;
+      if (!Array.isArray(coords) || coords.length === 0) {
+        return NextResponse.json({ error: 'Coordenadas são obrigatórias para Poio da Vaca' }, { status: 400 });
+      }
+      quantidade = coords.length;
+    }
+    const precoEfetivo = isPoio
+      ? (jogo.custoQuadrado || jogo.preco)
+      : jogo.preco;
     const valorTotal = jogo.tipo === 'euromilhoes'
       ? (Array.isArray(numerosArr) ? numerosArr.length : 1) * jogo.preco
-      : jogo.preco * data.quantidade;
+      : precoEfetivo * quantidade;
 
     if (data.metodoPagamento === 'saldo') {
       if (((user as any).saldo || 0) < valorTotal) {
@@ -347,6 +358,14 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // O stock é decrementado pelo número real de participações criadas
+    // (quantidade resolvida — para poio = nº de coordenadas).
+    const quantidadeEfetiva = isPoio ? quantidade : data.quantidade;
+
+    if (jogo.stockAtual < quantidadeEfetiva) {
+      return NextResponse.json({ error: 'Stock insuficiente' }, { status: 400 });
     }
 
     // Verificar limite por utilizador
@@ -415,15 +434,15 @@ export async function POST(request: NextRequest) {
           where: { id: data.jogoId },
           select: { stockAtual: true, preco: true, tipo: true, nome: true, eventoId: true },
         });
-        if (!jogoLocked || jogoLocked.stockAtual < data.quantidade) {
+        if (!jogoLocked || jogoLocked.stockAtual < quantidadeEfetiva) {
           throw new Error('Stock insuficiente');
         }
 
         const updated = await tx.jogo.updateMany({
-          where: { id: data.jogoId, stockAtual: { gte: data.quantidade } },
+          where: { id: data.jogoId, stockAtual: { gte: quantidadeEfetiva } },
           data: {
-            stockAtual: { decrement: data.quantidade },
-            totalParticipacoes: { increment: data.quantidade },
+            stockAtual: { decrement: quantidadeEfetiva },
+            totalParticipacoes: { increment: quantidadeEfetiva },
             totalAngariado: { increment: valorTotal },
           },
         });
@@ -460,10 +479,10 @@ export async function POST(request: NextRequest) {
         }
 
         const participacoes: any[] = [];
-        for (let i = 0; i < data.quantidade; i++) {
+        for (let i = 0; i < quantidadeEfetiva; i++) {
           const dados: Record<string, unknown> = {
             dadosParticipacao: JSON.stringify(sanitizeObject(data.dadosParticipacao)),
-            valorPago: jogo.preco,
+            valorPago: precoEfetivo,
             metodoPagamento: data.metodoPagamento,
             estadoPagamento: data.metodoPagamento === 'dinheiro' || data.metodoPagamento === 'saldo' ? 'concluido' : 'pendente',
             jogoId: data.jogoId,
@@ -498,7 +517,7 @@ export async function POST(request: NextRequest) {
         await tx.evento.update({
           where: { id: jogoLocked.eventoId },
           data: {
-            totalParticipacoes: { increment: data.quantidade },
+            totalParticipacoes: { increment: quantidadeEfetiva },
             totalAngariado: { increment: valorTotal },
           },
         });
@@ -525,7 +544,7 @@ export async function POST(request: NextRequest) {
                 userId: effectiveUser.id,
                 valor: -valorTotal,
                 tipo: 'pagamento_jogo',
-                descricao: `Pagamento de ${data.quantidade}x ${jogo.nome}`,
+                descricao: `Pagamento de ${quantidadeEfetiva}x ${jogo.nome}`,
                 referencia: jogo.id,
               },
             });
@@ -563,19 +582,18 @@ export async function POST(request: NextRequest) {
 
         if (data.metodoPagamento === 'dinheiro' && canExecuteVenda) {
           if (!effectiveUser) throw new Error('Utilizador não autenticado');
-          const valorVenda = jogo.preco * data.quantidade;
           const cashbox = await tx.vendedorCashbox.upsert({
             where: { userId: effectiveUser.id },
-            create: { userId: effectiveUser.id, saldo: valorVenda },
-            update: { saldo: { increment: valorVenda } },
+            create: { userId: effectiveUser.id, saldo: valorTotal },
+            update: { saldo: { increment: valorTotal } },
           });
 
           await tx.vendedorCashboxTransaction.create({
             data: {
               cashboxId: cashbox.id,
               tipo: 'RECEBIDO_DO_JOGADOR',
-              valor: valorVenda,
-              descricao: `Venda de ${data.quantidade}x ${jogo.nome} (dinheiro)`,
+              valor: valorTotal,
+              descricao: `Venda de ${quantidadeEfetiva}x ${jogo.nome} (dinheiro)`,
               referencia: participacoes[0]?.id,
               criadoPorId: effectiveUser.id,
             },

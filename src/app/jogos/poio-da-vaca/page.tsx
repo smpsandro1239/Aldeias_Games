@@ -44,7 +44,7 @@ function PoioDaVacaPage() {
     cells, dimensoes, numerosOcupados, apostasParaLista,
     custoPorQuadrado, valorMercado, valorCompra,
     randomOptions, isVendedor,
-    fetchJogo, fetchApostas,
+    fetchJogo, fetchOcupados, fetchParticipacoes,
     handleSquareClick, handleRandomPlay, handleClearSelection,
     handleBet, handleSubmitBet, processarPagamento,
     handlePlayerConfirmOwnData, handlePlayerConfirmNewData,
@@ -54,7 +54,7 @@ function PoioDaVacaPage() {
   const rentabilidade = calcularRentabilidade(custoPorQuadrado, valorMercado, valorCompra, totalCells);
   const statusRentabilidade = getRentabilidadeStatus(rentabilidade);
 
-  useEffect(() => { fetchJogo(); fetchApostas(); }, [fetchJogo, fetchApostas]);
+  useEffect(() => { fetchJogo(); fetchOcupados(); fetchParticipacoes(); }, [fetchJogo, fetchOcupados, fetchParticipacoes]);
 
   if (loading) {
     return (

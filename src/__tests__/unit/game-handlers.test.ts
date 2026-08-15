@@ -233,10 +233,14 @@ describe('Rifa Handler', () => {
 });
 
 describe('Poio da Vaca Handler', () => {
-  const jogo = makeJogo({ tipo: 'poio_da_vaca' });
+  const jogo = makeJogo({
+    tipo: 'poio_da_vaca',
+    configuracao: JSON.stringify({ letras: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], numerosPorLetra: 10 }),
+    dimensoesCampo: '{"x":10,"y":10}',
+  });
 
   it('deve retornar hashParticipacao e dadosVerificacao', () => {
-    const data = { dadosParticipacao: { coordenadas: ['A1', 'B5', 'C3'] } };
+    const data = { dadosParticipacao: { coordenadas: [{ letra: 'A', numero: 1 }, { letra: 'B', numero: 5 }, { letra: 'C', numero: 3 }] } };
     const result = poioHandler.prepareData(data, jogo, []);
 
     expect(result).toHaveProperty('hashParticipacao');
@@ -244,26 +248,44 @@ describe('Poio da Vaca Handler', () => {
       expect((result.hashParticipacao as string).length).toBe(64);
   });
 
-  it('dadosVerificacao deve conter coordenadas', () => {
-    const data = { dadosParticipacao: { coordenadas: ['A1', 'B5'] } };
+  it('dadosVerificacao deve conter a coordenada desta participação', () => {
+    const data = { dadosParticipacao: { coordenadas: [{ letra: 'A', numero: 1 }, { letra: 'B', numero: 5 }] } };
     const result = poioHandler.prepareData(data, jogo, []);
     const verificacao = JSON.parse(result.dadosVerificacao as string);
 
-    expect(verificacao.coordenadas).toEqual(['A1', 'B5']);
+    // 1 participação = 1 quadrado: a primeira coordenada da seleção
+    expect(verificacao.coordenadas).toEqual([{ letra: 'A', numero: 1 }]);
     expect(verificacao).toHaveProperty('seed');
     expect(verificacao).toHaveProperty('timestamp');
   });
 
-  it('deve funcionar com coordenadas vazias', () => {
-    const data = { dadosParticipacao: { coordenadas: [] } };
-    const result = poioHandler.prepareData(data, jogo, []);
-    expect(result).toHaveProperty('hashParticipacao');
+  it('cada participação do lote recebe a SUA coordenada (índice = existing.length)', () => {
+    const data = { dadosParticipacao: { coordenadas: [{ letra: 'A', numero: 1 }, { letra: 'B', numero: 5 }] } };
+    const r1 = JSON.parse(poioHandler.prepareData(data, jogo, []).dadosParticipacao as string);
+    const r2 = JSON.parse(poioHandler.prepareData(data, jogo, [{}]).dadosParticipacao as string);
+    expect(r1.coordenadas).toEqual([{ letra: 'A', numero: 1 }]);
+    expect(r2.coordenadas).toEqual([{ letra: 'B', numero: 5 }]);
   });
 
-  it('deve funcionar sem dadosParticipacao', () => {
+  it('formato legacy {x, y} é normalizado para letra/numero', () => {
+    const data = { dadosParticipacao: { coordenadas: [{ x: 2, y: 7 }] } };
+    const result = JSON.parse(poioHandler.prepareData(data, jogo, []).dadosParticipacao as string);
+    expect(result.coordenadas).toEqual([{ letra: 'B', numero: 7 }]);
+  });
+
+  it('coordenada fora do campo é rejeitada', () => {
+    const data = { dadosParticipacao: { coordenadas: [{ letra: 'Z', numero: 1 }] } };
+    expect(() => poioHandler.prepareData(data, jogo, [])).toThrow('não existe no campo');
+  });
+
+  it('coordenadas vazias são rejeitadas', () => {
+    const data = { dadosParticipacao: { coordenadas: [] } };
+    expect(() => poioHandler.prepareData(data, jogo, [])).toThrow('Coordenadas são obrigatórias');
+  });
+
+  it('sem dadosParticipacao é rejeitado', () => {
     const data = {};
-    const result = poioHandler.prepareData(data, jogo, []);
-    expect(result).toHaveProperty('hashParticipacao');
+    expect(() => poioHandler.prepareData(data, jogo, [])).toThrow('Coordenadas são obrigatórias');
   });
 });
 

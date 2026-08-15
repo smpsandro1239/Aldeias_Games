@@ -4,6 +4,7 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { logSorteio } from '@/lib/audit';
+import { normalizePoioConfig } from '@/lib/poio-utils';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -87,12 +88,15 @@ export async function POST(request: NextRequest) {
     let vencedoresDetalhes: any[] = [];
 
     if (jogo.tipo === 'poio_da_vaca') {
-      const config = JSON.parse(jogo.configuracao);
+      const cfg = normalizePoioConfig(
+        JSON.parse(jogo.configuracao || '{}'),
+        jogo.dimensoesCampo
+      );
       // Sortear letra e número com base na seed
       const seedNum = parseInt(seed.slice(0, 8), 16);
-      const letraIndex = seedNum % config.letras.length;
-      const letra = config.letras[letraIndex];
-      const numero = (seedNum % config.numerosPorLetra) + 1;
+      const letraIndex = seedNum % cfg.letras.length;
+      const letra = cfg.letras[letraIndex];
+      const numero = (seedNum % cfg.numerosPorLetra) + 1;
 
       resultado = { letraVencedora: letra, numeroVencedor: numero };
 
@@ -102,7 +106,7 @@ export async function POST(request: NextRequest) {
         const dados = JSON.parse(p.dadosParticipacao as string);
         if (dados.letra === letra && dados.numero === numero) return true;
         if (Array.isArray(dados.coordenadas)) {
-          return dados.coordenadas.some((c: any) => c.y === numero && config.letras[c.x - 1] === letra);
+          return dados.coordenadas.some((c: any) => c.y === numero && cfg.letras[c.x - 1] === letra);
         }
         return false;
       });

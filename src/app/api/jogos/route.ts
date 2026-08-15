@@ -10,6 +10,7 @@ import { logJogoWrite } from '@/lib/audit';
 import { createLogger, extractRequestContext } from '@/lib/logger';
 import { getOfficialTime, getNextFriday, getBloqueioData } from '@/lib/time';
 import { buildRaspadinhaPool } from '@/app/api/participacoes/_lib/raspadinha';
+import { generateLetras as generatePoioLetras } from '@/lib/poio-utils';
 
 function gerarHashVerificacao(dados: {
   tipo: string;
@@ -340,6 +341,26 @@ export async function POST(request: NextRequest) {
     if (data.tipo === 'raspadinha') {
       const premiosPool = (data.premios && data.premios.length > 0 ? data.premios : (configData.premios as any[]) || []) as Array<{ nome: string; percentagem?: number }>;
       configData = { ...configData, pool: buildRaspadinhaPool(premiosPool, data.stockInicial) };
+    }
+    if (data.tipo === 'poio_da_vaca') {
+      // Config de poio auto-gerada quando ausente: letras por colunas +
+      // numerosPorLetra (linhas). Evita jogos legacy sem letras a crashar
+      // o sorteio. Se dimensoesCampo não existir, default 10x10.
+      let dims = { x: 10, y: 10 };
+      if (data.dimensoesCampo) {
+        try {
+          const parsed = JSON.parse(data.dimensoesCampo);
+          if (parsed && typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+            dims = { x: parsed.x, y: parsed.y };
+          }
+        } catch { /* ignore */ }
+      }
+      const letrasAtuais = Array.isArray(configData.letras) ? configData.letras : [];
+      configData = {
+        ...configData,
+        letras: letrasAtuais.length > 0 ? letrasAtuais : generatePoioLetras(dims.x),
+        numerosPorLetra: typeof configData.numerosPorLetra === 'number' ? configData.numerosPorLetra : dims.y,
+      };
     }
 
     const jogoData: Record<string, unknown> = {

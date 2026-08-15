@@ -5,6 +5,25 @@ import { toast } from "sonner";
 import { apiRequest } from '@/lib/api-client';
 import type { Jogo, Aposta, Dimensoes, JogadorForm, ApostaConfirmada } from "./poio-types";
 import { calcularRentabilidade, getRentabilidadeStatus } from "./poio-types";
+import { normalizePoioConfig, squareIdToCoord, coordToSquareId, Coordenada } from "@/lib/poio-utils";
+
+function parseCoordenadas(participacao: any): Coordenada[] {
+  try {
+    const dados = typeof participacao.dadosParticipacao === 'string'
+      ? JSON.parse(participacao.dadosParticipacao)
+      : participacao.dadosParticipacao;
+    const coords = Array.isArray(dados?.coordenadas) ? dados.coordenadas : [];
+    return coords
+      .map((c: any) => (typeof c?.letra === 'string' && typeof c?.numero === 'number'
+        ? { letra: c.letra, numero: c.numero }
+        : typeof c?.x === 'number' && typeof c?.y === 'number'
+        ? { letra: String.fromCharCode(64 + c.x), numero: c.y }
+        : null))
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
 
 export function usePoioGame(
   jogo: Jogo | null,
@@ -34,9 +53,9 @@ export function usePoioGame(
   const [userAldeiaId, setUserAldeiaId] = useState<string | null>(null);
   const [userNome, setUserNome] = useState<string | null>(null);
   const [apostaConfirmada, setApostaConfirmada] = useState<ApostaConfirmada | null>(null);
+  const [numerosOcupados, setNumerosOcupados] = useState<number[]>([]);
 
   const isVendedor = userRole === "vendedor";
-  const numerosOcupados = apostas.flatMap(a => a.numeros);
 
   const apostasParaLista = isVendedor
     ? apostas.filter(a => a.vendedorId === vendedorId)
@@ -67,6 +86,10 @@ export function usePoioGame(
     };
   });
 
+  const cfgPoio = jogo
+    ? normalizePoioConfig(jogo.configuracao, jogo.dimensoesCampo)
+    : null;
+
   const rentabilidade = calcularRentabilidade(custoPorQuadrado, valorMercado, valorCompra, totalCells);
   const statusRentabilidade = getRentabilidadeStatus(rentabilidade);
 
@@ -83,30 +106,57 @@ export function usePoioGame(
     } finally { setLoading(false); }
   }, [jogoId, setJogo]);
 
-  const fetchApostas = useCallback(async () => {
+  // Ocupação: GET público numeros-ocupados (ids de quadrados)
+  const fetchOcupados = useCallback(async () => {
+    if (!jogoId) return;
     try {
-      const storedUser = localStorage.getItem("user");
-      let userParam = "";
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        userParam = "&user=" + btoa(JSON.stringify(userData));
-      }
-      const response = await fetch(`/api/apostas?tipo=poio_da_vaca${userParam}`, { headers: {} });
-      const data = await response.json();
-      if (data.data) {
-        const apostasConvertidas = data.data.map((a: any) => ({
-          ...a,
-          numeros: typeof a.numeros === 'string' ? JSON.parse(a.numeros) : a.numeros
-        }));
-        setApostas(apostasConvertidas);
+      const res = await fetch(`/api/jogos/${jogoId}/numeros-ocupados`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.numerosOcupados)) setNumerosOcupados(data.numerosOcupados);
       }
     } catch (error) {
-      console.error("Erro ao carregar apostas:", error);
+      console.error("Erro ao carregar números ocupados:", error);
     }
-  }, []);
+  }, [jogoId]);
+
+  // Lista: GET participações do jogo (role-filtered server-side)
+  const fetchParticipacoes = useCallback(async () => {
+    if (!jogoId) return;
+    try {
+      const res = await fetch(`/api/participacoes?jogoId=${jogoId}&limit=200`);
+      if (res.ok) {
+        const data = await res.json();
+        const lista = data.data || data.participacoes || [];
+        const cfg = jogo
+          ? normalizePoioConfig(jogo.configuracao, jogo.dimensoesCampo)
+          : null;
+        const convertidas: Aposta[] = lista.map((p: any) => {
+          const ids = cfg
+            ? parseCoordenadas(p).map(c => coordToSquareId(c, cfg)).filter((id): id is number => id !== null)
+            : [];
+          return {
+            id: p.id,
+            jogoId: p.jogoId,
+            numeros: ids,
+            jogadorNome: p.nomeCliente || p.user?.nome || null,
+            jogadorTelefone: p.telefoneCliente || null,
+            jogadorEmail: p.emailCliente || null,
+            vendedorId: p.vendedorId || null,
+            createdAt: p.createdAt,
+            pago: p.estadoPagamento === 'concluido',
+          };
+        });
+        setApostas(convertidas);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar participações:", error);
+    }
+  }, [jogoId, jogo]);
 
   useEffect(() => {
-    fetchApostas();
+    fetchOcupados();
+    fetchParticipacoes();
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
@@ -124,7 +174,7 @@ export function usePoioGame(
         }
       } catch (e) {}
     }
-  }, [fetchApostas]);
+  }, [fetchOcupados, fetchParticipacoes]);
 
   const handleSquareClick = (id: number) => {
     if (numerosOcupados.includes(id)) {
@@ -215,9 +265,7 @@ export function usePoioGame(
       return;
     }
     try {
-      if (metodo === "dinheiro") await criarAposta(true, "dinheiro");
-      else if (metodo === "saldo") await criarAposta(true, "saldo");
-      else if (metodo === "mbway") {
+      if (metodo === "mbway") {
         const tel = jogadorForm.telefone;
         if (!tel) { toast.error("Telefone obrigatório para MBWay"); return; }
         const res = await apiRequest("/api/pagamentos/mbway", {
@@ -228,34 +276,54 @@ export function usePoioGame(
         const data = await res.json();
         if (!res.ok) { toast.error(data.error || "Erro ao iniciar pagamento MBWay"); return; }
         toast.success("Pagamento MBWay enviado! Confirme no seu telemóvel.");
-        await criarAposta(true, "mbway");
-      } else if (metodo === "stripe") {
-        toast.info("Stripe em implementação");
       }
+      await criarParticipacao(metodo);
     } catch (error) {
       console.error("Erro no pagamento:", error);
       toast.error("Erro ao processar pagamento");
     }
   };
 
-  const criarAposta = async (pago: boolean, metodoPagamento: string = "dinheiro") => {
-    if (!pagamentoPendente) return;
-    const usarSaldo = metodoPagamento === "saldo";
+  const criarParticipacao = async (metodoPagamento: string) => {
+    if (!pagamentoPendente || !jogo) return;
+    if (!cfgPoio) { toast.error("Configuração do campo inválida"); return; }
+    const coordenadas = pagamentoPendente.numeros.map((id: number) => squareIdToCoord(id, cfgPoio));
     try {
-      const aposta = { ...pagamentoPendente, pago, usarSaldo };
-      const response = await apiRequest("/api/apostas", {
+      const payload = {
+        jogoId: jogo.id,
+        dadosParticipacao: { coordenadas },
+        quantidade: coordenadas.length,
+        metodoPagamento,
+        dadosCliente: {
+          nome: jogadorForm.nome,
+          telefone: jogadorForm.telefone || undefined,
+          email: jogadorForm.email || undefined,
+        },
+      };
+      const response = await apiRequest("/api/participacoes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(aposta)
+        body: JSON.stringify(payload),
       });
       if (response.ok) {
-        const novaAposta = await response.json();
-        setApostas(prev => [...prev, {
-          ...novaAposta.data,
-          numeros: typeof novaAposta.data.numeros === 'string' ? JSON.parse(novaAposta.data.numeros) : novaAposta.data.numeros
-        }]);
+        const data = await response.json();
+        const criadas = Array.isArray(data.participacao)
+          ? data.participacao
+          : data.participacao
+          ? [data.participacao]
+          : data.data
+          ? (Array.isArray(data.data) ? data.data : [data.data])
+          : [];
+        if (criadas.length === 0) {
+          toast.error("Erro ao registar a participação.");
+          return;
+        }
+        setNumerosOcupados(prev => [...new Set([...prev, ...pagamentoPendente.numeros])]);
+        setParticipacaoCriada(criadas[0]);
         setPaymentModalOpen(false);
+        fetchParticipacoes();
         const labels = pagamentoPendente.numeros.map((id: number) => cells[id - 1]?.display || `N${id}`).join(", ");
+        const pago = metodoPagamento === 'dinheiro' || metodoPagamento === 'saldo';
         if (jogadorForm.notificacao === "whatsapp" && jogadorForm.telefone) {
           const telLimpo = jogadorForm.telefone.replace(/\D/g, "");
           const msg = encodeURIComponent(`Aposta registada!\n\nJogo: Poio da Vaca\nNúmeros: ${labels}\nPagamento: ${pago ? "Confirmado" : "Pendente"}\nObrigado por participar!`);
@@ -266,14 +334,14 @@ export function usePoioGame(
           window.open(`mailto:${jogadorForm.email}?subject=${subject}&body=${body}`);
         }
         toast.success(`Aposta registada${pago ? " e paga" : ""} para ${jogadorForm.nome}!`);
-        setApostaConfirmada({ id: novaAposta.data.id, numeros: pagamentoPendente.numeros, labels, pago, nome: jogadorForm.nome });
+        setApostaConfirmada({ id: criadas[0].id, numeros: pagamentoPendente.numeros, labels, pago, nome: jogadorForm.nome });
         setSelectedSquares([]);
         setJogadorForm({ nome: "", telefone: "", email: "", notificacao: "whatsapp" });
         setPagamentoPendente(null);
         refreshBalance();
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Erro ao registar aposta.");
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.error || "Erro ao registar aposta.");
       }
     } catch (error) {
       console.error("Erro ao submeter aposta:", error);
@@ -294,11 +362,11 @@ export function usePoioGame(
     custoPorQuadrado, valorMercado, valorCompra,
     rentabilidade, statusRentabilidade,
     randomOptions, isVendedor,
-    fetchJogo, fetchApostas,
+    fetchJogo, fetchOcupados, fetchParticipacoes,
     handleSquareClick, handleRandomPlay,
     handleClearSelection, handleBet,
     handleSubmitBet, processarPagamento,
-    criarAposta,
+    criarParticipacao,
     handlePlayerConfirmOwnData, handlePlayerConfirmNewData,
   };
 }

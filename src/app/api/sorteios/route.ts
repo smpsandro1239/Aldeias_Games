@@ -6,6 +6,7 @@ import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib
 import { logSorteio } from '@/lib/audit'
 import { createLogger, extractRequestContext } from '@/lib/logger'
 import { hashClientSeed, computeFinalHash, isValidSha256Hash, hashToIndex } from '@/lib/lottery-utils'
+import { normalizePoioConfig } from '@/lib/poio-utils'
 import crypto from 'crypto'
 // @ts-ignore - @prisma/client types generated at build time
 import { TipoNotificacao } from '@prisma/client'
@@ -151,19 +152,22 @@ export async function POST(request: NextRequest) {
     const finalHash = computeFinalHash(jogo.seedSorteio, seedCliente || 'no-client-seed');
 
     if (jogo.tipo === 'poio_da_vaca') {
-      const config = JSON.parse(jogo.configuracao);
-      const totalCells = config.letras.length * config.numerosPorLetra;
+      const cfg = normalizePoioConfig(
+        JSON.parse(jogo.configuracao || '{}'),
+        jogo.dimensoesCampo
+      );
+      const totalCells = cfg.letras.length * cfg.numerosPorLetra;
       const roll = hashToIndex(finalHash, totalCells);
-      const letraIdx = Math.floor(roll / config.numerosPorLetra);
-      const num = (roll % config.numerosPorLetra) + 1;
-      const letra = config.letras[letraIdx];
+      const letraIdx = Math.floor(roll / cfg.numerosPorLetra);
+      const num = (roll % cfg.numerosPorLetra) + 1;
+      const letra = cfg.letras[letraIdx];
       winningCoord = `${letra}${num}`;
 
       const vencedor = jogo.participacoes.find((p: (typeof jogo.participacoes)[number]) => {
         const d = JSON.parse(p.dadosParticipacao);
         if (d.letra === letra && d.numero === num) return true;
         if (Array.isArray(d.coordenadas)) {
-          return d.coordenadas.some((c: any) => c.y === num && config.letras[c.x - 1] === letra);
+          return d.coordenadas.some((c: any) => c.y === num && cfg.letras[c.x - 1] === letra);
         }
         return false;
       });
