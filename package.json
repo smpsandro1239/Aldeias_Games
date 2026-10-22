@@ -91,7 +91,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.0",
     "react-resizable-panels": "^2.1.0",
-    "recharts": "^2.15.0",
+    "recharts": "^3.10.1",
     "sonner": "^1.7.0",
     "stripe": "^17.5.0",
     "tailwind-merge": "^2.6.0",
