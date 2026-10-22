@@ -197,11 +197,14 @@ model PasswordReset {
 }
 
 model TwoFactorAuth {
-  userId    String   @unique
-  secret    String
-  enabled   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId        String   @unique
+  secret        String
+  enabled       Boolean  @default(false)
+  // FIX (segurança): guarda o último código TOTP aceite, para rejeitar
+  // replay do mesmo código dentro da mesma janela de 30s.
+  lastUsedToken String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([userId])
   @@map("two_factor_auths")

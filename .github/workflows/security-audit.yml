@@ -1,0 +1,28 @@
+name: Security Audit
+
+# C2 (Ronda Segurança 1): falha o CI se existirem vulnerabilidades high/critical
+# nas dependências de produção. Corrida também semanalmente (cron) para apanhar
+# novos advisories publicados após o último push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 1' # Segunda-feira 02:00 UTC
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci --omit=dev
+
+      - name: npm audit (high+) — dependências de produção
+        run: npm audit --omit=dev --audit-level=high

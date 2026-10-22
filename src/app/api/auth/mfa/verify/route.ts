@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import { verifyMFAOTP } from '@/lib/mfa';
+import { verifyMFAOTP, verifyMFAOTPOnce } from '@/lib/mfa';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'MFA secret not found. Please set up MFA first.' }, { status: 400 });
     }
 
-    const isValid = verifyMFAOTP(token, twoFactorAuth.secret);
+    // FIX (segurança): anti-replay na ativação do MFA
+    const isValid = await verifyMFAOTPOnce(token, userData.userId, prisma);
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
     }
