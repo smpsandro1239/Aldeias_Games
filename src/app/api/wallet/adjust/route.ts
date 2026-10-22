@@ -7,8 +7,26 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getFullUserFromRequest(request);
 
-    const body = await request.json();
-    const { userId, valor, tipo, descricao, aldeiaId } = body;
+    // FIX (segurança): validação estrita do payload financeiro com Zod.
+    // Antes, `valor` era aceite sem verificação de tipo/faixa — NaN, strings,
+    // objetos ou valores absurdos podiam chegar diretamente às operações de
+    // saldo (injeção financeira). Agora: número finito, inteiro em cêntimos
+    // implícitos, |valor| <= 100000 e campos com limites de tamanho.
+    const { z } = await import('zod');
+    const adjustSchema = z.object({
+      userId: z.string().min(1).max(64).optional(),
+      valor: z.number().finite().refine((v) => Number.isInteger(v), { message: 'valor deve ser inteiro' }).refine((v) => Math.abs(v) <= 100000, { message: 'valor fora da faixa permitida' }),
+      tipo: z.enum(['credito', 'debito', 'entrega_admin', 'ajuste', 'carregamento']).or(z.string().min(1).max(40)),
+      descricao: z.string().max(500).optional(),
+      aldeiaId: z.string().max(64).optional(),
+    });
+    const parsed = adjustSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 });
+    }
+    const { userId, valor, tipo, descricao, aldeiaId } = parsed.data as {
+      userId?: string; valor: number; tipo: string; descricao?: string; aldeiaId?: string;
+    };
 
     // Allow vendor to deliver money to admin
     const isVendorDelivery = tipo === 'entrega_admin' && user?.role === 'vendedor';
@@ -39,7 +57,7 @@ export async function POST(request: NextRequest) {
 prisma.transacao.create({
           data: {
             valor: valor,
-            tipo: 'entrega_admin' as any,
+            tipo: 'entrega_admin' as never,
             descricao: descricao || `Entrega de dinheiro à aldeia`,
             userId: user.id,
             dadosAdicionais: {

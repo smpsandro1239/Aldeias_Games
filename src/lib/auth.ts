@@ -5,20 +5,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from './db';
 
 // Constants
-const AUTH_COOKIE_NAME = 'auth-token';
-const REFRESH_COOKIE_NAME = 'refresh-token';
+// FIX (segurança): em produção os cookies de sessão passam a usar o prefixo
+// __Host- / __Secure-, que obriga o browser a rejeitar cookies definidos por
+// subdomínios (mitiga session-fixation / cookie-tossing via subdomínio comprometido).
+export const AUTH_COOKIE_NAME =
+  process.env.NODE_ENV === 'production' ? '__Host-auth-token' : 'auth-token';
+export const REFRESH_COOKIE_NAME =
+  process.env.NODE_ENV === 'production' ? '__Host-refresh-token' : 'refresh-token';
 const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 horas em segundos
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 dias em segundos
 const JWT_EXPIRATION = '24h';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
+// FIX (segurança): validar o segredo JWT no arranque do módulo — comprimento
+// mínimo e ausência de placeholders conhecidos, falhando cedo (fail-fast).
 const JWT_SECRET = process.env.JWT_SECRET;
+const WEAK_SECRETS = ['secret', 'changeme', 'your-secret-here', 'jwt_secret', 'devsecret'];
+
+function validateJwtSecret(secret: string | undefined): string {
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'JWT_SECRET é obrigatório e deve ter pelo menos 32 caracteres. Define a variável de ambiente JWT_SECRET.'
+    );
+  }
+  if (WEAK_SECRETS.some((w) => secret.toLowerCase().includes(w))) {
+    throw new Error('JWT_SECRET contém um placeholder inseguro. Genera um segredo aleatório forte.');
+  }
+  return secret;
+}
 
 function getSecret(): Uint8Array {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET é obrigatório. Define a variável de ambiente JWT_SECRET.');
-  }
-  return new TextEncoder().encode(JWT_SECRET);
+  return new TextEncoder().encode(validateJwtSecret(JWT_SECRET));
 }
 
 export interface JWTPayload {
@@ -248,21 +265,51 @@ export async function logAccess(
 /**
  * Gerar refresh token na BD e retornar o token string
  */
+/**
+ * FIX (segurança): os refresh tokens são agora armazenados apenas como hash
+ * SHA-256 na base de dados. Se a BD for comprometida, os tokens reais não
+ * podem ser roubados/reutilizados (padrão OWASP para tokens de longa duração).
+ */
+async function hashRefreshToken(token: string): Promise<string> {
+  const crypto = await import('crypto');
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 export async function generateRefreshToken(userId: string): Promise<string> {
   const crypto = await import('crypto');
   const token = crypto.randomBytes(40).toString('hex');
+  const tokenHash = await hashRefreshToken(token);
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
   await prisma.refreshToken.create({
     data: {
-      token,
+      token: tokenHash,
       userId,
       expiresAt,
     },
   });
 
+  // Purga assíncrona (best-effort) de tokens expirados/revogados — evita
+  // crescimento ilimitado da tabela e remove credenciais mortas (RGPD/higiene).
+  purgeExpiredRefreshTokens().catch(() => {});
+
   return token;
+}
+
+/**
+ * Remover refresh tokens expirados ou revogados (executado a cada rotação).
+ */
+export async function purgeExpiredRefreshTokens(): Promise<number> {
+  const result = await prisma.refreshToken.deleteMany({
+    where: {
+      OR: [
+        { expiresAt: { lt: new Date() } },
+        { revoked: true },
+      ],
+    },
+  });
+  return result.count;
 }
 
 /**
@@ -299,8 +346,9 @@ export function clearRefreshTokenCookie(response: NextResponse): void {
  * Validar refresh token na BD
  */
 export async function validateRefreshToken(token: string): Promise<{ userId: string } | null> {
+  const tokenHash = await hashRefreshToken(token);
   const record = await prisma.refreshToken.findUnique({
-    where: { token },
+    where: { token: tokenHash },
     select: { userId: true, expiresAt: true, revoked: true },
   });
 
@@ -318,9 +366,10 @@ export async function rotateRefreshToken(oldToken: string): Promise<string | nul
   const validation = await validateRefreshToken(oldToken);
   if (!validation) return null;
 
-  // Revoke the old token
+  // Revoke the old token (armazenado como hash)
+  const oldHash = await hashRefreshToken(oldToken);
   await prisma.refreshToken.update({
-    where: { token: oldToken },
+    where: { token: oldHash },
     data: { revoked: true },
   });
 

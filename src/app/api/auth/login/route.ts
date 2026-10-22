@@ -295,7 +295,10 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const isValidCode = verifyMFAOTP(totpCode, tfa.secret);
+        // FIX (segurança): anti-replay — o mesmo código TOTP não pode ser
+        // aceite duas vezes (verifica + marca lastUsedToken atomicamente).
+        const { verifyMFAOTPOnce } = await import('@/lib/mfa');
+        const isValidCode = await verifyMFAOTPOnce(totpCode, user.id, prisma);
 
         if (!isValidCode) {
           await logAccess(

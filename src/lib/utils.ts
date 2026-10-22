@@ -138,12 +138,33 @@ export function generateSlug(text: string): string {
 
 /**
  * Gerar codigo aleatorio usando crypto seguro
+ * FIX (segurança): usava Math.random() (PRNG previsível). Agora usa o CSPRNG
+ * nativo (crypto.getRandomValues no browser / globalThis.crypto no Node 18+)
+ * com rejeição de enviesamento (modulo bias) via intervalo de rejeição.
  */
 export function generateCode(length: number = DEFAULT_CODE_LENGTH): string {
   const chars = CODE_CHARS;
+  const n = chars.length;
+  const limit = Math.floor(256 / n) * n; // rejeitar valores >= limit evita modulo bias
+  const bytes = new Uint8Array(length);
+  const rng = (globalThis as { crypto?: Crypto }).crypto;
+  if (rng?.getRandomValues) {
+    let filled = 0;
+    while (filled < length) {
+      rng.getRandomValues(bytes.subarray(filled));
+      for (let i = 0; i < bytes.length && filled < length; i++) {
+        if (bytes[i] < limit) {
+          bytes[filled++] = bytes[i];
+        }
+      }
+    }
+  } else {
+    // Fallback apenas para ambientes sem WebCrypto (não usado em código sensível)
+    for (let i = 0; i < length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
   let result = '';
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(bytes[i] % n);
   }
   return result;
 }
