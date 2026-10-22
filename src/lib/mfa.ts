@@ -1,14 +1,31 @@
 import { TOTP } from 'otplib';
+import { NobleCryptoPlugin } from '@otplib/plugin-crypto-noble';
+import { ScureBase32Plugin } from '@otplib/plugin-base32-scure';
 import crypto from 'crypto';
 import { toDataURL } from 'qrcode';
 
+// FIX (R1): otplib v13 exige plugins explícitos (crypto + base32). Sem eles,
+// qualquer generate/verify lança CryptoPluginMissingError — ou seja, o 2FA
+// rebentava em runtime. Instanciamos os plugins uma vez e reutilizamos.
+const OTP_CRYPTO = new NobleCryptoPlugin();
+const OTP_BASE32 = new ScureBase32Plugin();
+
+/** Nova instância TOTP com os plugins configurados e tolerância temporal 0. */
+function makeTOTP(secret?: string): TOTP {
+  return new TOTP({
+    ...(secret ? { secret } : {}),
+    crypto: OTP_CRYPTO,
+    base32: OTP_BASE32,
+  });
+}
+
 export const generateMFASecret = () => {
-  return new TOTP().generateSecret();
+  // FIX (R1): gerar segredo com entropia adequada (>=16 bytes) via otplib
+  return makeTOTP().generateSecretSync();
 };
 
-export const generateMFAOTP = (secret: string) => {
-  const totp = new TOTP({ secret });
-  return totp.generate();
+export const generateMFAOTP = async (secret: string) => {
+  return await makeTOTP(secret).generate();
 };
 
 /**
@@ -100,9 +117,12 @@ export async function setupBackupCodes(userId: string): Promise<string[]> {
 
 async function prismaUpdateBackupCodes(userId: string, backupCodes: string | null): Promise<void> {
   const { default: prisma } = await import('./db');
-  await prisma.twoFactorAuth.update({
+  // FIX (R1): upsert em vez de update — setupBackupCodes não deve falhar
+  // se ainda não existir registo TwoFactorAuth para o utilizador.
+  await prisma.twoFactorAuth.upsert({
     where: { userId },
-    data: { backupCodes },
+    update: { backupCodes },
+    create: { userId, secret: '', enabled: false, backupCodes },
   });
 }
 
