@@ -197,11 +197,17 @@ model PasswordReset {
 }
 
 model TwoFactorAuth {
-  userId    String   @unique
-  secret    String
-  enabled   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId        String   @unique
+  secret        String
+  enabled       Boolean  @default(false)
+  // FIX (segurança): guarda o último código TOTP aceite, para rejeitar
+  // replay do mesmo código dentro da mesma janela de 30s.
+  lastUsedToken String?
+  // A2 (Sprint 1): array JSON de hashes SHA-256 dos 10 backup codes
+  // single-use. Os códigos em claro NUNCA são armazenados — só o hash.
+  backupCodes   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([userId])
   @@map("two_factor_auths")

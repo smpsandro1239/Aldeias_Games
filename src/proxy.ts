@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
@@ -86,6 +87,13 @@ const publicPages = [
   '/termos',
   '/favicon.ico',
 ];
+
+// === C1 (RONDA SEGURANÇA 1) — DEFESA EM PROFUNDIDADE ===
+// Rotas de API exclusivas de super_admin. O proxy exige JWT válido COM role
+// super_admin antes de deixar o pedido chegar ao route handler — mesmo que o
+// handler tenha bug, a rota fica fechada na borda. /api/seed cria utilizadores
+// com credenciais conhecidas e nunca deve ser acessível sem super_admin.
+const adminOnlyRoutes = ['/api/seed'];
 
 // Rotas protegidas por role
 const roleProtectedRoutes: Record<string, string[]> = {
@@ -207,7 +215,7 @@ async function proxyInner(request: NextRequest) {
 
     let requestHeaders: Headers | null = null;
     const authHeader = request.headers.get('authorization');
-    const hasAuthCookie = Boolean(request.cookies.get('auth-token')?.value);
+    const hasAuthCookie = Boolean(request.cookies.get(AUTH_COOKIE_NAME)?.value);
     const usesBearer = Boolean(authHeader?.startsWith('Bearer '));
 
     // Rotas não públicas exigem autenticação (JWT) antes de prosseguir
@@ -217,7 +225,7 @@ async function proxyInner(request: NextRequest) {
       if (usesBearer) {
         token = authHeader!.substring(7);
       } else {
-        token = request.cookies.get('auth-token')?.value || null;
+        token = request.cookies.get(AUTH_COOKIE_NAME)?.value || null;
       }
 
       if (!token) {
@@ -242,6 +250,17 @@ async function proxyInner(request: NextRequest) {
         requestHeaders.set('x-user-role', String(payload.role));
         if (payload.aldeiaId) {
           requestHeaders.set('x-user-aldeia-id', String(payload.aldeiaId));
+        }
+
+        // C1 (defesa em profundidade): rotas admin-only exigem role super_admin
+        // já na borda (proxy), independentemente das verificações do handler.
+        if (adminOnlyRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
+          if (payload.role !== 'super_admin') {
+            return NextResponse.json(
+              { error: 'Acesso restrito a super_admin' },
+              { status: 403 }
+            );
+          }
         }
       } catch {
         return NextResponse.json(
@@ -328,7 +347,7 @@ async function proxyInner(request: NextRequest) {
   }
 
   if (matchedRoute) {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
     if (!token) {
       const loginUrl = new URL('/', request.url);

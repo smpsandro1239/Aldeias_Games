@@ -22,8 +22,8 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-// Set JWT_SECRET before importing auth
-process.env.JWT_SECRET = "test-secret-key-for-auth-tests-12345";
+// Set JWT_SECRET before importing auth (>=32 chars, sem substrings de placeholder)
+process.env.JWT_SECRET = "unit-tests-hs256-key-0123456789abcdef";
 
 import {
   hashPassword,

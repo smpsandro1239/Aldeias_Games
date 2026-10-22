@@ -5,20 +5,49 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from './db';
 
 // Constants
-const AUTH_COOKIE_NAME = 'auth-token';
-const REFRESH_COOKIE_NAME = 'refresh-token';
-const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 horas em segundos
+// FIX (segurança): em produção os cookies de sessão passam a usar o prefixo
+// __Host- / __Secure-, que obriga o browser a rejeitar cookies definidos por
+// subdomínios (mitiga session-fixation / cookie-tossing via subdomínio comprometido).
+export const AUTH_COOKIE_NAME =
+  process.env.NODE_ENV === 'production' ? '__Host-auth-token' : 'auth-token';
+export const REFRESH_COOKIE_NAME =
+  process.env.NODE_ENV === 'production' ? '__Host-refresh-token' : 'refresh-token';
+const COOKIE_MAX_AGE = Number(process.env.JWT_COOKIE_MAX_AGE ?? 15 * 60); // T3/A4: 15 min (era 24h)
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 dias em segundos
-const JWT_EXPIRATION = '24h';
+// FIX (segurança, T3/A4): access token JWT passa a expirar em 15 minutos
+// (antes 24h). Sessões antigas deixam de ser aceites — utilizadores têm de
+// fazer re-login após o deploy. A renovação transparente é feita pelo
+// endpoint /api/auth/refresh (cookie httpOnly de refresh + interceptor axios).
+const JWT_EXPIRATION = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// FIX (segurança): validar o segredo JWT no ACESSO (lazy), não na importação
+// do módulo — comprimento mínimo e ausência de placeholders conhecidos,
+// falhando cedo (fail-fast) mas permitindo que testes definam
+// process.env.JWT_SECRET após o import.
+const getJwtSecretEnv = () => process.env.JWT_SECRET;
+const WEAK_SECRETS = ['secret', 'changeme', 'your-secret-here', 'jwt_secret', 'devsecret'];
+
+function validateJwtSecret(secret: string | undefined): string {
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'JWT_SECRET é obrigatório e deve ter pelo menos 32 caracteres. Define a variável de ambiente JWT_SECRET.'
+    );
+  }
+  if (WEAK_SECRETS.some((w) => secret.toLowerCase().includes(w))) {
+    throw new Error('JWT_SECRET contém um placeholder inseguro. Genera um segredo aleatório forte.');
+  }
+  // L2 (Sprint 3): verificação de entropia mínima — rejeita segredos com
+  // poucas personagens distintas (ex.: "aaaa...") que são triviais de forçar.
+  const distinctChars = new Set(secret).size;
+  if (distinctChars < 12) {
+    throw new Error('JWT_SECRET tem baixa entropia (mínimo 12 caracteres distintos). Usa openssl rand -base64 48.');
+  }
+  return secret;
+}
 
 function getSecret(): Uint8Array {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET é obrigatório. Define a variável de ambiente JWT_SECRET.');
-  }
-  return new TextEncoder().encode(JWT_SECRET);
+  return new TextEncoder().encode(validateJwtSecret(getJwtSecretEnv()));
 }
 
 export interface JWTPayload {
@@ -39,7 +68,10 @@ export function setAuthCookie(response: NextResponse, token: string): void {
     value: token,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    // T3/A4: sameSite=strict em produção (o prefixo __Host- já obriga a
+    // Secure+path=/; strict elimina CSRF cross-site por envio de cookie).
+    // Em dev mantém-se 'lax' para não partir OAuth local (redirects top-level).
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     maxAge: COOKIE_MAX_AGE,
     path: '/',
   });
@@ -68,10 +100,16 @@ export function getAuthTokenFromCookie(request: NextRequest): string | null {
 }
 
 /**
+ * L2 (Sprint 3): custo bcrypt 10 → 12 (~4x mais resistente a brute-force;
+ * login ~250ms vs ~60ms — aceitável num fluxo de autenticação).
+ */
+export const BCRYPT_HASH_COST = Number(process.env.BCRYPT_COST ?? 12);
+
+/**
  * Hash de password com bcrypt
  */
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, BCRYPT_HASH_COST);
 }
 
 /**
@@ -248,21 +286,51 @@ export async function logAccess(
 /**
  * Gerar refresh token na BD e retornar o token string
  */
+/**
+ * FIX (segurança): os refresh tokens são agora armazenados apenas como hash
+ * SHA-256 na base de dados. Se a BD for comprometida, os tokens reais não
+ * podem ser roubados/reutilizados (padrão OWASP para tokens de longa duração).
+ */
+async function hashRefreshToken(token: string): Promise<string> {
+  const crypto = await import('crypto');
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 export async function generateRefreshToken(userId: string): Promise<string> {
   const crypto = await import('crypto');
   const token = crypto.randomBytes(40).toString('hex');
+  const tokenHash = await hashRefreshToken(token);
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
   await prisma.refreshToken.create({
     data: {
-      token,
+      token: tokenHash,
       userId,
       expiresAt,
     },
   });
 
+  // Purga assíncrona (best-effort) de tokens expirados/revogados — evita
+  // crescimento ilimitado da tabela e remove credenciais mortas (RGPD/higiene).
+  purgeExpiredRefreshTokens().catch(() => {});
+
   return token;
+}
+
+/**
+ * Remover refresh tokens expirados ou revogados (executado a cada rotação).
+ */
+export async function purgeExpiredRefreshTokens(): Promise<number> {
+  const result = await prisma.refreshToken.deleteMany({
+    where: {
+      OR: [
+        { expiresAt: { lt: new Date() } },
+        { revoked: true },
+      ],
+    },
+  });
+  return result.count;
 }
 
 /**
@@ -299,8 +367,9 @@ export function clearRefreshTokenCookie(response: NextResponse): void {
  * Validar refresh token na BD
  */
 export async function validateRefreshToken(token: string): Promise<{ userId: string } | null> {
+  const tokenHash = await hashRefreshToken(token);
   const record = await prisma.refreshToken.findUnique({
-    where: { token },
+    where: { token: tokenHash },
     select: { userId: true, expiresAt: true, revoked: true },
   });
 
@@ -318,9 +387,10 @@ export async function rotateRefreshToken(oldToken: string): Promise<string | nul
   const validation = await validateRefreshToken(oldToken);
   if (!validation) return null;
 
-  // Revoke the old token
+  // Revoke the old token (armazenado como hash)
+  const oldHash = await hashRefreshToken(oldToken);
   await prisma.refreshToken.update({
-    where: { token: oldToken },
+    where: { token: oldHash },
     data: { revoked: true },
   });
 

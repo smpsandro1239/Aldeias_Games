@@ -11,10 +11,12 @@ const STATE_COOKIE_OPTIONS = {
   maxAge: 60 * 10, // 10 minutos
 };
 
-// Gerar state aleatório para prevenir CSRF
+// FIX (segurança): gerar state OAuth com CSPRNG (crypto.randomBytes) em vez de
+// Math.random(), que é um PRNG previsível e permitia prever/forjar o estado
+// anti-CSRF do fluxo Google.
 function generateState(): string {
-  return Math.random().toString(36).substring(2, 15) +
-         Math.random().toString(36).substring(2, 15);
+  const { randomBytes } = require('crypto') as typeof import('crypto');
+  return randomBytes(32).toString('base64url');
 }
 
 export async function GET(request: NextRequest) {

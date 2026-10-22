@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto'; // T2/A3: timingSafeEqual na validação do state OAuth
 import { generateToken, setAuthCookie } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
@@ -59,7 +60,23 @@ export async function handleOAuthCallback(
 
     // CSRF protection using state parameter
     const storedState = request.cookies.get(`${options.providerName.toLowerCase()}_oauth_state`)?.value;
-    if (!state || state !== storedState) {
+
+    // FIX (segurança, T2/A3): comparação com timingSafeEqual em vez de `!==`.
+    // Compara primeiro os comprimentos (timingSafeEqual lança RangeError se
+    // os buffers tiverem tamanhos diferentes) e depois o conteúdo byte-a-byte
+    // em tempo constante — mitiga timing attacks sobre o state OAuth.
+    let stateValid = false;
+    if (state && storedState) {
+      try {
+        const stateBuf = Buffer.from(state);
+        const storedBuf = Buffer.from(storedState);
+        stateValid =
+          stateBuf.length === storedBuf.length && crypto.timingSafeEqual(stateBuf, storedBuf);
+      } catch {
+        stateValid = false;
+      }
+    }
+    if (!stateValid) {
       logger.warn(`Invalid ${options.providerName} OAuth state`, {
         module: 'auth',
         provider: options.providerName,
@@ -147,10 +164,13 @@ export async function handleOAuthCallback(
 
     // If user doesn't exist, create new one
     if (!user) {
-      // Generate random password (required for schema but not used for OAuth login)
-      const randomPassword = Math.random().toString(36).slice(-12);
+      // FIX (segurança, T2/A3): password aleatória gerada com CSPRNG
+      // (crypto.randomBytes do import top-level) em vez de Math.random
+      // (PRNG previsível). A password não é usada no login OAuth, mas um
+      // valor previsível permitiria takeover por password-login.
+      const randomPassword = crypto.randomBytes(24).toString('base64url');
       const bcrypt = await import('bcryptjs');
-      const passwordHash = await bcrypt.hash(randomPassword, 10);
+      const passwordHash = await bcrypt.hash(randomPassword, 12);
 
       user = await prisma.user.create({
         data: {

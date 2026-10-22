@@ -11,7 +11,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { AnalyticsInit } from "@/components/analytics-init";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { RouteAnnouncer } from "@/components/route-announcer";
-import { SeedInitializer } from "@/components/seed-initializer";
+// C1 (Ronda Segurança 1): SeedInitializer removido — o auto-seed anónimo em
+// cada visita ao layout era a superfície de ataque de /api/seed. Em produção,
+// o seed é feito via `prisma db seed` / pipeline controlado, nunca via HTTP.
 import { ensureSeeded } from "@/lib/db-init";
 
 const inter = Inter({ subsets: ["latin", "latin-ext"] });
@@ -83,10 +85,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const nonce = (await headers()).get("x-nonce") || undefined;
-  try {
-    await ensureSeeded();
-  } catch (e) {
-    console.error("[layout] ensureSeeded failed — rendering without seed:", e);
+  // C1 (Ronda Segurança 1): auto-seed apenas fora de produção. Em produção a
+  // inicialização da BD é feita por `prisma db seed` / pipeline controlado.
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      await ensureSeeded();
+    } catch (e) {
+      console.error("[layout] ensureSeeded failed — rendering without seed:", e);
+    }
   }
 
   return (
@@ -104,7 +110,6 @@ export default async function RootLayout({
                 <SentryInit />
                 <AnalyticsInit />
                 <RouteAnnouncer />
-                <SeedInitializer />
                 {children}
                 <CookieConsentBanner />
                 <Toaster position="top-right" richColors />

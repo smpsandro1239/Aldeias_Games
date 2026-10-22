@@ -42,10 +42,28 @@ if (typeof setInterval !== 'undefined') {
  * Get client identifier (IP or UA+path fallback)
  */
 export function getClientIdentifier(request: Request): string {
+  // FIX (segurança): o cabeçalho X-Forwarded-For é controlável pelo cliente
+  // quando não há proxy confiável — atacantes podiam contornar o rate limit
+  // enviando IPs falsos. Em produção usamos apenas o último hop (adicionado
+  // pelo nosso proxy) e, se TRUSTED_PROXY_DEPTH estiver definido, esse número
+  // de hops da direita; caso contrário caímos para 'unknown' (chave UA+path).
   const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded?.split(',')[0]?.trim() ||
-             request.headers.get('x-real-ip') ||
-             'unknown';
+  let ip: string | null = null;
+  if (forwarded) {
+    const hops = forwarded.split(',').map((h) => h.trim()).filter(Boolean);
+    if (process.env.NODE_ENV !== 'production') {
+      ip = hops[0] || null; // dev: proxy local, sem risco
+    } else {
+      const depth = parseInt(process.env.TRUSTED_PROXY_DEPTH || '1', 10);
+      ip = hops.length >= depth ? hops[hops.length - depth] : null;
+    }
+  }
+  if (!ip) {
+    ip = process.env.NODE_ENV === 'production'
+      ? null // x-real-ip só é fiável se definido pelo proxy de borda
+      : request.headers.get('x-real-ip');
+  }
+  ip = ip || 'unknown';
 
   if (ip === 'unknown') {
     const userAgent = request.headers.get('user-agent') || 'unknown';
