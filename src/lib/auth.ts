@@ -17,9 +17,11 @@ const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 dias em segundos
 const JWT_EXPIRATION = '24h';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
-// FIX (segurança): validar o segredo JWT no arranque do módulo — comprimento
-// mínimo e ausência de placeholders conhecidos, falhando cedo (fail-fast).
-const JWT_SECRET = process.env.JWT_SECRET;
+// FIX (segurança): validar o segredo JWT no ACESSO (lazy), não na importação
+// do módulo — comprimento mínimo e ausência de placeholders conhecidos,
+// falhando cedo (fail-fast) mas permitindo que testes definam
+// process.env.JWT_SECRET após o import.
+const getJwtSecretEnv = () => process.env.JWT_SECRET;
 const WEAK_SECRETS = ['secret', 'changeme', 'your-secret-here', 'jwt_secret', 'devsecret'];
 
 function validateJwtSecret(secret: string | undefined): string {
@@ -35,7 +37,7 @@ function validateJwtSecret(secret: string | undefined): string {
 }
 
 function getSecret(): Uint8Array {
-  return new TextEncoder().encode(validateJwtSecret(JWT_SECRET));
+  return new TextEncoder().encode(validateJwtSecret(getJwtSecretEnv()));
 }
 
 export interface JWTPayload {
