@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 
-// Set JWT_SECRET for tests that import proxy.ts (validates at module scope)
+// Set JWT_SECRET for tests that import proxy.ts (validação fail-fast em auth.ts)
 if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = "test-secret-for-unit-tests";
+  // >=32 caracteres e sem substrings de placeholder ("secret", "changeme", ...)
+  process.env.JWT_SECRET = "unit-tests-hs256-key-0123456789abcdef";
 }
