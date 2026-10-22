@@ -22,6 +22,47 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutos
 // Demo users: BLOCKED unconditionally in production regardless of env vars
 const DEMO_USERS_ALLOWED = process.env.ENABLE_DEMO_USERS === 'true' && process.env.NODE_ENV !== 'production';
 
+// L1 (Sprint 3): os emails de demonstração passam a vir de .env — já não
+// estão hardcoded no bundle. O hash bcrypt da password de demo vem de
+// DEMO_USER_PASSWORD_HASH (gerar com:
+// node -e "console.log(require('bcryptjs').hashSync(process.argv[1], 12))" 'PASSWORD').
+// Se as envs não estiverem definidas, o modo demo fica simplesmente desligado.
+const DEMO_EMAILS: Record<string, Pick<DemoUser, 'id' | 'nome' | 'role' | 'aldeiaId'>> = {
+  'super_admin': { id: 'user-super-admin', nome: 'Super Admin', role: 'super_admin', aldeiaId: null },
+  'aldeia_admin': { id: 'user-aldeia-admin', nome: 'Aldeia Admin', role: 'aldeia_admin', aldeiaId: 'aldeia-vale-azenha' },
+  'vendedor': { id: 'user-vendedor', nome: 'Vendedor', role: 'vendedor', aldeiaId: 'aldeia-vale-azenha' },
+  'user': { id: 'user-jogador', nome: 'Jogador', role: 'user', aldeiaId: null },
+};
+
+function buildDemoUsers(): Record<string, DemoUser> | null {
+  if (!DEMO_USERS_ALLOWED) return null;
+  const passwordHash = process.env.DEMO_USER_PASSWORD_HASH;
+  const emails = [
+    process.env.DEMO_ADMIN_EMAIL,
+    process.env.DEMO_ALDEIA_ADMIN_EMAIL,
+    process.env.DEMO_PHOTOGRAPHER_EMAIL || process.env.DEMO_VENDEDOR_EMAIL,
+    process.env.DEMO_PLAYER_EMAIL || process.env.DEMO_USER_EMAIL,
+  ];
+  // Sem hash/email configurados → modo demo desligado (sem fallback hardcoded).
+  if (!passwordHash || !emails.every(Boolean)) return null;
+
+  const roles: Array<'super_admin' | 'aldeia_admin' | 'vendedor' | 'user'> =
+    ['super_admin', 'aldeia_admin', 'vendedor', 'user'];
+  const out: Record<string, DemoUser> = {};
+  emails.forEach((email, i) => {
+    const meta = DEMO_EMAILS[roles[i]];
+    out[(email as string).toLowerCase()] = {
+      ...meta,
+      email: (email as string).toLowerCase(),
+      aldeia: null,
+      emailVerificado: true,
+      notificacoesEmail: true,
+      passwordHash,
+    };
+  });
+  return out;
+}
+
 type DemoUser = {
   id: string;
   email: string;
@@ -31,56 +72,11 @@ type DemoUser = {
   aldeia: null;
   emailVerificado: boolean;
   notificacoesEmail: boolean;
-  // Hash bcrypt de 'AldeiasDemo2024!' (cost 10)
+  // Hash bcrypt lido de DEMO_USER_PASSWORD_HASH (nunca em claro no código)
   passwordHash: string;
 };
 
-const demoUsers: Record<string, DemoUser> | null = DEMO_USERS_ALLOWED ? {
-  'admin@aldeias.pt': {
-    id: 'user-super-admin',
-    email: 'admin@aldeias.pt',
-    nome: 'Super Admin',
-    role: 'super_admin',
-    aldeiaId: null,
-    aldeia: null,
-    emailVerificado: true,
-    notificacoesEmail: true,
-    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
-  },
-  'aldeia@gmail.com': {
-    id: 'user-aldeia-admin',
-    email: 'aldeia@gmail.com',
-    nome: 'Aldeia Admin',
-    role: 'aldeia_admin',
-    aldeiaId: 'aldeia-vale-azenha',
-    aldeia: null,
-    emailVerificado: true,
-    notificacoesEmail: true,
-    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
-  },
-  'vendedor@gmail.com': {
-    id: 'user-vendedor',
-    email: 'vendedor@gmail.com',
-    nome: 'Vendedor',
-    role: 'vendedor',
-    aldeiaId: 'aldeia-vale-azenha',
-    aldeia: null,
-    emailVerificado: true,
-    notificacoesEmail: true,
-    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
-  },
-  'smpsandro1239@gmail.com': {
-    id: 'user-jogador',
-    email: 'smpsandro1239@gmail.com',
-    nome: 'Jogador',
-    role: 'user',
-    aldeiaId: null,
-    aldeia: null,
-    emailVerificado: true,
-    notificacoesEmail: true,
-    passwordHash: '$2a$10$kIxKQbO6VhVhGvLzK3b4kOz9xK5aHJ7Z5yN8rT1wE2mP4vC6dB3G6',
-  },
-} : null;
+const demoUsers = buildDemoUsers();
 
 async function getDemoUser(email: string, password: string): Promise<DemoUser | null> {
   if (!demoUsers) return null;
@@ -298,9 +294,20 @@ export async function POST(request: NextRequest) {
         // FIX (segurança): anti-replay — o mesmo código TOTP não pode ser
         // aceite duas vezes (verifica + marca lastUsedToken atomicamente).
         const { verifyMFAOTPOnce } = await import('@/lib/mfa');
-        const isValidCode = await verifyMFAOTPOnce(totpCode, user.id, prisma);
+        let isValidCode = await verifyMFAOTPOnce(totpCode, user.id, prisma);
+
+        // A2 (Sprint 1): permitir backup code single-use como segundo fator.
+        if (!isValidCode) {
+          const { verifyBackupCode } = await import('@/lib/mfa');
+          isValidCode = await verifyBackupCode(user.id, totpCode);
+        }
 
         if (!isValidCode) {
+          // T1 (A2): falhas de 2FA passam a contar para o lockout da conta
+          // (antes só a password incorreta incrementava falhasLogin).
+          const { handle2FAFailure } = await import('@/lib/lockout');
+          await handle2FAFailure(user.id);
+
           await logAccess(
             email,
             false,
