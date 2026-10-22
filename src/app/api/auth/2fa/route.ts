@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
-import { generateMFASecret, generateMFAQRCode, verifyMFAOTP } from '@/lib/mfa';
+import { generateMFASecret, generateMFAQRCode, verifyMFAOTP, setupBackupCodes } from '@/lib/mfa';
 import { checkRateLimit, rateLimitConfigs, createRateLimitResponse } from '@/lib/rate-limit';
 import { logCRUD as logAudit, getClientIP } from '@/lib/audit';
 
@@ -54,7 +54,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '2FA não configurado' }, { status: 400 });
       }
 
-      const isValid = verifyMFAOTP(code, tfa.secret);
+      // FIX (segurança, T1/A2): verifyMFAOTP é async desde que passou a usar
+      // otplib v13 (Promise<VerifyResult>). Sem await, `isValid` era uma
+      // Promise truthy — ou seja, QUALQUER código era aceite. Este era um
+      // bug crítico de autenticação 2FA.
+      const isValid = await verifyMFAOTP(code, tfa.secret);
 
       if (!isValid) {
         await logAudit(user.id, '2fa_verify_fail', 'security', undefined, { email: user.email }, ip, ua);
@@ -66,11 +70,25 @@ export async function POST(request: NextRequest) {
         data: { enabled: true },
       });
 
+      // A2 (Sprint 1): gerar 10 backup codes single-use no enable 2FA.
+      // Os códigos em claro são retornados UMA única vez — na BD fica
+      // apenas o array JSON de hashes SHA-256 (ver src/lib/mfa.ts).
+      let backupCodes: string[] | undefined;
+      try {
+        backupCodes = await setupBackupCodes(user.id);
+      } catch (e) {
+        console.error('[2FA] Falha ao gerar backup codes:', e);
+      }
+
       await logAudit(user.id, '2fa_enable', 'security', undefined, { email: user.email }, ip, ua);
 
       return NextResponse.json({
         success: true,
         message: '2FA ativado com sucesso',
+        backupCodes,
+        backupCodesWarning: backupCodes
+          ? 'Guarda estes códigos num local seguro. Só são mostrados uma vez e cada um só pode ser usado uma vez.'
+          : undefined,
       });
     }
 
@@ -90,7 +108,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '2FA não está ativo' }, { status: 400 });
       }
 
-      const isValid = verifyMFAOTP(code, tfa.secret);
+      // FIX (segurança, T1/A2): async — ver comentário no bloco 'verify'.
+      const isValid = await verifyMFAOTP(code, tfa.secret);
       if (!isValid) {
         await logAudit(user.id, '2fa_disable_fail', 'security', undefined, { email: user.email }, ip, ua);
         return NextResponse.json({ error: 'Código TOTP inválido' }, { status: 400 });

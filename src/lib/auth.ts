@@ -12,9 +12,13 @@ export const AUTH_COOKIE_NAME =
   process.env.NODE_ENV === 'production' ? '__Host-auth-token' : 'auth-token';
 export const REFRESH_COOKIE_NAME =
   process.env.NODE_ENV === 'production' ? '__Host-refresh-token' : 'refresh-token';
-const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 horas em segundos
+const COOKIE_MAX_AGE = Number(process.env.JWT_COOKIE_MAX_AGE ?? 15 * 60); // T3/A4: 15 min (era 24h)
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 dias em segundos
-const JWT_EXPIRATION = '24h';
+// FIX (segurança, T3/A4): access token JWT passa a expirar em 15 minutos
+// (antes 24h). Sessões antigas deixam de ser aceites — utilizadores têm de
+// fazer re-login após o deploy. A renovação transparente é feita pelo
+// endpoint /api/auth/refresh (cookie httpOnly de refresh + interceptor axios).
+const JWT_EXPIRATION = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 // FIX (segurança): validar o segredo JWT no ACESSO (lazy), não na importação
@@ -32,6 +36,12 @@ function validateJwtSecret(secret: string | undefined): string {
   }
   if (WEAK_SECRETS.some((w) => secret.toLowerCase().includes(w))) {
     throw new Error('JWT_SECRET contém um placeholder inseguro. Genera um segredo aleatório forte.');
+  }
+  // L2 (Sprint 3): verificação de entropia mínima — rejeita segredos com
+  // poucas personagens distintas (ex.: "aaaa...") que são triviais de forçar.
+  const distinctChars = new Set(secret).size;
+  if (distinctChars < 12) {
+    throw new Error('JWT_SECRET tem baixa entropia (mínimo 12 caracteres distintos). Usa openssl rand -base64 48.');
   }
   return secret;
 }
@@ -58,7 +68,10 @@ export function setAuthCookie(response: NextResponse, token: string): void {
     value: token,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    // T3/A4: sameSite=strict em produção (o prefixo __Host- já obriga a
+    // Secure+path=/; strict elimina CSRF cross-site por envio de cookie).
+    // Em dev mantém-se 'lax' para não partir OAuth local (redirects top-level).
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     maxAge: COOKIE_MAX_AGE,
     path: '/',
   });
@@ -87,10 +100,16 @@ export function getAuthTokenFromCookie(request: NextRequest): string | null {
 }
 
 /**
+ * L2 (Sprint 3): custo bcrypt 10 → 12 (~4x mais resistente a brute-force;
+ * login ~250ms vs ~60ms — aceitável num fluxo de autenticação).
+ */
+export const BCRYPT_HASH_COST = Number(process.env.BCRYPT_COST ?? 12);
+
+/**
  * Hash de password com bcrypt
  */
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, BCRYPT_HASH_COST);
 }
 
 /**
