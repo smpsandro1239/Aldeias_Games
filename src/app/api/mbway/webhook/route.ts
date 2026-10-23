@@ -13,31 +13,35 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get("x-mbway-signature");
     const webhookSecret = process.env.MBWAY_WEBHOOK_SECRET;
 
-    if (webhookSecret) {
-      if (!signature) {
-        return NextResponse.json(
-          { error: "Signature MBWay obrigatória" },
-          { status: 400 }
-        );
-      }
-      const isValid = validateWebhookSignature(
-        JSON.stringify(body),
-        signature,
-        webhookSecret
+    // M1 (Sprint 2): FAIL-CLOSED ABSOLUTO — sem secret configurado o webhook
+    // NÃO processa nada, em nenhum ambiente. Antes, fora de produção aceitava
+    // payloads não assinados (porta a falsificação de status de pagamento).
+    if (!webhookSecret) {
+      console.error(
+        "[MBWay webhook] MBWAY_WEBHOOK_SECRET não configurado — REJEITANDO (fail-closed)"
       );
-      if (!isValid) {
-        return NextResponse.json(
-          { error: "Signature MBWay inválida" },
-          { status: 400 }
-        );
-      }
-    } else {
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json(
-          { error: "Configuração MBWay em falta" },
-          { status: 500 }
-        );
-      }
+      return NextResponse.json(
+        { error: "Webhook não configurado" },
+        { status: 500 }
+      );
+    }
+
+    if (!signature) {
+      return NextResponse.json(
+        { error: "Signature MBWay obrigatória" },
+        { status: 400 }
+      );
+    }
+    const isValid = validateWebhookSignature(
+      JSON.stringify(body),
+      signature,
+      webhookSecret
+    );
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Signature MBWay inválida" },
+        { status: 401 }
+      );
     }
 
     const result = processWebhookCallback(body);
@@ -62,6 +66,25 @@ export async function POST(request: NextRequest) {
     try {
       const dados = body?.Entity_ClientPhone || body?.dados || body;
       const tipoTransacao = dados?.tipo || dados?.metadata?.tipo;
+
+      // M1 (Sprint 2): VALIDAÇÃO DE AMOUNT — o webhook só pode creditar o
+      // valor registado na Transação pendente. Sem isto, um payload assinado
+      // com amount adulterado inflacionaria saldos.
+      if (result.status === 'completed') {
+        const ok = await verifyWebhookAmount(
+          result.transactionId,
+          typeof body?.amount === 'number' ? body.amount : undefined
+        );
+        if (!ok) {
+          await completeWebhookEvent("mbway", result.transactionId, "failed", {
+            error: "amount_mismatch",
+          });
+          return NextResponse.json(
+            { error: "Amount mismatch" },
+            { status: 400 }
+          );
+        }
+      }
 
       if (tipoTransacao === "carregamento_saldo") {
         await processCarregamento(result.transactionId);

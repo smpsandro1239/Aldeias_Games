@@ -1,14 +1,52 @@
 import { TOTP } from 'otplib';
+import { NobleCryptoPlugin } from '@otplib/plugin-crypto-noble';
+import { ScureBase32Plugin } from '@otplib/plugin-base32-scure';
 import crypto from 'crypto';
 import { toDataURL } from 'qrcode';
 
+// FIX (R1): otplib v13 exige plugins explícitos (crypto + base32). Sem eles,
+// qualquer generate/verify lança CryptoPluginMissingError — ou seja, o 2FA
+// rebentava em runtime. Instanciamos os plugins uma vez e reutilizamos.
+const OTP_CRYPTO = new NobleCryptoPlugin();
+const OTP_BASE32 = new ScureBase32Plugin();
+
+/** Nova instância TOTP com os plugins configurados e tolerância temporal 0. */
+function makeTOTP(secret?: string): TOTP {
+  return new TOTP({
+    ...(secret ? { secret } : {}),
+    crypto: OTP_CRYPTO,
+    base32: OTP_BASE32,
+  });
+}
+
+/**
+ * Gerar segredo base32 com >=20 bytes de entropia criptográfica.
+ * FIX (R3a): API síncrona — generateSecretSync não existe no otplib v13;
+ * usar crypto.randomBytes + base32 manual mantém a mesma garantia (>=16 bytes)
+ * sem exigir await em todos os callers (setup 2FA).
+ */
+const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 export const generateMFASecret = () => {
-  return new TOTP().generateSecret();
+  const bytes = crypto.randomBytes(20); // 160 bits > guardrail otplib v13 (>=16 bytes)
+  let bits = 0;
+  let value = 0;
+  let output = '';
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 5) {
+      output += BASE32_ALPHABET[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) {
+    output += BASE32_ALPHABET[(value << (5 - bits)) & 31];
+  }
+  return output;
 };
 
-export const generateMFAOTP = (secret: string) => {
-  const totp = new TOTP({ secret });
-  return totp.generate();
+export const generateMFAOTP = async (secret: string) => {
+  return await makeTOTP(secret).generate();
 };
 
 /**
@@ -19,7 +57,8 @@ export const generateMFAOTP = (secret: string) => {
  * NOTA: async porque o TOTP do otplib v13 devolve uma Promise<VerifyResult>.
  */
 export const verifyMFAOTP = async (token: string, secret: string): Promise<boolean> => {
-  const totp = new TOTP({ secret });
+  // FIX (R3a): usar makeTOTP — new TOTP({secret}) sem plugins lança CryptoPluginMissingError
+  const totp = makeTOTP(secret);
   const result = await totp.verify(token, { epochTolerance: 0 });
   return result.valid === true;
 };
@@ -100,9 +139,12 @@ export async function setupBackupCodes(userId: string): Promise<string[]> {
 
 async function prismaUpdateBackupCodes(userId: string, backupCodes: string | null): Promise<void> {
   const { default: prisma } = await import('./db');
-  await prisma.twoFactorAuth.update({
+  // FIX (R1): upsert em vez de update — setupBackupCodes não deve falhar
+  // se ainda não existir registo TwoFactorAuth para o utilizador.
+  await prisma.twoFactorAuth.upsert({
     where: { userId },
-    data: { backupCodes },
+    update: { backupCodes },
+    create: { userId, secret: '', enabled: false, backupCodes },
   });
 }
 
@@ -134,7 +176,8 @@ export async function verifyBackupCode(userId: string, code: string): Promise<bo
 }
 
 export const generateMFAQRCode = async (email: string, secret: string, issuer: string = 'Aldeias Games') => {
-  const totp = new TOTP({ issuer });
+  // FIX (R3a): instância com plugins (toURI não usa crypto, mas mantém consistência)
+  const totp = makeTOTP();
   const otpauthUrl = totp.toURI({ label: email, secret });
   return await toDataURL(otpauthUrl);
 };
