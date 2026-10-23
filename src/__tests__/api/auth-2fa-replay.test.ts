@@ -9,31 +9,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Mock da BD (vi.mock é hoisted — usar vi.hoisted para as referências) ──
-const mocks = vi.hoisted(() => ({
-  tfa: { findUnique: vi.fn(), update: vi.fn(), upsert: vi.fn() },
-  user: { update: vi.fn(), findUnique: vi.fn() },
-}));
+const mocks = vi.hoisted(() => {
+  const tfa = { findUnique: vi.fn(), update: vi.fn(), upsert: vi.fn() };
+  const user = { update: vi.fn(), findUnique: vi.fn() };
+  return { tfa, user, dbDefault: { twoFactorAuth: tfa, user } };
+});
 vi.mock('@/lib/db', () => ({
-  default: mocks,
-  prisma: mocks,
+  default: mocks.dbDefault,
+  prisma: mocks.dbDefault,
 }));
 const mockTfa = mocks.tfa;
 const mockUser = mocks.user;
 
-import { TOTP } from 'otplib';
 import {
   verifyMFAOTP,
   verifyMFAOTPOnce,
   generateBackupCodes,
   setupBackupCodes,
   verifyBackupCode,
+  generateMFASecret,
+  generateMFAOTP,
 } from '@/lib/mfa';
 import { handle2FAFailure } from '@/lib/lockout';
 
-const SECRET = 'JBSWY3DPEHPK3PXP';
+// FIX (R3a): secret dinâmico com >=16 bytes de entropia (guardrail otplib v13)
+// e token gerado via mfa.ts (que tem os plugins configurados).
+const SECRET = generateMFASecret();
 
-function currentToken(): string {
-  return new TOTP({ secret: SECRET }).generate();
+async function currentToken(): Promise<string> {
+  return await generateMFAOTP(SECRET);
 }
 
 describe('A2 — 2FA replay protection + backup codes + lockout', () => {
@@ -50,14 +54,14 @@ describe('A2 — 2FA replay protection + backup codes + lockout', () => {
     const result = await verifyMFAOTP('000000', SECRET);
     expect(result).toBe(false);
     // Sanity: um código genuíno DA janela actual é aceite
-    const validResult = await verifyMFAOTP(currentToken(), SECRET);
+    const validResult = await verifyMFAOTP(await currentToken(), SECRET);
     expect(validResult).toBe(true);
   });
 
   it('deve rejeitar replay do mesmo código TOTP (lastUsedToken)', async () => {
-    const token = currentToken();
+    const token = await currentToken();
     mockTfa.findUnique.mockResolvedValue({ userId: 'user-1', secret: SECRET, lastUsedToken: null });
-    const first = await verifyMFAOTPOnce(token, 'user-1', {});
+    const first = await verifyMFAOTPOnce(token, 'user-1', { twoFactorAuth: mockTfa });
     expect(first).toBe(true);
     expect(mockTfa.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { lastUsedToken: token } })
@@ -65,7 +69,7 @@ describe('A2 — 2FA replay protection + backup codes + lockout', () => {
 
     // Replay: mesmo código, já marcado como usado → deve falhar
     mockTfa.findUnique.mockResolvedValue({ userId: 'user-1', secret: SECRET, lastUsedToken: token });
-    const replay = await verifyMFAOTPOnce(token, 'user-1', {});
+    const replay = await verifyMFAOTPOnce(token, 'user-1', { twoFactorAuth: mockTfa });
     expect(replay).toBe(false);
   });
 
@@ -84,7 +88,7 @@ describe('A2 — 2FA replay protection + backup codes + lockout', () => {
     const codes = await setupBackupCodes('user-1');
     expect(mockTfa.upsert).toHaveBeenCalledTimes(1);
     const arg = mockTfa.upsert.mock.calls[0][0];
-    const storedHashes = JSON.parse(arg.data.backupCodes);
+    const storedHashes = JSON.parse((arg.update ?? arg.data).backupCodes);
     expect(storedHashes).toHaveLength(10);
     for (const h of storedHashes) {
       expect(h).toHaveLength(64); // SHA-256 hex

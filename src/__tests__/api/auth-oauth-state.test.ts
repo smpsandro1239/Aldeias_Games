@@ -46,8 +46,9 @@ describe('A3 — OAuth state crypto.randomBytes + timingSafeEqual', () => {
     const req = new NextRequest(
       'http://localhost:3000/api/auth/google/callback?code=fake&state=abc123',
     );
-    const res = await handleOAuthCallback(req, {
-      providerName: 'google',
+    const res = await handleOAuthCallback(req, 'google', {
+      providerName: 'Google',
+      getUserData: async () => ({ email: 'x@y.pt', providerId: 'pid' }),
       tokenUrl: 'https://oauth2.googleapis.com/token',
       userInfoUrl: 'https://openidconnect.googleapis.com/v1/userinfo',
       clientId: 'id',
@@ -68,8 +69,9 @@ describe('A3 — OAuth state crypto.randomBytes + timingSafeEqual', () => {
       'http://localhost:3000/api/auth/google/callback?code=fake&state=STATESAOFORJADOS',
     );
     req.cookies.set('google_oauth_state', 'OUTROSTATECOMPRIMENTOIDENTICOXX');
-    const res = await handleOAuthCallback(req, {
-      providerName: 'google',
+    const res = await handleOAuthCallback(req, 'google', {
+      providerName: 'Google',
+      getUserData: async () => ({ email: 'x@y.pt', providerId: 'pid' }),
       tokenUrl: 'https://oauth2.googleapis.com/token',
       userInfoUrl: 'https://openidconnect.googleapis.com/v1/userinfo',
       clientId: 'id',
