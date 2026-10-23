@@ -1,7 +1,10 @@
 /**
  * R3 (A4 · Sprint 1) — Testes: cookie __Host- + sameSite/Secure + JWT 15min + refresh.
  * Mock-based, sem BD real.
+ * NOTA: corre em ambiente node (como auth.test.ts) — o jsdom do setup global
+ * altera a resolução de polyfills do jose e quebra SignJWT.sign().
  */
+// @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => {
@@ -15,10 +18,13 @@ const mocks = vi.hoisted(() => {
 vi.mock('@/lib/db', () => ({ default: mocks.dbDefault, prisma: mocks.dbDefault }));
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SignJWT, jwtVerify } from 'jose';
+import { jwtVerify } from 'jose';
 import { setAuthCookie, generateToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 
-const JWT_TEST_KEY = 'chave-hs256-de-teste-0123456789abcdefghij-KLmnop';
+// NOTA: o guardrail WEAK_SECRETS de auth.ts rejeita segredos que contenham
+// substrings como 'secret'/'devsecret'. O setup global define um segredo válido;
+// aqui usamos um equivalente sem placeholder, mantendo >=32 chars e >=12 distintos.
+const JWT_TEST_KEY = process.env.JWT_SECRET ?? 'unit-tests-hs256-key-0123456789abcdef-XyZqrlmn';
 
 describe('A4 — __Host- cookie + JWT 15min + refresh', () => {
   beforeEach(() => {
