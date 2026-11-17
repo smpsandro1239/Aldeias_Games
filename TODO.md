@@ -4,6 +4,8 @@
 
 ## Prioridade crítica
 
+- [ ] **P0 — E2E bloqueado por rotas dinâmicas Next.js duplicadas:** `membros/[membroId]` e `membros/[userId]/role` usavam nomes diferentes no mesmo segmento; a pasta foi normalizada para `[userId]` para permitir arranque do servidor Next.js. Aguarda CI/E2E.
+
 - [ ] **P0 — Privacidade em `GET /api/apostas`:** a rota legada devolvia nomes, contactos e relações completas do jogo mesmo sem autenticação. A resposta pública foi reduzida a números/estado/IDs; utilizadores autenticados ficam limitados às próprias apostas, vendedores às suas vendas e administradores à sua aldeia. Adicionados testes; aguarda CI.
 
 - [ ] **P0 — Robustez do relógio oficial:** uma resposta HTTP 200 sem `unixtime` válido podia propagar `Invalid Date` para criação de grelhas e cron do Euromilhões. A validação defensiva e o fallback para relógio local foram implementados; aguarda CI.

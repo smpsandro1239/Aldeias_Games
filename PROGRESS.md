@@ -10,6 +10,11 @@
 
 ## Trabalho desta sessão
 
+### Correção de rotas dinâmicas Next.js (código integrado, validação pendente)
+
+- [x] Normalizado o segmento dinâmico de membros para `[userId]`, mantendo os mesmos endpoints HTTP e parâmetros URL; o Next.js exige nomes idênticos para segmentos dinâmicos equivalentes no mesmo ramo.
+- [ ] Confirmar que o servidor Next.js arranca e que os testes E2E passam.
+
 ### Segurança — API legada de apostas (código integrado, validação pendente)
 
 - [x] `GET /api/apostas` deixa de devolver PII e relações completas do jogo a visitantes não autenticados; mantém apenas os dados mínimos necessários para a ocupação do tabuleiro.

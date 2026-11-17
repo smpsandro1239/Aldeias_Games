@@ -12,9 +12,9 @@ const editMemberSchema = z
     message: 'Pelo menos um campo (nome ou email) é obrigatório',
   })
 
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string; membroId: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string; userId: string }> }) {
   try {
-    const { id, membroId } = await context.params
+    const { id, userId } = await context.params
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     }
 
     const membership = await prisma.userAldeiaRole.findFirst({
-      where: { aldeiaId: id, userId: membroId },
+      where: { aldeiaId: id, userId: userId },
       include: {
         role: true,
         user: { select: { id: true, nome: true, email: true, role: true, telefone: true } },
@@ -62,9 +62,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   }
 }
 
-export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string; membroId: string }> }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string; userId: string }> }) {
   try {
-    const { id, membroId } = await context.params
+    const { id, userId } = await context.params
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -94,14 +94,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
 
     const membership = await prisma.userAldeiaRole.findFirst({
-      where: { aldeiaId: id, userId: membroId },
+      where: { aldeiaId: id, userId: userId },
       select: { id: true },
     })
     if (!membership) {
       return NextResponse.json({ error: 'Utilizador não é membro desta aldeia' }, { status: 404 })
     }
 
-    const isTargetLider = aldeia.admins.some((admin: any) => admin.id === membroId)
+    const isTargetLider = aldeia.admins.some((admin: any) => admin.id === userId)
     if (isTargetLider) {
       return NextResponse.json({ error: 'Não é possível editar o líder da aldeia' }, { status: 400 })
     }
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     if (email) {
       const emailExists = await prisma.user.findFirst({
-        where: { email, NOT: { id: membroId } },
+        where: { email, NOT: { id: userId } },
         select: { id: true },
       })
       if (emailExists) {
@@ -128,7 +128,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (email !== undefined) updates.email = email
 
     const targetUser = await prisma.user.update({
-      where: { id: membroId },
+      where: { id: userId },
       data: updates,
       select: { id: true, nome: true, email: true },
     })
@@ -139,9 +139,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         aldeiaId: id,
         action: 'EDITAR_MEMBRO_ALDEIA',
         resource: 'User',
-        resourceId: membroId,
+        resourceId: userId,
         metadata: {
-          targetUserId: membroId,
+          targetUserId: userId,
           targetUserNome: targetUser.nome,
           alteracoes: Object.keys(updates),
         },
@@ -155,9 +155,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string; membroId: string }> }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string; userId: string }> }) {
   try {
-    const { id, membroId } = await context.params
+    const { id, userId } = await context.params
     const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json(
@@ -167,7 +167,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     }
 
     const aldeiaId = id
-    const targetUserId = membroId
+    const targetUserId = userId
 
     // Check if the aldeia exists
     const aldeia = await prisma.aldeia.findUnique({
