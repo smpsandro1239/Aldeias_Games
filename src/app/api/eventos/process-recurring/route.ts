@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { addRecurrence } from '@/lib/recurrence';
 
 // POST - Processar eventos recorrentes (chamado por cron job)
 export async function POST(request: NextRequest) {
@@ -104,21 +105,12 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Calcular próxima ocorrência
-      const nextOccurrence = new Date(template.proximaData);
-
-      if (template.frequenciaRecorrencia === 'semanal') {
-        nextOccurrence.setDate(nextOccurrence.getDate() + 7);
-      } else if (template.frequenciaRecorrencia === 'quinzenal') {
-        nextOccurrence.setDate(nextOccurrence.getDate() + 14);
-      } else if (template.frequenciaRecorrencia === 'mensal') {
-        nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
-        // Ajustar para o mesmo dia da semana
-        const targetDay = template.diaSemanaRecorrencia;
-        while (nextOccurrence.getDay() !== targetDay) {
-          nextOccurrence.setDate(nextOccurrence.getDate() + (targetDay > nextOccurrence.getDay() ? 1 : -6));
-        }
-      }
+      // Usar a regra partilhada com a criação do template e a pré-visualização.
+      const nextOccurrence = addRecurrence(
+        template.proximaData,
+        template.frequenciaRecorrencia,
+        template.diaSemanaRecorrencia
+      );
 
       // Atualizar próxima data do template e contador de ocorrências
       const stopRecurrence = nextOccurrence > template.dataFim;

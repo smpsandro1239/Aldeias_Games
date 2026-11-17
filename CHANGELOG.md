@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Corrigido
+- Unificado o cálculo de recorrências entre a criação de eventos, o cron e a pré-visualização; corrigido o overflow mensal quando a data de referência é 30/31 e acrescentados testes de regressão.
+
+
 Todas as alterações relevantes do projeto estão documentadas neste ficheiro.
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-PT/1.1.0/).

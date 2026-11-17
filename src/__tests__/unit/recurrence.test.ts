@@ -18,6 +18,17 @@ describe("computeFirstRecurrenceDate", () => {
     expect(next!.getHours()).toBe(8);
   });
 
+  it("mensal não salta o mês quando a data de referência é o último dia do mês", () => {
+    const from = new Date(2026, 9, 31, 9, 15); // 31 de outubro de 2026
+    const next = computeFirstRecurrenceDate("mensal", 5, "10:30", from)!;
+    expect(next.getFullYear()).toBe(2026);
+    expect(next.getMonth()).toBe(10); // novembro
+    expect(next.getDate()).toBe(6); // primeira 6.ª feira de novembro
+    expect(next.getDay()).toBe(5);
+    expect(next.getHours()).toBe(10);
+    expect(next.getMinutes()).toBe(30);
+  });
+
   it("quinzenal avança 14 dias quando o dia já passou", () => {
     const from = new Date(2026, 0, 7); // terça-feira
     const next = computeFirstRecurrenceDate("quinzenal", 1, "08:00", from)!;
@@ -55,6 +66,15 @@ describe("addRecurrence", () => {
     expect(next.getMonth()).toBe(10); // novembro
     expect(next.getDate()).toBe(6); // primeira 6.ª feira de novembro 2026
     expect(next.getDay()).toBe(5);
+  });
+
+  it("mensal não sofre overflow quando a ocorrência anterior é no dia 31", () => {
+    const d = new Date(2026, 9, 31, 18, 45);
+    const next = addRecurrence(d, "mensal", 5);
+    expect(next.getMonth()).toBe(10);
+    expect(next.getDate()).toBe(6);
+    expect(next.getHours()).toBe(18);
+    expect(next.getMinutes()).toBe(45);
   });
 
   it("mensal com dia cedo no mês mantém mês correto (sem overflow)", () => {

@@ -234,6 +234,6 @@ TOTAL: ██████████ 100%
 | # | Tarefa | Estado |
 |---|--------|--------|
 | P1 | Resolver vulnerabilidades npm audit (5 moderate, 7 high, 1 critical) | ✅ FEITO — `npm audit fix` + nodemailer@9; **0 vulnerabilidades** |
-| P2 | Bug latente memal `addRecurrence`/cron: ajuste `(target>day?1:-6)` pode recuar para o mês anterior em âncoras com meses de 31 dias — também no POST `/api/eventos` e `process-recurring` (mover para lib `recurrence.ts` partilhada + corrigir + testar) | ⏳ |
+| P2 | Recorrência mensal: unificar cálculo entre POST, cron e pré-visualização; corrigir overflow de datas 30/31 e cobrir com testes | ✅ FEITO — `computeFirstRecurrenceDate` e `addRecurrence` partilhados; POST e cron migrados; testes de fim de mês adicionados (17/11/2026) |
 
-*Última actualização: 07/08/2026*
+*Última actualização: 17/11/2026*
