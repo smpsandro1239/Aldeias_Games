@@ -37,9 +37,10 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Apply non-breaking security fixes
-        run: |
-          npm audit fix --no-fund --no-progress
+      - name: Apply non-breaking security fixes (major updates remain pending)
+        id: audit_fix
+        continue-on-error: true
+        run: npm audit fix --no-fund --no-progress
 
       - name: Verify lockfile remains installable
         run: npm ci
