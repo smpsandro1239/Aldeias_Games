@@ -11,7 +11,7 @@
 - [x] **P0 — Build com URL base inválida:** parsing defensivo de `NEXT_PUBLIC_BASE_URL`, fallback para `VERCEL_URL` e domínio canónico. Build Next.js passou no commit `e0d5734`.
 - [ ] **P0 — Preparação da base de dados E2E:** a execução Playwright do commit `e0d5734` falhou porque o CI arrancou `next start` sem criar o schema nem semear a SQLite. Logs confirmam Prisma P2021 (`main.aldeias`, `main.jogos`, `main.rate_limits` inexistentes). O workflow `.github/workflows/ci.yml` foi corrigido no commit `c366264` para executar `prisma db push` e `prisma db seed` antes do Playwright; aguarda nova execução.
 - [ ] **P0 — Dependências de produção:** `npm audit --omit=dev --audit-level=high` continua a falhar. No commit `e0d5734` o relatório indicou 12 vulnerabilidades: 4 moderadas e 8 altas, incluindo `picomatch` e `zod` (a correção do Zod requer versão major segundo o npm). Atualizar de forma compatível e validar novamente; não usar `--force` sem migração e testes.
-- [ ] **P0 — CI de segurança:** manter o workflow de auditoria independente e obter `npm audit --omit=dev --audit-level=high` sem vulnerabilidades altas/críticas.
+- [ ] **P0 — CI de segurança:** manter o workflow de auditoria independente e obter `npm audit --omit=dev --audit-level=high` sem vulnerabilidades altas/críticas. O workflow `dependency-remediation.yml` foi ajustado no commit `c5c9d9c` para aceitar `workflow_dispatch` e não ocultar falhas do `npm audit fix`; validar a execução antes de aceitar atualizações.
 - [ ] **P0 — Webhooks/pagamentos:** continuar revisão de idempotência, ownership, estado e montante em todos os fluxos Stripe/MB WAY; as correções MB WAY existentes passaram typecheck/Vitest, mas falta validação E2E integrada.
 
 ## Prioridade alta
