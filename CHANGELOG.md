@@ -4,6 +4,7 @@
 
 ### Corrigido
 - Unificado o cálculo de recorrências entre a criação de eventos, o cron e a pré-visualização; corrigido o overflow mensal quando a data de referência é 30/31 e acrescentados testes de regressão.
+- Separada a auditoria de dependências do pipeline principal de qualidade, para que uma vulnerabilidade reportada não impeça a execução dos testes e do build; a auditoria continua a ser executada e a falhar no workflow dedicado até ser resolvida.
 
 
 Todas as alterações relevantes do projeto estão documentadas neste ficheiro.
