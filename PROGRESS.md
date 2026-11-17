@@ -110,3 +110,10 @@
 - [x] Adicionado trigger manual `workflow_dispatch` para permitir execução controlada futura.
 - [x] Removido `|| true` de `npm audit fix`, para não esconder falhas inesperadas da ferramenta; a execução continua sem `--force`.
 - [ ] Confirmar a execução do workflow, rever as alterações efetivas em `package.json`/`package-lock.json` e validar TypeScript, Vitest e build antes de aceitar qualquer atualização automática.
+
+
+## Correções iniciais de ESLint — continuação
+
+- [x] `src/components/bottom-nav.tsx`: `usePathname()` passa a ser chamado incondicionalmente; o valor `currentPath` é aplicado depois do hook.
+- [x] `src/components/modals/poio-da-vaca-modal.tsx`: helper de leitura de estado renomeado de `useNumeroState` para `getNumeroState`, porque não é um hook React e é chamado dentro de callbacks; interfaces vazias convertidas em aliases de tipo.
+- [ ] Confirmar redução dos erros ESLint e executar typecheck/testes no CI dos commits `648a255` e `a52243b`.
