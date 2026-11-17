@@ -76,7 +76,7 @@
     "input-otp": "^1.4.0",
     "jose": "^6.0.0",
     "jspdf": "^4.2.1",
-    "jspdf-autotable": "^5.0.7",
+    "jspdf-autotable": "^5.0.9",
     "lightningcss": "^1.32.0",
     "lucide-react": "^0.460.0",
     "next": "^16.0.0",
