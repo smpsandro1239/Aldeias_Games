@@ -1,6 +1,7 @@
 name: Remediação segura de dependências
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -38,7 +39,7 @@ jobs:
 
       - name: Apply non-breaking security fixes
         run: |
-          npm audit fix --no-fund --no-progress || true
+          npm audit fix --no-fund --no-progress
 
       - name: Verify lockfile remains installable
         run: npm ci
