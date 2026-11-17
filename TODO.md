@@ -10,6 +10,8 @@
 
 ## Prioridade alta
 
+- [ ] **P1 — Dívida técnica ESLint:** o primeiro lint integral revelou 224 erros e 1311 avisos em 1535 ocorrências; predominam `@ts-nocheck`/`@ts-ignore`, imports `require`, `prefer-const` e violações reais das Rules of Hooks. Corrigir por módulos, sem desativar regras globalmente.
+
 - [ ] **P1 — Segurança de autenticação e autorização:** completar auditoria endpoint a endpoint (RBAC, CSRF, rate limiting, isolamento multi-tenant e PII).
 - [ ] **P1 — Integridade financeira:** rever concorrência e idempotência em todos os fluxos de carteira, caixa, cofre, pagamentos e webhooks.
 

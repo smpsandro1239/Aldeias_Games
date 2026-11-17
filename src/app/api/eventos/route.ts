@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Construir where
     // Eventos eliminados (soft-delete) nunca aparecem em listas públicas
-    let where: Record<string, unknown> = incluirEliminados ? {} : { eliminado: false };
+    const where: Record<string, unknown> = incluirEliminados ? {} : { eliminado: false };
 
     if (aldeiaId) {
       where.aldeiaId = aldeiaId;
