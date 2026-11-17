@@ -4,6 +4,8 @@
 
 ## Prioridade crítica
 
+- [ ] **P0 — Privacidade em `GET /api/apostas`:** a rota legada devolvia nomes, contactos e relações completas do jogo mesmo sem autenticação. A resposta pública foi reduzida a números/estado/IDs; utilizadores autenticados ficam limitados às próprias apostas, vendedores às suas vendas e administradores à sua aldeia. Adicionados testes; aguarda CI.
+
 - [ ] **P0 — Robustez do relógio oficial:** uma resposta HTTP 200 sem `unixtime` válido podia propagar `Invalid Date` para criação de grelhas e cron do Euromilhões. A validação defensiva e o fallback para relógio local foram implementados; aguarda CI.
 - [ ] **P0 — Build Vercel com URL inválido:** `NEXT_PUBLIC_BASE_URL` malformada provocava falha no `metadataBase` de `src/app/layout.tsx`. Implementado parsing defensivo com fallback para `VERCEL_URL` e domínio canónico; aguarda build.
 

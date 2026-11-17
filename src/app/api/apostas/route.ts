@@ -1,80 +1,100 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from '@prisma/client';
 import { prisma } from "@/lib/db";
-import { getFullUserFromRequest, verifyToken } from "@/lib/auth";
+import { getFullUserFromRequest } from "@/lib/auth";
 import { resolvePermissions } from '@/lib/rbac/resolvePermissions';
 import { executeWithRetry } from '@/lib/transaction-retry';
 import { escapeHtml } from "@/lib/utils";
-
-async function getAuthFromHeader(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.substring(7);
-    return await verifyToken(token);
-  }
-  return null;
-}
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get("tipo");
     const jogoId = searchParams.get("jogoId");
+    const user = await getFullUserFromRequest(request);
 
-    const payload = await getAuthFromHeader(request);
-    const userRole = payload?.role || null;
-    const userAldeiaId = payload?.aldeiaId || null;
+    // A consulta pública é necessária para mostrar números ocupados, mas nunca
+    // deve devolver nome, telefone, email ou a relação completa do jogo.
+    const canViewPlayerData = Boolean(user);
+    const filters: Prisma.ApostaWhereInput[] = [];
 
-    const where: Prisma.ApostaWhereInput = {};
-    
-    if (tipo) {
-      where.jogo = { tipo: tipo as any };
-    }
-    
-    if (jogoId) {
-      where.jogoId = jogoId;
+    if (tipo) filters.push({ jogo: { tipo: tipo as any } });
+    if (jogoId) filters.push({ jogoId });
+
+    if (user) {
+      switch (user.role) {
+        case "super_admin":
+          break;
+        case "aldeia_admin":
+          if (!user.aldeiaId) {
+            return NextResponse.json({ error: "Aldeia não associada" }, { status: 403 });
+          }
+          filters.push({ jogo: { evento: { aldeiaId: user.aldeiaId } } });
+          break;
+        case "vendedor":
+        case "user":
+          // O modelo legado Aposta usa vendedorId para registar o utilizador
+          // autenticado que criou a aposta (não existe coluna userId).
+          filters.push({ vendedorId: user.id });
+          break;
+        default:
+          return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+      }
     }
 
     const apostas = await prisma.aposta.findMany({
-      where,
-      include: {
-        jogo: {
-          include: {
-            evento: {
-              include: {
-                aldeia: true
-              }
+      where: filters.length > 0 ? { AND: filters } : {},
+      select: {
+        id: true,
+        numeros: true,
+        pago: true,
+        jogoId: true,
+        createdAt: true,
+        ...(canViewPlayerData
+          ? {
+              jogadorNome: true,
+              jogadorTelefone: true,
+              jogadorEmail: true,
+              vendedorId: true,
             }
-          }
-        },
+          : {}),
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
 
-    const mappedApostas = apostas.map((a: (typeof apostas)[number]) => {
-      const nums = typeof a.numeros === 'string' ? JSON.parse(a.numeros || "[]") : a.numeros;
-
-      // Filtragem de dados sensíveis para utilizadores normais
-      if (userRole === "super_admin" || userRole === "aldeia_admin" || userRole === "admin" || userRole === "vendedor") {
-        return { ...a, numeros: nums };
+    const data = apostas.map((aposta) => {
+      let numeros: number[] = [];
+      try {
+        const parsed = typeof aposta.numeros === "string"
+          ? JSON.parse(aposta.numeros || "[]")
+          : aposta.numeros;
+        if (Array.isArray(parsed)) {
+          numeros = parsed.filter((numero): numero is number =>
+            typeof numero === "number" && Number.isInteger(numero)
+          );
+        }
+      } catch {
+        // Um registo legado malformado não deve derrubar a listagem.
       }
 
-      const isPropria = payload?.userId === (a as any).userId || (a.jogadorNome === payload?.email);
-
       return {
-        id: a.id,
-        numeros: nums,
-        jogadorNome: a.jogadorNome,
-        pago: a.pago,
-        jogoId: a.jogoId,
-        createdAt: a.createdAt,
-        isPropria
+        id: aposta.id,
+        numeros,
+        pago: aposta.pago,
+        jogoId: aposta.jogoId,
+        createdAt: aposta.createdAt,
+        ...(canViewPlayerData
+          ? {
+              jogadorNome: aposta.jogadorNome,
+              jogadorTelefone: aposta.jogadorTelefone,
+              jogadorEmail: aposta.jogadorEmail,
+              vendedorId: aposta.vendedorId,
+            }
+          : {}),
       };
     });
 
-    return NextResponse.json({ data: mappedApostas });
+    return NextResponse.json({ data });
   } catch (error) {
     console.error("Erro ao buscar apostas:", error);
     return NextResponse.json(
@@ -89,7 +109,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { jogoId, numeros, jogador, pago, usarSaldo } = body;
 
-    if (!jogoId || !numeros || !numeros.length || !jogador || !jogador.nome) {
+    if (
+      typeof jogoId !== "string" ||
+      !Array.isArray(numeros) ||
+      numeros.length === 0 ||
+      !numeros.every((numero: unknown) => typeof numero === "number" && Number.isInteger(numero) && numero > 0) ||
+      new Set(numeros).size !== numeros.length ||
+      !jogador ||
+      typeof jogador.nome !== "string" ||
+      !jogador.nome.trim()
+    ) {
       return NextResponse.json(
         { error: "Dados inválidos. É necessário jogoId, números e nome do jogador." },
         { status: 400 }
@@ -106,6 +135,22 @@ export async function POST(request: NextRequest) {
         { error: "Jogo não encontrado" },
         { status: 404 }
       );
+    }
+
+    // Normalizar e limitar os dados pessoais antes de os guardar.
+    const jogadorNome = escapeHtml(jogador.nome.trim().slice(0, 100));
+    const jogadorTelefone = typeof jogador.telefone === "string"
+      ? jogador.telefone.replace(/[^+0-9]/g, "").slice(0, 20)
+      : null;
+    const jogadorEmail = typeof jogador.email === "string"
+      ? jogador.email.trim().toLowerCase().slice(0, 254)
+      : null;
+
+    if (jogadorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(jogadorEmail)) {
+      return NextResponse.json({ error: "Email do jogador inválido" }, { status: 400 });
+    }
+    if (jogador.telefone && (!jogadorTelefone || jogadorTelefone.replace(/\D/g, "").length < 9)) {
+      return NextResponse.json({ error: "Telefone do jogador inválido" }, { status: 400 });
     }
 
     // Get authenticated user
@@ -203,9 +248,9 @@ export async function POST(request: NextRequest) {
         data: {
           jogoId,
           numeros: JSON.stringify(numeros),
-          jogadorNome: escapeHtml(String(jogador.nome)),
-          jogadorTelefone: jogador.telefone || null,
-          jogadorEmail: jogador.email || null,
+          jogadorNome,
+          jogadorTelefone,
+          jogadorEmail,
           vendedorId: vendedorAssociado,
           pago: isSaldoPayment || (isCashSale && canExecuteVenda),
         },

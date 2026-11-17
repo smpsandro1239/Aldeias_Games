@@ -10,6 +10,13 @@
 
 ## Trabalho desta sessão
 
+### Segurança — API legada de apostas (código integrado, validação pendente)
+
+- [x] `GET /api/apostas` deixa de devolver PII e relações completas do jogo a visitantes não autenticados; mantém apenas os dados mínimos necessários para a ocupação do tabuleiro.
+- [x] Utilizadores normais e vendedores ficam limitados às apostas associadas ao respetivo utilizador; administradores de aldeia ficam limitados à sua aldeia; super admin mantém visão global.
+- [x] Dados pessoais do POST são normalizados/limitados, email e telefone são validados e números têm de ser inteiros positivos e únicos.
+- [x] Criados testes unitários de privacidade pública, ownership e isolamento multi-tenant; aguarda CI.
+
 ### Continuação — robustez do relógio e build de produção (código integrado, validação pendente)
 
 - [x] Corrigido `syncTime()` para validar HTTP, `unixtime` finito e data válida antes de atualizar o offset; respostas inválidas preservam o último offset ou usam o relógio local, sem propagar `Invalid Date` nem repetir chamadas em cada pedido.
