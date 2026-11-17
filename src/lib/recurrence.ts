@@ -35,16 +35,16 @@ export function computeFirstRecurrenceDate(
     } else if (frequency === 'quinzenal') {
       daysToAdd += 14;
     } else if (frequency === 'mensal') {
-      next.setMonth(next.getMonth() + 1);
       next.setDate(1);
+      next.setMonth(next.getMonth() + 1);
       while (next.getDay() !== targetDay) next.setDate(next.getDate() + 1);
     }
   } else {
     if (frequency === 'quinzenal') {
       daysToAdd += 7;
     } else if (frequency === 'mensal') {
-      next.setMonth(next.getMonth() + 1);
       next.setDate(1);
+      next.setMonth(next.getMonth() + 1);
       while (next.getDay() !== targetDay) next.setDate(next.getDate() + 1);
     }
   }
