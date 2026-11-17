@@ -6,6 +6,7 @@ import {
   validateWebhookSignature,
 } from "@/lib/mbway";
 import { claimWebhookEvent, completeWebhookEvent } from "@/lib/webhook-helpers";
+import { amountMatches } from "@/lib/payment-amount";
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,20 +71,22 @@ export async function POST(request: NextRequest) {
       // M1 (Sprint 2): VALIDAÇÃO DE AMOUNT — o webhook só pode creditar o
       // valor registado na Transação pendente. Sem isto, um payload assinado
       // com amount adulterado inflacionaria saldos.
-      if (result.status === 'completed') {
-        const ok = await verifyWebhookAmount(
-          result.transactionId,
-          typeof body?.amount === 'number' ? body.amount : undefined
-        );
-        if (!ok) {
-          await completeWebhookEvent("mbway", result.transactionId, "failed", {
-            error: "amount_mismatch",
-          });
-          return NextResponse.json(
-            { error: "Amount mismatch" },
-            { status: 400 }
-          );
-        }
+      if (result.status !== "completed") {
+        await completeWebhookEvent("mbway", result.transactionId, "failed", {
+          status: result.status,
+        });
+        return NextResponse.json({ received: true, status: result.status });
+      }
+
+      const amountIsValid = await verifyWebhookAmount(
+        result.transactionId,
+        typeof body?.amount === "number" ? body.amount : undefined
+      );
+      if (!amountIsValid) {
+        await completeWebhookEvent("mbway", result.transactionId, "failed", {
+          error: "amount_mismatch",
+        });
+        return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
       }
 
       if (tipoTransacao === "carregamento_saldo") {
@@ -193,4 +196,33 @@ async function processParticipacao(transactionId: string) {
       });
     }
   });
+}
+
+
+/**
+ * Confirma o montante comunicado pelo MBWay contra o valor originalmente
+ * registado na participação ou no carregamento pendente. Sem correspondência
+ * exata ao cêntimo, o webhook não pode creditar saldo nem concluir compras.
+ */
+async function verifyWebhookAmount(
+  transactionId: string,
+  receivedAmount: number | undefined
+): Promise<boolean> {
+  if (typeof receivedAmount !== "number" || !Number.isFinite(receivedAmount)) {
+    return false;
+  }
+
+  const [participacao, carregamento] = await Promise.all([
+    prisma.participacao.findFirst({
+      where: { referenciaPagamento: transactionId },
+      select: { valorPago: true },
+    }),
+    prisma.transacao.findFirst({
+      where: { referencia: transactionId, tipo: "carregamento_saldo" },
+      select: { valor: true },
+    }),
+  ]);
+
+  const expectedAmount = participacao?.valorPago ?? carregamento?.valor;
+  return expectedAmount !== undefined && amountMatches(expectedAmount, receivedAmount);
 }

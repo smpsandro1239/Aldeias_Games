@@ -10,6 +10,16 @@
 
 ## Trabalho desta sessão
 
+### Continuação — correção do webhook MBWay (código integrado, validação pendente)
+
+- [x] Corrigido o erro de TypeScript `Cannot find name 'verifyWebhookAmount'` que bloqueava o CI.
+- [x] Implementada verificação do montante do webhook contra a participação ou carregamento pendente, com comparação exata ao cêntimo.
+- [x] Carregamentos MBWay passam a guardar a referência do fornecedor em `Transacao.referencia`, permitindo pesquisa direta em vez de depender exclusivamente de JSON.
+- [x] O endpoint de iniciação valida que a participação pertence ao utilizador, ainda não foi paga e tem o mesmo montante antes de contactar o MBWay.
+- [x] Callbacks `failed` e `cancelled` são agora payloads válidos e ficam registados como falhados, sem acionar créditos.
+- [x] Adicionados testes unitários para montantes iguais, diferenças ao cêntimo e valores inválidos.
+- [ ] Validar CI (typecheck, Vitest, lint, build/E2E) após o commit.
+
 ### Concluído no código (validação pendente)
 
 - [x] Leitura das instruções do repositório (`AGENTS.md`) e do prompt de análise (`ANALISE_CRITICA_PROMPT.md`).
@@ -43,4 +53,4 @@
 
 ## Próximo passo
 
-Resolver as vulnerabilidades de produção sem forçar atualizações major, avaliar a migração de Zod 4 isoladamente e executar novamente CI, testes, typecheck e build. Não declarar a tarefa de recorrência validada até o CI confirmar os testes.
+Executar CI para validar a correção MBWay; depois corrigir os erros ESLint por grupos e atualizar dependências vulneráveis com versões compatíveis, começando por Sentry 10.x com patch de segurança. Não declarar a tarefa de recorrência validada até o CI confirmar os testes.

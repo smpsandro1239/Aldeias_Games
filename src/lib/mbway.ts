@@ -312,15 +312,31 @@ export function processWebhookCallback(payload: {
   status: 'completed' | 'failed' | 'cancelled';
   success: boolean;
 } {
+  const validStatus =
+    payload?.status === 'completed' ||
+    payload?.status === 'failed' ||
+    payload?.status === 'cancelled';
+  const validPayload =
+    typeof payload?.transactionId === 'string' &&
+    payload.transactionId.trim().length > 0 &&
+    typeof payload?.reference === 'string' &&
+    payload.reference.trim().length > 0 &&
+    validStatus &&
+    typeof payload?.amount === 'number' &&
+    Number.isFinite(payload.amount) &&
+    payload.amount > 0;
+
   if (process.env.NODE_ENV !== 'production') {
     console.log('[MBWay] Webhook recebido');
   }
-  
+
   return {
     transactionId: payload.transactionId,
     reference: payload.reference,
     status: payload.status,
-    success: payload.status === 'completed',
+    // "success" significa payload válido; o estado do pagamento é tratado
+    // separadamente para que callbacks failed/cancelled também sejam registados.
+    success: validPayload,
   };
 }
 

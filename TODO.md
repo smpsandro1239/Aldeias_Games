@@ -4,6 +4,8 @@
 
 ## Prioridade crítica
 
+- [x] **P0 — Webhook MBWay sem verificação de montante implementada:** adicionada comparação ao cêntimo contra o valor pendente registado; carregamentos passam a guardar `Transacao.referencia` para lookup indexável; o endpoint valida ownership/estado/valor da participação antes de iniciar o pagamento. Callbacks `failed`/`cancelled` passam a ser reconhecidos e registados sem creditar saldo. Testes unitários da comparação adicionados; CI pendente.
+
 - [ ] **P0 — Dependências de produção:** resolver o `npm audit --omit=dev --audit-level=high` que falha na branch `main`. Evidência inicial: `@sentry/nextjs` (crítico), `follow-redirects` (alto) e `zod` (alto; correção indicada pelo npm implica migração major para Zod 4). Atualizar primeiro sem alterações major e planear a migração de Zod separadamente.
 - [ ] **P0 — CI de segurança:** voltar a executar a auditoria após atualizar o lockfile e confirmar que não existem vulnerabilidades high/critical nas dependências de produção.
 - [ ] **P1 — Compatibilidade de dependências:** rever PRs Dependabot abertos individualmente; não integrar atualizações major sem typecheck, testes e build.

@@ -3,6 +3,7 @@ import { getFullUserFromRequest } from '@/lib/auth';
 import { mbwayPaymentSchema } from '@/lib/validations';
 import { initiatePayment, checkPaymentStatus, normalizePhoneNumber } from '@/lib/mbway';
 import { prisma } from '@/lib/db';
+import { amountMatches } from '@/lib/payment-amount';
 
 // POST - Iniciar pagamento MBWay
 export async function POST(request: NextRequest) {
@@ -32,6 +33,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Telefone é obrigatório' }, { status: 400 });
     }
 
+    // Se o pagamento corresponde a uma participação, confirmar ownership,
+    // estado e montante antes de contactar o fornecedor externo.
+    let participacaoAssociada: { id: string } | null = null;
+    if (body.participacaoId) {
+      const participacao = await prisma.participacao.findUnique({
+        where: { id: String(body.participacaoId) },
+        select: { id: true, userId: true, estadoPagamento: true, valorPago: true },
+      });
+
+      if (!participacao || participacao.userId !== user.id) {
+        return NextResponse.json({ error: 'Participação não encontrada' }, { status: 404 });
+      }
+      if (participacao.estadoPagamento === 'concluido') {
+        return NextResponse.json({ error: 'Participação já paga' }, { status: 409 });
+      }
+      if (!amountMatches(participacao.valorPago, valor)) {
+        return NextResponse.json({ error: 'O valor não corresponde à participação' }, { status: 400 });
+      }
+      participacaoAssociada = { id: participacao.id };
+    }
+
     // Normalizar telefone
     const telefoneNormalizado = normalizePhoneNumber(telefone);
 
@@ -50,10 +72,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!result.transactionId) {
+      return NextResponse.json({ error: 'O fornecedor não devolveu uma referência de transação' }, { status: 502 });
+    }
+
     // Se há uma participação associada, atualizar referência
-    if (body.participacaoId && result.transactionId) {
+    if (participacaoAssociada) {
       await prisma.participacao.update({
-        where: { id: body.participacaoId },
+        where: { id: participacaoAssociada.id },
         data: {
           referenciaPagamento: result.transactionId,
           estadoPagamento: 'processando',
@@ -69,6 +95,9 @@ export async function POST(request: NextRequest) {
           tipo: 'carregamento_saldo',
           valor: valor,
           descricao: 'Carregamento de saldo via MBWay',
+          referencia: result.transactionId,
+          metodoPagamento: 'mbway',
+          estado: 'pendente',
           dadosAdicionais: {
             transactionId: result.transactionId,
             reference: result.reference,
