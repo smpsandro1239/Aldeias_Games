@@ -10,6 +10,11 @@
 
 ## Trabalho desta sessão
 
+### Remediação de dependências
+
+- [x] Criado workflow controlado `.github/workflows/dependency-remediation.yml`: executa `npm audit fix` sem `--force`, valida `npm ci`, Prisma, typecheck, Vitest e build antes de fazer commit de lockfile/package.json diretamente na `main`; vulnerabilidades que exijam major permanecem visíveis no audit e não bloqueiam as restantes validações.
+- [ ] Confirmar resultado do workflow e rever todas as versões efetivamente instaladas antes de marcar dependências como corrigidas.
+
 ### Continuação — correção do fluxo MBWay (código integrado, validação pendente)
 
 - [x] Corrigido o erro de TypeScript `Cannot find name 'verifyWebhookAmount'` que bloqueava o CI.
