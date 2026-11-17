@@ -149,6 +149,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // A referência MBWay não é uma credencial de acesso. Confirmar que a
+    // transação pertence ao utilizador antes de consultar o fornecedor.
+    const [participacao, carregamento] = await Promise.all([
+      prisma.participacao.findFirst({
+        where: { referenciaPagamento: transactionId },
+        select: { id: true, userId: true, estadoPagamento: true },
+      }),
+      prisma.transacao.findFirst({
+        where: { referencia: transactionId, tipo: 'carregamento_saldo' },
+        select: { userId: true },
+      }),
+    ]);
+
+    if (participacao?.userId !== user.id && carregamento?.userId !== user.id) {
+      return NextResponse.json({ error: 'Transação não encontrada' }, { status: 404 });
+    }
+
     const status = await checkPaymentStatus(transactionId);
 
     if (!status) {
@@ -158,21 +175,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Atualizar participação se pagamento concluído
-    if (status.status === 'completed') {
-      const participacao = await prisma.participacao.findFirst({
-        where: { referenciaPagamento: transactionId },
+    // Atualizar apenas a participação previamente associada ao utilizador.
+    if (status.status === 'completed' && participacao && participacao.estadoPagamento !== 'concluido') {
+      await prisma.participacao.updateMany({
+        where: {
+          id: participacao.id,
+          userId: user.id,
+          estadoPagamento: { not: 'concluido' },
+        },
+        data: {
+          estadoPagamento: 'concluido',
+          dataPagamento: new Date(),
+        },
       });
-
-      if (participacao && participacao.estadoPagamento !== 'concluido') {
-        await prisma.participacao.update({
-          where: { id: participacao.id },
-          data: {
-            estadoPagamento: 'concluido',
-            dataPagamento: new Date(),
-          },
-        });
-      }
     }
 
     return NextResponse.json({
