@@ -28,11 +28,13 @@
 - [ ] Build.
 - [ ] Verificar CI e auditoria de dependências após o commit.
 - [x] Separada a auditoria de dependências do pipeline de testes: existe workflow dedicado `.github/workflows/security-audit.yml`; a falha do audit já não deve impedir a execução de lint, typecheck, testes, build e E2E.
+- [x] Migrado o lint de `next lint` para `eslint .` no `package.json` e no workflow CI: Next.js 16 removeu oficialmente o comando `next lint`; a execução direta do ESLint é agora a configuração suportada.
 
 ## Bloqueios e riscos identificados
 
 - **Bloqueio de segurança conhecido:** a execução Security Audit falha no passo `npm audit --omit=dev --audit-level=high`, após instalação bem-sucedida. O log identifica 1 vulnerabilidade crítica em `@sentry/nextjs`, vulnerabilidades altas em `follow-redirects` e `zod`, além de moderadas em `glob/minimatch`. Não é falha de infraestrutura.
-- **CI de qualidade:** o pipeline principal estava a parar no audit antes de executar os testes; a auditoria já tem workflow dedicado, por isso foi removida a duplicação do job principal para permitir obter resultados independentes de lint, typecheck, Vitest, build e E2E.
+- **CI de qualidade:** o pipeline principal estava a parar no audit antes de executar os testes; a auditoria já tem workflow dedicado, por isso foi removida a duplicação do job principal para permitir obter resultados independentes de lint, typecheck, Vitest, build e E2E. Foi também corrigido o comando de lint obsoleto `next lint` (removido no Next.js 16) para `eslint .`.
+
 - **Deploy Vercel:** alguns checks reportaram `build-rate-limit` / pedido de upgrade do plano. Isto é um limite de infraestrutura/conta, não evidência de falha do código; o check de deployment restante ainda deve ser consultado.
 - **Migração Zod:** o npm indica que a correção de Zod requer versão 4, uma alteração major que exige revisão de compatibilidade antes de integrar.
 - **PRs Dependabot:** existem PRs abertos; cada atualização será avaliada individualmente antes de integrar.

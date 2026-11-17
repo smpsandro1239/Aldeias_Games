@@ -28,7 +28,7 @@ jobs:
         run: npx --yes prisma@6.19.3 generate
 
       - name: Lint (ESLint)
-        run: npx next lint
+        run: npm run lint
 
       - name: Typecheck (tsc)
         run: npm run typecheck
