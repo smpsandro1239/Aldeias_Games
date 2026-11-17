@@ -11,15 +11,34 @@ async function syncTime(): Promise<void> {
   try {
     const start = Date.now();
     const res = await fetch(WORLD_TIME_API, { signal: AbortSignal.timeout(5000) });
-    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`WorldTimeAPI respondeu com HTTP ${res.status}`);
+    }
+
+    const data: unknown = await res.json();
+    const unixtime =
+      typeof data === "object" && data !== null && "unixtime" in data
+        ? (data as { unixtime?: unknown }).unixtime
+        : undefined;
+
+    if (typeof unixtime !== "number" || !Number.isFinite(unixtime) || unixtime <= 0) {
+      throw new Error("WorldTimeAPI devolveu um timestamp inválido");
+    }
+
     const roundtrip = Date.now() - start;
     const serverEstimate = start + roundtrip / 2;
-    const officialTime = new Date(data.unixtime * 1000).getTime();
+    const officialTime = new Date(unixtime * 1000).getTime();
+    if (!Number.isFinite(officialTime)) {
+      throw new Error("WorldTimeAPI devolveu uma data fora do intervalo suportado");
+    }
+
     cachedOffset = serverEstimate - officialTime;
     lastSync = Date.now();
   } catch {
-    // mantém offset anterior ou 0
-    if (cachedOffset === null) cachedOffset = 0;
+    // Uma resposta inválida/indisponível não pode contaminar o relógio com NaN.
+    // Preserva o último offset válido; sem cache, usa o relógio do servidor.
+    if (cachedOffset === null || !Number.isFinite(cachedOffset)) cachedOffset = 0;
+    lastSync = Date.now();
   }
 }
 

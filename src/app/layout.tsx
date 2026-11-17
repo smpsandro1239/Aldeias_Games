@@ -40,13 +40,39 @@ const russoOne = Russo_One({
   display: "swap",
 });
 
+function resolveMetadataBase(): URL {
+  const configured = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/^["']|["']$/g, "");
+
+  if (configured) {
+    try {
+      const parsed = new URL(configured);
+      if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+        return parsed;
+      }
+    } catch {
+      // Variáveis de ambiente malformadas não devem impedir a compilação.
+    }
+  }
+
+  const vercelHost = process.env.VERCEL_URL?.trim();
+  if (vercelHost) {
+    try {
+      return new URL(`https://${vercelHost.replace(/^https?:\/\//, "")}`);
+    } catch {
+      // Recorre ao domínio canónico conhecido.
+    }
+  }
+
+  return new URL("https://aldeiasgames.pt");
+}
+
 export const metadata: Metadata = {
   title: "Aldeias Games - Plataforma de Angariação de Fundos",
   description: "Plataforma SaaS multi-tenant para comunidades locais portuguesas realizarem angariação de fundos digital através de jogos tradicionais.",
   keywords: ["aldeias", "jogos", "rifas", "angariação", "fundos", "comunidade", "Portugal"],
   authors: [{ name: "Sandro Pereira" }],
   creator: "Sandro Pereira",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+  metadataBase: resolveMetadataBase(),
   openGraph: {
     type: "website",
     locale: "pt_PT",

@@ -10,6 +10,13 @@
 
 ## Trabalho desta sessão
 
+### Continuação — robustez do relógio e build de produção (código integrado, validação pendente)
+
+- [x] Corrigido `syncTime()` para validar HTTP, `unixtime` finito e data válida antes de atualizar o offset; respostas inválidas preservam o último offset ou usam o relógio local, sem propagar `Invalid Date` nem repetir chamadas em cada pedido.
+- [x] Adicionados testes unitários para resposta sem timestamp e HTTP 503 da WorldTimeAPI.
+- [x] Corrigido `metadataBase` para não lançar `ERR_INVALID_URL` quando `NEXT_PUBLIC_BASE_URL` está malformada; tenta URL configurada, `VERCEL_URL` e domínio canónico como fallback.
+- [ ] Validar testes Euromilhões, suite completa, typecheck, lint e build Vercel após commit.
+
 ### Remediação de dependências
 
 - [x] Criado workflow controlado `.github/workflows/dependency-remediation.yml`: executa `npm audit fix` sem `--force`, valida `npm ci`, Prisma, typecheck, Vitest e build antes de fazer commit de lockfile/package.json diretamente na `main`; vulnerabilidades que exijam major permanecem visíveis no audit e não bloqueiam as restantes validações.

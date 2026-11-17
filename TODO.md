@@ -4,6 +4,9 @@
 
 ## Prioridade crítica
 
+- [ ] **P0 — Robustez do relógio oficial:** uma resposta HTTP 200 sem `unixtime` válido podia propagar `Invalid Date` para criação de grelhas e cron do Euromilhões. A validação defensiva e o fallback para relógio local foram implementados; aguarda CI.
+- [ ] **P0 — Build Vercel com URL inválido:** `NEXT_PUBLIC_BASE_URL` malformada provocava falha no `metadataBase` de `src/app/layout.tsx`. Implementado parsing defensivo com fallback para `VERCEL_URL` e domínio canónico; aguarda build.
+
 - [x] **P0 — Consulta de estado MBWay sem isolamento por utilizador:** o GET agora confirma a associação da referência à participação ou ao carregamento do utilizador autenticado antes de consultar o fornecedor; atualização da participação usa condição de ownership e estado.
 
 - [x] **P0 — Webhook MBWay sem verificação de montante implementada:** adicionada comparação ao cêntimo contra o valor pendente registado; carregamentos passam a guardar `Transacao.referencia` para lookup indexável; o endpoint valida ownership/estado/valor da participação antes de iniciar o pagamento. Callbacks `failed`/`cancelled` passam a ser reconhecidos e registados sem creditar saldo. Testes unitários da comparação adicionados; CI pendente.
