@@ -10,6 +10,11 @@
 
 ## Trabalho desta sessão
 
+### Ajuste de testes após renomeação de rota (código integrado, validação pendente)
+
+- [x] Atualizado `membros-gestao.test.ts` para importar a rota normalizada `[userId]` e fornecer o parâmetro `userId`; a falha anterior era um import de teste obsoleto, não uma regressão no endpoint.
+- [ ] Confirmar suite Vitest e E2E após novo commit.
+
 ### Reforço da assinatura HMAC MBWay (código integrado, validação pendente)
 
 - [x] Removido `require('crypto')` da validação HMAC; agora usa imports estáticos `createHmac` e `timingSafeEqual`.

@@ -4,6 +4,8 @@
 
 ## Prioridade crítica
 
+- [ ] **P0 — Teste de gestão de membros após normalização de rota:** atualizado o teste de integração para importar `membros/[userId]` e enviar o parâmetro `userId`; o CI anterior falhou porque o teste ainda importava a pasta removida `[membroId]`. Aguarda nova execução.
+
 - [ ] **P0 — Validação HMAC MBWay e lint:** substituído `require('crypto')` por imports tipados e comparação `timingSafeEqual` com verificação explícita do comprimento; acrescentados testes para assinatura válida, adulterada, truncada e credenciais vazias. Aguarda CI.
 
 - [ ] **P0 — E2E bloqueado por rotas dinâmicas Next.js duplicadas:** `membros/[membroId]` e `membros/[userId]/role` usavam nomes diferentes no mesmo segmento; a pasta foi normalizada para `[userId]` para permitir arranque do servidor Next.js. Aguarda CI/E2E.

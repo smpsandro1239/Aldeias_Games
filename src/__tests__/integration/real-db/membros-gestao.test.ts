@@ -190,7 +190,7 @@ describe("Real DB: Gestão de membros da aldeia", () => {
     let patchMembro: any;
 
     beforeAll(async () => {
-      const route = await import("@/app/api/aldeias/[id]/membros/[membroId]/route");
+      const route = await import("@/app/api/aldeias/[id]/membros/[userId]/route");
       patchMembro = route.PATCH;
     });
 
@@ -201,7 +201,7 @@ describe("Real DB: Gestão de membros da aldeia", () => {
 
       const res = await patchMembro(
         req({ nome: "Alice M. Silva", email: "alice.silva@teste.pt" }),
-        { params: Promise.resolve({ id: aldeia.id, membroId: alice.id }) },
+        { params: Promise.resolve({ id: aldeia.id, userId: alice.id }) },
       );
       expect(res.status).toBe(200);
       const body = await res.json();
@@ -220,7 +220,7 @@ describe("Real DB: Gestão de membros da aldeia", () => {
       const alice = await prisma.user.findUnique({ where: { email: "alice.silva@teste.pt" } });
       const res = await patchMembro(
         req({ email: "bruno@teste.pt" }),
-        { params: Promise.resolve({ id: aldeia.id, membroId: alice.id }) },
+        { params: Promise.resolve({ id: aldeia.id, userId: alice.id }) },
       );
       expect(res.status).toBe(409);
     });
@@ -230,7 +230,7 @@ describe("Real DB: Gestão de membros da aldeia", () => {
       const bruno = await prisma.user.findUnique({ where: { email: "bruno@teste.pt" } });
       const res = await patchMembro(
         req({ nome: "Bruno X" }),
-        { params: Promise.resolve({ id: aldeia.id, membroId: bruno.id }) },
+        { params: Promise.resolve({ id: aldeia.id, userId: bruno.id }) },
       );
       expect(res.status).toBe(404);
     });
@@ -240,7 +240,7 @@ describe("Real DB: Gestão de membros da aldeia", () => {
       const alice = await prisma.user.findUnique({ where: { email: "alice.silva@teste.pt" } });
       const res = await patchMembro(
         req({ nome: "X" }),
-        { params: Promise.resolve({ id: aldeia.id, membroId: alice.id }) },
+        { params: Promise.resolve({ id: aldeia.id, userId: alice.id }) },
       );
       expect(res.status).toBe(403);
     });
@@ -258,7 +258,7 @@ describe("Real DB: Gestão de membros da aldeia", () => {
 
       const res = await patchMembro(
         req({ nome: "Lider Editado" }),
-        { params: Promise.resolve({ id: aldeia.id, membroId: lider.id }) },
+        { params: Promise.resolve({ id: aldeia.id, userId: lider.id }) },
       );
       expect(res.status).toBe(400);
     });
