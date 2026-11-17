@@ -4,7 +4,7 @@
 
 - Branch de trabalho: `main`
 - Commit de referência antes desta sessão: `28176292694eae3f6db0c391a5456703fa36091a`
-- Commits desta sessão: `0c39f07` (integração), `2112857` (correção adicional do cálculo mensal).
+- Commits desta sessão: `0c39f07`, `2112857`, `ad6411f`, `41a752c`, `18266f7`, `a51d3d8` (MBWay).
 - Repositório: `smpsandro1239/Aldeias_Games`
 - Última atualização: 17/11/2026
 
@@ -19,6 +19,7 @@
 - [x] Callbacks `failed` e `cancelled` são agora payloads válidos e ficam registados como falhados, sem acionar créditos.
 - [x] Adicionados testes unitários para montantes iguais, diferenças ao cêntimo e valores inválidos.
 - [ ] Validar CI (typecheck, Vitest, lint, build/E2E) após o commit.
+- [x] O webhook procura agora primeiro por `Transacao.referencia` e `Participacao.referenciaPagamento`, mantendo fallback legado limitado a registos recentes; callbacks malformados não provocam exceção ao construir a resposta.
 
 ### Concluído no código (validação pendente)
 

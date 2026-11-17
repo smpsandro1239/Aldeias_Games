@@ -116,13 +116,18 @@ async function processCarregamento(transactionId: string) {
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Filtro JSON por path difere entre SQLite (string) e Postgres (string[]) —
     // buscar por tipo e filtrar em JS é provider-agnóstico
-    const recentes = await tx.transacao.findMany({
-      where: { tipo: "carregamento_saldo" },
-      orderBy: { createdAt: "desc" },
-      take: 50,
+    const porReferencia = await tx.transacao.findFirst({
+      where: { tipo: "carregamento_saldo", referencia: transactionId },
     });
+    const recentes = porReferencia
+      ? []
+      : await tx.transacao.findMany({
+          where: { tipo: "carregamento_saldo" },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+        });
 
-    const c = recentes.find(
+    const c = porReferencia ?? recentes.find(
       (t) =>
         (t.dadosAdicionais as Record<string, unknown> | null)?.transactionId ===
         transactionId
@@ -153,10 +158,11 @@ async function processCarregamento(transactionId: string) {
 }
 
 async function processParticipacao(transactionId: string) {
-  const participacao = await prisma.participacao.findFirst({
-    where: {
-      dadosParticipacao: { contains: transactionId },
-    },
+  const participacaoPorReferencia = await prisma.participacao.findFirst({
+    where: { referenciaPagamento: transactionId },
+  });
+  const participacao = participacaoPorReferencia ?? await prisma.participacao.findFirst({
+    where: { dadosParticipacao: { contains: transactionId } },
   });
 
   if (!participacao) return;

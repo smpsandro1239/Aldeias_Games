@@ -316,24 +316,26 @@ export function processWebhookCallback(payload: {
     payload?.status === 'completed' ||
     payload?.status === 'failed' ||
     payload?.status === 'cancelled';
+  const validAmount =
+    typeof payload?.amount === 'number' &&
+    Number.isFinite(payload.amount) &&
+    (payload.status !== 'completed' || payload.amount > 0);
   const validPayload =
     typeof payload?.transactionId === 'string' &&
     payload.transactionId.trim().length > 0 &&
     typeof payload?.reference === 'string' &&
     payload.reference.trim().length > 0 &&
     validStatus &&
-    typeof payload?.amount === 'number' &&
-    Number.isFinite(payload.amount) &&
-    payload.amount > 0;
+    validAmount;
 
   if (process.env.NODE_ENV !== 'production') {
     console.log('[MBWay] Webhook recebido');
   }
 
   return {
-    transactionId: payload.transactionId,
-    reference: payload.reference,
-    status: payload.status,
+    transactionId: typeof payload?.transactionId === 'string' ? payload.transactionId : '',
+    reference: typeof payload?.reference === 'string' ? payload.reference : '',
+    status: validStatus ? payload.status : 'failed',
     // "success" significa payload válido; o estado do pagamento é tratado
     // separadamente para que callbacks failed/cancelled também sejam registados.
     success: validPayload,
