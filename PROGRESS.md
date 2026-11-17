@@ -126,3 +126,25 @@
 - [x] Atualizado `.github/workflows/dependency-remediation.yml` no commit `54c2a8c`: a tentativa de correção não-major passa a ser não bloqueante, mas o lockfile continua sujeito a `npm ci`, typecheck, Vitest e build antes de qualquer commit automático.
 - [ ] Confirmar o novo workflow e planear as migrações major separadamente; não houve atualização de dependências nesta execução.
 - [x] Evidência do audit completo: 29 vulnerabilidades (4 moderadas, 25 altas). O audit apenas de produção continua a indicar 12 (4 moderadas, 8 altas).
+
+
+## Correção da falha E2E — segredo JWT inválido no CI (17/11/2026)
+
+### Evidência do run `44160756845` (commit `e5c34d1`)
+
+- Prisma Client, TypeScript, Vitest e build passaram.
+- Os passos `Prepare SQLite database for E2E` e `Seed deterministic E2E fixtures` passaram; portanto, a falha anterior de schema não se reproduziu neste run.
+- Playwright: 55 passaram, 7 ignorados e 8 falharam. As falhas comuns ocorreram em autenticação; os logs do servidor mostram `Erro no login` e os testes recebem HTTP 500.
+- Inspeção de `src/lib/auth.ts`: `validateJwtSecret()` rejeita qualquer segredo que contenha `secret` como placeholder inseguro.
+- O CI fornecia `JWT_SECRET=ci-test-secret-key-for-testing-only`, que contém a substring proibida. Após a validação da password, `generateToken()` lançava erro e o endpoint devolvia 500. Esta é a causa confirmada da falha de login.
+
+### Alterações aplicadas diretamente na main
+
+- [x] `.github/workflows/ci.yml`: segredo JWT de build e E2E substituído por um valor de teste válido, com entropia/diversidade suficientes e sem placeholders.
+- [x] `.github/workflows/dependency-remediation.yml`: mesmo segredo corrigido para o build de validação.
+- [x] `TODO.md` atualizado com causa, evidência e validação pendente.
+- [ ] Aguardar CI dos commits `bf39331` / `89c3448`; confirmar Playwright e build.
+- [ ] O ESLint mantém 214 erros e 1309 avisos no run observado; não foi alterado nem desativado.
+- [ ] Auditoria de produção mantém 12 vulnerabilidades (4 moderadas, 8 altas) no run observado.
+- [ ] Deploy Vercel continua bloqueado pela quota diária gratuita (mais de 100 deployments em 24h), apesar do build concluído.
+
