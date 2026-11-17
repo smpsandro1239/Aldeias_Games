@@ -102,3 +102,11 @@
 - Falhas de quota, serviços externos ou configuração são registadas como bloqueios de infraestrutura.
 - Atualizar sempre este ficheiro e `TODO.md` após cada conjunto de alterações.
 - Trabalhar diretamente na `main`, com commits pequenos e mensagens em português de Portugal.
+
+
+## Workflow de remediação de dependências — continuação
+
+- [x] Atualizado `.github/workflows/dependency-remediation.yml` no commit `c5c9d9c`.
+- [x] Adicionado trigger manual `workflow_dispatch` para permitir execução controlada futura.
+- [x] Removido `|| true` de `npm audit fix`, para não esconder falhas inesperadas da ferramenta; a execução continua sem `--force`.
+- [ ] Confirmar a execução do workflow, rever as alterações efetivas em `package.json`/`package-lock.json` e validar TypeScript, Vitest e build antes de aceitar qualquer atualização automática.
