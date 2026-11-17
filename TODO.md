@@ -9,7 +9,7 @@
 - [x] **P0 — Privacidade em `GET /api/apostas`:** resposta pública reduzida aos dados mínimos; ownership e isolamento por vendedor/aldeia implementados. Typecheck e Vitest passaram no commit `e0d5734`.
 - [x] **P0 — Robustez do relógio oficial:** validação de HTTP, `unixtime` finito e data válida; testes para timestamp ausente e HTTP 503 incluídos na suite Vitest aprovada.
 - [x] **P0 — Build com URL base inválida:** parsing defensivo de `NEXT_PUBLIC_BASE_URL`, fallback para `VERCEL_URL` e domínio canónico. Build Next.js passou no commit `e0d5734`.
-- [ ] **P0 — Preparação da base de dados E2E:** a execução Playwright do commit `e0d5734` falhou porque o CI arrancou `next start` sem criar o schema nem semear a SQLite. Logs confirmam Prisma P2021 (`main.aldeias`, `main.jogos`, `main.rate_limits` inexistentes). O workflow `.github/workflows/ci.yml` foi corrigido no commit `c366264` para executar `prisma db push` e `prisma db seed` antes do Playwright; aguarda nova execução.
+- [x] **P0 — Preparação da base de dados E2E:** `.github/workflows/ci.yml` executa `prisma db push` e `prisma db seed` antes do Playwright; ambos os passos passaram no run `44160756845`.
 - [ ] **P0 — Dependências de produção:** `npm audit --omit=dev --audit-level=high` continua a falhar. O audit completo de `c5c9d9c` reportou 29 vulnerabilidades (4 moderadas, 25 altas); o audit de produção reporta 12 (4 moderadas, 8 altas). `npm audit fix` não encontrou atualizações seguras aplicáveis; as correções sugeridas exigem majors como Prisma 7, Vitest 3 e Zod 4. Planear atualizações por dependência e validar compatibilidade; não usar `--force` em bloco.
 - [ ] **P0 — CI de segurança:** manter o workflow de auditoria independente e obter `npm audit --omit=dev --audit-level=high` sem vulnerabilidades altas/críticas. O workflow `dependency-remediation.yml` foi ajustado no commit `c5c9d9c` para aceitar `workflow_dispatch` e não ocultar falhas do `npm audit fix`; validar a execução antes de aceitar atualizações.
 - [ ] **P0 — Webhooks/pagamentos:** continuar revisão de idempotência, ownership, estado e montante em todos os fluxos Stripe/MB WAY; as correções MB WAY existentes passaram typecheck/Vitest, mas falta validação E2E integrada.
@@ -36,3 +36,12 @@
 ## Regras de conclusão
 
 Uma tarefa só passa a concluída depois de executar os testes relevantes e verificar o resultado do CI. Falhas de infraestrutura ou serviços externos devem ser registadas como bloqueios, não como defeitos de código.
+
+
+## E2E — correção da configuração JWT do CI (17/11/2026)
+
+- [ ] Validar o CI após os commits `bf39331` e `89c3448`.
+- [x] Diagnóstico: os 8 testes E2E falhados dependiam de login; o endpoint devolvia HTTP 500 durante a geração do JWT.
+- [x] Causa identificada no código: `src/lib/auth.ts` rejeita segredos que contenham os placeholders `secret`, `changeme`, etc.; o valor anterior `ci-test-secret-key-for-testing-only` continha literalmente `secret`.
+- [x] Atualizado `.github/workflows/ci.yml` e `.github/workflows/dependency-remediation.yml` para usar um segredo de teste com comprimento e diversidade suficientes, sem substrings proibidas.
+- [ ] Confirmar que login, refresh token e os restantes fluxos E2E passam com a configuração corrigida.
