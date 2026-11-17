@@ -4,6 +4,8 @@
 
 ## Prioridade crítica
 
+- [ ] **P0 — Regressão HMAC MBWay:** a refatoração da comparação timing-safe removeu acidentalmente a exportação `processWebhookCallback`; reposta a função e os testes de callback/HMAC permanecem ativos. O typecheck do commit anterior detetou a regressão antes de qualquer deploy; validar novamente.
+
 - [ ] **P0 — Teste de gestão de membros após normalização de rota:** atualizado o teste de integração para importar `membros/[userId]` e enviar o parâmetro `userId`; o CI anterior falhou porque o teste ainda importava a pasta removida `[membroId]`. Aguarda nova execução.
 
 - [ ] **P0 — Validação HMAC MBWay e lint:** substituído `require('crypto')` por imports tipados e comparação `timingSafeEqual` com verificação explícita do comprimento; acrescentados testes para assinatura válida, adulterada, truncada e credenciais vazias. Aguarda CI.

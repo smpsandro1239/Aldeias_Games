@@ -10,6 +10,12 @@
 
 ## Trabalho desta sessão
 
+### Correção imediata de regressão no módulo MBWay (código integrado, validação pendente)
+
+- [x] O CI detetou que a refatoração HMAC anterior removeu inadvertidamente a exportação `processWebhookCallback`; a função foi restaurada, mantendo a validação de estados completed/failed/cancelled e montantes.
+- [x] Mantida a comparação HMAC timing-safe e os testes de assinatura.
+- [ ] Confirmar typecheck e suite Vitest no commit de correção.
+
 ### Ajuste de testes após renomeação de rota (código integrado, validação pendente)
 
 - [x] Atualizado `membros-gestao.test.ts` para importar a rota normalizada `[userId]` e fornecer o parâmetro `userId`; a falha anterior era um import de teste obsoleto, não uma regressão no endpoint.
