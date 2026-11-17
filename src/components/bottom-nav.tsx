@@ -72,7 +72,8 @@ const navItems = {
 
 export function BottomNav({ role, currentPath }: BottomNavProps) {
   const router = useRouter();
-  const pathname = currentPath || usePathname();
+  const routePathname = usePathname();
+  const pathname = currentPath || routePathname;
   
   const items = role ? (navItems[role as keyof typeof navItems] || navItems.default) : navItems.default;
 
