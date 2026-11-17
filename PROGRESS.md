@@ -117,3 +117,12 @@
 - [x] `src/components/bottom-nav.tsx`: `usePathname()` passa a ser chamado incondicionalmente; o valor `currentPath` é aplicado depois do hook.
 - [x] `src/components/modals/poio-da-vaca-modal.tsx`: helper de leitura de estado renomeado de `useNumeroState` para `getNumeroState`, porque não é um hook React e é chamado dentro de callbacks; interfaces vazias convertidas em aliases de tipo.
 - [ ] Confirmar redução dos erros ESLint e executar typecheck/testes no CI dos commits `648a255` e `a52243b`.
+
+
+## Auditoria de dependências — resultado observado
+
+- [x] Executado `npm audit fix --no-fund --no-progress` no workflow de remediação do commit `c5c9d9c`.
+- [x] A ferramenta terminou sem atualizar dependências (`up to date`); os advisories restantes só indicam correções com breaking changes, nomeadamente Prisma 7, Vitest 3 e Zod 4. O job parou antes de typecheck/testes/build por o comando devolver exit code 1 devido às vulnerabilidades não resolvidas.
+- [x] Atualizado `.github/workflows/dependency-remediation.yml` no commit `54c2a8c`: a tentativa de correção não-major passa a ser não bloqueante, mas o lockfile continua sujeito a `npm ci`, typecheck, Vitest e build antes de qualquer commit automático.
+- [ ] Confirmar o novo workflow e planear as migrações major separadamente; não houve atualização de dependências nesta execução.
+- [x] Evidência do audit completo: 29 vulnerabilidades (4 moderadas, 25 altas). O audit apenas de produção continua a indicar 12 (4 moderadas, 8 altas).
