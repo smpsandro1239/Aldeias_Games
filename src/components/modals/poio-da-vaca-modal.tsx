@@ -41,9 +41,9 @@ interface NumeroCoordenada {
   numero: number;
 }
 
-interface NumeroOcupado extends NumeroCoordenada {}
+type NumeroOcupado = NumeroCoordenada;
 
-interface NumeroJogado extends NumeroCoordenada {}
+type NumeroJogado = NumeroCoordenada;
 
 interface PoioDaVacaModalProps {
   open: boolean;
@@ -126,7 +126,7 @@ export function PoioDaVacaModal({
   }, []);
 
   // Hook customizado para verificar estado dos números
-  const useNumeroState = useCallback((letra: string, numero: number): SelectionState => {
+  const getNumeroState = useCallback((letra: string, numero: number): SelectionState => {
     if (numerosJogados?.some(j => j.letra === letra && j.numero === numero)) {
       return SELECTION_STATES.PLAYED_BY_USER;
     }
@@ -140,16 +140,16 @@ export function PoioDaVacaModal({
   }, [numerosOcupados, numerosJogados, state.selecao]);
 
   const isOcupado = useCallback((letra: string, numero: number) => {
-    return useNumeroState(letra, numero) === SELECTION_STATES.OCCUPIED;
-  }, [useNumeroState]);
+    return getNumeroState(letra, numero) === SELECTION_STATES.OCCUPIED;
+  }, [getNumeroState]);
 
   const isJogadoPorMim = useCallback((letra: string, numero: number) => {
-    return useNumeroState(letra, numero) === SELECTION_STATES.PLAYED_BY_USER;
-  }, [useNumeroState]);
+    return getNumeroState(letra, numero) === SELECTION_STATES.PLAYED_BY_USER;
+  }, [getNumeroState]);
 
   const isSelecionado = useCallback((letra: string, numero: number) => {
-    return useNumeroState(letra, numero) === SELECTION_STATES.SELECTED;
-  }, [useNumeroState]);
+    return getNumeroState(letra, numero) === SELECTION_STATES.SELECTED;
+  }, [getNumeroState]);
 
   const toggleNumero = useCallback((letra: string, numero: number) => {
     if (isOcupado(letra, numero) || isJogadoPorMim(letra, numero)) return;
@@ -180,7 +180,7 @@ export function PoioDaVacaModal({
   }, [state.modo, state.selecao, numerosPorLetra, isOcupado, isJogadoPorMim, isSelecionado]);
 
   const getNumeroAriaLabel = useCallback((letra: string, numero: number): string => {
-    const estado = useNumeroState(letra, numero);
+    const estado = getNumeroState(letra, numero);
 
     switch (estado) {
       case SELECTION_STATES.PLAYED_BY_USER:
@@ -192,7 +192,7 @@ export function PoioDaVacaModal({
       default:
         return `Número ${letra}${numero}, disponível`;
     }
-  }, [useNumeroState]);
+  }, [getNumeroState]);
 
   const getValorTotal = useCallback(() => {
     if (state.modo === GAME_MODES.CARTAO) {
@@ -369,7 +369,7 @@ export function PoioDaVacaModal({
                     >
                     <AnimatePresence mode="popLayout">
                       {Array.from({ length: numerosPorLetra }, (_, i) => i + 1).map((numero) => {
-                        const estado = useNumeroState(state.letraAtiva, numero);
+                        const estado = getNumeroState(state.letraAtiva, numero);
                         const ocupado = estado === SELECTION_STATES.OCCUPIED;
                         const jogadoPorMim = estado === SELECTION_STATES.PLAYED_BY_USER;
                         const selecionado = estado === SELECTION_STATES.SELECTED;
