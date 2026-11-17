@@ -13,6 +13,7 @@
 ### Concluído no código (validação pendente)
 
 - [x] Leitura das instruções do repositório (`AGENTS.md`) e do prompt de análise (`ANALISE_CRITICA_PROMPT.md`).
+- [x] Registado em `AGENTS.md` o protocolo obrigatório para futuras sessões: ler instruções, prompt, TODO e PROGRESS antes de desenvolver e validar estado atual.
 - [x] Identificada divergência: o helper `src/lib/recurrence.ts` já corrigia parte do overflow mensal, mas o POST de criação e o cron mantinham implementações próprias; o helper de primeira ocorrência ainda alterava mês antes de definir o dia 1.
 - [x] Corrigida a ordem de operações mensal em `computeFirstRecurrenceDate`.
 - [x] POST `/api/eventos` passa a usar `computeFirstRecurrenceDate`.

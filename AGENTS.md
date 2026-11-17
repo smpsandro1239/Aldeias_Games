@@ -622,3 +622,24 @@ URL: https://console.cloud.google.com/apis/credentials (project: aldeiasgames)
 - **Página pública** (`/jogos/poio-da-vaca`): `use-poio-game.ts` migrado para `/api/participacoes` — ocupação via `numeros-ocupados`, lista via `GET /api/participacoes?jogoId=` (role-filtered), POST com `dadosCliente` + coordenadas; venda externa (com dadosCliente) NÃO recebe cashback (comportamento consistente com rifa/euromilhões)
 - **Migração**: `scripts/migrate-apostas-poio.ts` (idempotente, guarda `migradaDeAposta` em dadosVerificacao, não apaga Apostas, ajusta stock/totais do jogo) — `DATABASE_URL="file:./dev.db" npx tsx scripts/migrate-apostas-poio.ts [--dry-run]`
 - Testes: `unit/game-handlers.test.ts` (poio unitário: lote, legacy {x,y}, fora do campo, obrigatoriedade) + `integration/real-db/poio-correcao.test.ts` (7: rasto financeiro saldo, legacy {x,y}, fora do campo 400, coordenada vendida 400 com reversão, cashbox dinheiro, ocupados ids, config auto-gerada)
+
+## Protocolo Obrigatório Antes de Desenvolver
+
+Antes de iniciar qualquer tarefa de desenvolvimento, auditoria ou correção neste repositório, o agente deve:
+
+1. Ler integralmente este ficheiro `AGENTS.md`.
+2. Ler `ANALISE_CRITICA_PROMPT.md` e quaisquer prompts específicos relevantes para a tarefa.
+3. Ler `TODO.md` e `PROGRESS.md` para conhecer o estado atual, bloqueios e trabalho já validado.
+4. Confirmar a branch `main`, o commit atual e o estado dos workflows/PRs antes de alterar ficheiros.
+5. Inspecionar a implementação atual e os testes antes de assumir que uma tarefa pendente continua por resolver.
+6. Não repetir trabalho já concluído nem confiar cegamente em relatórios antigos: confirmar sempre o código atual e as evidências.
+
+### Regras de execução e conclusão
+
+- Trabalhar diretamente na `main`, conforme autorizado pelo proprietário do repositório; não criar PRs para alterações próprias.
+- Integrar alterações de terceiros apenas depois de rever o diff, conflitos, compatibilidade e verificações disponíveis.
+- Executar testes e verificações relevantes após cada conjunto de alterações. Se um workflow falhar antes de chegar aos testes, corrigir a sequência ou executar uma validação independente.
+- Atualizar sempre `TODO.md` e `PROGRESS.md`; manter `todolist.md` sincronizado quando a tarefa já existir na lista histórica.
+- Distinguir falhas de código de limites de infraestrutura, quotas, indisponibilidade de serviços e configuração externa.
+- Nunca marcar uma tarefa como concluída sem validação observável; registar explicitamente qualquer validação pendente ou bloqueio.
+- Fazer commits pequenos, descritivos e em português de Portugal; confirmar que o ref atualizado é `main`.
