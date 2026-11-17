@@ -60,7 +60,7 @@ jobs:
         run: npx next build --webpack
         env:
           DATABASE_URL: "file:./dev.db"
-          JWT_SECRET: "ci-test-secret-key-for-testing-only"
+          JWT_SECRET: "ci-e2e-HS256-7f9a2c4d8b6e1f0a3c5d"
           NEXT_PUBLIC_APP_URL: "http://localhost:3000"
 
       - name: Prepare SQLite database for E2E
@@ -77,4 +77,4 @@ jobs:
         run: npx playwright test --project=chromium --reporter=list
         env:
           DATABASE_URL: "file:./dev.db"
-          JWT_SECRET: "ci-test-secret-key-for-testing-only"
+          JWT_SECRET: "ci-e2e-HS256-7f9a2c4d8b6e1f0a3c5d"
