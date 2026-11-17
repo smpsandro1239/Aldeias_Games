@@ -63,6 +63,16 @@ jobs:
           JWT_SECRET: "ci-test-secret-key-for-testing-only"
           NEXT_PUBLIC_APP_URL: "http://localhost:3000"
 
+      - name: Prepare SQLite database for E2E
+        run: npx --yes prisma@6.19.3 db push --accept-data-loss
+        env:
+          DATABASE_URL: "file:./dev.db"
+
+      - name: Seed deterministic E2E fixtures
+        run: npx --yes prisma@6.19.3 db seed
+        env:
+          DATABASE_URL: "file:./dev.db"
+
       - name: E2E Tests (Playwright)
         run: npx playwright test --project=chromium --reporter=list
         env:
