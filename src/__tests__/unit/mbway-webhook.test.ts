@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { processWebhookCallback } from "@/lib/mbway";
+import { processWebhookCallback, validateWebhookSignature } from "@/lib/mbway";
+import { createHmac } from "crypto";
 
 const basePayload = {
   transactionId: "mbway-123",
@@ -45,5 +46,26 @@ describe("processWebhookCallback", () => {
       status: "completed",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+
+describe("validateWebhookSignature", () => {
+  const secret = "segredo-de-teste-mbway";
+  const payload = JSON.stringify({ transactionId: "mbway-123", amount: 10 });
+  const validSignature = createHmac("sha256", secret).update(payload).digest("hex");
+
+  it("aceita uma assinatura HMAC-SHA256 válida", () => {
+    expect(validateWebhookSignature(payload, validSignature, secret)).toBe(true);
+  });
+
+  it("rejeita assinatura adulterada ou com comprimento inválido", () => {
+    expect(validateWebhookSignature(payload, "0".repeat(64), secret)).toBe(false);
+    expect(validateWebhookSignature(payload, "abc", secret)).toBe(false);
+  });
+
+  it("rejeita assinatura ou segredo vazios", () => {
+    expect(validateWebhookSignature(payload, "", secret)).toBe(false);
+    expect(validateWebhookSignature(payload, validSignature, "")).toBe(false);
   });
 });

@@ -6,6 +6,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 // Constants
 const MBWAY_API_URL_DEFAULT = 'https://api.mbway.pt/v1';
@@ -279,67 +280,21 @@ export function validateWebhookSignature(
   }
 
   try {
-    const crypto = require('crypto');
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
+    const expectedSignature = createHmac('sha256', secret)
       .update(payload)
-      .digest('hex');
-    
-    // Comparação timing-safe para prevenir timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'hex'),
-      Buffer.from(expectedSignature, 'hex')
-    );
-  } catch (error) {
-    console.error('Erro ao validar assinatura MBWay:', error);
+      .digest();
+    const receivedSignature = Buffer.from(signature, 'hex');
+
+    // timingSafeEqual lança exceção quando os comprimentos diferem.
+    // Validar o tamanho primeiro mantém a comparação segura e previsível.
+    if (receivedSignature.length !== expectedSignature.length) {
+      return false;
+    }
+
+    return timingSafeEqual(receivedSignature, expectedSignature);
+  } catch {
     return false;
   }
-}
-
-/**
- * Processar callback de webhook MBWay
- */
-export function processWebhookCallback(payload: {
-  transactionId: string;
-  reference: string;
-  status: 'completed' | 'failed' | 'cancelled';
-  amount: number;
-  phoneNumber: string;
-  timestamp: string;
-}): {
-  transactionId: string;
-  reference: string;
-  status: 'completed' | 'failed' | 'cancelled';
-  success: boolean;
-} {
-  const validStatus =
-    payload?.status === 'completed' ||
-    payload?.status === 'failed' ||
-    payload?.status === 'cancelled';
-  const validAmount =
-    typeof payload?.amount === 'number' &&
-    Number.isFinite(payload.amount) &&
-    (payload.status !== 'completed' || payload.amount > 0);
-  const validPayload =
-    typeof payload?.transactionId === 'string' &&
-    payload.transactionId.trim().length > 0 &&
-    typeof payload?.reference === 'string' &&
-    payload.reference.trim().length > 0 &&
-    validStatus &&
-    validAmount;
-
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('[MBWay] Webhook recebido');
-  }
-
-  return {
-    transactionId: typeof payload?.transactionId === 'string' ? payload.transactionId : '',
-    reference: typeof payload?.reference === 'string' ? payload.reference : '',
-    status: validStatus ? payload.status : 'failed',
-    // "success" significa payload válido; o estado do pagamento é tratado
-    // separadamente para que callbacks failed/cancelled também sejam registados.
-    success: validPayload,
-  };
 }
 
 /**

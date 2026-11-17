@@ -10,6 +10,13 @@
 
 ## Trabalho desta sessão
 
+### Reforço da assinatura HMAC MBWay (código integrado, validação pendente)
+
+- [x] Removido `require('crypto')` da validação HMAC; agora usa imports estáticos `createHmac` e `timingSafeEqual`.
+- [x] A comparação valida comprimento antes de `timingSafeEqual`, evitando exceções para assinaturas truncadas e mantendo comparação timing-safe.
+- [x] Adicionados testes unitários de assinatura válida, adulterada, truncada e segredo/assinatura vazios.
+- [ ] Validar CI após commit.
+
 ### Correção de rotas dinâmicas Next.js (código integrado, validação pendente)
 
 - [x] Normalizado o segmento dinâmico de membros para `[userId]`, mantendo os mesmos endpoints HTTP e parâmetros URL; o Next.js exige nomes idênticos para segmentos dinâmicos equivalentes no mesmo ramo.

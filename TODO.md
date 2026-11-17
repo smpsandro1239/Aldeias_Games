@@ -4,6 +4,8 @@
 
 ## Prioridade crítica
 
+- [ ] **P0 — Validação HMAC MBWay e lint:** substituído `require('crypto')` por imports tipados e comparação `timingSafeEqual` com verificação explícita do comprimento; acrescentados testes para assinatura válida, adulterada, truncada e credenciais vazias. Aguarda CI.
+
 - [ ] **P0 — E2E bloqueado por rotas dinâmicas Next.js duplicadas:** `membros/[membroId]` e `membros/[userId]/role` usavam nomes diferentes no mesmo segmento; a pasta foi normalizada para `[userId]` para permitir arranque do servidor Next.js. Aguarda CI/E2E.
 
 - [ ] **P0 — Privacidade em `GET /api/apostas`:** a rota legada devolvia nomes, contactos e relações completas do jogo mesmo sem autenticação. A resposta pública foi reduzida a números/estado/IDs; utilizadores autenticados ficam limitados às próprias apostas, vendedores às suas vendas e administradores à sua aldeia. Adicionados testes; aguarda CI.
