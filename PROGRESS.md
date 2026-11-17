@@ -1,102 +1,104 @@
 # PROGRESS — Aldeias Games
 
-## Estado da branch
+## Estado atual da branch
 
-- Branch de trabalho: `main`
-- Commit de referência antes desta sessão: `28176292694eae3f6db0c391a5456703fa36091a`
-- Commits desta sessão: `0c39f07`, `2112857`, `ad6411f`, `41a752c`, `18266f7`, `a51d3d8`, `05d947a`, `d3ef962`.
 - Repositório: `smpsandro1239/Aldeias_Games`
-- Última atualização: 17/11/2026
+- Branch: `main`
+- Último commit desta atualização documental: `32e5e55`
+- Correção do workflow E2E: `c366264`
+- Commit de código validado parcialmente: `e0d5734600ebbcf5f4955c4b6cbec623a95afd5d`
+- Data: 17/11/2026
 
-## Trabalho desta sessão
+## Validação CI do commit e0d5734
 
-### Correção imediata de regressão no módulo MBWay (código integrado, validação pendente)
+| Verificação | Resultado | Evidência |
+|---|---|---|
+| Prisma Client | Passou | Geração v6.19.3 |
+| TypeScript | Passou | Job CI |
+| Vitest | Passou | Suite completa |
+| Build Next.js | Passou | Build Webpack; 142 páginas/rotas geradas |
+| Playwright E2E | Falhou | 48 passaram, 15 falharam, 7 ignorados |
+| ESLint | Falhou | Erros de lint existentes, incluindo `ban-ts-comment` |
+| Security Audit | Falhou | 12 vulnerabilidades de produção: 4 moderadas, 8 altas |
+| Deploy Vercel | Bloqueado por quota | Build concluído; deployment recusado por `api-deployments-free-per-day` |
 
-- [x] O CI detetou que a refatoração HMAC anterior removeu inadvertidamente a exportação `processWebhookCallback`; a função foi restaurada, mantendo a validação de estados completed/failed/cancelled e montantes.
-- [x] Mantida a comparação HMAC timing-safe e os testes de assinatura.
-- [ ] Confirmar typecheck e suite Vitest no commit de correção.
+### Causa confirmada da falha E2E
 
-### Ajuste de testes após renomeação de rota (código integrado, validação pendente)
+- O workflow executava o build e arrancava `next start`, mas não preparava a base de dados SQLite usada pelo Playwright.
+- Os logs do servidor mostram Prisma P2021: as tabelas `main.aldeias`, `main.eventos`, `main.jogos` e `main.rate_limits` não existiam.
+- O login devolvia HTTP 500 porque o rate limiter e as consultas de utilizador dependiam de tabelas ausentes.
+- Não se trata de uma falha das credenciais dos testes nem de uma regressão no login: a base de dados do E2E não estava inicializada.
 
-- [x] Atualizado `membros-gestao.test.ts` para importar a rota normalizada `[userId]` e fornecer o parâmetro `userId`; a falha anterior era um import de teste obsoleto, não uma regressão no endpoint.
-- [ ] Confirmar suite Vitest e E2E após novo commit.
+## Alteração aplicada nesta continuação
 
-### Reforço da assinatura HMAC MBWay (código integrado, validação pendente)
+### Preparação da base de dados antes do Playwright
 
-- [x] Removido `require('crypto')` da validação HMAC; agora usa imports estáticos `createHmac` e `timingSafeEqual`.
-- [x] A comparação valida comprimento antes de `timingSafeEqual`, evitando exceções para assinaturas truncadas e mantendo comparação timing-safe.
-- [x] Adicionados testes unitários de assinatura válida, adulterada, truncada e segredo/assinatura vazios.
-- [ ] Validar CI após commit.
+- [x] Atualizado `.github/workflows/ci.yml` no commit `c366264`.
+- [x] Adicionado passo `prisma db push --accept-data-loss` com `DATABASE_URL=file:./dev.db` para criar o schema SQLite descartável de CI.
+- [x] Adicionado passo `prisma db seed` para executar o seed completo configurado em `package.json`, criando os utilizadores e os dados determinísticos exigidos pelos testes E2E.
+- [ ] Aguardar e inspecionar o novo CI após o commit `c366264`; só então confirmar se os testes E2E passam.
 
-### Correção de rotas dinâmicas Next.js (código integrado, validação pendente)
+## Alterações de código já validadas no CI de e0d5734
 
-- [x] Normalizado o segmento dinâmico de membros para `[userId]`, mantendo os mesmos endpoints HTTP e parâmetros URL; o Next.js exige nomes idênticos para segmentos dinâmicos equivalentes no mesmo ramo.
-- [ ] Confirmar que o servidor Next.js arranca e que os testes E2E passam.
+### MB WAY — assinatura e callback
 
-### Segurança — API legada de apostas (código integrado, validação pendente)
+- [x] Restaurada a exportação `processWebhookCallback`, removida inadvertidamente numa refatoração anterior.
+- [x] HMAC usa `createHmac` e `timingSafeEqual`, com validação de comprimento antes da comparação.
+- [x] Testes cobrem assinatura válida, adulterada, truncada e segredo/assinatura vazios.
+- [x] Typecheck e Vitest passaram no commit `e0d5734`.
 
-- [x] `GET /api/apostas` deixa de devolver PII e relações completas do jogo a visitantes não autenticados; mantém apenas os dados mínimos necessários para a ocupação do tabuleiro.
-- [x] Utilizadores normais e vendedores ficam limitados às apostas associadas ao respetivo utilizador; administradores de aldeia ficam limitados à sua aldeia; super admin mantém visão global.
-- [x] Dados pessoais do POST são normalizados/limitados, email e telefone são validados e números têm de ser inteiros positivos e únicos.
-- [x] Criados testes unitários de privacidade pública, ownership e isolamento multi-tenant; aguarda CI.
+### Gestão de membros e rotas Next.js
 
-### Continuação — robustez do relógio e build de produção (código integrado, validação pendente)
+- [x] Segmento dinâmico normalizado para `[userId]`, evitando nomes dinâmicos incompatíveis no mesmo ramo.
+- [x] Teste de integração atualizado para importar a nova rota e passar `userId`.
+- [x] Build Next.js gerou as rotas `/api/aldeias/[id]/membros/[userId]` e `/role`; Typecheck e Vitest passaram.
 
-- [x] Corrigido `syncTime()` para validar HTTP, `unixtime` finito e data válida antes de atualizar o offset; respostas inválidas preservam o último offset ou usam o relógio local, sem propagar `Invalid Date` nem repetir chamadas em cada pedido.
-- [x] Adicionados testes unitários para resposta sem timestamp e HTTP 503 da WorldTimeAPI.
-- [x] Corrigido `metadataBase` para não lançar `ERR_INVALID_URL` quando `NEXT_PUBLIC_BASE_URL` está malformada; tenta URL configurada, `VERCEL_URL` e domínio canónico como fallback.
-- [ ] Validar testes Euromilhões, suite completa, typecheck, lint e build Vercel após commit.
+### Privacidade da API de apostas
 
-### Remediação de dependências
+- [x] GET público reduzido aos dados mínimos para ocupação do tabuleiro, sem nome, telefone, email ou relações completas.
+- [x] Filtros de ownership aplicados a utilizadores/vendedores e isolamento por aldeia para administradores.
+- [x] POST normaliza e limita dados pessoais, valida email/telefone e números.
+- [x] Typecheck e Vitest passaram.
 
-- [x] Criado workflow controlado `.github/workflows/dependency-remediation.yml`: executa `npm audit fix` sem `--force`, valida `npm ci`, Prisma, typecheck, Vitest e build antes de fazer commit de lockfile/package.json diretamente na `main`; vulnerabilidades que exijam major permanecem visíveis no audit e não bloqueiam as restantes validações.
-- [ ] Confirmar resultado do workflow e rever todas as versões efetivamente instaladas antes de marcar dependências como corrigidas.
+### Hora oficial, recorrência e build
 
-### Continuação — correção do fluxo MBWay (código integrado, validação pendente)
+- [x] `syncTime()` valida resposta HTTP, `unixtime` finito e data válida; preserva offset/fallback sem propagar `Invalid Date`.
+- [x] Testes para timestamp ausente e HTTP 503 passaram em Vitest.
+- [x] Recorrência mensal centralizada entre criação, cron e pré-visualização; testes de overflow de dias 30/31 passaram.
+- [x] `metadataBase` passou a tratar URL inválida com fallback defensivo; build Next.js passou.
 
-- [x] Corrigido o erro de TypeScript `Cannot find name 'verifyWebhookAmount'` que bloqueava o CI.
-- [x] Implementada verificação do montante do webhook contra a participação ou carregamento pendente, com comparação exata ao cêntimo.
-- [x] Carregamentos MBWay passam a guardar a referência do fornecedor em `Transacao.referencia`, permitindo pesquisa direta em vez de depender exclusivamente de JSON.
-- [x] O endpoint de iniciação valida que a participação pertence ao utilizador, ainda não foi paga e tem o mesmo montante antes de contactar o MBWay.
-- [x] Callbacks `failed` e `cancelled` são agora payloads válidos e ficam registados como falhados, sem acionar créditos.
-- [x] Adicionados testes unitários para montantes iguais, diferenças ao cêntimo e valores inválidos.
-- [x] O GET de estado MBWay passou a verificar ownership da referência antes de consultar o fornecedor e só atualiza uma participação do utilizador autenticado.
-- [x] Atualizada a dependência `@vercel/blob` para 2.8.2 através do PR #18, com preview Vercel Ready.
-- [ ] Validar CI (typecheck, Vitest, lint, build/E2E) após o commit.
-- [x] Validação observada no commit `a51d3d8`: Prisma Client gerado, TypeScript passou e Vitest passou; lint falhou por erros existentes noutros módulos. O commit seguinte acrescentou testes de callbacks e lookup por referência; aguarda validação CI própria.
-- [x] O webhook procura agora primeiro por `Transacao.referencia` e `Participacao.referenciaPagamento`, mantendo fallback legado limitado a registos recentes; callbacks malformados não provocam exceção ao construir a resposta.
+## Bloqueios ativos
 
-### Concluído no código (validação pendente)
+### ESLint
 
-- [x] Leitura das instruções do repositório (`AGENTS.md`) e do prompt de análise (`ANALISE_CRITICA_PROMPT.md`).
-- [x] Registado em `AGENTS.md` o protocolo obrigatório para futuras sessões: ler instruções, prompt, TODO e PROGRESS antes de desenvolver e validar estado atual.
-- [x] Identificada divergência: o helper `src/lib/recurrence.ts` já corrigia parte do overflow mensal, mas o POST de criação e o cron mantinham implementações próprias; o helper de primeira ocorrência ainda alterava mês antes de definir o dia 1.
-- [x] Corrigida a ordem de operações mensal em `computeFirstRecurrenceDate`.
-- [x] POST `/api/eventos` passa a usar `computeFirstRecurrenceDate`.
-- [x] Cron `/api/eventos/process-recurring` passa a usar `addRecurrence`.
-- [x] Acrescentados testes unitários para datas de referência no dia 31 e preservação da hora.
-- [x] Atualizada a tarefa histórica em `todolist.md`.
+- O job continua a falhar.
+- O log contém erros de `@typescript-eslint/ban-ts-comment`, nomeadamente `@ts-ignore`/`@ts-nocheck), além de avisos de `no-console`, `no-explicit-any` e variáveis/imports não usados.
+- Corrigir por módulos e reexecutar; não desativar regras globalmente.
 
-### Validação
+### Dependências
 
-- [ ] Vitest — executar suite de recorrência e suite completa.
-- [ ] Typecheck.
-- [ ] Lint — primeiro lint integral revelou 224 erros e 1311 avisos; dívida pré-existente, registada em TODO.md.
-- [ ] Build.
-- [ ] Verificar CI e auditoria de dependências após o commit.
-- [x] Separada a auditoria de dependências do pipeline de testes: existe workflow dedicado `.github/workflows/security-audit.yml`; a falha do audit já não deve impedir a execução de lint, typecheck, testes, build e E2E.
-- [x] Migrado o lint de `next lint` para `eslint .` no `package.json` e no workflow CI: Next.js 16 removeu oficialmente o comando `next lint`; a execução direta do ESLint é agora a configuração suportada.
+- `npm audit --omit=dev --audit-level=high` falha com 12 vulnerabilidades (4 moderadas, 8 altas) no commit `e0d5734`.
+- O relatório inclui vulnerabilidades em `glob`, `minimatch`, `picomatch` e `zod`; o npm indica que a correção do Zod requer v4 (major).
+- Não aplicar `npm audit fix --force` sem migração de compatibilidade e validação.
 
-## Bloqueios e riscos identificados
+### Deploy Vercel
 
-- **Bloqueio de segurança conhecido:** a execução Security Audit falha no passo `npm audit --omit=dev --audit-level=high`, após instalação bem-sucedida. O log identifica 1 vulnerabilidade crítica em `@sentry/nextjs`, vulnerabilidades altas em `follow-redirects` e `zod`, além de moderadas em `glob/minimatch`. Não é falha de infraestrutura.
-- **CI de qualidade:** a auditoria já tem workflow dedicado e foi separada do pipeline principal. O primeiro lint integral executado após migrar para ESLint detetou 224 erros e 1311 avisos em 1535 ocorrências; o lint passou para job independente para não bloquear typecheck, Vitest, build e E2E. O comando obsoleto `next lint` foi substituído por `eslint .` e a dívida foi registada em TODO.md.
+- O build foi concluído com sucesso no job de deployment.
+- A publicação foi recusada pelo limite diário gratuito, com indicação de tentar novamente após 24 horas.
+- É um bloqueio de quota/infraestrutura, não uma falha de compilação.
 
+## Próximos passos
 
-- **Deploy Vercel:** alguns checks reportaram `build-rate-limit` / pedido de upgrade do plano. Isto é um limite de infraestrutura/conta, não evidência de falha do código; o check de deployment restante ainda deve ser consultado.
-- **Migração Zod:** o npm indica que a correção de Zod requer versão 4, uma alteração major que exige revisão de compatibilidade antes de integrar.
-- **PRs Dependabot:** existem PRs abertos; cada atualização será avaliada individualmente antes de integrar.
+1. Consultar o CI do commit `c366264` e confirmar que os passos de schema/seed correm antes do Playwright.
+2. Se E2E ainda falhar, analisar a primeira falha funcional depois da inicialização da BD; não ajustar expectativas para mascarar erros.
+3. Corrigir o ESLint em grupos pequenos, começando pelos erros de regras e imports efetivamente não utilizados.
+4. Remediar dependências sem alterações major sempre que possível; planear migração Zod 4 isoladamente.
+5. Continuar auditoria endpoint a endpoint de RBAC, CSRF, rate limiting, multi-tenancy, dados pessoais e integridade financeira.
+6. Não declarar o projeto pronto nem concluir o relatório das 10 áreas sem evidências por ficheiro/linha.
 
-## Próximo passo
+## Regras de validação
 
-Executar CI para validar a correção MBWay; depois corrigir os erros ESLint por grupos e atualizar dependências vulneráveis com versões compatíveis, começando por Sentry 10.x com patch de segurança. Não declarar a tarefa de recorrência validada até o CI confirmar os testes.
+- Uma tarefa só é concluída quando os testes relevantes e o CI confirmam o comportamento.
+- Falhas de quota, serviços externos ou configuração são registadas como bloqueios de infraestrutura.
+- Atualizar sempre este ficheiro e `TODO.md` após cada conjunto de alterações.
+- Trabalhar diretamente na `main`, com commits pequenos e mensagens em português de Portugal.
