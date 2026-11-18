@@ -32,7 +32,7 @@ function SuccessContent() {
 
         if (data.success && data.data?.status === "paid") {
           setStatus("success");
-          setAmount(data.data.amount / 100);
+          setAmount(data.data.amount);
           
           // Buscar saldo atualizado após pagamento bem-sucedido
           try {
