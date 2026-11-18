@@ -435,7 +435,7 @@ export default function UltimateRaffleTicket({
               <div className="my-2 mx-auto">
                 <div className="h-8 bg-gray-800 w-full flex items-end justify-center gap-0.5 px-2">
                   {[...Array(20)].map((_, i) => (
-                    <div key={i} className="bg-foreground w-0.5" style={{ height: `${Math.random() * 100}%` }} />
+                    <div key={i} className="bg-foreground w-0.5" style={{ height: `${20 + (((fullTicketNumber || "00000").charCodeAt(i % (fullTicketNumber || "00000").length) * (i + 1)) % 80)}%` }} />
                   ))}
                 </div>
                 <p className="text-center text-xs font-mono mt-1" style={getTextStyle(theme.stubTextColor)}>{fullTicketNumber}</p>
