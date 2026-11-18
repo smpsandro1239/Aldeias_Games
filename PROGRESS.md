@@ -584,3 +584,11 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Stripe webhook rejeita sessões não pagas, moeda diferente de EUR e montante nulo/zero; cada participação criada recebe a `session.id` como `referenciaPagamento`, permitindo detectar replay por outra `event.id`.
 - Testes unitários e real-DB adicionados para retry de eventos falhados. Ainda sem validação CI observada. Os checks de commit consultados expõem apenas os três contextos Vercel, todos bloqueados por `build-rate-limit`; não há resultado visível de TypeScript/Vitest.
 - MB WAY continua com risco de associação incompleta: os hooks ainda não associam de forma fiável o `transactionId` à participação; o trabalho seguinte deve introduzir intenção persistida, ownership e cancelamento/libertação de stock.
+
+
+## Revisão final do ciclo de webhooks (18/11/2026)
+
+- Commits adicionais: `cdc5359` (Stripe exige sessão paga/EUR/montante positivo e deduplica participações por `session.id`), `d2a8a51` (MB WAY classifica por registos internos e falha em referências inexistentes/ambíguas), `225964e` (comentário do helper), `23aa495` (AGENTS com semântica de retry e rota activa), `aee9782` (mensagem de sucesso sem prometer crédito antecipado).
+- A página de sucesso Stripe já não afirma que o saldo foi creditado apenas porque o fornecedor indica `paid`; a mensagem distingue confirmação externa de processamento interno.
+- Estado do branch: `main`. Os status checks consultados para os commits de código expõem apenas os três deployments Vercel, todos falhados por `build-rate-limit`; a consulta disponível não devolveu jobs GitHub Actions de CI para estes commits. Não foi possível executar npm/Vitest/Playwright localmente através das ferramentas disponíveis.
+- Estado das alterações financeiras deste ciclo: **corrigidas, por validar**. Não anunciar pagamentos prontos nem testes aprovados.
