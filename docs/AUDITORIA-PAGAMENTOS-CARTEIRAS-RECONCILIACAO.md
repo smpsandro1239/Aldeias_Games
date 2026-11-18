@@ -180,3 +180,12 @@ As alterações de consultas read-only, classificação Stripe, retry de webhook
 - O processamento exige agora `Transacao.referencia = transactionId`, tal como a validação do montante. A associação por JSON livre foi removida.
 - Não houve alteração ao schema. A alteração está por validar por falta de execução local/CI confirmada.
 - Risco P0 ainda aberto: a transacção de carregamento é criada após a chamada ao fornecedor e a participação é criada pelos hooks após a iniciação MB WAY. É necessário modelar a intenção prévia e a janela de callback antecipado antes de considerar o fluxo completo.
+
+
+### Actualização — bloqueio de cobranças MB WAY sem associação interna (18/11/2026)
+
+- Commit `8006d4af1316c41742ad46cffc830c5a06b16209`: o endpoint de iniciação rejeita pagamentos de jogo sem `participacaoId`, bem como combinações entre carregamento de saldo e participação. A rejeição ocorre antes de chamar `initiatePayment`.
+- Commit `336dbb1ada163e12bd9ad6572d6a1af6c84af578`: testes unitários cobrem estes dois cenários e verificam que o fornecedor não é contactado.
+- Esta alteração fecha a possibilidade de iniciar cobranças de jogo sem uma referência interna associável pelo webhook. Como consequência, os hooks antigos que não enviam `participacaoId` ficam bloqueados até migração.
+- Continuam pendentes: persistência prévia da intenção de carregamento, callbacks recebidos antes de gravar a referência externa, cancelamento/libertação de stock e migração dos fluxos de jogo.
+- Estado: corrigido, por validar; sem execução local ou CI relevante confirmada.
