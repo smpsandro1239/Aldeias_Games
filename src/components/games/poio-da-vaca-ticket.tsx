@@ -46,6 +46,7 @@ export type PoioDaVacaTicketProps = {
     gridSize?: number; // 5x5, 7x7, etc.
     price?: string;
     cowNumber?: number; // The winning number
+    ticketNumber?: string;
   };
   layout?: {
     borderRadius?: "none" | "small" | "medium" | "large";
@@ -105,7 +106,7 @@ export default function PoioDaVacaTicket({
   data = {
     gridSize: 5, // 5x5 grid = 25 numbers
     price: "2€",
-    cowNumber: Math.floor(Math.random() * 25) + 1, // Random winning number
+    cowNumber: 1,
   },
   layout = {
     borderRadius: "medium",
@@ -244,7 +245,7 @@ export default function PoioDaVacaTicket({
                 borderColor: "rgba(255,255,255,0.3)"
               }}
             >
-              Nº {Math.floor(Math.random() * 90000) + 10000}
+              Nº {data.ticketNumber || "10001"}
             </div>
           </div>
 
