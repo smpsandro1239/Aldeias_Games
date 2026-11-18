@@ -154,3 +154,14 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] O ESLint no run `44257802393` apresenta 180 erros e 1309 avisos (face a 201 erros na medição anterior). Permanecem `ban-ts-comment`, `@ts-nocheck` e outros erros; continuar por contexto.
 - [ ] Security Audit `44257802349` continua a falhar; o audit completo reporta 29 vulnerabilidades (4 moderadas, 25 altas), sem remediação automática segura confirmada.
 - [ ] Deploy `44257802457` falhou; consultar o log completo antes de classificar a causa. A quota Vercel anterior não deve ser assumida como causa deste run sem evidência.
+
+
+## Continuação — teste de hash compatível com Node.js — 18/11/2026
+
+- [x] O CI do commit `eee7131` confirmou que o typecheck passa após a correcção de `moedaInterna`.
+- [x] Vitest: 528 passaram e 1 falhou em `src/__tests__/unit/game-logic.test.ts`; o teste tentava usar `vi.spyOn` sobre `node:crypto.createHash`, cuja propriedade não pode ser redefinida no runtime Node.js.
+- [x] Substituído o teste intrusivo por uma verificação do contrato observável do identificador (`AG-` + 8 dígitos hexadecimais + timestamp base36), mantendo o comportamento de produção inalterado.
+- [ ] Validar a suite Vitest completa no CI seguinte; não foram executados testes locais.
+- [ ] Lint continua com 180 erros e 1309 avisos; não foram removidas supressões de tipos em massa.
+- [ ] Security Audit mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- [ ] Deploy Vercel recusado por quota diária `api-deployments-free-per-day`; o build de artefactos chegou à fase de publicação.

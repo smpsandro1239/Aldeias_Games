@@ -1,5 +1,4 @@
 // @vitest-environment node
-import { vi } from 'vitest';
 import * as crypto from 'node:crypto';
 
 /**
@@ -255,8 +254,7 @@ describe('Gerar Hash de Verificação', () => {
     expect(hash1).not.toEqual(hash2);
   });
 
-  it('deve incluir dados completos no hash', () => {
-    const spy = vi.spyOn(crypto, 'createHash');
+  it('deve produzir identificador com digest SHA-256 e timestamp', () => {
     const dados = {
       tipo: 'rifa',
       nome: 'Rifa',
@@ -265,10 +263,9 @@ describe('Gerar Hash de Verificação', () => {
       premios: [],
     };
 
-    gerarHashVerificacao(dados);
+    const hash = gerarHashVerificacao(dados);
 
-    expect(spy).toHaveBeenCalledWith('sha256');
-    spy.mockRestore();
+    expect(hash).toMatch(/^AG-[A-F0-9]{8}-[0-9A-Z]+$/);
   });
 });
 

@@ -315,3 +315,24 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Run Security Audit `44257802349`: falhou; instalação reportou 29 vulnerabilidades (4 moderadas, 25 altas). A auditoria de produção deve ser lida no log específico para identificar os advisories ainda activos.
 - Run Deploy `44257802457`: terminou com falha. A causa será confirmada pelo log do job; não classificar automaticamente como quota Vercel.
 - Não foram executados testes locais. A validação da correção depende de um novo CI.
+
+
+
+
+## Continuação — teste de hash compatível com Node.js — 18/11/2026
+
+- [x] O CI do commit `eee7131` confirmou que o typecheck passa após a correcção de `moedaInterna`.
+- [x] Vitest: 528 passaram e 1 falhou em `src/__tests__/unit/game-logic.test.ts`; o teste tentava usar `vi.spyOn` sobre `node:crypto.createHash`, cuja propriedade não pode ser redefinida no runtime Node.js.
+- [x] Substituído o teste intrusivo por uma verificação do contrato observável do identificador (`AG-` + 8 dígitos hexadecimais + timestamp base36), mantendo o comportamento de produção inalterado.
+- [ ] Validar a suite Vitest completa no CI seguinte; não foram executados testes locais.
+- [ ] Lint continua com 180 erros e 1309 avisos; não foram removidas supressões de tipos em massa.
+- [ ] Security Audit mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- [ ] Deploy Vercel recusado por quota diária `api-deployments-free-per-day`; o build de artefactos chegou à fase de publicação.
+
+### Resultados CI do commit `eee7131`
+
+- `npm run typecheck`: passou; a falha de tipo em `src/lib/aldeia-progress.ts:78` foi eliminada.
+- Vitest: 528 testes passaram e 1 falhou. A causa foi `TypeError: Cannot redefine property: createHash` no spy de `src/__tests__/unit/game-logic.test.ts:259`; por isso, os passos seguintes de build/E2E do job CI foram ignorados.
+- ESLint: 180 erros e 1309 avisos; principais grupos `ban-ts-comment` e `no-require-imports`.
+- Security Audit: `npm audit --omit=dev --audit-level=high` reportou 12 vulnerabilidades (4 moderadas, 8 altas).
+- Vercel: build dos artefactos concluído até à fase de publicação; publicação recusada pela quota diária `api-deployments-free-per-day` (>100 deployments/24h).
