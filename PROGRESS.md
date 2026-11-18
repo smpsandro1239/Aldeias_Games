@@ -182,3 +182,25 @@
 - [ ] Executar novamente todos os checks e atualizar este ficheiro com os resultados do novo commit.
 
 Nota de rigor: nesta continuação foram feitas inspeções e atualização documental. Não foi alterada lógica da aplicação nem se declara qualquer das três falhas E2E resolvida. O último build de produção observado foi concluído, mas não foi publicado devido à quota Vercel.
+
+
+## Correção de teste não determinístico — 18/11/2026
+
+- Run analisado: CI `44254577712`, commit `71d4a79`.
+- Vitest: 528 testes passaram e 1 falhou em `src/__tests__/integration/real-db/jogos-estatisticas.test.ts`, na expectativa de apenas um dia de vendas.
+- Causa identificada: os timestamps de fixture eram criados subtraindo horas a partir da hora atual. A suite correu às 06:53 UTC; as participações abrangeram dois dias UTC, e a API agrupou corretamente por `createdAt.toISOString().slice(0, 10)`. A expectativa do teste era, por isso, dependente da hora de execução.
+- Alteração no commit `3c8cc5ebe04802e8ad12baea544dc731dc515045`: ancorar a janela de timestamps às 12:00 UTC do dia atual, preservando as oito vendas no mesmo dia e mantendo as expectativas de negócio intactas.
+- Não foi alterada a implementação da API de estatísticas.
+- Validação pendente: o push iniciou novos workflows; só marcar como resolvido depois de o Vitest/CI confirmar o resultado.
+
+### Estado dos workflows anteriores (commit 71d4a79)
+
+| Verificação | Resultado observado |
+|---|---|
+| Vitest | 528 passaram; 1 falhou por fixture temporal não determinística |
+| ESLint | 214 erros e 1309 avisos; `ban-ts-comment` continua a bloquear |
+| Security Audit | 12 vulnerabilidades de produção: 4 moderadas, 8 altas |
+| Build Vercel | Concluído com sucesso |
+| Deploy Vercel | Bloqueado por quota diária `api-deployments-free-per-day` (>100 deployments/24h) |
+
+A falha do deploy é de quota externa; o build não falhou. A falha do Vitest foi corrigida no teste, mas ainda não está validada por um novo run.
