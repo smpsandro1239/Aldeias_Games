@@ -211,3 +211,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - O log ESLint do run `44254577712` identificou duas violações `react-hooks/rules-of-hooks` em `src/hooks/useAccessibility.ts`: `useRef` e `useEffect` eram invocados dentro da callback `useFocusTrap` criada por `useCallback`.
 - No commit `0a73470dc6afb2c799e9fa8653bc56b763bc579f`, `useFocusTrap` foi extraído para um hook autónomo de nível superior; o efeito depende agora de `enabled` e `onEscape` em vez do objeto `options` completo.
 - Validação pendente no CI; o restante lint não foi suprimido nem desativado.
+
+
+## Redução de erros ESLint — 18/11/2026
+
+- Run `44255161634` (commit `6498b9e`): o job lint terminou com falha. O log mostrou ainda 214 erros e 1309 avisos no total; os dois erros de `react-hooks/rules-of-hooks` em `useAccessibility.ts` já não aparecem no conjunto de erros extraído.
+- Os erros restantes incluem `@ts-nocheck` em testes E2E/seed, `@ts-ignore`, imports `require`, `prefer-const`, e regras Next.js de navegação/script.
+- No commit `234c1ad0d271bc3274d934a9691416a224bb90a0`, convertidas para `const` quatro declarações que o lint assinalou como não reatribuídas: `nextDate`, `where`, `hash`, `publicKey` e `privateKey` (quatro ficheiros de rotas).
+- A alteração foi feita sem modificar condições, filtros, cálculos ou validações de negócio. A validação CI do commit `234c1ad` ainda não foi observada.
+- Security Audit `44255161505`: falhou com 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo advisories transitivos de `picomatch` e `zod <4.6.6`; o fix de Zod indicado é major e não foi aplicado.
+- Deploy `44255161539`: build Vercel terminou com sucesso; publicação recusada pela quota `api-deployments-free-per-day` (>100 deployments/24h), bloqueio externo.
