@@ -64,6 +64,15 @@ export async function POST(request: NextRequest) {
           const { userId, jogoId, eventoId, tipo, numeros } =
             session.metadata || {};
 
+          if (
+            session.payment_status !== "paid" ||
+            session.currency !== "eur" ||
+            !Number.isInteger(session.amount_total) ||
+            (session.amount_total ?? 0) <= 0
+          ) {
+            throw new Error("SESSAO_STRIPE_NAO_PAGA_OU_MONTANTE_INVALIDO");
+          }
+
           if (tipo === "participacao" && jogoId) {
             await processParticipacao(session, event, userId, jogoId, numeros);
           }
@@ -105,6 +114,14 @@ async function processParticipacao(
 
   // Atomicidade: participações + stock + evento + cashback numa única transação
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // A referência da Checkout Session torna o processamento idempotente
+    // mesmo que o fornecedor entregue o mesmo pagamento com outro event.id.
+    const alreadyProcessed = await tx.participacao.findFirst({
+      where: { referenciaPagamento: session.id },
+      select: { id: true },
+    });
+    if (alreadyProcessed) return;
+
     const jogo = await tx.jogo.findUnique({ where: { id: jogoId } });
     if (!jogo) throw new Error(`Jogo ${jogoId} not found`);
 
@@ -177,6 +194,7 @@ async function processParticipacao(
           valorPago: precoUnitario,
           metodoPagamento: "stripe",
           estadoPagamento: "concluido",
+          referenciaPagamento: session.id,
           dataPagamento: new Date(),
           seedRaspe: seed,
           hashRaspe: hashParticipacao,
