@@ -6,9 +6,6 @@ interface ProcessarEntregaSaldoInput {
   entregaId: string;
   acao: EntregaSaldoAction;
   observacoes?: string | null;
-  actorUserId: string;
-  ip?: string;
-  userAgent?: string;
 }
 
 /**
@@ -105,24 +102,6 @@ export async function processarTransicaoEntregaSaldo(
       },
     });
   }
-
-  await tx.auditLog.create({
-    data: {
-      userId: input.actorUserId,
-      aldeiaId: entrega.aldeiaId,
-      action: `entrega_saldo.${input.acao}`,
-      resource: 'entrega_saldo',
-      resourceId: entrega.id,
-      ip: input.ip,
-      userAgent: input.userAgent?.slice(0, 500),
-      metadata: {
-        estadoAnterior: estadoOrigem,
-        estadoNovo: estadoDestino,
-        valor: entrega.valor,
-        transferenciaFinanceira: input.acao === 'confirmar',
-      },
-    },
-  });
 
   return tx.entregaSaldo.findUniqueOrThrow({
     where: { id: input.entregaId },

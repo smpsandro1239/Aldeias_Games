@@ -469,7 +469,7 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - A revisão do PATCH de entregas revelou ausência de auditoria persistente na operação financeira. A transição agora cria `AuditLog` dentro da mesma transação que altera o estado, debita/credita saldos e cria os movimentos financeiros.
 - A auditoria regista actor, aldeia, ação, recurso, IP, User-Agent limitado a 500 caracteres e metadados de estado/valor. Se a operação falhar, o AuditLog também sofre rollback.
 - PATCH passa a aceitar apenas administradores de aldeia e super administradores, valida `entregaId`, ação e observações, e lê apenas `id`/`aldeiaId` na verificação prévia do âmbito.
-- Os testes reais da BD foram ampliados para verificar auditoria única na confirmação, rollback da auditoria em saldo insuficiente e registo da rejeição. Estes testes ainda aguardam execução no CI pós-commit.
+- Os testes reais da BD foram ampliados para verificar auditoria única na confirmação, rollback da auditoria em saldo insuficiente e registo da rejeição. Uma revisão estática após o primeiro commit detetou desalinhamentos nos resultados de Promise.all e um actor em falta num cenário; estes pontos foram corrigidos antes da validação final.
 
 ### Próximas ações
 

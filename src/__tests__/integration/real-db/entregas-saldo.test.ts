@@ -94,7 +94,6 @@ describe("Real DB: integridade das entregas de saldo", () => {
           dadosAdicionais: { path: "$.entregaId", equals: entrega.id },
         },
       }),
-      prisma.auditLog.count({ where: { resource: "entrega_saldo", resourceId: entrega.id } }),
       prisma.auditLog.count({ where: { resource: "entrega_saldo", resourceId: entrega.id, action: "entrega_saldo.confirmar" } }),
     ]);
 
@@ -146,6 +145,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
           dadosAdicionais: { path: "$.entregaId", equals: entrega.id },
         },
       }),
+      prisma.auditLog.count({ where: { resource: "entrega_saldo", resourceId: entrega.id } }),
     ]);
 
     expect(entregaFinal.estado).toBe("solicitado");
@@ -170,6 +170,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
       processarTransicaoEntregaSaldo(tx, {
         entregaId: entrega.id,
         acao: "rejeitar",
+        actorUserId: adminId,
         observacoes: "Pedido inválido",
       })
     );

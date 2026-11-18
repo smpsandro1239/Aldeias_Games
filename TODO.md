@@ -284,4 +284,4 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Remediar as 4 vulnerabilidades altas de produção identificadas no CI; o Zod requer migração major para v4 e validação de compatibilidade.
 - [x] Adicionar registo AuditLog transacional nas transições confirmar/rejeitar/concluir de entregas de saldo, com actor, aldeia, ação, estado e valor; garantir rollback da auditoria se a operação financeira falhar.
 - [x] Restringir PATCH a `aldeia_admin` e `super_admin`, validar observações e reduzir a leitura prévia da entrega aos campos necessários.
-- [ ] Validar no CI os novos testes de auditoria e as transições de entrega após o commit desta alteração.
+- [ ] Validar no CI os novos testes de auditoria e as transições de entrega após o commit desta alteração; a revisão estática detetou e corrigiu desalinhamentos nos resultados de Promise.all antes da validação final.
