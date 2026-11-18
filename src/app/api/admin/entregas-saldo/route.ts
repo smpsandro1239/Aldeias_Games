@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
+import { executeWithRetry } from '@/lib/transaction-retry';
+import { processarTransicaoEntregaSaldo, type EntregaSaldoAction } from '@/lib/entrega-saldo';
 import { getPaginationFromRequest, createPagination, createPaginatedResponse } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
@@ -99,115 +100,46 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado para esta aldeia' }, { status: 403 });
     }
 
-    let novoEstado = entrega.estado;
-
-    if (acao === 'confirmar') {
-      if (entrega.estado !== 'solicitado') {
-        return NextResponse.json({ error: 'Apenas solicitações pendentes podem ser confirmadas' }, { status: 400 });
-      }
-      novoEstado = 'confirmado';
-
-      // Transferir saldo do vendedor para admin
-      try {
-        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-          // 1. Retirar saldo do vendedor
-          await tx.user.update({
-            where: { id: entrega.vendedorId },
-            data: {
-              saldo: { decrement: entrega.valor }
-            }
-          });
-
-          // 2. Adicionar saldo ao admin
-          await tx.user.update({
-            where: { id: entrega.adminId },
-            data: {
-              saldo: { increment: entrega.valor }
-            }
-          });
-
-          // 3. Criar transação de transferência para vendedor (saída)
-          await tx.transacao.create({
-            data: {
-              userId: entrega.vendedorId,
-              tipo: 'transferencia_vendedor_admin',
-              valor: -entrega.valor,
-              descricao: `Transferência para admin (${entrega.admin.nome}) - Entrega #${entrega.id.slice(0, 8)}`,
-              estado: 'concluido',
-              dadosAdicionais: {
-                entregaId: entrega.id,
-                adminId: entrega.adminId,
-                adminNome: entrega.admin.nome,
-                dataConfirmacao: new Date().toISOString()
-              }
-            }
-          });
-
-          // 4. Criar transação de recebimento para admin (entrada)
-          await tx.transacao.create({
-            data: {
-              userId: entrega.adminId,
-              tipo: 'recebimento_vendedor',
-              valor: entrega.valor,
-              descricao: `Recebimento de vendedor (${entrega.vendedor.nome}) - Entrega #${entrega.id.slice(0, 8)}`,
-              estado: 'concluido',
-              dadosAdicionais: {
-                entregaId: entrega.id,
-                vendedorId: entrega.vendedorId,
-                vendedorNome: entrega.vendedor.nome,
-                dataConfirmacao: new Date().toISOString()
-              }
-            }
-          });
-        });
-
-      } catch (txError) {
-        console.error('Erro na transação:', txError);
-        throw txError;
-      }
-
-    } else if (acao === 'rejeitar') {
-      if (entrega.estado !== 'solicitado') {
-        return NextResponse.json({ error: 'Apenas solicitações pendentes podem ser rejeitadas' }, { status: 400 });
-      }
-      novoEstado = 'cancelado';
-
-    } else if (acao === 'concluir') {
-      // Admin marca como concluída (após ter recebido fisicamente)
-      if (entrega.estado !== 'confirmado') {
-        return NextResponse.json({ error: 'Apenas entregas confirmadas podem ser concluídas' }, { status: 400 });
-      }
-      novoEstado = 'concluido';
-    } else {
+    if (!['confirmar', 'rejeitar', 'concluir'].includes(acao)) {
       return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
     }
 
-    // Atualizar entrega
-    const entregaAtualizada = await prisma.entregaSaldo.update({
-      where: { id: entregaId },
-      data: {
-        estado: novoEstado,
-        dataConfirmacao: acao === 'confirmar' ? new Date() : entrega.dataConfirmacao,
-        dataConclusao: acao === 'concluir' ? new Date() : entrega.dataConclusao,
-        observacoes: observacoes || entrega.observacoes
-      },
-      include: {
-        vendedor: { select: { id: true, nome: true } },
-        admin: { select: { id: true, nome: true } }
-      }
-    });
+    try {
+      const entregaAtualizada = await executeWithRetry(() =>
+        prisma.$transaction((tx) =>
+          processarTransicaoEntregaSaldo(tx, {
+            entregaId,
+            adminId: user.id,
+            acao: acao as EntregaSaldoAction,
+            observacoes,
+          })
+        )
+      );
 
-    return NextResponse.json({
-      success: true,
-      data: entregaAtualizada,
-      message: acao === 'confirmar' ? 'Entrega confirmada e saldo transferido com sucesso!' :
-               acao === 'rejeitar' ? 'Entrega rejeitada' :
-               'Entrega marcada como concluída'
-    });
+
+      return NextResponse.json({
+        success: true,
+        data: entregaAtualizada,
+        message: acao === 'confirmar' ? 'Entrega confirmada e saldo transferido com sucesso!' :
+                 acao === 'rejeitar' ? 'Entrega rejeitada' :
+                 'Entrega marcada como concluída'
+      });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+      if (errMsg === 'ENTREGA_JA_PROCESSADA') {
+        return NextResponse.json({ error: 'A entrega já foi processada' }, { status: 409 });
+      }
+      if (errMsg === 'SALDO_INSUFICIENTE_VENDEDOR') {
+        return NextResponse.json({ error: 'Saldo insuficiente do vendedor' }, { status: 400 });
+      }
+      if (errMsg === 'ENTREGA_NAO_ENCONTRADA') {
+        return NextResponse.json({ error: 'Entrega não encontrada' }, { status: 404 });
+      }
+      throw error;
+    }
 
   } catch (error) {
     console.error('Erro ao processar entrega:', error);
-    const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
-    return NextResponse.json({ error: 'Erro interno', details: errMsg }, { status: 500 });
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
