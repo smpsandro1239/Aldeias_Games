@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/stripe";
 import { sanitizeObject } from "@/lib/sanitization";
 import { claimWebhookEvent, completeWebhookEvent } from "@/lib/webhook-helpers";
-// @ts-ignore - stripe types
 import Stripe from "stripe";
 import crypto from "crypto";
 

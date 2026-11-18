@@ -3,7 +3,6 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { sanitizeObject } from '@/lib/sanitization';
-// @ts-ignore - stripe types
 import Stripe from 'stripe';
 
 export async function POST(request: NextRequest) {

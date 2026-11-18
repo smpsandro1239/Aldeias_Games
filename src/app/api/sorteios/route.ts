@@ -8,7 +8,6 @@ import { createLogger, extractRequestContext } from '@/lib/logger'
 import { hashClientSeed, computeFinalHash, isValidSha256Hash, hashToIndex } from '@/lib/lottery-utils'
 import { normalizePoioConfig } from '@/lib/poio-utils'
 import crypto from 'crypto'
-// @ts-ignore - @prisma/client types generated at build time
 import { TipoNotificacao } from '@prisma/client'
 
 // PATCH — commit do sorteio (passo 1 do fluxo provably-fair)

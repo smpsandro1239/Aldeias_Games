@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
-// @ts-ignore
 import { PermissionKey } from "@prisma/client";
 import { resolvePermissions } from "./resolvePermissions";
 
