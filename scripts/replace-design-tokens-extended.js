@@ -80,7 +80,7 @@ function replaceHexString(match, quote, hexWithHash) {
 
 function processFile(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
-  let original = content;
+  const original = content;
 
   // Class arbitrary value replacements
   for (const rep of replacements) {
