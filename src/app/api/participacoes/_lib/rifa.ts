@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import { GameHandler, JogoWithEvento, ParticipacaoRequestData } from './types';
-// @ts-ignore - @prisma/client types generated at build time
 import { Prisma } from '@prisma/client';
 
 function generateSeed(): string {

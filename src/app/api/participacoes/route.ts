@@ -10,7 +10,6 @@ import { executeWithRetry } from '@/lib/transaction-retry';
 import { createLogger, extractRequestContext } from '@/lib/logger';
 import { isMethodAllowed } from '@/lib/payment-commissions';
 import { resolvePermissions } from '@/lib/rbac/resolvePermissions';
-// @ts-ignore - @prisma/client types generated at build time
 import { Prisma } from '@prisma/client';
 import { getGameHandler } from './_lib';
 

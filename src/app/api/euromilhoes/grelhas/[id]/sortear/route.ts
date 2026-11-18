@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-// @ts-ignore - @prisma/client types generated at build time
 import { TipoNotificacao } from "@prisma/client";
 import { getOfficialTime } from "@/lib/time";
 import { getLatestFirstNumber } from "@/lib/euromillions-api";
