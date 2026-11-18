@@ -574,3 +574,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Página `/pagamento/sucesso` passa a apresentar o montante em euros sem divisão dupla.
 - Novo teste `src/__tests__/unit/payment-status-readonly.test.ts`: cobre os dois GET, ownership Stripe, classificação e filtragem de metadados no POST Stripe. Execução ainda pendente; não assumir aprovação.
 - Limitações ainda abertas: MB WAY continua a iniciar pagamento antes de criar participação em alguns hooks, pelo que falta ligar a participação à referência externa; o webhook Stripe ainda precisa de validar preço oficial/quantidade e estado pago. Não marcar os fluxos de pagamento como concluídos.
+
+
+## Webhooks — retry recuperável e protecção por referência (18/11/2026)
+
+- Commits directos na `main`: `685f01c` (retry condicional de eventos failed), `64c69a0` e `5a36951` (testes unitários e real-DB), `d2a8a51` (classificação MB WAY por registos internos), `cdc5359` (Stripe payment_status/moeda/montante e referência de sessão), `225964e` (documentação do helper), `23aa495` (AGENTS actualizado).
+- `claimWebhookEvent` recupera apenas estado `failed` com compare-and-swap; duas tentativas concorrentes não conseguem reclamar o mesmo evento. `processing`/`completed` continuam a ser duplicados.
+- MB WAY deixa de confiar no `tipo` do callback para decidir o destino financeiro: consulta registo de carregamento ou participação pela referência; ausência/ambiguidade falha e fica registada como `failed` em vez de sucesso silencioso.
+- Stripe webhook rejeita sessões não pagas, moeda diferente de EUR e montante nulo/zero; cada participação criada recebe a `session.id` como `referenciaPagamento`, permitindo detectar replay por outra `event.id`.
+- Testes unitários e real-DB adicionados para retry de eventos falhados. Ainda sem validação CI observada. Os checks de commit consultados expõem apenas os três contextos Vercel, todos bloqueados por `build-rate-limit`; não há resultado visível de TypeScript/Vitest.
+- MB WAY continua com risco de associação incompleta: os hooks ainda não associam de forma fiável o `transactionId` à participação; o trabalho seguinte deve introduzir intenção persistida, ownership e cancelamento/libertação de stock.
