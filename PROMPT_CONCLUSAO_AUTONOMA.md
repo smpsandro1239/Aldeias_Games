@@ -238,3 +238,12 @@ Começa agora pelo protocolo da secção 3. Revalida o estado do repositório e 
 - Typecheck/build detectaram três directivas `@ts-expect-error` supérfluas em imports de `PermissionKey` e Sentry (TS2578). Foram removidas na alteração seguinte.
 - Os erros restantes de lint são maioritariamente React Compiler/hooks: setState síncrono em effects, referências antes da declaração, funções impuras e componentes criados durante render.
 - Audit continua com 12 vulnerabilidades de produção. Build Vercel falhou antes da publicação por TS2578 (não por quota neste run).
+
+
+## Actualização de baseline — CI 44302130079
+
+- Job principal CI passou: TypeScript, 529 testes Vitest, build, SQLite, seed e Playwright (67 aprovados, 3 ignorados).
+- ESLint: 138 erros e 1306 avisos, maioritariamente React Compiler/hooks.
+- Security Audit `44302130082`: 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- Deploy `44302130095`: build de artefactos Vercel passou; publicação bloqueada pela quota diária `api-deployments-free-per-day`.
+- Próxima alteração em validação: migração das páginas administrativas de Entregas/Pedidos para TanStack Query, removendo setState indirecto em effects.

@@ -244,3 +244,13 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] ESLint desceu de 153 para 138 erros; o primeiro grupo de `@ts-nocheck`/CommonJS foi resolvido.
 - [ ] Revalidar typecheck e build após remover as três directivas não utilizadas.
 - [ ] Continuar os erros React Compiler/hooks (principalmente setState síncrono em effects e referências antes da declaração), sem desactivar regras.
+
+
+## React Query — remoção de efeitos de carregamento (18/11/2026)
+
+- [x] CI `44302130079`: typecheck, Vitest 529/529, build, SQLite, seed e Playwright 67/67 passaram (3 ignorados).
+- [x] Deployment Vercel `44302130095`: build de artefactos passou; publicação recusada por quota diária, bloqueio externo.
+- [x] Migrada a leitura de entregas administrativas para `useQuery`, com cache por utilizador e refetch após operações; removido o efeito que disparava actualizações de estado.
+- [x] Migrada a leitura de pedidos de carregamento para `useQuery`, com cache por utilizador/estado e refetch após confirmação.
+- [ ] Validar o novo grupo React Query no CI e confirmar redução dos erros ESLint.
+- [ ] Continuar correcções React Compiler/hooks por componentes, sem desactivar regras.

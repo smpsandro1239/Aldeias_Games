@@ -412,3 +412,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Build Vercel `44301485582` falhou pelo mesmo TS2578, antes da fase de publicação. Não foi quota neste run.
 - Security Audit `44301485542`: continuam 12 vulnerabilidades de produção (4 moderadas, 8 altas).
 - Próximo passo: revalidar typecheck/build com as directivas removidas e corrigir os erros React Compiler por componentes, em grupos pequenos.
+
+
+## React Query — Entregas e Pedidos administrativos (18/11/2026)
+
+- CI `44302130079`: job principal passou integralmente: typecheck, 529 testes Vitest, build, preparação SQLite, seed e Playwright (67 aprovados, 3 ignorados).
+- ESLint continua a falhar com 138 erros e 1306 avisos; os erros são maioritariamente React Compiler/hooks.
+- Deployment `44302130095`: build Vercel passou; publicação bloqueada pela quota diária `api-deployments-free-per-day`.
+- Security Audit `44302130082`: continua a falhar com 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- Preparada migração de `src/app/admindashboard/entregas/page.tsx` e `src/app/admindashboard/pedidos/page.tsx` para TanStack Query: os dados passam a ser derivados de `useQuery`, com `enabled` dependente da sessão e chaves de cache por utilizador/estado. Foram removidos os effects e setters de carregamento.
+- A alteração aguarda CI próprio; não confundir a validação do commit anterior com a validação deste novo refactor.

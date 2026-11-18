@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutHeader } from "@/components/layout-header";
@@ -47,32 +48,30 @@ interface EntregaSaldo {
 export default function AdminEntregasPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading } = useAuth();
-    const [loading, setLoading] = useState(true);
-   const [entregas, setEntregas] = useState<EntregaSaldo[]>([]);
    const [filter, setFilter] = useState<string>("todos");
    const [processing, setProcessing] = useState<string | null>(null);
    const [page, setPage] = useState<number>(1);
    const entregasPerPage = 10;
- 
-const fetchEntregas = useCallback(async () => {
-      try {
-        const res = await fetch("/api/admin/entregas-saldo");
-        if (res.ok) {
-          const data = await res.json();
-          setEntregas(data.data || []);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar entregas:", error);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
 
-    useEffect(() => {
-      if (isAuthenticated && user) {
-        void fetchEntregas();
-      }
-    }, [isAuthenticated, user, fetchEntregas]);
+   const {
+     data: entregas = [],
+     isLoading: entregasLoading,
+     refetch: refetchEntregas,
+   } = useQuery<EntregaSaldo[]>({
+     queryKey: ["admin-entregas-saldo", user?.id],
+     enabled: isAuthenticated && Boolean(user),
+     queryFn: async () => {
+       try {
+         const res = await fetch("/api/admin/entregas-saldo");
+         if (!res.ok) throw new Error("Não foi possível carregar as entregas");
+         const data = await res.json();
+         return data.data || [];
+       } catch (error) {
+         console.error("Erro ao buscar entregas:", error);
+         return [];
+       }
+     },
+   });
 
   const handleConfirmar = async (entregaId: string) => {
     setProcessing(entregaId);
@@ -86,7 +85,7 @@ const fetchEntregas = useCallback(async () => {
       const data = await res.json();
       if (res.ok) {
         toast.success("Entrega confirmada! Saldo transferido.");
-        fetchEntregas();
+        void refetchEntregas();
       } else {
         toast.error(data.error || "Erro ao confirmar");
       }
@@ -114,7 +113,7 @@ const fetchEntregas = useCallback(async () => {
           acao === 'rejeitar' ? 'Entrega rejeitada' :
           'Entrega concluída'
         );
-        fetchEntregas();
+        void refetchEntregas();
       } else {
         toast.error(data.error || "Erro ao processar");
       }
@@ -149,7 +148,7 @@ const fetchEntregas = useCallback(async () => {
      .filter(e => e.estado === 'solicitado')
      .reduce((acc, e) => acc + e.valor, 0);
 
-   if (isLoading || (isAuthenticated && loading)) {
+   if (isLoading || (isAuthenticated && entregasLoading)) {
     return <LoaderScreen message="A carregar entregas..." />;
   }
 
@@ -206,7 +205,7 @@ const fetchEntregas = useCallback(async () => {
               <option value="concluido">Concluídos</option>
               <option value="cancelado">Cancelados</option>
             </select>
-            <Button variant="outline" size="icon" onClick={fetchEntregas}>
+            <Button variant="outline" size="icon" onClick={() => void refetchEntregas()}>
               <RefreshCw className="w-4 h-4" />
             </Button>
           </div>

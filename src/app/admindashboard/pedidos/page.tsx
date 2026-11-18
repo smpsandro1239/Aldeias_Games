@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutHeader } from "@/components/layout-header";
@@ -53,32 +54,30 @@ interface PedidoCarregamento {
 export default function AdminPedidosPage() {
     const router = useRouter();
     const { user, isAuthenticated, isLoading } = useAuth();
-   const [loading, setLoading] = useState(true);
-   const [pedidos, setPedidos] = useState<PedidoCarregamento[]>([]);
    const [filter, setFilter] = useState<string>("todos");
    const [searchTerm, setSearchTerm] = useState("");
    const [page, setPage] = useState<number>(1);
    const pedidosPerPage = 10;
- 
-const fetchPedidos = useCallback(async () => {
-      try {
-        const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPedidos(data.data || []);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar pedidos:", error);
-      } finally {
-        setLoading(false);
-      }
-    }, [filter]);
 
-    useEffect(() => {
-      if (isAuthenticated && user) {
-        void fetchPedidos();
-      }
-    }, [isAuthenticated, user, fetchPedidos]);
+   const {
+     data: pedidos = [],
+     isLoading: pedidosLoading,
+     refetch: refetchPedidos,
+   } = useQuery<PedidoCarregamento[]>({
+     queryKey: ["admin-pedidos-carregamento", user?.id, filter],
+     enabled: isAuthenticated && Boolean(user),
+     queryFn: async () => {
+       try {
+         const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`);
+         if (!res.ok) throw new Error("Não foi possível carregar os pedidos");
+         const data = await res.json();
+         return data.data || [];
+       } catch (error) {
+         console.error("Erro ao buscar pedidos:", error);
+         return [];
+       }
+     },
+   });
 
    const handleConfirmar = async (pedidoId: string) => {
      try {
@@ -91,7 +90,7 @@ const fetchPedidos = useCallback(async () => {
        
        if (res.ok) {
          toast.success("Pedido confirmado com sucesso!");
-         fetchPedidos();
+         void refetchPedidos();
        } else {
          const data = await res.json();
          toast.error(data.error || "Erro ao confirmar pedido");
@@ -130,7 +129,7 @@ const fetchPedidos = useCallback(async () => {
    const totalPendente = filteredPedidos.filter(p => p.estado === "pendente").reduce((acc, p) => acc + p.valor, 0);
    const totalConfirmado = filteredPedidos.filter(p => p.estado === "confirmado").reduce((acc, p) => acc + p.valor, 0);
 
-   if (isLoading || (isAuthenticated && loading)) {
+   if (isLoading || (isAuthenticated && pedidosLoading)) {
      return <LoaderScreen message="A carregar pedidos..." />;
    }
 
@@ -192,7 +191,7 @@ const fetchPedidos = useCallback(async () => {
               <option value="confirmado">Confirmados</option>
               <option value="cancelado">Cancelados</option>
             </select>
-            <Button variant="outline" size="icon" onClick={fetchPedidos}>
+            <Button variant="outline" size="icon" onClick={() => void refetchPedidos()}>
               <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
