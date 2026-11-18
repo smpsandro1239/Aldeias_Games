@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutHeader } from "@/components/layout-header";
@@ -54,32 +54,25 @@ export default function AdminEntregasPage() {
    const [page, setPage] = useState<number>(1);
    const entregasPerPage = 10;
  
-useEffect(() => {
-      if (isAuthenticated && user) {
-        setLoading(true);
-        fetchEntregas();
-      } else {
-        setLoading(false);
-      }
-    }, [isAuthenticated, user]);
- 
-   useEffect(() => {
-     setPage(1);
-   }, [filter]);
-
-const fetchEntregas = async () => {
+const fetchEntregas = useCallback(async () => {
       try {
         const res = await fetch("/api/admin/entregas-saldo");
-       if (res.ok) {
-         const data = await res.json();
-         setEntregas(data.data || []);
-       }
-     } catch (error) {
-       console.error("Erro ao buscar entregas:", error);
-     } finally {
-       setLoading(false);
-     }
-   };
+        if (res.ok) {
+          const data = await res.json();
+          setEntregas(data.data || []);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar entregas:", error);
+      } finally {
+        setLoading(false);
+      }
+    }, []);
+
+    useEffect(() => {
+      if (isAuthenticated && user) {
+        void fetchEntregas();
+      }
+    }, [isAuthenticated, user, fetchEntregas]);
 
   const handleConfirmar = async (entregaId: string) => {
     setProcessing(entregaId);
@@ -156,7 +149,7 @@ const fetchEntregas = async () => {
      .filter(e => e.estado === 'solicitado')
      .reduce((acc, e) => acc + e.valor, 0);
 
-   if (loading || !isAuthenticated) {
+   if (isLoading || (isAuthenticated && loading)) {
     return <LoaderScreen message="A carregar entregas..." />;
   }
 
@@ -204,7 +197,7 @@ const fetchEntregas = async () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => { setFilter(e.target.value); setPage(1); }}
               className="px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-xl text-muted-foreground text-sm"
             >
               <option value="todos">Todos</option>

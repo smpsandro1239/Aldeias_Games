@@ -373,3 +373,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - ESLint: 159 erros e 1309 avisos após remoção de várias supressões. A maioria dos erros remanescentes está associada a regras React Compiler/hooks, que requerem correcções reais por componente.
 - Security Audit: 12 vulnerabilidades de produção (4 moderadas, 8 altas).
 - Deployment anterior também continua sujeito à quota Vercel `api-deployments-free-per-day`.
+
+
+## Validação de infraestrutura e primeiro grupo React Compiler — 18/11/2026
+
+- CI `44298140640` passou no job principal: typecheck, 529 testes Vitest, instalação Chromium em Ubuntu 24.04, build Next.js, push SQLite, seed e Playwright (67 aprovados, 3 ignorados).
+- A exclusão de `playwright.config.ts` do tsconfig da aplicação corrigiu o erro de produção relativo à dependência dev `@playwright/test`.
+- Build de artefactos Vercel passou; deploy falhou apenas porque a quota diária `api-deployments-free-per-day` excedeu 100 deployments/24h.
+- ESLint continua a falhar com 159 erros e 1309 avisos. Foram preparadas correcções de efeitos e paginação nas páginas de Entregas/Pedidos e valor derivado na página Euromilhões; validação pendente.
+- Security Audit mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- Próximo passo: verificar o novo lint e corrigir as falhas React Compiler por componentes, começando pelos restantes hooks de carregamento.

@@ -204,3 +204,14 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] ESLint mantém 159 erros e 1309 avisos; tratar primeiro supressões/imports e depois erros React Compiler/hooks por grupos.
 - [ ] Security Audit mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas).
 - [ ] Deploy de produção depende de build aprovado e quota Vercel disponível.
+
+
+## React Compiler — primeiro grupo de correcções (18/11/2026)
+
+- [x] CI `44298140640`: typecheck, Vitest (529), build, SQLite, seed e Playwright passaram; E2E: 67 aprovados, 3 ignorados.
+- [x] Runners CI em Ubuntu 24.04 e exclusão de `playwright.config.ts` do tsconfig da aplicação validados.
+- [x] Build Vercel passou; deploy bloqueado exclusivamente pela quota diária de deployments.
+- [ ] ESLint: 159 erros/1309 avisos no último run.
+- [ ] Preparadas correcções para evitar setState síncrono em effects e referências a funções antes da declaração nas páginas Entregas e Pedidos; o reset da paginação passou para os eventos de filtro/pesquisa.
+- [ ] Na página Euromilhões, removido estado de montagem redundante e substituído efeito de pré-selecção por valor derivado. Aguardam CI.
+- [ ] Security Audit continua com 12 vulnerabilidades de produção.

@@ -197,15 +197,15 @@ Nunca converter automaticamente “código alterado” em “validado”. Regist
 
 ## 9. Baseline observado em 18/11/2026
 
-Este baseline é apenas um ponto de partida e deve ser revalidado no início da próxima sessão:
-- Branch `main`, commit actual a consultar no GitHub.
-- CI run `44297294757`: TypeScript passou; Vitest passou com 529 testes. A instalação do Chromium falhou porque `ubuntu-latest` resolveu para Ubuntu 26.04, não suportado pelo Playwright 1.60.0; build e E2E foram ignorados após essa falha.
-- ESLint no mesmo run: 159 erros e 1309 avisos. Os erros incluem regras do React Compiler/hooks (principalmente actualizações síncronas de estado em effects), além de supressões TypeScript, imports CommonJS e alguns problemas de componentes. Não desactivar regras para obter um resultado verde.
-- Deploy run `44297294863`: build Next.js compilou, mas o typecheck do build falhou porque `playwright.config.ts` importava `@playwright/test`, uma dependência dev não instalada no ambiente de produção. O ficheiro de configuração Playwright foi excluído do tsconfig da aplicação por não fazer parte do runtime; deve continuar a ser validado no CI com dependências dev.
-- Security Audit run `44297294998`: continua a reportar 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo `glob`, `minimatch`, `picomatch` e `zod`. Não usar `npm audit fix --force`; avaliar actualizações compatíveis e migrações major separadamente.
-- CI anterior run `44271019344`: typecheck, Vitest, build e Playwright passaram; Playwright reportou 67 aprovados e 3 ignorados, incluindo os dois fluxos de autenticação corrigidos.
-- Deploy anterior falhou por quota `api-deployments-free-per-day` (>100 deployments/24h). A falha mais recente foi de typecheck antes da fase de publicação, não uma falha de quota.
-- Alteração preparada nesta ronda: runners CI fixados em `ubuntu-24.04` e `playwright.config.ts` excluído do tsconfig de produção. Aguardam novo CI/build para validação.
+Revalidar este estado no início de cada sessão; não reutilizar números históricos sem consultar Actions:
+- Branch `main`, SHA actual a consultar no GitHub.
+- CI run `44298140640`: typecheck, 529 testes Vitest, build Next.js, preparação SQLite, seed determinístico e Playwright passaram. Playwright: 67 aprovados, 3 ignorados.
+- Runners de lint/CI fixados em `ubuntu-24.04`; Chromium instalou correctamente. `playwright.config.ts` excluído do tsconfig de produção, corrigindo o erro de módulo ausente no build Vercel.
+- ESLint no mesmo run: 159 erros e 1309 avisos. A dívida principal são regras React Compiler/hooks (actualizações síncronas em effects, ordem de declarações e pureza de render), além de supressões TypeScript e imports CommonJS.
+- Deploy run `44298140668`: build dos artefactos Vercel passou; publicação recusada pela quota `api-deployments-free-per-day` (>100 deployments/24h). Falha de quota, não de build.
+- Security Audit run `44298140613`: continua com 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo `glob`, `minimatch`, `picomatch` e `zod`. Não usar `npm audit fix --force`.
+- Os testes E2E de compra com saldo e fluxo Cofre/Caixa continuam validados pelo Playwright.
+- Correcções adicionais nos efeitos e filtros das páginas de entregas, pedidos e Euromilhões foram preparadas nesta ronda; aguardam novo lint/CI.
 
 ## 10. Formato obrigatório de cada relatório de continuação
 

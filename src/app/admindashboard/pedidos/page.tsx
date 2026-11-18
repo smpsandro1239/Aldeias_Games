@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutHeader } from "@/components/layout-header";
@@ -60,23 +60,9 @@ export default function AdminPedidosPage() {
    const [page, setPage] = useState<number>(1);
    const pedidosPerPage = 10;
  
-useEffect(() => {
-      if (isAuthenticated && user) {
-        setLoading(true);
-        fetchPedidos();
-      } else {
-        setLoading(false);
-      }
-    }, [isAuthenticated, user]);
- 
-   useEffect(() => {
-     setPage(1);
-   }, [searchTerm, filter]);
- 
-const fetchPedidos = async () => {
+const fetchPedidos = useCallback(async () => {
       try {
         const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`);
-        
         if (res.ok) {
           const data = await res.json();
           setPedidos(data.data || []);
@@ -86,7 +72,13 @@ const fetchPedidos = async () => {
       } finally {
         setLoading(false);
       }
-    };
+    }, [filter]);
+
+    useEffect(() => {
+      if (isAuthenticated && user) {
+        void fetchPedidos();
+      }
+    }, [isAuthenticated, user, fetchPedidos]);
 
    const handleConfirmar = async (pedidoId: string) => {
      try {
@@ -138,7 +130,7 @@ const fetchPedidos = async () => {
    const totalPendente = filteredPedidos.filter(p => p.estado === "pendente").reduce((acc, p) => acc + p.valor, 0);
    const totalConfirmado = filteredPedidos.filter(p => p.estado === "confirmado").reduce((acc, p) => acc + p.valor, 0);
 
-   if (loading) {
+   if (isLoading || (isAuthenticated && loading)) {
      return <LoaderScreen message="A carregar pedidos..." />;
    }
 
@@ -186,13 +178,13 @@ const fetchPedidos = async () => {
                 type="text"
                 placeholder="Pesquisar por nome, email ou telefone..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                 className="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-xl text-muted-foreground placeholder:text-muted-foreground/40 text-sm"
               />
             </div>
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => { setFilter(e.target.value); setPage(1); }}
               className="px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-xl text-muted-foreground text-sm"
             >
               <option value="todos">Todos</option>

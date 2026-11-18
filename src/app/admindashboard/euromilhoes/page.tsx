@@ -17,13 +17,7 @@ import { EuromilhoesStats, GrelhaCard, NovaGrelhaDialog } from "./euromilhoes-wi
 const AdminEuromilhoesPage = () => {
   const { isLoading } = useAuth();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setReady(true);
-  }, []);
-
-  if (!ready || isLoading) {
+  if (isLoading) {
     return <LoaderScreen message="A carregar" />;
   }
 
@@ -51,6 +45,7 @@ function AdminEuromilhoes() {
   const [formJogoId, setFormJogoId] = useState("");
   const [formPremioDescricao, setFormPremioDescricao] = useState("");
   const [formPremioValor, setFormPremioValor] = useState("");
+  const effectiveFormJogoId = formJogoId || (jogos.length === 1 ? jogos[0].id : "");
 
   const fetchData = useCallback(async () => {
     try {
@@ -78,13 +73,7 @@ function AdminEuromilhoes() {
     fetchData();
   }, [fetchData]);
 
-  useEffect(() => {
-    if (jogos.length === 1 && !formJogoId) {
-      setFormJogoId(jogos[0].id);
-    }
-  }, [jogos, formJogoId]);
-
-  useEffect(() => {
+euromilhoes selection effect  useEffect(() => {
     const interval = setInterval(fetchData, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchData]);
@@ -136,7 +125,7 @@ function AdminEuromilhoes() {
   };
 
   const handleCriarGrelha = async () => {
-    if (!formJogoId) {
+    if (!effectiveFormJogoId) {
       toast.error("Selecione um jogo");
       return;
     }
@@ -148,7 +137,7 @@ function AdminEuromilhoes() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          jogoId: formJogoId,
+          jogoId: effectiveFormJogoId,
           premioDescricao: formPremioDescricao || undefined,
           premioValor: formPremioValor ? parseFloat(formPremioValor) : undefined,
         }),
@@ -275,7 +264,7 @@ function AdminEuromilhoes() {
         open={novaGrelhaOpen}
         onOpenChange={setNovaGrelhaOpen}
         jogos={jogos}
-        formJogoId={formJogoId}
+        formJogoId={effectiveFormJogoId}
         formPremioDescricao={formPremioDescricao}
         formPremioValor={formPremioValor}
         submitting={submitting}
