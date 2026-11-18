@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-// @ts-ignore
+// @ts-expect-error - generated/optional dependency types must be supplied by the installed package
 import * as Sentry from "@sentry/nextjs";
 
 export function SentryInit() {

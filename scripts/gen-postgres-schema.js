@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 const src = path.join(process.cwd(), 'prisma', 'schema.prisma');
 const dst = path.join(process.cwd(), 'prisma', 'schema.postgres.prisma');

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /// <reference types="node" />
 import { PrismaClient, UserRole, TipoJogo, EstadoJogo, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';

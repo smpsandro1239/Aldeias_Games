@@ -391,3 +391,14 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Removido o marcador e preservado o polling de grelhas. O estado de montagem foi substituído por `useSyncExternalStore` para manter o comportamento client-only sem actualizar estado dentro de um effect.
 - Lint desceu de 159 para 153 erros e de 1309 para 1305 avisos, apesar de o typecheck ter bloqueado o run.
 - Aguarda novo CI para validar a correcção e os três fluxos administrativos.
+
+
+## Ciclo ESLint — 18/11/2026
+
+- CI `44299680572`: job principal concluído com sucesso. Typecheck, build, 529 testes Vitest e Playwright (67 aprovados, 3 ignorados) passaram.
+- ESLint falhou com 153 erros e 1306 avisos. Os erros explícitos incluem quatro `@ts-nocheck` em seeds, `@ts-ignore` em imports RBAC/Sentry/SMS e imports CommonJS em três scripts.
+- Alterações preparadas: remoção de `@ts-nocheck` nos quatro seeds; substituição dos `@ts-ignore` por `@ts-expect-error` localizadas; conversão dos scripts para imports ESM nativos.
+- A validação destas alterações depende do novo CI; não há execução local npm disponível nesta sessão.
+- Security Audit `44299682737`: 12 vulnerabilidades de produção (4 moderadas, 8 altas). Cadeias: `glob`/`minimatch` via Sentry, `picomatch` via Rollup CommonJS e `zod` via @vercel/blob → @vercel/oidc → @vercel/cli-config.
+- Deploy `44299680519`: Prisma, schema e build Vercel passaram; publicação recusada por quota diária `api-deployments-free-per-day` (>100 deployments/24h), bloqueio externo.
+- Próxima acção: validar novo lint/typecheck; depois investigar e actualizar dependências por cadeia, sem `npm audit fix --force`.

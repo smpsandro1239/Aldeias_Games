@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { PrismaClient, UserRole, TipoJogo, EstadoJogo, GrelhaEstado, MetodoPagamento, EstadoPagamento, RoleName, PermissionKey, CashboxTipo, DepositoEstado, EstadoEntrega, VaultTipo, VaultEstado, TipoNotificacao } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 

@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Define token mapping for hex values to design tokens (for Tailwind classes)
 const replacements = [

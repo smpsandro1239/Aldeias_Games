@@ -221,3 +221,12 @@ Mantém o relatório conciso mas factual. Não uses expressões como “tudo con
 ## 11. Instrução de arranque
 
 Começa agora pelo protocolo da secção 3. Revalida o estado do repositório e os workflows; depois executa a próxima tarefa P0/P1 disponível. Continua autonomamente, em ciclos de implementação e validação, até não restarem tarefas executáveis. Se a sessão terminar antes disso, deixa o estado exacto e a próxima acção registados em `TODO.md` e `PROGRESS.md`.
+
+
+## Actualização de baseline — 18/11/2026 (run 44299680572)
+
+- Job principal CI: sucesso. Typecheck, build, 529 testes Vitest e Playwright (67 aprovados, 3 ignorados).
+- Lint: falhou com 153 erros e 1306 avisos. Primeiro grupo tratado no commit seguinte: quatro `@ts-nocheck`, cinco `@ts-ignore` e três scripts CommonJS.
+- Security Audit `44299682737`: 12 vulnerabilidades de produção (4 moderadas, 8 altas), com cadeias Sentry/glob/minimatch, Rollup/picomatch e Vercel Blob/OIDC/Zod.
+- Deploy `44299680519`: build Vercel passou; publicação bloqueada pela quota diária `api-deployments-free-per-day`.
+- A alteração seguinte remove supressões e converte scripts para ESM; estado **corrigida, por validar** até novo CI.

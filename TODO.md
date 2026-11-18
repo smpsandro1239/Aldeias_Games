@@ -225,3 +225,14 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Revalidar typecheck, lint, Vitest, build e E2E após a correcção.
 - [ ] ESLint no run `44299258443`: 153 erros e 1305 avisos.
 - [ ] Security Audit: 12 vulnerabilidades de produção.
+
+
+## ESLint — remoção de supressões e imports CommonJS (18/11/2026)
+
+- [x] CI `44299680572`: job principal passou; Vitest 529/529 e Playwright 67 aprovados, 3 ignorados. Typecheck e build passaram.
+- [x] ESLint medido em 153 erros e 1306 avisos. Primeiro grupo explícito: quatro `@ts-nocheck`, cinco `@ts-ignore` e três scripts com `require()`.
+- [x] Removidas as quatro directivas `@ts-nocheck`; substituídas supressões `@ts-ignore` por `@ts-expect-error` localizadas; scripts Node convertidos para imports ESM nativos.
+- [ ] Confirmar no CI que as supressões esperadas correspondem a erros reais e que os scripts continuam executáveis no Node 24.
+- [ ] Continuar a tratar os restantes erros ESLint sem desactivar regras.
+- [ ] Resolver as 12 vulnerabilidades reportadas no audit de produção: glob/minimatch (moderadas), picomatch (alta) e zod (alta), com actualizações compatíveis e lockfile regenerado.
+- [ ] Deployment Vercel bloqueado por quota `api-deployments-free-per-day`; build de artefactos passou.
