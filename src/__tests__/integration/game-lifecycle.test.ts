@@ -1,3 +1,5 @@
+import * as crypto from 'node:crypto';
+
 // Import business logic functions from API routes (need to extract them to testable location)
 // For now, we'll replicate the core logic in tests
 
@@ -250,7 +252,6 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
 
   describe('Sorteio e Hash de Auditoria', () => {
     it('deve gerar hash SHA-256 única para cada sorteio', () => {
-      const crypto = require('crypto');
 
       const seed = crypto.randomBytes(32).toString('hex');
       const resultado = { numeroVencedor: 123 };
@@ -268,7 +269,6 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
     });
 
     it('deve gerar seed aleatória para sorteio', () => {
-      const crypto = require('crypto');
       const seed = crypto.randomBytes(32).toString('hex');
       expect(seed.length).toBe(64); // 32 bytes = 64 hex chars
     });
@@ -502,7 +502,6 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
 
   describe('Hash de Verificação', () => {
     it('deve gerar hash estável para mesmos dados', () => {
-      const crypto = require('crypto');
 
       const dados = {
         tipo: 'rifa',
@@ -529,7 +528,6 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
     });
 
     it('deve gerar hash diferente para dados diferentes', () => {
-      const crypto = require('crypto');
 
       const dados1 = { nome: 'Jogo 1', preco: 2 };
       const dados2 = { nome: 'Jogo 2', preco: 2 };

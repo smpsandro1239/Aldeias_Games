@@ -129,3 +129,10 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] `src/app/not-found.tsx`: navegação interna para `/` passou a usar `next/link`.
 - [x] `src/app/docs/page.tsx`: Swagger UI passou a ser carregado com `next/script` e `strategy="afterInteractive"`, em vez de elemento `<script>` síncrono.
 - [ ] Validar estas três correções no CI; não foram executados testes locais.
+
+
+## Sexta ronda ESLint — imports CommonJS nos módulos TypeScript — 18/11/2026
+
+- [x] Substituídos `require('crypto')` por imports estáticos de `node:crypto` no OAuth Google e nos testes `game-lifecycle`, `game-logic` e `raspadinha`.
+- [x] O teste de spy passou a observar `crypto.createHash` através do módulo importado.
+- [ ] Validar lint, typecheck e Vitest no CI; não foram executados testes locais neste ambiente.

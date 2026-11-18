@@ -277,3 +277,11 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - `src/app/docs/page.tsx`: elemento `<script>` síncrono de Swagger UI substituído por `Script` de `next/script`, com `strategy="afterInteractive"`; mantém-se o callback de inicialização após o carregamento.
 - Commits: `11a0834`, `80855f8`, `e4033e6`.
 - Validação CI pendente; estas alterações não foram testadas localmente.
+
+
+## Sexta ronda ESLint — imports CommonJS nos módulos TypeScript — 18/11/2026
+
+- Em quatro módulos TypeScript, `require('crypto')` foi substituído por imports estáticos de `node:crypto`.
+- `src/app/api/auth/google/route.ts` usa agora `randomBytes` importado no topo para gerar o `state` OAuth com CSPRNG.
+- `src/__tests__/integration/game-lifecycle.test.ts` e `src/__tests__/unit/raspadinha.test.ts` partilham o módulo de crypto importado; `src/__tests__/unit/game-logic.test.ts` observa `crypto.createHash` com `vi.spyOn`.
+- Validação pendente por GitHub Actions. Não foram executados testes locais neste ambiente.

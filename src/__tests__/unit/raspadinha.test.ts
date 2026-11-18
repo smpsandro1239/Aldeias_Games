@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as crypto from 'node:crypto';
 
 vi.mock('@/lib/db', () => ({
   prisma: {
@@ -270,14 +271,12 @@ describe('Raspadinha Handler — Unit Tests', () => {
     });
 
     it('hash deve ser determinístico para mesmo seed+resultado+salt', () => {
-      const crypto = require('crypto');
       const hash1 = crypto.createHash('sha256').update('test:win:salt:ts').digest('hex');
       const hash2 = crypto.createHash('sha256').update('test:win:salt:ts').digest('hex');
       expect(hash1).toBe(hash2);
     });
 
     it('hash deve ser diferente para seeds diferentes', () => {
-      const crypto = require('crypto');
       const hash1 = crypto.createHash('sha256').update('seed1:win:salt:ts').digest('hex');
       const hash2 = crypto.createHash('sha256').update('seed2:win:salt:ts').digest('hex');
       expect(hash1).not.toBe(hash2);

@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { vi } from 'vitest';
+import * as crypto from 'node:crypto';
 
 /**
  * Testes unitários para funções de lógica de negócio de jogos
@@ -56,7 +57,6 @@ function calcularRentabilidade(tipo: string, dados: any) {
 }
 
 function gerarHashVerificacao(dados: any): string {
-  const crypto = require('crypto');
   const texto = JSON.stringify({
     ...dados,
     timestamp: new Date().toISOString(),
@@ -256,7 +256,7 @@ describe('Gerar Hash de Verificação', () => {
   });
 
   it('deve incluir dados completos no hash', () => {
-    const spy = vi.spyOn(require('crypto'), 'createHash');
+    const spy = vi.spyOn(crypto, 'createHash');
     const dados = {
       tipo: 'rifa',
       nome: 'Rifa',

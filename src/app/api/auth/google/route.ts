@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { randomBytes } from 'node:crypto';
 
 // Estado temporário para prevenir CSRF (em produção, use armazenamento seguro)
 const STATE_COOKIE_NAME = 'google_oauth_state';
@@ -15,7 +16,6 @@ const STATE_COOKIE_OPTIONS = {
 // Math.random(), que é um PRNG previsível e permitia prever/forjar o estado
 // anti-CSRF do fluxo Google.
 function generateState(): string {
-  const { randomBytes } = require('crypto') as typeof import('crypto');
   return randomBytes(32).toString('base64url');
 }
 
