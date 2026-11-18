@@ -365,3 +365,12 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Página de sucesso Stripe deixou de afirmar que o saldo foi creditado antes de confirmar o processamento interno.
 - [x] Actualizado `AGENTS.md`: retry `failed` e rota activa de confirmação de depósitos.
 - [ ] TypeScript, Vitest, real-DB, Playwright e lint continuam sem validação observada para estes commits; não marcar como concluído.
+
+
+## MB WAY — associação estrita por referência (18/11/2026)
+
+- [x] Commit `3d71a310b2a18cc83be836f1df73a28b07911555`: `processParticipacao` deixou de procurar `transactionId` dentro de `dadosParticipacao` com `contains`; a associação usa exclusivamente `Participacao.referenciaPagamento`.
+- A pesquisa em JSON livre podia produzir colisões ou associar uma referência externa a dados arbitrários. A ausência da referência dedicada passa a resultar em erro explícito, mantendo o evento `failed` e elegível para retry.
+- [ ] Adicionar teste de integração do webhook MB WAY com referência ausente, referência válida e referência não correspondente.
+- [ ] Resolver o P0 estrutural: criar intenção/participação antes do pedido ao fornecedor, validar ownership/montante/jogo e gerir cancelamento sem stock reservado.
+- Validação local não executada neste ambiente; não declarar TypeScript/Vitest/Playwright aprovados para este commit.
