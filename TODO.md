@@ -94,3 +94,14 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 
 - [x] No commit `963ccfc`, convertidas para `const` declarações assinaladas pelo ESLint como não reatribuídas em seis rotas API: entregas-saldo admin, comissões, exportação de relatório, RGPD, setup-status e entrega-saldo vendedor.
 - [ ] Validar no CI a redução adicional de seis erros `prefer-const`, sem alterações à lógica funcional.
+
+
+## Terceira ronda ESLint e validação — 18/11/2026
+
+- [x] No CI `44256083812` (commit `36d02a5`), ESLint reduziu de 207 para 201 erros; os seis `prefer-const` das rotas alteradas desapareceram.
+- [x] O mesmo job confirma TypeScript, Vitest e build Next.js concluídos com sucesso; a preparação SQLite e o seed E2E também passaram.
+- [x] Removido `require('@/lib/db')` de `src/lib/aldeia-progress.ts`, substituindo-o por import estático de `prisma`; removido o `@ts-ignore` redundante sobre a importação Prisma. Commit `61844dc`.
+- [ ] Validar o commit `61844dc` no CI, incluindo lint e testes de integração.
+- [ ] O ESLint continua a reportar 201 erros e 1309 avisos. Persistem, entre outros, `@ts-nocheck`, `@ts-ignore`, imports `require`, `prefer-const` e regras Next.js; continuar por grupos e sem desativar regras.
+- [ ] O Security Audit `44256083954` mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas): `glob`, `minimatch`, `picomatch` e `zod`. As correções automáticas de Zod exigem major upgrade; não aplicar `--force` sem migração.
+- [ ] O Playwright do CI `44256083812` estava ainda em execução na última consulta; não declarar os fluxos E2E aprovados até terminar.
