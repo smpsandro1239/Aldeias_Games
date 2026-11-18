@@ -614,3 +614,12 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Não foi introduzida alteração ao schema Prisma.
 - Validação: sem execução local de npm/Vitest/TypeScript/Playwright neste ambiente. O commit fica por validar até existir CI executado.
 - P0 permanece: persistir a intenção/participação antes da chamada ao fornecedor e tratar a janela entre a resposta do fornecedor, a gravação da referência e o webhook antecipado.
+
+
+## MB WAY — referências ambíguas no endpoint de estado (18/11/2026)
+
+- Commit `a373fdcfdfe920a7ffdb1f50afc9b8bb6f19c959`: o GET de estado deixou de aceitar uma referência que exista simultaneamente como participação e carregamento. Exige agora um único registo interno e ownership exacto.
+- Commit `28288d4db1b262e8c6a1680258a226b6f19e76da`: dois testes unitários novos cobrem referências duplicadas entre modelos e referências associadas a proprietários diferentes. Em ambos os cenários, a rota deve responder 404 sem consultar o fornecedor.
+- Documentação actualizada no commit `78fa2bb8c62da8199b8732652ef3a59a4fb24fbe`.
+- Não foi possível executar Vitest, TypeScript ou Playwright neste ambiente. Os testes foram adicionados, mas o comportamento permanece **por validar** até CI fornecer evidência.
+- O fluxo de criação tardia da participação e a janela de callback antecipado continuam como P0; esta alteração apenas fecha a divulgação do estado externo em referências ambíguas.
