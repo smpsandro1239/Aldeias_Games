@@ -422,3 +422,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Security Audit `44302130082`: continua a falhar com 12 vulnerabilidades de produção (4 moderadas, 8 altas).
 - Preparada migração de `src/app/admindashboard/entregas/page.tsx` e `src/app/admindashboard/pedidos/page.tsx` para TanStack Query: os dados passam a ser derivados de `useQuery`, com `enabled` dependente da sessão e chaves de cache por utilizador/estado. Foram removidos os effects e setters de carregamento.
 - A alteração aguarda CI próprio; não confundir a validação do commit anterior com a validação deste novo refactor.
+
+
+## React Query — erros de leitura visíveis (18/11/2026)
+
+- Inspecção do commit `1c0ebd6`: as funções `queryFn` das páginas Entregas e Pedidos lançavam erro para respostas HTTP não-OK, mas apanhavam imediatamente a excepção e devolviam `[]`. Isto convertia indisponibilidade da API, 401/403 ou falha de rede num estado vazio aparentemente válido.
+- Corrigido em `src/app/admindashboard/entregas/page.tsx` (commit `c43ec9c`) e `src/app/admindashboard/pedidos/page.tsx` (commit `1148dd6`): as excepções propagam-se ao TanStack Query; a UI distingue falha de carregamento de ausência real de registos e oferece retry manual.
+- Verificação posterior: ambos os ficheiros na `main` contêm o estado de erro acessível e já não contêm o `return []` no catch que ocultava a falha.
+- O estado combinado dos commits mostra apenas checks de deployment Vercel em falha por `build-rate-limit`; não foi possível observar um check CI de código através do endpoint de status consultado. Não classificar isto como falha de TypeScript/testes.
+- Não existe execução local do projecto neste ambiente; typecheck, ESLint, Vitest e build permanecem pendentes de workflow CI.
+- Próxima revisão: os endpoints são paginados (`createPaginatedResponse`), mas as páginas fazem paginação local e não enviam parâmetros de página/limite; verificar o limite predefinido e corrigir a paginação para não omitir dados.
