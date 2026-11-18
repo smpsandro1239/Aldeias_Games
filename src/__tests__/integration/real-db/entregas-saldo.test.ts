@@ -90,7 +90,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
       prisma.user.findUnique({ where: { id: adminId } }),
       prisma.transacao.findMany({
         where: {
-          dadosAdicionais: { path: ["entregaId"], equals: entrega.id },
+          dadosAdicionais: { path: "$.entregaId", equals: entrega.id },
         },
       }),
     ]);
@@ -138,7 +138,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
       prisma.user.findUnique({ where: { id: adminId } }),
       prisma.transacao.findMany({
         where: {
-          dadosAdicionais: { path: ["entregaId"], equals: entrega.id },
+          dadosAdicionais: { path: "$.entregaId", equals: entrega.id },
         },
       }),
     ]);
@@ -185,7 +185,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
     expect(
       await prisma.transacao.count({
         where: {
-          dadosAdicionais: { path: ["entregaId"], equals: entrega.id },
+          dadosAdicionais: { path: "$.entregaId", equals: entrega.id },
         },
       })
     ).toBe(0);
