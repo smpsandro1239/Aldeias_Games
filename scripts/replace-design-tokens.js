@@ -95,7 +95,7 @@ const exactReplacements = [
 
 function processFile(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
-  let original = content;
+  const original = content;
   for (const rep of replacements) {
     content = content.replace(rep.from, rep.to);
   }
