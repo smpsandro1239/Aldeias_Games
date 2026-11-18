@@ -121,3 +121,11 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] As alterações limitam-se a `let` → `const`, sem alterar os valores ou fluxos.
 - [ ] Validar a redução dos erros `prefer-const` no CI; não foi possível executar ESLint localmente neste ambiente.
 - [ ] Permanecem erros de lint relacionados com `@ts-nocheck`, `@ts-ignore`, `require()`, regras Next.js e uma interface vazia.
+
+
+## Quinta ronda ESLint — regras de tipos e Next.js — 18/11/2026
+
+- [x] `src/hooks/use-eventos.ts`: `UpdateEventoData` passou de interface vazia que estendia `Partial<CreateEventoData>` para alias equivalente.
+- [x] `src/app/not-found.tsx`: navegação interna para `/` passou a usar `next/link`.
+- [x] `src/app/docs/page.tsx`: Swagger UI passou a ser carregado com `next/script` e `strategy="afterInteractive"`, em vez de elemento `<script>` síncrono.
+- [ ] Validar estas três correções no CI; não foram executados testes locais.
