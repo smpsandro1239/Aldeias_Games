@@ -51,7 +51,7 @@ Estado: auditoria inicial com riscos confirmados por leitura do código; correc�
 - src/app/api/pagamentos/mbway/route.ts:39-47 só procura uma participação quando o body inclui participacaoId; nessa situação, valida ownership e estado e guarda referenciaPagamento.
 - src/hooks/useGamePage.ts:172-187 inicia o pagamento MB WAY e só depois chama criarParticipacao('pendente'), sem participacaoId.
 - src/hooks/use-game-participation.ts:154-166 segue a mesma ordem e cria a participação depois do pedido MB WAY, também sem a referência.
-- src/app/api/mbway/webhook/route.ts procura a participação por referenciaPagamento ou pelo transactionId dentro de dadosParticipacao; se não encontrar, processParticipacao regressa sem erro.
+- `src/app/api/mbway/webhook/route.ts` exige agora correspondência em `Participacao.referenciaPagamento`; a procura alternativa em JSON livre foi removida no commit `3d71a310`. A ausência de correspondência gera erro explícito e permite retry do evento `failed`.
 
 **Impacto:** o pagamento pode ser aceite pelo MB WAY, mas a participação não fica ligada à transacção; o webhook pode terminar como concluído sem actualizar a participação nem creditar cashback.
 
@@ -165,3 +165,10 @@ Criar relatório read-only que apresente divergências por aldeia, utilizador, v
 ## Estado de validação do ciclo — 18/11/2026
 
 As alterações de consultas read-only, classificação Stripe, retry de webhooks, validação básica de sessão Stripe e classificação MB WAY por registos internos estão **corrigidas, por validar**. Os status checks observáveis dos commits mostram apenas os deployments Vercel bloqueados por `build-rate-limit`; não há evidência de execução dos jobs TypeScript/Vitest/Playwright. A validação real-DB e o CI devem passar antes de mudar o estado para validado.
+
+
+### Actualização — associação por referência dedicada (18/11/2026)
+
+- No commit `3d71a310b2a18cc83be836f1df73a28b07911555`, o webhook MB WAY deixou de procurar referências em `dadosParticipacao` (JSON livre) e passou a exigir exclusivamente `referenciaPagamento`.
+- Esta alteração reduz o risco de colisão/associação acidental, mas não resolve a criação tardia da participação. O P0 permanece aberto: os hooks continuam a iniciar o pagamento antes de criar a participação e não fornecem uma referência interna ao endpoint MB WAY.
+- Sem execução local ou CI confirmado para este commit, a alteração está corrigida por leitura, mas por validar.
