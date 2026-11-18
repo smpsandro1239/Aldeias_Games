@@ -299,3 +299,6 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Validar testes de concorrência no CI e rever possíveis diferenças entre SQLite e PostgreSQL.
 
 - [ ] **Cofre — validar regressão dos testes de concorrência:** o primeiro CI do commit `de56f40` revelou que os novos testes partilhavam o saldo do cofre com testes legados; isolados no fim da suite para não contaminar os valores de referência. Aguardar novo CI.
+
+- [x] **Rota de confirmação do cofre:** os painéis de administrador passam a usar `PUT /api/cofre/confirmar-deposito/[id]`, mantendo a rota legada `pedido-deposito/[id]` fora do fluxo activo, conforme as regras do repositório.
+- [ ] Validar a nova rota dedicada no CI após o commit.

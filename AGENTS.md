@@ -84,7 +84,7 @@ npx next build --webpack
 - **Claim de prémio**: guard `premioEntregue=false` nos 4 branches (pagar_cliente/cofre/jogar_novamente/carteira) — anti double-claim
 - **Depósitos/levantamentos/confirmações**: `$transaction` + guard `estado='pendente'` — anti duplo crédito
 - **Webhooks**: processar toda a lógica dentro da `$transaction` do claim + guard de stock
-- Route legacy `PUT /api/cofre/pedido-deposito/[id]` (com bug `pedido.id`) foi substituída por `confirmar-deposito` — não reutilizar
+- Route legacy `PUT /api/cofre/pedido-deposito/[id]` (com bug `pedido.id`) não deve ser reutilizada. A confirmação/rejeição activa é `PUT /api/cofre/confirmar-deposito/[id]`; os painéis de administração chamam esta rota.
 
 ### Super Admin Cofre (Visão Global)
 - `GET /api/superadmin/cofre` — consolidated data across all villages (vault balances, pending deposits, recent movements)

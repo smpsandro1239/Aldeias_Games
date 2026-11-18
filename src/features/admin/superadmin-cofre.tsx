@@ -44,7 +44,7 @@ export function SuperAdminCofre() {
 
   const handleConfirmar = async (id: string) => {
     try {
-      const res = await apiRequest(`/api/cofre/pedido-deposito/${id}`, {
+      const res = await apiRequest(`/api/cofre/confirmar-deposito/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

@@ -517,3 +517,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Causa confirmada no log do job: os testes antigos esperavam 40€ após o primeiro depósito e 25€ após o levantamento, mas receberam 120€ e 105€.
 - Correção: mover os dois novos testes de concorrência para o fim do bloco `describe`, depois de todos os cenários que dependem do saldo inicial. Mantêm os seus próprios vendedores; o segundo cenário só altera o cofre depois das assertions antigas.
 - TypeScript passou no CI anterior; a nova execução de Vitest ainda é necessária para validar a correção. ESLint e Security Audit continuam a falhar por dívida técnica e vulnerabilidades em dependências.
+
+
+## Alinhamento da rota de confirmação de depósitos (18/11/2026)
+
+- A auditoria cruzada de `AGENTS.md` com o código revelou uma contradição: a documentação proibia reutilizar `PUT /api/cofre/pedido-deposito/[id]`, mas os painéis admin e superadmin ainda a chamavam.
+- Criada a rota dedicada `PUT /api/cofre/confirmar-deposito/[id]`, usando o helper transacional `processarPedidoDepositoCofre` já introduzido para claim condicional, débito protegido, crédito do cofre, movimentos e auditoria.
+- Os dois painéis passaram a chamar a rota dedicada. A rota antiga foi reposta exactamente como estava no commit anterior e fica fora do fluxo activo, sem remover compatibilidade de forma abrupta.
+- Actualizado `AGENTS.md` para indicar o caminho completo e eliminar a ambiguidade.
+- CI do commit `12a20d2`: TypeScript passou; Vitest passou (53 ficheiros, 536 testes); build Next.js passou; SQLite e seed E2E passaram; Playwright passou (67 testes, 3 ignorados). ESLint falhou com 131 erros de React Hooks/Compiler e avisos. Security Audit falhou com 4 vulnerabilidades altas e 5 moderadas. Build Vercel passou, mas deploy bloqueado por quota diária.
+- A rota nova e a migração dos painéis ainda aguardam CI próprio.

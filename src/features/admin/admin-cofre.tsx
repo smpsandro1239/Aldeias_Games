@@ -77,7 +77,7 @@ export function AdminCofre() {
 
   const handleConfirmarDeposito = async (id: string) => {
     try {
-      const res = await apiRequest(`/api/cofre/pedido-deposito/${id}`, {
+      const res = await apiRequest(`/api/cofre/confirmar-deposito/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ acao: "confirmar" })
@@ -96,7 +96,7 @@ export function AdminCofre() {
 
   const handleRejeitarDeposito = async (id: string, motivo: string) => {
     try {
-      const res = await apiRequest(`/api/cofre/pedido-deposito/${id}`, {
+      const res = await apiRequest(`/api/cofre/confirmar-deposito/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ acao: "rejeitar", observacoes: motivo })
