@@ -160,3 +160,8 @@ Criar relatório read-only que apresente divergências por aldeia, utilizador, v
 - Stripe valida `payment_status=paid`, `currency=eur` e montante positivo; participações guardam `referenciaPagamento=session.id` e a transacção verifica essa referência antes de criar participações/cashback.
 - O fluxo MB WAY continua incompleto enquanto os hooks não persistirem e associarem o `transactionId` a uma participação pertencente ao utilizador; manter como P0 aberto.
 - O preço oficial e quantidade de participações Stripe ainda não são comparados com o montante cobrado; manter como P0 aberto.
+
+
+## Estado de validação do ciclo — 18/11/2026
+
+As alterações de consultas read-only, classificação Stripe, retry de webhooks, validação básica de sessão Stripe e classificação MB WAY por registos internos estão **corrigidas, por validar**. Os status checks observáveis dos commits mostram apenas os deployments Vercel bloqueados por `build-rate-limit`; não há evidência de execução dos jobs TypeScript/Vitest/Playwright. A validação real-DB e o CI devem passar antes de mudar o estado para validado.
