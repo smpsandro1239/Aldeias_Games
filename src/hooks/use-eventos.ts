@@ -38,7 +38,7 @@ interface CreateEventoData {
   aldeiaId: string;
 }
 
-interface UpdateEventoData extends Partial<CreateEventoData> {}
+type UpdateEventoData = Partial<CreateEventoData>;
 
 export function useEventos(token: string | null) {
   const [eventos, setEventos] = useState<Evento[]>([]);
