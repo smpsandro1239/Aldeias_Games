@@ -129,7 +129,10 @@ describe("Real DB: M5 — estatísticas, CSV export e safeConfig sem pool", () =
       { numero: 1 }, { numero: 2 }, { numero: 3 },
       { numero: 4 }, { numero: 5 },
     ];
+    // Fixar a janela no meio do dia UTC evita dividir as vendas em dois dias
+    // quando a suite corre perto da meia-noite (o agrupamento usa toISOString()).
     const now = new Date();
+    now.setUTCHours(12, 0, 0, 0);
     await prisma.participacao.createMany({
       data: payloads.map((p, i) => ({
         jogoId: jogoEuroId,
