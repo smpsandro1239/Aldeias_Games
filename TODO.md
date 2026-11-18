@@ -374,3 +374,12 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Adicionar teste de integração do webhook MB WAY com referência ausente, referência válida e referência não correspondente.
 - [ ] Resolver o P0 estrutural: criar intenção/participação antes do pedido ao fornecedor, validar ownership/montante/jogo e gerir cancelamento sem stock reservado.
 - Validação local não executada neste ambiente; não declarar TypeScript/Vitest/Playwright aprovados para este commit.
+
+
+## MB WAY — carregamentos por referência dedicada (18/11/2026)
+
+- [x] Commit `84f67d2e2ab1d972a5a9da517530b06c7d4ad665`: `processCarregamento` deixou de procurar `transactionId` em JSON livre nas últimas 50 transacções; exige exclusivamente `Transacao.referencia`.
+- A validação do montante (`verifyWebhookAmount`) já usa a mesma referência dedicada. As duas fases de validação e processamento ficam alinhadas e deixam de aceitar vias alternativas de associação.
+- [ ] Criar testes de rota para carregamento com referência válida, inexistente e duplicada; executar Vitest/TypeScript/Playwright quando o ambiente de CI estiver disponível.
+- [ ] Resolver a criação tardia da participação e do registo de carregamento antes da chamada ao fornecedor, incluindo o tratamento de callback antecipado e falha do fornecedor.
+- Validação deste commit não executada localmente; não declarar testes aprovados.
