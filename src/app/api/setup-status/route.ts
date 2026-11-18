@@ -100,7 +100,7 @@ export async function PATCH(request: NextRequest) {
     const { step, data } = body;
 
     // Atualizar baseado no passo
-    let updateData: Prisma.AldeiaUpdateInput = {};
+    const updateData: Prisma.AldeiaUpdateInput = {};
 
     switch (step) {
       case 1: // Informações básicas da aldeia (já deveria existir)

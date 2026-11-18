@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const estado = url.searchParams.get('estado');
     const userId = url.searchParams.get('userId');
 
-    let where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {};
     if (estado) where.estado = estado;
     if (userId) where.id = userId;
 

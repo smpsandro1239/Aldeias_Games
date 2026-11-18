@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const vendedorId = url.searchParams.get('vendedorId');
 
-    let where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {};
 
     if (user.role === 'vendedor') {
       where.vendedorId = user.id;

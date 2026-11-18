@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const aldeiaId = searchParams.get('aldeiaId');
     const { page, limit } = getPaginationFromRequest(request);
 
-    let where: Prisma.EntregaSaldoWhereInput = {};
+    const where: Prisma.EntregaSaldoWhereInput = {};
 
     if (user.role === 'aldeia_admin' && user.aldeiaId) {
       where.aldeiaId = user.aldeiaId;

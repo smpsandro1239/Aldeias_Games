@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
 
-    let where: Prisma.EntregaSaldoWhereInput = {
+    const where: Prisma.EntregaSaldoWhereInput = {
       vendedorId: user.id
     };
 

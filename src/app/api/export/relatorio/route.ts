@@ -6,7 +6,7 @@ import { requirePermission } from '@/lib/rbac/checkPermission';
 
 function generatePDFReport(data: string, type: string): string {
   // Simplified HTML report that can be printed
-  let html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
