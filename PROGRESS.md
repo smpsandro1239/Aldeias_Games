@@ -268,3 +268,12 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - As alterações apenas tornam constantes bindings que o ESLint identificou como não reatribuídos.
 - Validação pendente: os workflows iniciados pelos pushes ainda têm de confirmar a redução de erros; não foram executados testes locais neste ambiente.
 - Restantes grupos identificados no relatório anterior: `@ts-nocheck`/`@ts-ignore`, imports `require()` em scripts/testes/rotas, duas regras Next.js e interface vazia em `src/hooks/use-eventos.ts`.
+
+
+## Quinta ronda ESLint — regras de tipos e Next.js — 18/11/2026
+
+- `src/hooks/use-eventos.ts`: interface vazia `UpdateEventoData extends Partial<CreateEventoData>` substituída por alias de tipo equivalente `type UpdateEventoData = Partial<CreateEventoData>`.
+- `src/app/not-found.tsx`: link interno para a raiz substituído por `Link` de `next/link`.
+- `src/app/docs/page.tsx`: elemento `<script>` síncrono de Swagger UI substituído por `Script` de `next/script`, com `strategy="afterInteractive"`; mantém-se o callback de inicialização após o carregamento.
+- Commits: `11a0834`, `80855f8`, `e4033e6`.
+- Validação CI pendente; estas alterações não foram testadas localmente.
