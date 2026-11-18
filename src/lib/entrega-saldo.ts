@@ -4,7 +4,6 @@ export type EntregaSaldoAction = 'confirmar' | 'rejeitar' | 'concluir';
 
 interface ProcessarEntregaSaldoInput {
   entregaId: string;
-  adminId: string;
   acao: EntregaSaldoAction;
   observacoes?: string | null;
 }
