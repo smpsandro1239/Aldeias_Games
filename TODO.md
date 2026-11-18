@@ -215,3 +215,13 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Preparadas correcções para evitar setState síncrono em effects e referências a funções antes da declaração nas páginas Entregas e Pedidos; o reset da paginação passou para os eventos de filtro/pesquisa.
 - [ ] Na página Euromilhões, removido estado de montagem redundante e substituído efeito de pré-selecção por valor derivado. Aguardam CI.
 - [ ] Security Audit continua com 12 vulnerabilidades de produção.
+
+
+## Correcção da página Euromilhões e estado CI — 18/11/2026
+
+- [x] Corrigido o marcador textual acidental na página `src/app/admindashboard/euromilhoes/page.tsx`, que causou erro de sintaxe TypeScript no CI `44299258443`.
+- [x] Substituído o estado `ready` baseado em effect por `useSyncExternalStore` com snapshot de servidor falso/cliente verdadeiro, preservando a renderização client-only sem setState num effect.
+- [x] CI anterior `44298140640`: typecheck, 529 Vitest, build, seed e E2E passaram (67 aprovados, 3 ignorados).
+- [ ] Revalidar typecheck, lint, Vitest, build e E2E após a correcção.
+- [ ] ESLint no run `44299258443`: 153 erros e 1305 avisos.
+- [ ] Security Audit: 12 vulnerabilidades de produção.

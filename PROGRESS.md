@@ -383,3 +383,11 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - ESLint continua a falhar com 159 erros e 1309 avisos. Foram preparadas correcções de efeitos e paginação nas páginas de Entregas/Pedidos e valor derivado na página Euromilhões; validação pendente.
 - Security Audit mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas).
 - Próximo passo: verificar o novo lint e corrigir as falhas React Compiler por componentes, começando pelos restantes hooks de carregamento.
+
+
+## Correcção da página Euromilhões — 18/11/2026
+
+- O CI `44299258443` identificou erro TS1434 na linha 76 da página Euromilhões. Causa: marcador textual acidental no lugar do efeito de polling, introduzido durante a remoção do efeito de pré-selecção.
+- Removido o marcador e preservado o polling de grelhas. O estado de montagem foi substituído por `useSyncExternalStore` para manter o comportamento client-only sem actualizar estado dentro de um effect.
+- Lint desceu de 159 para 153 erros e de 1309 para 1305 avisos, apesar de o typecheck ter bloqueado o run.
+- Aguarda novo CI para validar a correcção e os três fluxos administrativos.

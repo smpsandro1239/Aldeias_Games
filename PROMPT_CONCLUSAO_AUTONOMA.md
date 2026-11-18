@@ -197,15 +197,14 @@ Nunca converter automaticamente “código alterado” em “validado”. Regist
 
 ## 9. Baseline observado em 18/11/2026
 
-Revalidar este estado no início de cada sessão; não reutilizar números históricos sem consultar Actions:
+Revalidar este estado no início de cada sessão; consultar sempre Actions:
 - Branch `main`, SHA actual a consultar no GitHub.
-- CI run `44298140640`: typecheck, 529 testes Vitest, build Next.js, preparação SQLite, seed determinístico e Playwright passaram. Playwright: 67 aprovados, 3 ignorados.
-- Runners de lint/CI fixados em `ubuntu-24.04`; Chromium instalou correctamente. `playwright.config.ts` excluído do tsconfig de produção, corrigindo o erro de módulo ausente no build Vercel.
-- ESLint no mesmo run: 159 erros e 1309 avisos. A dívida principal são regras React Compiler/hooks (actualizações síncronas em effects, ordem de declarações e pureza de render), além de supressões TypeScript e imports CommonJS.
-- Deploy run `44298140668`: build dos artefactos Vercel passou; publicação recusada pela quota `api-deployments-free-per-day` (>100 deployments/24h). Falha de quota, não de build.
-- Security Audit run `44298140613`: continua com 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo `glob`, `minimatch`, `picomatch` e `zod`. Não usar `npm audit fix --force`.
-- Os testes E2E de compra com saldo e fluxo Cofre/Caixa continuam validados pelo Playwright.
-- Correcções adicionais nos efeitos e filtros das páginas de entregas, pedidos e Euromilhões foram preparadas nesta ronda; aguardam novo lint/CI.
+- CI run `44299258443`: falhou no typecheck devido a um marcador textual introduzido por engano na página Euromilhões durante a remoção do efeito de pré-selecção. Não chegou a executar Vitest/build/E2E.
+- ESLint no mesmo run: 153 erros e 1305 avisos (redução face aos 159 erros/1309 avisos anteriores). As páginas Entregas e Pedidos reduziram erros de efeitos; a página Euromilhões precisa de nova validação após a correcção do marcador.
+- CI run `44298140640`: typecheck, 529 testes Vitest, build, preparação SQLite, seed e Playwright passaram; Playwright: 67 aprovados, 3 ignorados.
+- Runners CI fixados em `ubuntu-24.04`; Chromium instala correctamente. `playwright.config.ts` excluído do tsconfig de produção.
+- Deploy run `44299258454`: build de artefactos chegou a passar/está sujeito à quota; consultar o resultado final. O run anterior `44298140668` passou o build e falhou na publicação pela quota `api-deployments-free-per-day`.
+- Security Audit run `44299258431`: 12 vulnerabilidades de produção (4 moderadas, 8 altas). Não usar `npm audit fix --force`.
 
 ## 10. Formato obrigatório de cada relatório de continuação
 

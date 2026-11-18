@@ -1,7 +1,7 @@
 "use client";
 
 import { apiRequest } from "@/lib/api-client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -14,10 +14,15 @@ import { toast } from "sonner";
 import { GrelhaWithVencedor, Jogo, POLL_INTERVAL } from "./euromilhoes-types";
 import { EuromilhoesStats, GrelhaCard, NovaGrelhaDialog } from "./euromilhoes-widgets";
 
+const subscribeToNothing = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 const AdminEuromilhoesPage = () => {
   const { isLoading } = useAuth();
   const router = useRouter();
-  if (isLoading) {
+  const isClient = useSyncExternalStore(subscribeToNothing, getClientSnapshot, getServerSnapshot);
+  if (!isClient || isLoading) {
     return <LoaderScreen message="A carregar" />;
   }
 
@@ -73,7 +78,7 @@ function AdminEuromilhoes() {
     fetchData();
   }, [fetchData]);
 
-euromilhoes selection effect  useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(fetchData, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchData]);
