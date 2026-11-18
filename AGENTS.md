@@ -71,8 +71,8 @@ npx next build --webpack
 - **Stripe webhook** (`/api/stripe/webhook`): Claims `event.id` atomically before processing, returns 200 + `"duplicate"` if already seen
 - **MBWay webhook** (`/api/mbway/webhook`): Claims `transactionId` atomically before processing
 - Both mark events as `completed` or `failed` after processing
-- Flow: `claimWebhookEvent(provider, eventId)` → returns `true` if first time → process → `completeWebhookEvent(provider, eventId, "completed")`
-- Unique constraint violation (`P2002`) = duplicate event → skip
+- Flow: `claimWebhookEvent(provider, eventId)` → returns `true` for a new event or a conditional retry of an event in `failed` → process → `completeWebhookEvent(provider, eventId, "completed")`
+- Unique constraint violation (`P2002`): only events in `failed` may be reclaimed by compare-and-swap; `completed` and `processing` remain duplicates and are skipped
 
 ### Regras de Segurança & Atomicidade (v3.13.0)
 - **Proxy auth-first**: valida JWT + CSRF (origin) ANTES do rate-limit. Nunca reposicionar — rotas protegidas falham open sem auth
@@ -110,7 +110,7 @@ Flow completo de vendas de rua:
 
 3. Vendedor deposita excedente no cofre da aldeia
    → POST /api/cofre/pedido-deposito (cria pedido pendente)
-   → Admin confirma: PUT /api/cofre/pedido-deposito/[id]
+   → Admin confirma: PUT /api/cofre/confirmar-deposito/[id]
    → VendedorCashbox -= valor, Vault += valor
 
 4. Admin retira do cofre para despesas
@@ -138,7 +138,7 @@ API Endpoints:
 - `GET /api/vendedor/cashbox` — saldo e transações da caixa do vendedor
 - `POST /api/cofre/pedido-deposito` — criar pedido de depósito
 - `GET /api/cofre/pedido-deposito` — listar pedidos de depósito
-- `PUT /api/cofre/pedido-deposito/[id]` — confirmar/rejeitar depósito
+- `PUT /api/cofre/confirmar-deposito/[id]` — confirmar/rejeitar depósito (rota activa; a legacy não deve ser reutilizada)
 - `POST /api/cofre/levantamento` — criar pedido de levantamento
 - `PUT /api/cofre/levantamento/[id]` — confirmar/rejeitar levantamento
 - `GET /api/cofre/historico` — histórico de transações do vault
