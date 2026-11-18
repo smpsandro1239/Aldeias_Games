@@ -1,4 +1,3 @@
-// @ts-ignore
 import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {

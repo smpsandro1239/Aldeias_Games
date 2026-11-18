@@ -1,4 +1,3 @@
-// @ts-ignore
 import Stripe from 'stripe';
 
 // Constants
