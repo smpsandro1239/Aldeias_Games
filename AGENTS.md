@@ -650,3 +650,11 @@ Antes de iniciar qualquer tarefa de desenvolvimento, auditoria ou correção nes
 - Antes de qualquer continuação, ler integralmente `PROMPT_CONCLUSAO_AUTONOMA.md`.
 - Este prompt define a missão, prioridades, ciclos de execução, critérios verificáveis de produção e formato de relatório; complementa este guia e `ANALISE_CRITICA_PROMPT.md`, sem os substituir.
 - Revalidar sempre o baseline e os workflows: os números e bloqueios registados no prompt são históricos, não estado actual garantido.
+
+
+## MB WAY — requisito de associação antes de iniciar cobranças
+
+- `POST /api/pagamentos/mbway` só pode iniciar um pagamento de jogo quando recebe um `participacaoId` interno e valida ownership, estado e montante antes de contactar o fornecedor.
+- A única operação sem `Participacao` é `tipo=carregamento_saldo`; não aceitar `participacaoId` em simultâneo nem outros tipos arbitrários.
+- Não remover este fail-closed para restaurar compatibilidade dos hooks antigos. Migrar os fluxos para persistir uma intenção/participação antes da cobrança e tratar cancelamento/stock e callbacks antecipados.
+- O carregamento de saldo ainda cria o registo `Transacao` depois da chamada ao fornecedor; tratar esta janela antes de considerar o fluxo robusto.
