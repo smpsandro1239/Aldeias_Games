@@ -55,6 +55,7 @@ const RATE_LIMIT_CONFIG: Record<string, { maxRequests: number; windowMs: number 
   "/api/pagamentos/stripe": { maxRequests: 10, windowMs: 60 * 1000 },
   "/api/pagamentos/mbway": { maxRequests: 10, windowMs: 60 * 1000 },
   "/api/participacoes": { maxRequests: 20, windowMs: 60 * 1000 },
+  "/api/verificar-publico": { maxRequests: 20, windowMs: 60 * 1000 },
   "/api/apostas": { maxRequests: 20, windowMs: 60 * 1000 },
 };
 
@@ -74,6 +75,7 @@ const publicRoutes = [
   '/api/mbway/webhook',
   '/api/participacoes',
   '/api/participacoes/verificar',
+  '/api/verificar-publico',
   '/api/rbac/roles',
   '/api/rbac/user',
 ];
