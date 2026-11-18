@@ -330,7 +330,7 @@ export default function useAdminCrudHandlers(params: AdminCrudHandlersParams) {
     const url = isEditing ? `/api/users/${data.id}` : `/api/users`;
     const method = isEditing ? "PUT" : "POST";
 
-    let userData = { ...data };
+    const userData = { ...data };
 
     if (userRole === "aldeia_admin" && aldeiaId) {
       userData.aldeiaId = aldeiaId;
