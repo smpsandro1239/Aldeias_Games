@@ -392,3 +392,13 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Commit de testes `28288d4db1b262e8c6a1680258a226b6f19e76da`: adicionados casos para referência partilhada entre participação/carregamento e referência dividida entre dois proprietários; ambos exigem HTTP 404 e não chamam o fornecedor.
 - [ ] Executar Vitest, TypeScript e CI; a alteração está implementada, mas ainda não validada por execução.
 - [ ] O P0 estrutural permanece: hooks MB WAY não criam consistentemente uma participação/intenção antes do pedido ao fornecedor, e o callback antecipado continua possível.
+
+
+## MB WAY — bloquear cobranças sem associação interna (18/11/2026)
+
+- [x] Commit `8006d4af1316c41742ad46cffc830c5a06b16209`: o POST MB WAY rejeita pagamentos de jogo sem `participacaoId` e rejeita combinações de tipo/ID incompatíveis antes de contactar o fornecedor.
+- [x] Commit `336dbb1ada163e12bd9ad6572d6a1af6c84af578`: adicionados testes unitários para cobrança de jogo sem participação e carregamento de saldo com participação simultânea; ambos devem falhar sem chamar o fornecedor.
+- A finalidade é impedir que a aplicação inicie uma cobrança externa que não possa ser ligada a um registo financeiro interno. Os fluxos de jogo que ainda não enviam `participacaoId` passam a falhar de forma explícita, em vez de aceitar dinheiro sem capacidade de concluir a participação.
+- [ ] Migrar os callsites dos jogos para criar/associar uma participação antes do pedido MB WAY, incluindo cancelamento/libertação segura de stock se o fornecedor recusar.
+- [ ] Corrigir a janela de callback antecipado e a criação tardia do registo de carregamento de saldo.
+- [ ] Executar Vitest, TypeScript, real-DB e E2E. Não há validação observada para estes commits; estado: **corrigido, por validar**.
