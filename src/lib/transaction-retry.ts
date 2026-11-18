@@ -20,6 +20,9 @@ export async function executeWithRetry<T>(
         msg.includes('PGRST116') ||
         msg.includes('Deadlock') ||
         msg.includes('could not execute') ||
+        msg.includes('database is locked') ||
+        msg.includes('SQLITE_BUSY') ||
+        msg.includes('P2034') ||
         msg.includes('CONFLICT') || msg.includes('Números ocupados');
       if (!isRetryable || attempt === MAX_RETRIES - 1) {
         throw lastError;
