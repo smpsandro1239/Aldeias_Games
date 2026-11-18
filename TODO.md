@@ -81,3 +81,10 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] No commit `234c1ad`, substituídas declarações `let` por `const` em quatro rotas (`api/eventos/[id]`, `api/jogos`, `api/participacoes/[id]/prova`, `api/push/vapid-keys`), porque o ESLint confirmou que essas variáveis não eram reatribuídas.
 - [ ] Validar no CI se os quatro erros `prefer-const` foram eliminados e verificar typecheck/testes.
 - [ ] Continuar os restantes erros por grupos; não converter automaticamente variáveis mutáveis nem desativar regras.
+
+
+## Endpoint público de verificação — 18/11/2026
+
+- [x] Corrigido `src/proxy.ts` no commit `f656a3c`: `/api/verificar-publico` passa a estar explicitamente na lista de rotas públicas e recebe rate limit de 20 pedidos/minuto por IP.
+- [ ] Validar no CI que a rota pública funciona sem sessão, que a limitação responde HTTP 429 após exceder o limite e que o build continua a passar.
+- [ ] Rever a confiança no identificador IP do proxy e o comportamento de rate limiting quando a base de dados está indisponível.
