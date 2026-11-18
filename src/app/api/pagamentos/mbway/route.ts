@@ -175,20 +175,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Atualizar apenas a participação previamente associada ao utilizador.
-    if (status.status === 'completed' && participacao && participacao.estadoPagamento !== 'concluido') {
-      await prisma.participacao.updateMany({
-        where: {
-          id: participacao.id,
-          userId: user.id,
-          estadoPagamento: { not: 'concluido' },
-        },
-        data: {
-          estadoPagamento: 'concluido',
-          dataPagamento: new Date(),
-        },
-      });
-    }
+    // Consulta read-only: só o webhook assinado confirma a operação financeira.
 
     return NextResponse.json({
       success: true,
