@@ -198,15 +198,14 @@ Nunca converter automaticamente “código alterado” em “validado”. Regist
 ## 9. Baseline observado em 18/11/2026
 
 Este baseline é apenas um ponto de partida e deve ser revalidado no início da próxima sessão:
-- Branch `main`, commit `3c3f96cb63114546e6b80586ddf4ae68072f631d`.
-- CI run `44268750503`: typecheck, Vitest, build, preparação SQLite e seed passaram; Playwright terminou com 65 testes aprovados, 2 falhados e 3 ignorados. Os dois testes corrigidos falharam antes de chegar à lógica funcional porque `browserContext.addCookies` rejeitou os objectos de cookie (erro “Cookie should have either url or path”), apesar de os testes declararem ambos os campos.
-- Diagnóstico: `POST /api/auth/login` já usa `setAuthCookie()` e emite o cookie `__Host-auth-token` com atributos de produção. Os testes usavam o fixture `request`, isolado do contexto do browser, e tentavam injectar manualmente o cookie. A correcção incluída nesta actualização usa `page.context().request`, que partilha o armazenamento de cookies do browser, e verifica a presença/atributos do cookie emitido pela API; aguarda CI do novo commit.
-- ESLint falhou com 178 erros e 1309 avisos.
-- Security Audit run `44268750607`: falhou com 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo `glob`, `minimatch`, `picomatch` e `zod`. A migração Zod 4 exige análise de compatibilidade; não usar `--force`.
-- Deploy run `44268750485`: Prisma, push de schema e build de artefactos Vercel passaram; a publicação foi recusada pela quota `api-deployments-free-per-day` (>100 deployments/24h). Não é falha de build.
-- Dívida ESLint e auditoria de dependências continuam pendentes.
-
-Não reutilizes estes números como estado actual sem consultar novamente os workflows.
+- Branch `main`, commit actual a consultar no GitHub.
+- CI run `44297294757`: TypeScript passou; Vitest passou com 529 testes. A instalação do Chromium falhou porque `ubuntu-latest` resolveu para Ubuntu 26.04, não suportado pelo Playwright 1.60.0; build e E2E foram ignorados após essa falha.
+- ESLint no mesmo run: 159 erros e 1309 avisos. Os erros incluem regras do React Compiler/hooks (principalmente actualizações síncronas de estado em effects), além de supressões TypeScript, imports CommonJS e alguns problemas de componentes. Não desactivar regras para obter um resultado verde.
+- Deploy run `44297294863`: build Next.js compilou, mas o typecheck do build falhou porque `playwright.config.ts` importava `@playwright/test`, uma dependência dev não instalada no ambiente de produção. O ficheiro de configuração Playwright foi excluído do tsconfig da aplicação por não fazer parte do runtime; deve continuar a ser validado no CI com dependências dev.
+- Security Audit run `44297294998`: continua a reportar 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo `glob`, `minimatch`, `picomatch` e `zod`. Não usar `npm audit fix --force`; avaliar actualizações compatíveis e migrações major separadamente.
+- CI anterior run `44271019344`: typecheck, Vitest, build e Playwright passaram; Playwright reportou 67 aprovados e 3 ignorados, incluindo os dois fluxos de autenticação corrigidos.
+- Deploy anterior falhou por quota `api-deployments-free-per-day` (>100 deployments/24h). A falha mais recente foi de typecheck antes da fase de publicação, não uma falha de quota.
+- Alteração preparada nesta ronda: runners CI fixados em `ubuntu-24.04` e `playwright.config.ts` excluído do tsconfig de produção. Aguardam novo CI/build para validação.
 
 ## 10. Formato obrigatório de cada relatório de continuação
 

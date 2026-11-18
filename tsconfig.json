@@ -43,6 +43,7 @@
     "vitest.config.ts",
     "src/__tests__",
     "e2e",
-    "prisma/seed*.ts"
+    "prisma/seed*.ts",
+    "playwright.config.ts"
   ]
 }

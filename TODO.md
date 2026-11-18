@@ -192,3 +192,15 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Resolver os 178 erros ESLint e 1309 avisos por grupos pequenos, sem desactivar regras.
 - [ ] Resolver as 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo migrações compatíveis de dependências.
 - [ ] Repetir deployment apenas quando a quota Vercel estiver disponível e os gates de CI/segurança estiverem aprovados.
+
+
+## Infraestrutura CI e compilação de produção — 18/11/2026
+
+- [x] Typecheck passou e Vitest passou (529 testes) no CI `44297294757`.
+- [x] Diagnóstico da instalação Playwright: runner `ubuntu-latest` resolveu para Ubuntu 26.04, não suportado pelo Playwright 1.60.0; runners de lint e CI fixados em `ubuntu-24.04`.
+- [x] Diagnóstico do build Vercel: `playwright.config.ts` era incluído no typecheck de produção, mas `@playwright/test` é dependência dev. Configuração Playwright excluída do tsconfig da aplicação.
+- [ ] Validar novo CI: Chromium, build, seed e E2E após fixar Ubuntu 24.04.
+- [ ] Validar build Vercel após excluir o config de testes do tsconfig.
+- [ ] ESLint mantém 159 erros e 1309 avisos; tratar primeiro supressões/imports e depois erros React Compiler/hooks por grupos.
+- [ ] Security Audit mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- [ ] Deploy de produção depende de build aprovado e quota Vercel disponível.

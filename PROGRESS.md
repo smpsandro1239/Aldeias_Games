@@ -362,3 +362,14 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Security Audit: 12 vulnerabilidades de produção (4 moderadas, 8 altas).
 - Deploy: build de artefactos passou; publicação bloqueada pela quota diária Vercel `api-deployments-free-per-day`.
 - Próximo passo: validar o novo CI, analisar Playwright e depois reduzir erros ESLint por grupos pequenos.
+
+
+## Infraestrutura CI e compilação de produção — 18/11/2026
+
+- CI `44297294757`: typecheck passou e Vitest passou com 529 testes. Playwright não arrancou porque o runner `ubuntu-latest` passou a Ubuntu 26.04, incompatível com Playwright 1.60.0.
+- Runners de lint e CI fixados em `ubuntu-24.04` para usar uma imagem suportada pelo Playwright.
+- Deploy `44297294863`: Next.js compilou, mas o typecheck de produção falhou em `playwright.config.ts` porque `@playwright/test` não está instalado no ambiente de produção. Este ficheiro é configuração de testes, não código de runtime; foi excluído do tsconfig da aplicação.
+- Aguardam novo CI e build Vercel para validar estas alterações.
+- ESLint: 159 erros e 1309 avisos após remoção de várias supressões. A maioria dos erros remanescentes está associada a regras React Compiler/hooks, que requerem correcções reais por componente.
+- Security Audit: 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- Deployment anterior também continua sujeito à quota Vercel `api-deployments-free-per-day`.
