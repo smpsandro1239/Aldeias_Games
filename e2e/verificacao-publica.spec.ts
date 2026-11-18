@@ -1,4 +1,3 @@
-// @ts-nocheck - Playwright test runner (types resolved at runtime)
 import { test, expect } from '@playwright/test';
 
 const ADMIN_EMAIL = 'admin@aldeias.pt';
