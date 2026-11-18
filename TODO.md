@@ -263,3 +263,11 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Adicionado estado de erro acessível com `role="alert"` e acção explícita "Tentar novamente" nas duas páginas.
 - [ ] Validar typecheck, ESLint, Vitest e build no CI após os commits `c43ec9c` e `1148dd6`.
 - [ ] Rever paginação: os endpoints devolvem respostas paginadas, enquanto as páginas actuais ainda fazem paginação local; confirmar que não se ocultam registos para conjuntos superiores ao limite da API.
+
+
+## P0 — Integridade financeira das entregas de saldo
+
+- [ ] Corrigir a confirmação de `EntregaSaldo`: a leitura/validação do estado ocorre antes da transacção, a transferência entre carteiras e os lançamentos são executados numa transacção, mas a actualização do estado da entrega ocorre depois e fora dela. Duas confirmações concorrentes podem ambas observar `solicitado` e executar a transferência antes de qualquer uma marcar a entrega como `confirmado`.
+- [ ] Tornar a transição de estado condicional e a transferência financeira uma única transacção atómica; garantir que apenas uma operação concorrente consegue reclamar a entrega.
+- [ ] Validar saldo suficiente do vendedor dentro da mesma transacção e impedir saldo negativo, se essa for a regra financeira confirmada no domínio.
+- [ ] Criar teste real-DB concorrente que prove exactamente uma transferência e uma única transição; testar também rollback integral em falha intermédia.
