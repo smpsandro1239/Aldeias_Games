@@ -317,3 +317,17 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Zod 4: inventariar APIs incompatíveis (`.errors`, `z.record`, `z.enum`, transforms/refinements, coerções e inferências), mapear dependências transitivas e preparar migração em branch/commit isolado antes de atualizar lockfile.
 - [ ] Segurança: obter novo `npm audit --omit=dev`, corrigir primeiro advisories transitivos não-major (glob/minimatch/picomatch) e migrar Zod 3→4 com testes de contrato, typecheck, Vitest e build.
 - [ ] Auditoria financeira: rever pagamentos Stripe/MB WAY e idempotência de webhooks, débitos/créditos de carteira, cashbox, Vault e reconciliação entre saldos e movimentos.
+
+
+## Auditoria de pagamentos, carteiras e reconciliação (18/11/2026)
+
+- [ ] P0 — Stripe: garantir que o fluxo de compra define o tipo de evento no servidor; os hooks activos enviam jogoId sem metadata.tipo, enquanto o webhook só processa participação quando tipo=participacao. Validar preço oficial, moeda, ownership e quantidade.
+- [ ] P0 — MB WAY: criar intenção/participação antes de iniciar pagamento e associar transactionId; os hooks actuais criam participação depois do pedido e não enviam participacaoId.
+- [ ] P0 — Polling: tornar GET Stripe/MB WAY read-only; hoje alteram estado da participação sem executar todo o processamento financeiro (incluindo cashback).
+- [ ] P1 — Webhooks: permitir retry controlado de eventos failed com claim condicional; tornar processamento idempotente por session.id/transactionId.
+- [ ] P1 — MB WAY: ausência de carregamento pendente deve falhar explicitamente, não marcar webhook como concluído.
+- [ ] P1 — Carteira: corrigir entrega de saldo do vendedor com débito condicional dentro da transacção; validar aldeia a partir da sessão.
+- [ ] P1 — Ajustes: notificações pós-commit best-effort; mover leitura/cálculo de saldo para a transacção e criar auditoria estruturada.
+- [ ] P1 — Carregamentos: validar vendedorId e aldeiaId no servidor e assegurar isolamento multi-tenant.
+- [ ] P1 — Reconciliação: construir relatório read-only que compare User.saldo/Transacao, VendedorCashbox.saldo/VendedorCashboxTransaction e Vault.saldo/VaultTransaction, com referência aos pagamentos externos.
+- [ ] Criado docs/AUDITORIA-PAGAMENTOS-CARTEIRAS-RECONCILIACAO.md com evidências, impactos, sequência de implementação e critérios de aceitação. Os riscos estão documentados, não corrigidos nem validados ainda.
