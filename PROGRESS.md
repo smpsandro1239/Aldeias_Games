@@ -551,3 +551,15 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Confirmar CI dos commits de levantamentos e do primeiro grupo ESLint; corrigir quaisquer regressões antes de iniciar outro grupo.
 - Auditar chamadas Zod e a árvore de dependências antes de qualquer alteração major.
 - Continuar revisão de pagamentos, carteiras, caixas, cofres e reconciliação com testes de invariantes financeiros.
+
+
+## Auditoria inicial de pagamentos e carteiras (18/11/2026)
+
+- Criado `docs/AUDITORIA-PAGAMENTOS-CARTEIRAS-RECONCILIACAO.md` com riscos P0/P1 e plano de implementação.
+- Stripe: os hooks de compra enviam jogoId sem metadata.tipo, mas o webhook só executa o ramo de participação quando tipo=participacao; existe risco de sessão paga sem criação da participação. O preço do jogo também não é comparado com o valor pedido no servidor.
+- MB WAY: os hooks iniciam o pagamento antes de criar a participação e não enviam participacaoId; a rota só grava referenciaPagamento quando esse ID é fornecido. O webhook pode não encontrar a participação e terminar o evento como concluído.
+- GET de estado Stripe/MB WAY altera estadoPagamento sem executar o fluxo financeiro completo, podendo antecipar o webhook e omitir cashback.
+- Webhooks: claimWebhookEvent trata qualquer P2002 como duplicado, mesmo quando o evento anterior ficou failed; carregamento MB WAY sem registo correspondente regressa silenciosamente e o webhook é marcado concluído.
+- Carteira: a entrega de saldo do vendedor verifica saldo antes da transacção e debita sem guarda SQL; ajustes manuais notificam depois do commit sem best-effort; carregamentos com vendedor aceitam IDs do body sem validação suficiente de pertença à aldeia.
+- Estas conclusões são auditoria estática de código. Nenhuma destas correcções financeiras foi aplicada nesta fase; implementar com serviços de domínio e testes real-DB antes de alterar os fluxos.
+- Estado de validação dos commits recentes: o CI de `00ef913` foi confirmado verde no job principal (67 E2E aprovados, 3 ignorados), mas ainda não foi possível obter pelo conector a lista de runs push associada aos novos commits. Não declarar os novos testes/alterações ESLint validados até consultar o CI correspondente.
