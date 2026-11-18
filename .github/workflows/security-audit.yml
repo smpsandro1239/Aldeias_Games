@@ -1,5 +1,9 @@
 name: Security Audit
 
+concurrency:
+  group: security-audit-${{ github.ref }}
+  cancel-in-progress: true
+
 # C2 (Ronda Segurança 1): falha o CI se existirem vulnerabilidades high/critical
 # nas dependências de produção. Corrida também semanalmente (cron) para apanhar
 # novos advisories publicados após o último push.

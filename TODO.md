@@ -136,3 +136,11 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Substituídos `require('crypto')` por imports estáticos de `node:crypto` no OAuth Google e nos testes `game-lifecycle`, `game-logic` e `raspadinha`.
 - [x] O teste de spy passou a observar `crypto.createHash` através do módulo importado.
 - [ ] Validar lint, typecheck e Vitest no CI; não foram executados testes locais neste ambiente.
+
+
+## Oitava ronda — controlo de concorrência do CI/CD — 18/11/2026
+
+- [x] CI: cancelar execuções antigas da mesma branch quando chega um novo commit.
+- [x] Security Audit: cancelar auditorias obsoletas da mesma branch.
+- [x] Deploy: serializar deployments sem cancelar um deployment que já esteja a executar; ignorar alterações exclusivamente Markdown/documentação.
+- [ ] Validar sintaxe e comportamento dos workflows no GitHub Actions após o push.

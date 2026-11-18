@@ -285,3 +285,12 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - `src/app/api/auth/google/route.ts` usa agora `randomBytes` importado no topo para gerar o `state` OAuth com CSPRNG.
 - `src/__tests__/integration/game-lifecycle.test.ts` e `src/__tests__/unit/raspadinha.test.ts` partilham o módulo de crypto importado; `src/__tests__/unit/game-logic.test.ts` observa `crypto.createHash` com `vi.spyOn`.
 - Validação pendente por GitHub Actions. Não foram executados testes locais neste ambiente.
+
+
+## Oitava ronda — controlo de concorrência do CI/CD — 18/11/2026
+
+- Configurado `concurrency` no workflow CI para cancelar execuções obsoletas da mesma branch, evitando consumir runners com commits intermédios.
+- Configurado `concurrency` no Security Audit para cancelar auditorias obsoletas da mesma branch.
+- Deploy Vercel passa a serializar execuções por branch sem cancelar um deployment em curso (`cancel-in-progress: false`); pushes compostos apenas por Markdown e documentação deixam de provocar deploys.
+- Objetivo: reduzir acumulação de workflows provocada por commits frequentes na `main`, mantendo a execução final representativa do estado mais recente.
+- Validação dos workflows pendente após o push; os runs já enfileirados antes desta alteração não são automaticamente garantidos como cancelados.
