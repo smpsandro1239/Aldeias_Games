@@ -162,7 +162,15 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    if (participacao?.userId !== user.id && carregamento?.userId !== user.id) {
+    // Uma referência deve identificar exactamente um registo interno.
+    // Se existir simultaneamente como participação e carregamento, não revelar
+    // o estado externo: o webhook também rejeita esta associação ambígua.
+    if (participacao && carregamento) {
+      return NextResponse.json({ error: 'Transação não encontrada' }, { status: 404 });
+    }
+
+    const ownerId = participacao?.userId ?? carregamento?.userId;
+    if (!ownerId || ownerId !== user.id) {
       return NextResponse.json({ error: 'Transação não encontrada' }, { status: 404 });
     }
 
