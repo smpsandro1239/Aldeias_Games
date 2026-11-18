@@ -383,3 +383,12 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Criar testes de rota para carregamento com referência válida, inexistente e duplicada; executar Vitest/TypeScript/Playwright quando o ambiente de CI estiver disponível.
 - [ ] Resolver a criação tardia da participação e do registo de carregamento antes da chamada ao fornecedor, incluindo o tratamento de callback antecipado e falha do fornecedor.
 - Validação deste commit não executada localmente; não declarar testes aprovados.
+
+
+## MB WAY — rejeição de referências ambíguas no endpoint de estado (18/11/2026)
+
+- [x] Commit de código `a373fdcfdfe920a7ffdb1f50afc9b8bb6f19c959`: `GET /api/pagamentos/mbway` passa a exigir exactamente um registo interno (participação ou carregamento) e ownership correspondente ao utilizador autenticado.
+- Antes, se a mesma referência existisse nos dois modelos e um deles pertencesse ao utilizador, o GET podia consultar e devolver o estado externo apesar da ambiguidade que o webhook rejeita.
+- [x] Commit de testes `28288d4db1b262e8c6a1680258a226b6f19e76da`: adicionados casos para referência partilhada entre participação/carregamento e referência dividida entre dois proprietários; ambos exigem HTTP 404 e não chamam o fornecedor.
+- [ ] Executar Vitest, TypeScript e CI; a alteração está implementada, mas ainda não validada por execução.
+- [ ] O P0 estrutural permanece: hooks MB WAY não criam consistentemente uma participação/intenção antes do pedido ao fornecedor, e o callback antecipado continua possível.
