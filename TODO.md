@@ -287,4 +287,4 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Validar no CI os novos testes de auditoria e as transições de entrega após o commit desta alteração; a revisão estática detetou e corrigiu desalinhamentos nos resultados de Promise.all antes da validação final.
 
 - [x] Corrigir a criação de entregas: pedidos solicitados/confirmados/concluídos passam a reservar saldo; cálculo e criação são transacionais e serializados por vendedor.
-- [ ] Validar concorrência da criação de entregas no CI (testes reais-DB adicionados).
+- [ ] Validar concorrência da criação de entregas no CI (testes reais-DB adicionados com vendedores isolados para evitar interferência entre cenários).

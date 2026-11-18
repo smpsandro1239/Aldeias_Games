@@ -485,4 +485,4 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - O cálculo e a criação eram operações separadas; pedidos simultâneos podiam reservar o mesmo montante.
 - Criado `src/lib/solicitar-entrega-saldo.ts`: adquire bloqueio de escrita na linha do vendedor, calcula o total de carregamentos confirmados menos entregas em estado solicitado/confirmado/concluído e cria pedido + AuditLog na mesma transação.
 - O endpoint passa a validar papel vendedor, valor numérico positivo com no máximo duas casas decimais, observações limitadas e âmbito da aldeia; aplica retry a conflitos transitórios.
-- Acrescentados testes reais-DB para duas solicitações concorrentes e para a dedução de reservas pendentes. A execução está pendente no CI do commit seguinte.
+- Acrescentados testes reais-DB para duas solicitações concorrentes e para a dedução de reservas pendentes, cada cenário com vendedor isolado para evitar interferência de dados. A execução está pendente no CI do commit seguinte.

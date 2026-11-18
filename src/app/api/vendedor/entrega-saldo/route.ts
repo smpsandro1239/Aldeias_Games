@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
+import { EstadoEntrega, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     }
 
     const where: Prisma.EntregaSaldoWhereInput = { vendedorId: user.id };
-    if (estado) where.estado = estado as Prisma.EnumEstadoEntregaFilter['equals'];
+    if (estado) where.estado = estado as EstadoEntrega;
 
     const entregas = await prisma.entregaSaldo.findMany({
       where,

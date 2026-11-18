@@ -23,6 +23,10 @@ export async function solicitarEntregaSaldo(
   tx: Prisma.TransactionClient,
   input: SolicitarEntregaSaldoInput
 ) {
+  if (!Number.isFinite(input.valor) || input.valor <= 0 || Math.abs(input.valor * 100 - Math.round(input.valor * 100)) > 1e-8) {
+    throw new Error('VALOR_ENTREGA_INVALIDO');
+  }
+
   const now = new Date();
   const vendedor = await tx.user.updateMany({
     where: {
