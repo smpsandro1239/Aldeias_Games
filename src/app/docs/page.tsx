@@ -1,5 +1,7 @@
 "use client";
 
+import Script from "next/script";
+
 export default function DocsPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -20,7 +22,8 @@ export default function DocsPage() {
         </div>
       </header>
       <div id="swagger-ui" />
-      <script
+      <Script
+        strategy="afterInteractive"
         src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"
         charSet="UTF-8"
         onLoad={() => {
