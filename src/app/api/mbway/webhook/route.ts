@@ -65,9 +65,8 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const dados = body?.Entity_ClientPhone || body?.dados || body;
-      const tipoTransacao = dados?.tipo || dados?.metadata?.tipo;
-
+      // A classificação financeira vem dos registos internos, não de metadata
+      // controlada pelo payload externo.
       // M1 (Sprint 2): VALIDAÇÃO DE AMOUNT — o webhook só pode creditar o
       // valor registado na Transação pendente. Sem isto, um payload assinado
       // com amount adulterado inflacionaria saldos.
@@ -89,10 +88,26 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
       }
 
-      if (tipoTransacao === "carregamento_saldo") {
+      const [carregamento, participacao] = await Promise.all([
+        prisma.transacao.findFirst({
+          where: { referencia: result.transactionId, tipo: "carregamento_saldo" },
+          select: { id: true },
+        }),
+        prisma.participacao.findFirst({
+          where: { referenciaPagamento: result.transactionId },
+          select: { id: true },
+        }),
+      ]);
+
+      if (carregamento && participacao) {
+        throw new Error("REFERENCIA_MBWAY_AMBIGUA");
+      }
+      if (carregamento) {
         await processCarregamento(result.transactionId);
-      } else {
+      } else if (participacao) {
         await processParticipacao(result.transactionId);
+      } else {
+        throw new Error("PAGAMENTO_MBWAY_SEM_REGISTO_INTERNO");
       }
 
       await completeWebhookEvent("mbway", result.transactionId, "completed");
@@ -133,7 +148,7 @@ async function processCarregamento(transactionId: string) {
         transactionId
     );
 
-    if (!c) return;
+    if (!c) throw new Error("CARREGAMENTO_MBWAY_NAO_ENCONTRADO");
     if ((c.dadosAdicionais as Record<string, unknown>)?.estado === "concluido")
       return; // already processed
 
@@ -165,7 +180,7 @@ async function processParticipacao(transactionId: string) {
     where: { dadosParticipacao: { contains: transactionId } },
   });
 
-  if (!participacao) return;
+  if (!participacao) throw new Error("PARTICIPACAO_MBWAY_NAO_ENCONTRADA");
 
   if (participacao.estadoPagamento === "concluido") {
     return; // already processed
