@@ -440,3 +440,15 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Risco: pedidos concorrentes podem passar ambos na validação inicial e executar transferências duplicadas antes de a entrega mudar de estado. Trata-se de risco de integridade financeira P0, não de um problema de interface.
 - Não foi alterado o fluxo financeiro nesta ronda: a correcção exige transição condicional/claim atómico e teste real-DB de concorrência para não introduzir inconsistências em dinheiro.
 - A tarefa foi adicionada ao TODO como prioridade máxima, com critérios de aceitação de exactamente uma transferência e rollback integral.
+
+
+## Correcção P0 — atomicidade de entregas de saldo (18/11/2026)
+
+- A auditoria confirmou que o PATCH de `/api/admin/entregas-saldo` transferia saldo dentro de uma transacção, mas actualizava o estado da entrega fora dela. Isto permitia double-spend em confirmações concorrentes.
+- Criado `src/lib/entrega-saldo.ts`: claim condicional da transição, débito com guarda `saldo >= valor`, crédito ao administrador e criação dos dois movimentos financeiros passam a ocorrer na mesma transacção.
+- O estado só é considerado confirmado se a transferência e os lançamentos forem todos concluídos; falha de saldo provoca rollback integral.
+- As transições confirmar/rejeitar/concluir são condicionais ao estado de origem. Repetição/conflito de estado devolve HTTP 409; saldo insuficiente devolve HTTP 400.
+- `executeWithRetry` passou a reconhecer conflitos/deadlocks Prisma e bloqueios SQLite, com limite de três tentativas.
+- Adicionado teste real-DB `src/__tests__/integration/real-db/entregas-saldo.test.ts`: duas confirmações simultâneas (exactamente uma deve vencer), rollback por saldo insuficiente e rejeição repetida sem movimentos financeiros.
+- Commits de implementação: `b0d24d1`, `76c9292`, `0b66635`, `0fa2098`, `bc9b59a`, `3988145`, `5a591a7`, `b6e69a6`, `9e42fac`.
+- Validação ainda pendente: não existe execução npm/Prisma local neste ambiente; o endpoint de estado consultado apenas expõe checks Vercel, que estão a falhar por quota de deployments. É necessário confirmar o workflow CI do último commit para avaliar typecheck, Vitest, ESLint e build.
