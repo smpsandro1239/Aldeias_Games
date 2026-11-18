@@ -254,3 +254,12 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Migrada a leitura de pedidos de carregamento para `useQuery`, com cache por utilizador/estado e refetch após confirmação.
 - [ ] Validar o novo grupo React Query no CI e confirmar redução dos erros ESLint.
 - [ ] Continuar correcções React Compiler/hooks por componentes, sem desactivar regras.
+
+
+## React Query — tratamento de falhas de leitura (18/11/2026)
+
+- [x] Identificado que as queries de Entregas e Pedidos convertiam erros HTTP/rede em arrays vazios, fazendo a interface apresentar falsamente "Nenhum ... encontrado".
+- [x] Removido o tratamento que engolia a excepção; o TanStack Query passa a receber o erro e a activar o estado de erro.
+- [x] Adicionado estado de erro acessível com `role="alert"` e acção explícita "Tentar novamente" nas duas páginas.
+- [ ] Validar typecheck, ESLint, Vitest e build no CI após os commits `c43ec9c` e `1148dd6`.
+- [ ] Rever paginação: os endpoints devolvem respostas paginadas, enquanto as páginas actuais ainda fazem paginação local; confirmar que não se ocultam registos para conjuntos superiores ao limite da API.
