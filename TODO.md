@@ -267,7 +267,10 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 
 ## P0 — Integridade financeira das entregas de saldo
 
-- [ ] Corrigir a confirmação de `EntregaSaldo`: a leitura/validação do estado ocorre antes da transacção, a transferência entre carteiras e os lançamentos são executados numa transacção, mas a actualização do estado da entrega ocorre depois e fora dela. Duas confirmações concorrentes podem ambas observar `solicitado` e executar a transferência antes de qualquer uma marcar a entrega como `confirmado`.
-- [ ] Tornar a transição de estado condicional e a transferência financeira uma única transacção atómica; garantir que apenas uma operação concorrente consegue reclamar a entrega.
-- [ ] Validar saldo suficiente do vendedor dentro da mesma transacção e impedir saldo negativo, se essa for a regra financeira confirmada no domínio.
-- [ ] Criar teste real-DB concorrente que prove exactamente uma transferência e uma única transição; testar também rollback integral em falha intermédia.
+- [x] Identificado o risco de dupla confirmação: estado da entrega era actualizado fora da transacção que movimentava os saldos.
+- [x] Extraída a operação para `src/lib/entrega-saldo.ts`; o claim condicional `updateMany({ where: { id, estado: estadoOrigem } })`, o débito/crédito das carteiras, os dois lançamentos e a leitura final decorrem na mesma transacção.
+- [x] O débito do vendedor usa guarda atómica `saldo >= valor`; se não existir saldo suficiente, a excepção provoca rollback do estado e de todos os movimentos.
+- [x] Confirmação, rejeição e conclusão usam transições condicionais; pedidos repetidos recebem HTTP 409.
+- [x] Adicionado retry limitado para conflitos/deadlocks Prisma e SQLite (`P2034`, `SQLITE_BUSY`, database locked).
+- [x] Criado `src/__tests__/integration/real-db/entregas-saldo.test.ts` com testes para concorrência, rollback por saldo insuficiente e rejeição repetida.
+- [ ] Validar typecheck, lint, Vitest e build no CI do commit final; não marcar a correcção como validada até o teste real-DB passar.
