@@ -41,9 +41,9 @@
 | 2.1 | [IMPL] Criar Stripe checkout session | ✅ FEITO | Redirect para Stripe |
 | 2.2 | [IMPL] Processar webhook Stripe | ✅ FEITO | Confirmar pagamento |
 | 2.3 | [IMPL] Implementar refunds | ✅ FEITO | Via API admin |
-| 2.5 | [IMPL] Enviar pedido MBWay | ✅ FEITO | lib/mbway.ts (mock existente) |
+| 2.5 | [IMPL] Enviar pedido MBWay | ⏳ PARCIAL | A iniciação existe, mas cobranças de jogo sem `participacaoId` são agora bloqueadas; falta migrar os hooks e persistir intenção antes do pedido |
 | 2.6 | [IMPL] Verificar estado do pagamento | ✅ FEITO | Polling endpoint |
-| 2.7 | [IMPL] Callback 处理 | ✅ FEITO | Webhook MBWay |
+| 2.7 | [IMPL] Callback MB WAY | ⏳ PARCIAL | Assinatura/idempotência/referências estritas implementadas; falta fechar callback antecipado e intenção prévia |
 
 ### 🟡 Sistema de Subscrições
 
@@ -237,3 +237,12 @@ TOTAL: ██████████ 100%
 | P2 | Recorrência mensal: unificar cálculo entre POST, cron e pré-visualização; corrigir overflow de datas 30/31 e cobrir com testes | ✅ FEITO — `computeFirstRecurrenceDate` e `addRecurrence` partilhados; POST e cron migrados; testes de fim de mês adicionados (17/11/2026) |
 
 *Última actualização: 17/11/2026*
+
+
+## Actualização de segurança MB WAY — 18/11/2026
+
+- Os itens 2.5 e 2.7 ficam explicitamente **parciais**: a existência do cliente API e do webhook não prova um fluxo de pagamento completo.
+- Commit `8006d4af1316c41742ad46cffc830c5a06b16209`: o endpoint recusa cobranças de jogo sem `participacaoId` interno e combinações ambíguas antes de contactar o fornecedor.
+- Commit `336dbb1ada163e12bd9ad6572d6a1af6c84af578`: testes adicionados para impedir estas cobranças sem associação.
+- Próximo trabalho: migrar todos os callsites MB WAY para uma intenção persistida antes da chamada externa, com tratamento de falha/cancelamento e callback antecipado.
+- Validação automática ainda pendente; não considerar a integração MB WAY concluída.
