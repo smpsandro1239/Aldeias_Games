@@ -45,3 +45,16 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Causa identificada no código: `src/lib/auth.ts` rejeita segredos que contenham os placeholders `secret`, `changeme`, etc.; o valor anterior `ci-test-secret-key-for-testing-only` continha literalmente `secret`.
 - [x] Atualizado `.github/workflows/ci.yml` e `.github/workflows/dependency-remediation.yml` para usar um segredo de teste com comprimento e diversidade suficientes, sem substrings proibidas.
 - [ ] Confirmar que login, refresh token e os restantes fluxos E2E passam com a configuração corrigida.
+
+
+## Reavaliação CI após correção JWT (18/11/2026)
+
+- [x] Consultado o run mais recente disponível da branch main: 44186738714 (commit 90b3d94).
+- [x] A correção JWT removeu o bloqueio generalizado de login: Playwright passou de 55 aprovados/8 falhados para 64 aprovados/3 falhados (3 ignorados).
+- [ ] P0 — E2E cofre/cashbox: e2e/cofre-cashbox-flow.spec.ts falha no fluxo de depósito/confirmação; inspecionar estado inicial do vendedor e permissões/estado do depósito antes de alterar expectativas.
+- [ ] P0 — E2E compra raspadinha: e2e/login-compra-raspadinha.spec.ts encontra o botão Saldo Aldeias desativado; investigar saldo e elegibilidade da conta seed, não forçar clique nem contornar validação financeira.
+- [ ] P1 — E2E verificação pública: e2e/verificacao-publica.spec.ts encontra o estado Válida, mas a asserção adicional /verificada com sucesso/i não corresponde à mensagem renderizada em src/app/verificar/page.tsx; alinhar o teste com o contrato real da API/UI após inspecionar a resposta concreta.
+- [ ] P1 — ESLint: run 44186738714 continua com 214 erros e 1309 avisos; os erros incluem @ts-ignore e @ts-nocheck em vários módulos. Corrigir por grupos e não suprimir regras.
+- [ ] P0 — Security Audit: run 44186738753 mantém 12 advisories de produção (4 moderados, 8 altos), incluindo picomatch (ReDoS) e zod <4.6.6 (esgotamento de memória); mapear dependências diretas/transitivas e atualizar de forma compatível.
+- [ ] P1 — Deploy: run 44186739242 confirma build concluído e falha apenas no deploy por quota Vercel api-deployments-free-per-day; aguardar reset/quota ou rever plano, sem tratar como regressão de código.
+- [ ] Revalidar typecheck, Vitest, Playwright e build após cada correção; nenhuma das três falhas E2E deve ser marcada como resolvida antes de nova execução verde.
