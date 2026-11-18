@@ -236,3 +236,11 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Continuar a tratar os restantes erros ESLint sem desactivar regras.
 - [ ] Resolver as 12 vulnerabilidades reportadas no audit de produção: glob/minimatch (moderadas), picomatch (alta) e zod (alta), com actualizações compatíveis e lockfile regenerado.
 - [ ] Deployment Vercel bloqueado por quota `api-deployments-free-per-day`; build de artefactos passou.
+
+
+## Ajuste das supressões de tipos — 18/11/2026
+
+- [x] CI `44301485563`: identificou que três `@ts-expect-error` em imports Prisma/Sentry eram desnecessárias (TS2578); foram removidas.
+- [x] ESLint desceu de 153 para 138 erros; o primeiro grupo de `@ts-nocheck`/CommonJS foi resolvido.
+- [ ] Revalidar typecheck e build após remover as três directivas não utilizadas.
+- [ ] Continuar os erros React Compiler/hooks (principalmente setState síncrono em effects e referências antes da declaração), sem desactivar regras.

@@ -2,7 +2,6 @@
 
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-// @ts-expect-error - generated/optional dependency types must be supplied by the installed package
 import { PermissionKey } from "@prisma/client";
 
 type UserPermission = {

@@ -402,3 +402,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Security Audit `44299682737`: 12 vulnerabilidades de produção (4 moderadas, 8 altas). Cadeias: `glob`/`minimatch` via Sentry, `picomatch` via Rollup CommonJS e `zod` via @vercel/blob → @vercel/oidc → @vercel/cli-config.
 - Deploy `44299680519`: Prisma, schema e build Vercel passaram; publicação recusada por quota diária `api-deployments-free-per-day` (>100 deployments/24h), bloqueio externo.
 - Próxima acção: validar novo lint/typecheck; depois investigar e actualizar dependências por cadeia, sem `npm audit fix --force`.
+
+
+## Validação do primeiro ciclo ESLint — 18/11/2026
+
+- Commit `b626322`: removidas quatro directivas `@ts-nocheck`, convertidos três scripts para ESM e substituídos imports `@ts-ignore` por `@ts-expect-error` localizadas.
+- CI `44301485563`: lint reduziu de 153 para 138 erros e manteve 1306 avisos. Os erros remanescentes são maioritariamente regras React Compiler/hooks: setState síncrono dentro de effects, acesso a funções antes da declaração, funções impuras durante render e criação de componentes durante render.
+- Typecheck falhou porque três `@ts-expect-error` eram supérfluas (TS2578); essas directivas foram removidas. O erro é de tipagem/supressão, não de comportamento da aplicação.
+- Build Vercel `44301485582` falhou pelo mesmo TS2578, antes da fase de publicação. Não foi quota neste run.
+- Security Audit `44301485542`: continuam 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- Próximo passo: revalidar typecheck/build com as directivas removidas e corrigir os erros React Compiler por componentes, em grupos pequenos.

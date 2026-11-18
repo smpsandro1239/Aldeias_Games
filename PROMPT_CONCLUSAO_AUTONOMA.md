@@ -230,3 +230,11 @@ Começa agora pelo protocolo da secção 3. Revalida o estado do repositório e 
 - Security Audit `44299682737`: 12 vulnerabilidades de produção (4 moderadas, 8 altas), com cadeias Sentry/glob/minimatch, Rollup/picomatch e Vercel Blob/OIDC/Zod.
 - Deploy `44299680519`: build Vercel passou; publicação bloqueada pela quota diária `api-deployments-free-per-day`.
 - A alteração seguinte remove supressões e converte scripts para ESM; estado **corrigida, por validar** até novo CI.
+
+
+## Actualização de validação — commit b626322
+
+- CI `44301485563`: lint desceu para 138 erros e 1306 avisos após remover quatro `@ts-nocheck`, converter três scripts CommonJS e substituir `@ts-ignore` por `@ts-expect-error`.
+- Typecheck/build detectaram três directivas `@ts-expect-error` supérfluas em imports de `PermissionKey` e Sentry (TS2578). Foram removidas na alteração seguinte.
+- Os erros restantes de lint são maioritariamente React Compiler/hooks: setState síncrono em effects, referências antes da declaração, funções impuras e componentes criados durante render.
+- Audit continua com 12 vulnerabilidades de produção. Build Vercel falhou antes da publicação por TS2578 (não por quota neste run).
