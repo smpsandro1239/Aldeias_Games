@@ -68,6 +68,26 @@ describe("Real DB: Idempotência de Webhooks (Stripe + MBWay)", () => {
     expect(evento.metadata.erro).toBe("timeout");
   });
 
+  it("permite reclamar novamente um evento failed, mas bloqueia concorrência", async () => {
+    expect(await claimWebhookEvent("stripe", "evt_retry_real")).toBe(true);
+    await completeWebhookEvent("stripe", "evt_retry_real", "failed", {
+      erro: "falha transitória",
+    });
+
+    const retry = await claimWebhookEvent("stripe", "evt_retry_real");
+    expect(retry).toBe(true);
+
+    const concurrentDuplicate = await claimWebhookEvent("stripe", "evt_retry_real");
+    expect(concurrentDuplicate).toBe(false);
+
+    const event = await prisma.webhookEvent.findUnique({
+      where: {
+        provider_eventId: { provider: "stripe", eventId: "evt_retry_real" },
+      },
+    });
+    expect(event.status).toBe("processing");
+  });
+
   it("o mesmo eventId de providers diferentes não colide", async () => {
     await claimWebhookEvent("stripe", "evt_same");
     const mbwayClaim = await claimWebhookEvent("mbway", "evt_same");
