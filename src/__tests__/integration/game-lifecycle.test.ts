@@ -224,7 +224,7 @@ describe('Game Lifecycle - Complete Integration Tests', () => {
     });
 
     it('deve bloquear quando stock esgotado', () => {
-      let stockAtual = 0;
+      const stockAtual = 0;
       const participar = () => stockAtual > 0;
 
       expect(participar()).toBe(false);
