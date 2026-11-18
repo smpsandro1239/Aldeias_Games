@@ -355,3 +355,13 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Validar os novos testes e rotas em CI; o estado actual dos checks acessíveis mostra apenas falhas Vercel por quota, sem evidência de execução Vitest/TypeScript.
 - [ ] MB WAY: ainda falta criar e associar a intenção de pagamento à participação antes do callback; o fluxo dos hooks precisa de ser refactorizado sem deixar stock reservado quando o fornecedor falha.
 - [ ] Stripe: validar no servidor preço oficial, quantidade, stock, aldeia e ownership antes de criar Checkout Session; validar reembolsos/estornos.
+
+
+## Webhooks — última revisão (18/11/2026)
+
+- [x] Stripe: exigir `payment_status=paid`, `currency=eur` e `amount_total` inteiro positivo antes de qualquer crédito/participação.
+- [x] Stripe: persistir `session.id` em `Participacao.referenciaPagamento` e verificar a referência dentro da transacção antes de criar novos bilhetes/cashback.
+- [x] MB WAY: classificar a transacção a partir da BD; referências ausentes/ambíguas geram falha recuperável em vez de sucesso silencioso.
+- [x] Página de sucesso Stripe deixou de afirmar que o saldo foi creditado antes de confirmar o processamento interno.
+- [x] Actualizado `AGENTS.md`: retry `failed` e rota activa de confirmação de depósitos.
+- [ ] TypeScript, Vitest, real-DB, Playwright e lint continuam sem validação observada para estes commits; não marcar como concluído.
