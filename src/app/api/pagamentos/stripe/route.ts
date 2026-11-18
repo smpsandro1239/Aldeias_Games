@@ -27,15 +27,31 @@ export async function POST(request: NextRequest) {
     }
 
     const { valor, descricao, metadata } = validation.data;
+    const isParticipation = Boolean(metadata?.jogoId);
+    const isWalletTopup = metadata?.tipo === 'carregamento_saldo';
+
+    if (isParticipation === isWalletTopup) {
+      return NextResponse.json(
+        { error: 'O tipo de pagamento não pôde ser determinado' },
+        { status: 400 }
+      );
+    }
+
+    // Só são enviados metadados operacionais necessários ao webhook.
+    // Campos arbitrários do cliente (incluindo dados pessoais) não são propagados.
+    const checkoutMetadata: Record<string, string> = {
+      userId: user.id,
+      tipo: isParticipation ? 'participacao' : 'carregamento_saldo',
+    };
+    if (isParticipation && metadata?.jogoId) checkoutMetadata.jogoId = metadata.jogoId;
+    if (metadata?.eventoId) checkoutMetadata.eventoId = metadata.eventoId;
+    if (metadata?.numeros) checkoutMetadata.numeros = metadata.numeros;
 
     // Criar sessão de checkout
     const session = await createCheckoutSession({
       valor,
       descricao,
-      metadata: {
-        ...metadata,
-        userId: user.id,
-      },
+      metadata: checkoutMetadata,
       successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento/sucesso?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento/cancelado`,
     });
