@@ -110,7 +110,6 @@ export async function PATCH(request: NextRequest) {
         prisma.$transaction((tx) =>
           processarTransicaoEntregaSaldo(tx, {
             entregaId,
-            adminId: user.id,
             acao: acao as EntregaSaldoAction,
             observacoes,
           })
