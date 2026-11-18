@@ -527,3 +527,27 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Actualizado `AGENTS.md` para indicar o caminho completo e eliminar a ambiguidade.
 - CI do commit `12a20d2`: TypeScript passou; Vitest passou (53 ficheiros, 536 testes); build Next.js passou; SQLite e seed E2E passaram; Playwright passou (67 testes, 3 ignorados). ESLint falhou com 131 erros de React Hooks/Compiler e avisos. Security Audit falhou com 4 vulnerabilidades altas e 5 moderadas. Build Vercel passou, mas deploy bloqueado por quota diária.
 - A rota nova e a migração dos painéis ainda aguardam CI próprio.
+
+
+## Levantamentos do cofre — reserva e auditoria atómicas (18/11/2026)
+
+- Commits directos na `main`: `f9a5ddb` (helper transacional), `881f077` (POST), `9996e79` (PUT), `3c82637` (testes reais-DB), `101dc50` e `a0dc3ba` (tipagem das notificações).
+- `criarPedidoLevantamentoCofre` actualiza condicionalmente a linha do cofre antes de somar as reservas pendentes; valida o saldo disponível em cêntimos e grava pedido e AuditLog na mesma transação.
+- `processarLevantamentoCofre` valida o escopo, reclama o pedido apenas se continuar pendente, debita com `saldo >= valor` e cria AuditLog dentro da mesma transação. Rejeitar liberta a reserva ao mudar o estado.
+- Notificações passaram para depois do commit e são tratadas como best-effort.
+- Adicionados quatro testes reais-DB: duas reservas concorrentes sobre saldo insuficiente; duas confirmações concorrentes; reserva libertada após rejeição; rollback de estado/saldo/auditoria quando a transação aborta.
+- Validação deste conjunto ainda pendente: os commits foram enviados directamente para `main`, mas ainda não existe resultado CI observado para estes novos ficheiros. O run anterior `44382179150` do commit `00ef913` terminou com typecheck, Vitest, build, preparação SQLite, seed e Playwright aprovados (67 E2E aprovados, 3 ignorados); lint falhou com 136 erros e 1312 avisos.
+
+## ESLint — grupos iniciais React Compiler/hooks (18/11/2026)
+
+- `poio-da-vaca-ticket.tsx`: removida geração aleatória do número vencedor nos valores predefinidos e do número do bilhete durante render; o bilhete aceita agora `data.ticketNumber`, com fallback estável.
+- `ultimate-raffle-ticket.tsx`: barras do código de barras geradas deterministicamente a partir do número do bilhete, evitando `Math.random()` durante render.
+- `qr-scanner-modal.tsx`: callbacks de câmara estabilizados com `useCallback` e declarados antes do efeito; a stream é parada também quando o elemento de vídeo já não existe.
+- `aldeia-wizard-modal.tsx`: callback de carregamento estabilizado e declarado antes do efeito.
+- Não foram desactivadas regras ESLint. A redução efectiva só será registada após o novo job lint.
+
+## Próximas verificações
+
+- Confirmar CI dos commits de levantamentos e do primeiro grupo ESLint; corrigir quaisquer regressões antes de iniciar outro grupo.
+- Auditar chamadas Zod e a árvore de dependências antes de qualquer alteração major.
+- Continuar revisão de pagamentos, carteiras, caixas, cofres e reconciliação com testes de invariantes financeiros.
