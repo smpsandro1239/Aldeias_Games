@@ -33,6 +33,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Telefone é obrigatório' }, { status: 400 });
     }
 
+    // Não iniciar cobranças de jogo sem um registo interno que possa receber
+    // a referência do fornecedor. Carregamentos são a única operação sem
+    // Participacao e têm de declarar explicitamente o seu tipo.
+    const isCarregamento = body.tipo === 'carregamento_saldo';
+    if (
+      (isCarregamento && body.participacaoId) ||
+      (!isCarregamento && (!body.participacaoId || body.tipo !== undefined))
+    ) {
+      return NextResponse.json(
+        { error: 'Pagamento MB WAY sem associação interna válida' },
+        { status: 400 }
+      );
+    }
+
     // Se o pagamento corresponde a uma participação, confirmar ownership,
     // estado e montante antes de contactar o fornecedor externo.
     let participacaoAssociada: { id: string } | null = null;
