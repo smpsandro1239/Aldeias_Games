@@ -80,7 +80,7 @@ function SuccessContent() {
           <CheckCircle className="w-16 h-16 text-primary mx-auto mb-4" />
            <h1 className="text-2xl font-bold text-foreground mb-2">Pagamento Concluído!</h1>
            <p className="text-muted-foreground mb-2">
-             O seu saldo foi creditado com sucesso.
+             O pagamento foi confirmado pelo Stripe. A actualização da participação ou do saldo é processada em seguida.
            </p>
           {amount && (
             <p className="text-lg text-primary font-bold mb-2">
