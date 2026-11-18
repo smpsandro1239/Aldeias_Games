@@ -68,3 +68,9 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] ESLint continua com 214 erros/1309 avisos no último run observado; remediar por módulos.
 - [ ] Security Audit continua com 12 vulnerabilidades de produção (4 moderadas/8 altas); mapear dependências e atualizar com compatibilidade.
 - [ ] Deploy Vercel: build passou, publicação bloqueada pela quota diária gratuita; aguardar reposição da quota antes de nova publicação.
+
+
+## Correção de hook de acessibilidade — 18/11/2026
+
+- [x] Corrigido `src/hooks/useAccessibility.ts` no commit `0a73470`: `useRef` e `useEffect` deixaram de ser chamados dentro de uma callback criada por `useCallback`; `useFocusTrap` passou a ser um hook autónomo, com dependências explícitas (`enabled` e `onEscape`).
+- [ ] Confirmar ESLint e typecheck no CI do commit `0a73470`; não declarar resolvido antes da validação.
