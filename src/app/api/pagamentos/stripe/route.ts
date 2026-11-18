@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
 
     const { valor, descricao, metadata } = validation.data;
     const isParticipation = Boolean(metadata?.jogoId);
-    const isWalletTopup = metadata?.tipo === 'carregamento_saldo';
+    const isWalletTopup = !isParticipation && metadata?.tipo === 'carregamento_saldo';
 
-    if (isParticipation === isWalletTopup) {
+    if (!isParticipation && !isWalletTopup) {
       return NextResponse.json(
         { error: 'O tipo de pagamento não pôde ser determinado' },
         { status: 400 }
