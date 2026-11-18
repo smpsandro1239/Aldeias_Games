@@ -1,5 +1,5 @@
-// @ts-ignore
 import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/db';
 
 /**
  * Calcula o nível atual baseado na experiência
@@ -39,8 +39,6 @@ export async function addExperienceToAldeia(
   oldLevel: number;
   newLevel: number;
 }> {
-  const prisma = require('@/lib/db').prisma;
-  
   // Get current aldeia
   const aldeia = await prisma.aldeia.findUnique({
     where: { id: aldeiaId },
