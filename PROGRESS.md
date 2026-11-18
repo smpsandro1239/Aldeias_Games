@@ -623,3 +623,12 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Documentação actualizada no commit `78fa2bb8c62da8199b8732652ef3a59a4fb24fbe`.
 - Não foi possível executar Vitest, TypeScript ou Playwright neste ambiente. Os testes foram adicionados, mas o comportamento permanece **por validar** até CI fornecer evidência.
 - O fluxo de criação tardia da participação e a janela de callback antecipado continuam como P0; esta alteração apenas fecha a divulgação do estado externo em referências ambíguas.
+
+
+## MB WAY — fail-closed para cobranças sem associação (18/11/2026)
+
+- Commit `8006d4af1316c41742ad46cffc830c5a06b16209`: `POST /api/pagamentos/mbway` passou a exigir `participacaoId` para pagamentos de jogo; apenas carregamentos de saldo podem ser iniciados sem participação e têm de declarar `tipo=carregamento_saldo`. Combinações ambíguas são rejeitadas antes da chamada ao fornecedor.
+- Commit `336dbb1ada163e12bd9ad6572d6a1af6c84af578`: dois testes unitários cobrem ausência de associação e mistura de carregamento com participação. As asserções verificam que `initiatePayment` não é chamado.
+- Impacto funcional deliberado: os callsites de jogos que ainda iniciam MB WAY sem `participacaoId` deixam de conseguir iniciar uma cobrança. Isto evita cobrar um utilizador sem registo interno que o webhook possa confirmar; é necessário migrar os fluxos de jogo de forma transaccional antes de reactivar MB WAY nesses ecrãs.
+- Não foi alterado o schema Prisma. A janela de callback antecipado e o registo de carregamento criado após a resposta do fornecedor continuam por resolver.
+- Validação: não foi possível executar npm/Vitest/TypeScript/Playwright neste ambiente. A alteração está **corrigida, por validar**.
