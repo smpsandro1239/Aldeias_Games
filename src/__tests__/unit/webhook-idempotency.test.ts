@@ -71,6 +71,36 @@ describe("Webhook Idempotency - WebhookEvent", () => {
       expect(result).toBe(false);
     });
 
+    it("should reclaim a failed event atomically for retry", async () => {
+      const uniqueError = new Error("Unique constraint failed") as Error & {
+        code: string;
+      };
+      uniqueError.code = "P2002";
+      mockPrisma.webhookEvent.create.mockRejectedValue(uniqueError);
+      mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await claimWebhookEvent("stripe", "evt_retry", "participacao");
+
+      expect(result).toBe(true);
+      expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalledWith({
+        where: { provider: "stripe", eventId: "evt_retry", status: "failed" },
+        data: { status: "processing", tipo: "participacao" },
+      });
+    });
+
+    it("should not reclaim an event that is completed or currently processing", async () => {
+      const uniqueError = new Error("Unique constraint failed") as Error & {
+        code: string;
+      };
+      uniqueError.code = "P2002";
+      mockPrisma.webhookEvent.create.mockRejectedValue(uniqueError);
+      mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
+
+      const result = await claimWebhookEvent("stripe", "evt_busy");
+
+      expect(result).toBe(false);
+    });
+
     it("should rethrow non-P2002 errors", async () => {
       const dbError = new Error("Connection refused");
       mockPrisma.webhookEvent.create.mockRejectedValue(dbError);
