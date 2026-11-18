@@ -105,3 +105,11 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] O ESLint continua a reportar 201 erros e 1309 avisos. Persistem, entre outros, `@ts-nocheck`, `@ts-ignore`, imports `require`, `prefer-const` e regras Next.js; continuar por grupos e sem desativar regras.
 - [ ] O Security Audit `44256083954` mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas): `glob`, `minimatch`, `picomatch` e `zod`. As correções automáticas de Zod exigem major upgrade; não aplicar `--force` sem migração.
 - [ ] O Playwright do CI `44256083812` estava ainda em execução na última consulta; não declarar os fluxos E2E aprovados até terminar.
+
+
+## Quarta ronda ESLint — correções prefer-const — 18/11/2026
+
+- [x] Corrigidas declarações não reatribuídas em `scripts/migrate-apostas-poio.ts`, `scripts/replace-design-tokens-extended.js`, `scripts/replace-design-tokens.js`, `src/__tests__/integration/game-lifecycle.test.ts`, `src/__tests__/integration/real-db/membros-gestao.test.ts`, `src/components/qr-code-generator.tsx` e `src/features/admin/hooks/use-admin-crud-handlers.tsx`.
+- [x] Cada alteração limita-se a `let` → `const`, sem alterar valores ou fluxos.
+- [ ] Validar a redução dos erros `prefer-const` no CI dos commits `66a70ff` a `039a6f9`; não foi possível executar ESLint localmente neste ambiente.
+- [ ] Permanecem erros de lint não tratados: `@ts-nocheck` em testes/configuração/seeds, `@ts-ignore` em imports Prisma e rotas, `require()` em scripts/testes/rotas, além de duas regras Next.js e uma interface vazia.
