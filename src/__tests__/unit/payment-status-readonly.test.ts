@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   getFullUserFromRequest: vi.fn(),
+  initiatePayment: vi.fn(),
+  participacaoFindUnique: vi.fn(),
   getCheckoutSession: vi.fn(),
   createCheckoutSession: vi.fn(),
   checkPaymentStatus: vi.fn(),
@@ -24,13 +26,14 @@ vi.mock('@/lib/stripe', () => ({
 
 vi.mock('@/lib/mbway', () => ({
   checkPaymentStatus: mocks.checkPaymentStatus,
-  initiatePayment: vi.fn(),
+  initiatePayment: mocks.initiatePayment,
   normalizePhoneNumber: (value: string) => value,
 }));
 
 vi.mock('@/lib/db', () => ({
   prisma: {
     participacao: {
+      findUnique: mocks.participacaoFindUnique,
       findFirst: mocks.participacaoFindFirst,
       update: mocks.participacaoUpdate,
       updateMany: mocks.participacaoUpdateMany,
@@ -43,7 +46,7 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { POST as postStripePayment, GET as getStripePayment } from '@/app/api/pagamentos/stripe/route';
-import { GET as getMbwayPayment } from '@/app/api/pagamentos/mbway/route';
+import { GET as getMbwayPayment, POST as postMbwayPayment } from '@/app/api/pagamentos/mbway/route';
 
 function request(url: string) {
   return { url } as import('next/server').NextRequest;
@@ -141,6 +144,31 @@ describe('Payment status endpoints are read-only', () => {
 
     expect(response.status).toBe(404);
     expect(mocks.participacaoUpdate).not.toHaveBeenCalled();
+  });
+
+  it('MB WAY POST rejects a game payment without an internal participation before contacting the provider', async () => {
+    const response = await postMbwayPayment(postRequest({
+      telefone: '+351912345678',
+      valor: 10,
+      descricao: 'Participação',
+    }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.initiatePayment).not.toHaveBeenCalled();
+    expect(mocks.participacaoFindUnique).not.toHaveBeenCalled();
+  });
+
+  it('MB WAY POST rejects a top-up that also supplies a participation ID', async () => {
+    const response = await postMbwayPayment(postRequest({
+      telefone: '+351912345678',
+      valor: 10,
+      descricao: 'Carregamento',
+      tipo: 'carregamento_saldo',
+      participacaoId: 'participacao-1',
+    }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.initiatePayment).not.toHaveBeenCalled();
   });
 
   it('MB WAY GET reports completed status without changing participation or wallet', async () => {
