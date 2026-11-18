@@ -45,7 +45,7 @@ export function QRCodeGenerator({ open, onOpenChange, data, title }: QRCodeGener
     setLoading(true);
     
     // Build the URL
-    let baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
     let path = "";
 
     switch (data.type) {
