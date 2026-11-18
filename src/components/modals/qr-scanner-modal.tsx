@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,34 +20,39 @@ export function QRScannerModal({ open, onOpenChange, onConfirm }: QRScannerModal
   const [scanning, setScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (open && modo === "camera") {
-      startCamera();
-    }
-    return () => stopCamera();
-  }, [open, modo]);
-
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+      } else {
+        stream.getTracks().forEach((track) => track.stop());
       }
     } catch (err) {
       console.error("Camera error:", err);
       toast.error("Não foi possível aceder à câmera");
       setModo("manual");
     }
-  };
+  }, []);
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (videoRef.current?.srcObject) {
       const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (open && modo === "camera") {
+      void startCamera();
+    } else {
+      stopCamera();
+    }
+    return stopCamera;
+  }, [open, modo, startCamera, stopCamera]);
 
   const handleConfirm = async () => {
     if (!password || password.length < 6) {
