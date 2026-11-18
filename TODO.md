@@ -344,3 +344,14 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Validar o novo conjunto no CI (typecheck, Vitest, build, Playwright e lint); alterações ainda não marcadas como validadas.
 - [ ] Próxima tarefa: associação persistente MB WAY participação↔transactionId; rever a ordem do fluxo e garantir cancelamento/libertação de stock em caso de falha do fornecedor.
 - [ ] Stripe: validar preço oficial do jogo, quantidade, moeda e payment_status no webhook; reforçar idempotência por Checkout Session.
+
+
+## Webhooks Stripe/MB WAY — retry e classificação (18/11/2026)
+
+- [x] `claimWebhookEvent` permite recuperar eventos `failed` através de `updateMany` condicional; eventos `processing` e `completed` continuam bloqueados como duplicados.
+- [x] Adicionados testes unitários e real-DB para retry após falha e bloqueio de claims concorrentes.
+- [x] MB WAY classifica carregamento/participação por registos internos, não pelo tipo indicado no payload externo; referência inexistente ou ambígua não é marcada como concluída.
+- [x] Stripe webhook exige sessão paga, moeda EUR e montante positivo; participações guardam `referenciaPagamento=session.id` e são deduplicadas por sessão dentro da transacção.
+- [ ] Validar os novos testes e rotas em CI; o estado actual dos checks acessíveis mostra apenas falhas Vercel por quota, sem evidência de execução Vitest/TypeScript.
+- [ ] MB WAY: ainda falta criar e associar a intenção de pagamento à participação antes do callback; o fluxo dos hooks precisa de ser refactorizado sem deixar stock reservado quando o fornecedor falha.
+- [ ] Stripe: validar no servidor preço oficial, quantidade, stock, aldeia e ownership antes de criar Checkout Session; validar reembolsos/estornos.
