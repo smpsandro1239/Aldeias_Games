@@ -204,3 +204,10 @@ Nota de rigor: nesta continuação foram feitas inspeções e atualização docu
 | Deploy Vercel | Bloqueado por quota diária `api-deployments-free-per-day` (>100 deployments/24h) |
 
 A falha do deploy é de quota externa; o build não falhou. A falha do Vitest foi corrigida no teste, mas ainda não está validada por um novo run.
+
+
+## Correção de hook de acessibilidade — 18/11/2026
+
+- O log ESLint do run `44254577712` identificou duas violações `react-hooks/rules-of-hooks` em `src/hooks/useAccessibility.ts`: `useRef` e `useEffect` eram invocados dentro da callback `useFocusTrap` criada por `useCallback`.
+- No commit `0a73470dc6afb2c799e9fa8653bc56b763bc579f`, `useFocusTrap` foi extraído para um hook autónomo de nível superior; o efeito depende agora de `enabled` e `onEscape` em vez do objeto `options` completo.
+- Validação pendente no CI; o restante lint não foi suprimido nem desativado.
