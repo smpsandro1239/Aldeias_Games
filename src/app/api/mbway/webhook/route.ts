@@ -129,24 +129,12 @@ export async function POST(request: NextRequest) {
 
 async function processCarregamento(transactionId: string) {
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    // Filtro JSON por path difere entre SQLite (string) e Postgres (string[]) —
-    // buscar por tipo e filtrar em JS é provider-agnóstico
-    const porReferencia = await tx.transacao.findFirst({
+    // A validação do montante também usa esta referência dedicada. Não
+    // procurar transactionId em JSON livre: isso cria uma segunda via de
+    // associação e pode ligar um callback a um carregamento não relacionado.
+    const c = await tx.transacao.findFirst({
       where: { tipo: "carregamento_saldo", referencia: transactionId },
     });
-    const recentes = porReferencia
-      ? []
-      : await tx.transacao.findMany({
-          where: { tipo: "carregamento_saldo" },
-          orderBy: { createdAt: "desc" },
-          take: 50,
-        });
-
-    const c = porReferencia ?? recentes.find(
-      (t) =>
-        (t.dadosAdicionais as Record<string, unknown> | null)?.transactionId ===
-        transactionId
-    );
 
     if (!c) throw new Error("CARREGAMENTO_MBWAY_NAO_ENCONTRADO");
     if ((c.dadosAdicionais as Record<string, unknown>)?.estado === "concluido")
