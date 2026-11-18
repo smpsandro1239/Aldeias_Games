@@ -302,3 +302,18 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 
 - [x] **Rota de confirmação do cofre:** os painéis de administrador passam a usar `PUT /api/cofre/confirmar-deposito/[id]`, mantendo a rota legada `pedido-deposito/[id]` fora do fluxo activo, conforme as regras do repositório.
 - [ ] Validar a nova rota dedicada no CI após o commit.
+
+
+## Continuação — levantamentos, ESLint e segurança (18/11/2026)
+
+- [x] Criado `src/lib/cofre-withdrawal.ts` para serializar reservas por cofre, descontar levantamentos pendentes, validar montantes em cêntimos e criar `VaultTransaction` + `AuditLog` na mesma transação.
+- [x] Integrado o helper no POST de `/api/cofre/levantamento`; a notificação aos administradores é best-effort depois do commit.
+- [x] Integrado o helper no PUT de `/api/cofre/levantamento/[id]`; claim condicional, débito protegido, transição de estado e auditoria são atómicos. Notificações são posteriores ao commit.
+- [x] Criado `src/__tests__/integration/real-db/cofre-withdrawal.test.ts` com cenários de reserva concorrente, confirmação concorrente, libertação após rejeição e rollback integral.
+- [ ] Validar o conjunto de levantamentos no CI (TypeScript, Vitest, build e E2E); não declarar concluído antes do run correspondente.
+- [x] Primeiro grupo ESLint: removida aleatoriedade durante render nos bilhetes Poio/Rifa; os identificadores e barras de código passaram a ser estáveis/determinísticos.
+- [x] Segundo grupo ESLint: callbacks `startCamera`, `stopCamera` e `fetchAldeias` estabilizados com `useCallback` e declarados antes dos effects.
+- [ ] Validar no CI a redução dos erros React Compiler/hooks; o baseline do run `44382179150` foi 136 erros e 1312 avisos.
+- [ ] Zod 4: inventariar APIs incompatíveis (`.errors`, `z.record`, `z.enum`, transforms/refinements, coerções e inferências), mapear dependências transitivas e preparar migração em branch/commit isolado antes de atualizar lockfile.
+- [ ] Segurança: obter novo `npm audit --omit=dev`, corrigir primeiro advisories transitivos não-major (glob/minimatch/picomatch) e migrar Zod 3→4 com testes de contrato, typecheck, Vitest e build.
+- [ ] Auditoria financeira: rever pagamentos Stripe/MB WAY e idempotência de webhooks, débitos/créditos de carteira, cashbox, Vault e reconciliação entre saldos e movimentos.
