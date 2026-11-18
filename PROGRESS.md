@@ -230,3 +230,10 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - No commit `f656a3ca23f6db77aa5d94364d43456a9fc34717`, `/api/verificar-publico` foi acrescentada à lista pública e recebeu limite de 20 pedidos/minuto por IP. A resposta continua a expor apenas os dados de verificação necessários (sem email/telefone/nome do jogador).
 - Validação pendente no CI: confirmar acesso sem autenticação e resposta 429 sob excesso de pedidos.
 - Nota de segurança adicional: `src/lib/rate-limit.ts` contém um identificador IP mais defensivo, mas o proxy usa diretamente `x-forwarded-for`; rever a confiança desse cabeçalho na infraestrutura Vercel antes de alterar o mecanismo.
+
+
+## Segunda ronda de limpeza ESLint — 18/11/2026
+
+- Run `44255820651` (commit `234c1ad`): ESLint passou de 214 para 207 erros; os erros `prefer-const` em `eventos/[id]`, `jogos`, `participacoes/[id]/prova` e `push/vapid-keys` desapareceram do relatório. O hook `useAccessibility` também deixou de apresentar violações React Hooks.
+- No commit `963ccfc534cc687f341c4fe5c200dba7abef5fa1`, foram convertidas mais seis declarações `let` assinaladas pelo ESLint como não reatribuídas: `where` (admin entregas-saldo, comissões, RGPD e vendedor entrega-saldo), `html` (export relatório) e `updateData` (setup-status).
+- Estas alterações são sintáticas e não alteram os valores nem a lógica das consultas/updates. A validação CI do commit `963ccfc` está pendente.
