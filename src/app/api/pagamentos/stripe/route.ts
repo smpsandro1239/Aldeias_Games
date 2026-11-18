@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { stripePaymentSchema } from '@/lib/validations';
-import { createCheckoutSession, createPaymentIntent } from '@/lib/stripe';
+import { createCheckoutSession } from '@/lib/stripe';
 
 // POST - Criar sessão de checkout Stripe
 export async function POST(request: NextRequest) {
