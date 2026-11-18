@@ -221,3 +221,12 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - A alteração foi feita sem modificar condições, filtros, cálculos ou validações de negócio. A validação CI do commit `234c1ad` ainda não foi observada.
 - Security Audit `44255161505`: falhou com 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo advisories transitivos de `picomatch` e `zod <4.6.6`; o fix de Zod indicado é major e não foi aplicado.
 - Deploy `44255161539`: build Vercel terminou com sucesso; publicação recusada pela quota `api-deployments-free-per-day` (>100 deployments/24h), bloqueio externo.
+
+
+## Revisão da verificação pública e controlos de segurança — 18/11/2026
+
+- `next.config.js` já define `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, HSTS e `Permissions-Policy`; CSP é aplicada em `src/proxy.ts` com nonce por pedido. Não foi necessário duplicar estes headers.
+- `src/proxy.ts` já define limites específicos para login (5/15 min), registo (3/h), pagamentos e participações. A inspeção revelou que `/api/verificar-publico` não estava na lista de rotas públicas nem no mapa de rate limits, apesar de a página `/verificar` ser pública.
+- No commit `f656a3ca23f6db77aa5d94364d43456a9fc34717`, `/api/verificar-publico` foi acrescentada à lista pública e recebeu limite de 20 pedidos/minuto por IP. A resposta continua a expor apenas os dados de verificação necessários (sem email/telefone/nome do jogador).
+- Validação pendente no CI: confirmar acesso sem autenticação e resposta 429 sob excesso de pedidos.
+- Nota de segurança adicional: `src/lib/rate-limit.ts` contém um identificador IP mais defensivo, mas o proxy usa diretamente `x-forwarded-for`; rever a confiança desse cabeçalho na infraestrutura Vercel antes de alterar o mecanismo.
