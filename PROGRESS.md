@@ -432,3 +432,11 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - O estado combinado dos commits mostra apenas checks de deployment Vercel em falha por `build-rate-limit`; não foi possível observar um check CI de código através do endpoint de status consultado. Não classificar isto como falha de TypeScript/testes.
 - Não existe execução local do projecto neste ambiente; typecheck, ESLint, Vitest e build permanecem pendentes de workflow CI.
 - Próxima revisão: os endpoints são paginados (`createPaginatedResponse`), mas as páginas fazem paginação local e não enviam parâmetros de página/limite; verificar o limite predefinido e corrigir a paginação para não omitir dados.
+
+
+## Auditoria P0 — concorrência na confirmação de entregas (18/11/2026)
+
+- Revisão de `src/app/api/admin/entregas-saldo/route.ts` identificou que o handler PATCH lê a entrega e valida `estado === 'solicitado'` antes da transacção; executa os dois updates de saldo e os dois registos de transacção dentro de `prisma.$transaction`, mas só depois actualiza `EntregaSaldo.estado` fora da transacção.
+- Risco: pedidos concorrentes podem passar ambos na validação inicial e executar transferências duplicadas antes de a entrega mudar de estado. Trata-se de risco de integridade financeira P0, não de um problema de interface.
+- Não foi alterado o fluxo financeiro nesta ronda: a correcção exige transição condicional/claim atómico e teste real-DB de concorrência para não introduzir inconsistências em dinheiro.
+- A tarefa foi adicionada ao TODO como prioridade máxima, com critérios de aceitação de exactamente uma transferência e rollback integral.
