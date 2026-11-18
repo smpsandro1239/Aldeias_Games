@@ -151,3 +151,12 @@ Criar relatório read-only que apresente divergências por aldeia, utilizador, v
 - **Corrigido, por validar:** página de sucesso apresenta o valor em euros conforme contrato da API.
 - Testes adicionados em `src/__tests__/unit/payment-status-readonly.test.ts`; aguardam CI.
 - Permanecem P0: intenção MB WAY persistida e associada ao `transactionId`, preço oficial e quantidade Stripe validados no servidor, `payment_status`/moeda no webhook e idempotência financeira por sessão/transacção.
+
+
+## Actualização de webhooks — 18/11/2026
+
+- `claimWebhookEvent` agora permite retry condicional de eventos `failed`, mantendo bloqueio para eventos `processing` e `completed`; testes unitários e real-DB acrescentados, ainda por validar em CI.
+- MB WAY passou a classificar a operação a partir dos registos internos de carregamento/participação e a falhar se a referência não existir ou for ambígua; deixou de aceitar a classificação do payload como fonte de verdade.
+- Stripe valida `payment_status=paid`, `currency=eur` e montante positivo; participações guardam `referenciaPagamento=session.id` e a transacção verifica essa referência antes de criar participações/cashback.
+- O fluxo MB WAY continua incompleto enquanto os hooks não persistirem e associarem o `transactionId` a uma participação pertencente ao utilizador; manter como P0 aberto.
+- O preço oficial e quantidade de participações Stripe ainda não são comparados com o montante cobrado; manter como P0 aberto.
