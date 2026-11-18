@@ -1,7 +1,7 @@
 "use client";
 import { apiRequest } from '@/lib/api-client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Check, MapPin } from "lucide-react";
 import { toast } from "sonner";
@@ -23,28 +23,27 @@ export function AldeiaWizardModal({ open, onComplete }: AldeiaWizardModalProps) 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      fetchAldeias();
-    }
-  }, [open]);
-
-  const fetchAldeias = async () => {
+  const fetchAldeias = useCallback(async () => {
     try {
       const res = await apiRequest("/api/aldeias");
       if (res.ok) {
         const data = await res.json();
-        // Handle both { data: [...] } and [...] response formats
         const aldeiasList = data.data || data;
         setAldeias(aldeiasList || []);
       }
     } catch (error) {
       console.error("Erro ao carregar aldeias:", error);
-        toast.error("Não foi possível carregar as aldeias.");
+      toast.error("Não foi possível carregar as aldeias.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      void fetchAldeias();
+    }
+  }, [open, fetchAldeias]);
 
   const handleConfirm = async () => {
     if (!selectedId) return;
