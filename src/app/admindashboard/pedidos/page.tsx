@@ -62,20 +62,18 @@ export default function AdminPedidosPage() {
    const {
      data: pedidos = [],
      isLoading: pedidosLoading,
+     isError: pedidosError,
      refetch: refetchPedidos,
    } = useQuery<PedidoCarregamento[]>({
      queryKey: ["admin-pedidos-carregamento", user?.id, filter],
      enabled: isAuthenticated && Boolean(user),
      queryFn: async () => {
-       try {
-         const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`);
-         if (!res.ok) throw new Error("Não foi possível carregar os pedidos");
-         const data = await res.json();
-         return data.data || [];
-       } catch (error) {
-         console.error("Erro ao buscar pedidos:", error);
-         return [];
+       const res = await fetch(`/api/admin/pedidos-carregamento?estado=${filter}`);
+       if (!res.ok) {
+         throw new Error("Não foi possível carregar os pedidos");
        }
+       const data = await res.json();
+       return data.data || [];
      },
    });
 
@@ -198,7 +196,12 @@ export default function AdminPedidosPage() {
 
            {/* Lista de Pedidos */}
            <div className="space-y-3">
-             {filteredPedidos.length === 0 ? (
+             {pedidosError ? (
+               <Card className="bg-surface-container-low p-8 text-center">
+                 <p role="alert" className="text-destructive mb-3">Não foi possível carregar os pedidos. Tenta novamente.</p>
+                 <Button variant="outline" onClick={() => void refetchPedidos()}>Tentar novamente</Button>
+               </Card>
+             ) : filteredPedidos.length === 0 ? (
                <Card className="bg-surface-container-low p-8 text-center">
                  <Wallet className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
                  <p className="text-muted-foreground">Nenhum pedido encontrado</p>
