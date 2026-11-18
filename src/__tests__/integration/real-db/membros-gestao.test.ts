@@ -25,7 +25,7 @@ describe("Real DB: Gestão de membros da aldeia", () => {
   let prisma: any;
   let registarPOST: any;
   let aldeia: any;
-  let roles: Record<string, string> = {}; // name -> id
+  const roles: Record<string, string> = {}; // name -> id
 
   const req = (body: unknown, _params?: Record<string, string>) =>
     ({
