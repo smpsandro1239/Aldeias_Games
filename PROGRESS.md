@@ -592,3 +592,15 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - A página de sucesso Stripe já não afirma que o saldo foi creditado apenas porque o fornecedor indica `paid`; a mensagem distingue confirmação externa de processamento interno.
 - Estado do branch: `main`. Os status checks consultados para os commits de código expõem apenas os três deployments Vercel, todos falhados por `build-rate-limit`; a consulta disponível não devolveu jobs GitHub Actions de CI para estes commits. Não foi possível executar npm/Vitest/Playwright localmente através das ferramentas disponíveis.
 - Estado das alterações financeiras deste ciclo: **corrigidas, por validar**. Não anunciar pagamentos prontos nem testes aprovados.
+
+
+## Continuação — associação MB WAY estrita (18/11/2026)
+
+### Alteração aplicada na main
+
+- Commit: `3d71a310b2a18cc83be836f1df73a28b07911555`.
+- `src/app/api/mbway/webhook/route.ts`: removida a procura alternativa de `transactionId` dentro de `dadosParticipacao`; a confirmação de uma participação exige agora correspondência exacta em `referenciaPagamento`.
+- Motivo: impedir colisões e associação com conteúdo JSON controlado pelo cliente. A rota já valida previamente a existência de uma participação por referência dedicada e falha em referências inexistentes/ambíguas.
+- O fluxo de criação de participação continua por corrigir: os hooks observados iniciam MB WAY antes de criar a participação e não enviam `participacaoId`. Não foi criada uma intenção de pagamento nem alterado o schema nesta alteração.
+- Validação: não foi possível executar npm, TypeScript, Vitest ou Playwright através do ambiente disponível. A alteração fica **por validar** até CI fornecer evidência.
+- Próxima tarefa P0: desenhar e implementar a associação transaccional intenção → transactionId → participação, considerando os vários tipos de jogo, preço/quantidade, stock e callbacks antecipados.
