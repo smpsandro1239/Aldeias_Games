@@ -58,3 +58,13 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] P0 — Security Audit: run 44186738753 mantém 12 advisories de produção (4 moderados, 8 altos), incluindo picomatch (ReDoS) e zod <4.6.6 (esgotamento de memória); mapear dependências diretas/transitivas e atualizar de forma compatível.
 - [ ] P1 — Deploy: run 44186739242 confirma build concluído e falha apenas no deploy por quota Vercel api-deployments-free-per-day; aguardar reset/quota ou rever plano, sem tratar como regressão de código.
 - [ ] Revalidar typecheck, Vitest, Playwright e build após cada correção; nenhuma das três falhas E2E deve ser marcada como resolvida antes de nova execução verde.
+
+
+## Estabilização do teste de estatísticas diárias — 18/11/2026
+
+- [x] Diagnóstico da falha no run `44254577712`: as oito participações de teste eram distribuídas por uma janela móvel de sete horas a partir de `new Date()`; quando a suite corria perto das 07:00 UTC, os registos atravessavam a meia-noite UTC e a agregação correta devolvia dois dias.
+- [x] Corrigido `src/__tests__/integration/real-db/jogos-estatisticas.test.ts` no commit `3c8cc5e`: a janela de dados passa a ser ancorada às 12:00 UTC do dia de execução, mantendo as oito participações no mesmo dia sem alterar a lógica de produção nem enfraquecer as asserções.
+- [ ] Validar no CI do commit `3c8cc5e` que o teste passa e confirmar que não existem regressões.
+- [ ] ESLint continua com 214 erros/1309 avisos no último run observado; remediar por módulos.
+- [ ] Security Audit continua com 12 vulnerabilidades de produção (4 moderadas/8 altas); mapear dependências e atualizar com compatibilidade.
+- [ ] Deploy Vercel: build passou, publicação bloqueada pela quota diária gratuita; aguardar reposição da quota antes de nova publicação.
