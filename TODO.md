@@ -74,3 +74,10 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 
 - [x] Corrigido `src/hooks/useAccessibility.ts` no commit `0a73470`: `useRef` e `useEffect` deixaram de ser chamados dentro de uma callback criada por `useCallback`; `useFocusTrap` passou a ser um hook autónomo, com dependências explícitas (`enabled` e `onEscape`).
 - [ ] Confirmar ESLint e typecheck no CI do commit `0a73470`; não declarar resolvido antes da validação.
+
+
+## Redução de erros ESLint — 18/11/2026
+
+- [x] No commit `234c1ad`, substituídas declarações `let` por `const` em quatro rotas (`api/eventos/[id]`, `api/jogos`, `api/participacoes/[id]/prova`, `api/push/vapid-keys`), porque o ESLint confirmou que essas variáveis não eram reatribuídas.
+- [ ] Validar no CI se os quatro erros `prefer-const` foram eliminados e verificar typecheck/testes.
+- [ ] Continuar os restantes erros por grupos; não converter automaticamente variáveis mutáveis nem desativar regras.
