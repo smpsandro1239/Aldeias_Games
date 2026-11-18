@@ -297,3 +297,5 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Mover auditoria de criação/confirmação/rejeição para dentro da transação financeira.
 - [x] Tratar notificações pós-transação como melhor esforço para não devolver erro ambíguo depois de uma operação financeira já confirmada.
 - [ ] Validar testes de concorrência no CI e rever possíveis diferenças entre SQLite e PostgreSQL.
+
+- [ ] **Cofre — validar regressão dos testes de concorrência:** o primeiro CI do commit `de56f40` revelou que os novos testes partilhavam o saldo do cofre com testes legados; isolados no fim da suite para não contaminar os valores de referência. Aguardar novo CI.

@@ -509,3 +509,11 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 ### Validação
 
 - Os testes foram adicionados, mas ainda não executados no CI deste commit. O CI anterior `5ba8154` passou TypeScript, Vitest, build e Playwright; ESLint e Security Audit continuam a falhar. Vercel completou o build mas bloqueou a publicação por quota diária.
+
+
+## Correção de isolamento da suite do cofre (18/11/2026)
+
+- O CI do commit `de56f40` passou TypeScript, mas Vitest falhou em quatro assertions de saldo: os dois novos testes de concorrência foram colocados antes dos testes legados e creditaram 80€ no cofre partilhado, alterando os valores esperados (40€/25€).
+- Causa confirmada no log do job: os testes antigos esperavam 40€ após o primeiro depósito e 25€ após o levantamento, mas receberam 120€ e 105€.
+- Correção: mover os dois novos testes de concorrência para o fim do bloco `describe`, depois de todos os cenários que dependem do saldo inicial. Mantêm os seus próprios vendedores; o segundo cenário só altera o cofre depois das assertions antigas.
+- TypeScript passou no CI anterior; a nova execução de Vitest ainda é necessária para validar a correção. ESLint e Security Audit continuam a falhar por dívida técnica e vulnerabilidades em dependências.

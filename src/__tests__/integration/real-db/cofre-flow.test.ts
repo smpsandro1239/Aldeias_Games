@@ -65,106 +65,6 @@ describe("Real DB: Cofre e Cashbox (fluxo completo)", () => {
   });
 
 
-  it("reserva pedidos pendentes e impede reservas concorrentes acima do saldo da caixa", async () => {
-    const vendedor = await prisma.user.create({
-      data: {
-        nome: "Vendedor Reserva Cofre",
-        email: "vendedor.reserva.cofre@teste.pt",
-        password: "$2b$10$fakehash",
-        role: "vendedor",
-        aldeiaId,
-        saldo: 0,
-      },
-    });
-    await prisma.vendedorCashbox.create({ data: { userId: vendedor.id, saldo: 100 } });
-
-    const criar = () =>
-      executeWithRetry(() =>
-        prisma.$transaction((tx: any) =>
-          criarPedidoDepositoCofre(tx, {
-            vendedorId: vendedor.id,
-            actorUserId: vendedor.id,
-            aldeiaId,
-            valor: 70,
-            isAdmin: false,
-          })
-        )
-      );
-
-    const resultados = await Promise.allSettled([criar(), criar()]);
-    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    expect(resultados.filter((r) => r.status === "rejected")).toHaveLength(1);
-
-    const [pedidos, caixa, auditoria] = await Promise.all([
-      prisma.pedidoDepositoCofre.findMany({ where: { vendedorId: vendedor.id } }),
-      prisma.vendedorCashbox.findUnique({ where: { userId: vendedor.id } }),
-      prisma.auditLog.count({ where: { userId: vendedor.id, action: "deposito.criado" } }),
-    ]);
-    expect(pedidos).toHaveLength(1);
-    expect(pedidos[0].estado).toBe("pendente");
-    expect(caixa.saldo).toBe(100);
-    expect(auditoria).toBe(1);
-  });
-
-  it("não permite confirmar em simultâneo dois depósitos que excedem a caixa", async () => {
-    const vendedor = await prisma.user.create({
-      data: {
-        nome: "Vendedor Confirmação Concorrente",
-        email: "vendedor.confirmacao.concorrente@teste.pt",
-        password: "$2b$10$fakehash",
-        role: "vendedor",
-        aldeiaId,
-        saldo: 0,
-      },
-    });
-    const caixa = await prisma.vendedorCashbox.create({
-      data: { userId: vendedor.id, saldo: 100 },
-    });
-    const pedidos = await Promise.all([1, 2].map((n) =>
-      prisma.pedidoDepositoCofre.create({
-        data: {
-          vendedorId: vendedor.id,
-          aldeiaId,
-          valor: 80,
-          descricao: `Pedido concorrente ${n}`,
-          estado: "pendente",
-          criadoPorId: vendedor.id,
-        },
-      })
-    ));
-
-    const confirmar = (pedidoId: string) =>
-      executeWithRetry(() =>
-        prisma.$transaction((tx: any) =>
-          processarPedidoDepositoCofre(tx, {
-            pedidoId,
-            acao: "confirmar",
-            actorUserId: adminId,
-            aldeiaId,
-          })
-        )
-      );
-
-    const resultados = await Promise.allSettled(pedidos.map((p) => confirmar(p.id)));
-    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    expect(resultados.filter((r) => r.status === "rejected")).toHaveLength(1);
-
-    const [caixaFinal, pedidosFinais, movimentosCaixa, movimentosVault, auditorias] = await Promise.all([
-      prisma.vendedorCashbox.findUnique({ where: { id: caixa.id } }),
-      prisma.pedidoDepositoCofre.findMany({ where: { vendedorId: vendedor.id }, orderBy: { createdAt: "asc" } }),
-      prisma.vendedorCashboxTransaction.findMany({ where: { cashboxId: caixa.id } }),
-      prisma.vaultTransaction.findMany({ where: { referencia: { in: pedidos.map((p: any) => p.id) } } }),
-      prisma.auditLog.count({ where: { resource: "pedido-deposito", action: "deposito.confirmado", resourceId: { in: pedidos.map((p: any) => p.id) } } }),
-    ]);
-
-    expect(caixaFinal.saldo).toBe(20);
-    expect(pedidosFinais.filter((p: any) => p.estado === "confirmado")).toHaveLength(1);
-    expect(pedidosFinais.filter((p: any) => p.estado === "pendente")).toHaveLength(1);
-    expect(movimentosCaixa).toHaveLength(1);
-    expect(movimentosVault).toHaveLength(1);
-    expect(auditorias).toBe(1);
-  });
-
   it("deve confirmar depósito: cashbox decrementa, vault incrementa, transações criadas", async () => {
     const pedido = await prisma.pedidoDepositoCofre.create({
       data: {
@@ -487,4 +387,104 @@ describe("Real DB: Cofre e Cashbox (fluxo completo)", () => {
     const vaultFinal = await prisma.vault.findUnique({ where: { aldeiaId } });
     expect(vaultFinal.saldo).toBe(saldoAntes - 10);
   });
+  it("reserva pedidos pendentes e impede reservas concorrentes acima do saldo da caixa", async () => {
+    const vendedor = await prisma.user.create({
+      data: {
+        nome: "Vendedor Reserva Cofre",
+        email: "vendedor.reserva.cofre@teste.pt",
+        password: "$2b$10$fakehash",
+        role: "vendedor",
+        aldeiaId,
+        saldo: 0,
+      },
+    });
+    await prisma.vendedorCashbox.create({ data: { userId: vendedor.id, saldo: 100 } });
+
+    const criar = () =>
+      executeWithRetry(() =>
+        prisma.$transaction((tx: any) =>
+          criarPedidoDepositoCofre(tx, {
+            vendedorId: vendedor.id,
+            actorUserId: vendedor.id,
+            aldeiaId,
+            valor: 70,
+            isAdmin: false,
+          })
+        )
+      );
+
+    const resultados = await Promise.allSettled([criar(), criar()]);
+    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(resultados.filter((r) => r.status === "rejected")).toHaveLength(1);
+
+    const [pedidos, caixa, auditoria] = await Promise.all([
+      prisma.pedidoDepositoCofre.findMany({ where: { vendedorId: vendedor.id } }),
+      prisma.vendedorCashbox.findUnique({ where: { userId: vendedor.id } }),
+      prisma.auditLog.count({ where: { userId: vendedor.id, action: "deposito.criado" } }),
+    ]);
+    expect(pedidos).toHaveLength(1);
+    expect(pedidos[0].estado).toBe("pendente");
+    expect(caixa.saldo).toBe(100);
+    expect(auditoria).toBe(1);
+  });
+
+  it("não permite confirmar em simultâneo dois depósitos que excedem a caixa", async () => {
+    const vendedor = await prisma.user.create({
+      data: {
+        nome: "Vendedor Confirmação Concorrente",
+        email: "vendedor.confirmacao.concorrente@teste.pt",
+        password: "$2b$10$fakehash",
+        role: "vendedor",
+        aldeiaId,
+        saldo: 0,
+      },
+    });
+    const caixa = await prisma.vendedorCashbox.create({
+      data: { userId: vendedor.id, saldo: 100 },
+    });
+    const pedidos = await Promise.all([1, 2].map((n) =>
+      prisma.pedidoDepositoCofre.create({
+        data: {
+          vendedorId: vendedor.id,
+          aldeiaId,
+          valor: 80,
+          descricao: `Pedido concorrente ${n}`,
+          estado: "pendente",
+          criadoPorId: vendedor.id,
+        },
+      })
+    ));
+
+    const confirmar = (pedidoId: string) =>
+      executeWithRetry(() =>
+        prisma.$transaction((tx: any) =>
+          processarPedidoDepositoCofre(tx, {
+            pedidoId,
+            acao: "confirmar",
+            actorUserId: adminId,
+            aldeiaId,
+          })
+        )
+      );
+
+    const resultados = await Promise.allSettled(pedidos.map((p) => confirmar(p.id)));
+    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(resultados.filter((r) => r.status === "rejected")).toHaveLength(1);
+
+    const [caixaFinal, pedidosFinais, movimentosCaixa, movimentosVault, auditorias] = await Promise.all([
+      prisma.vendedorCashbox.findUnique({ where: { id: caixa.id } }),
+      prisma.pedidoDepositoCofre.findMany({ where: { vendedorId: vendedor.id }, orderBy: { createdAt: "asc" } }),
+      prisma.vendedorCashboxTransaction.findMany({ where: { cashboxId: caixa.id } }),
+      prisma.vaultTransaction.findMany({ where: { referencia: { in: pedidos.map((p: any) => p.id) } } }),
+      prisma.auditLog.count({ where: { resource: "pedido-deposito", action: "deposito.confirmado", resourceId: { in: pedidos.map((p: any) => p.id) } } }),
+    ]);
+
+    expect(caixaFinal.saldo).toBe(20);
+    expect(pedidosFinais.filter((p: any) => p.estado === "confirmado")).toHaveLength(1);
+    expect(pedidosFinais.filter((p: any) => p.estado === "pendente")).toHaveLength(1);
+    expect(movimentosCaixa).toHaveLength(1);
+    expect(movimentosVault).toHaveLength(1);
+    expect(auditorias).toBe(1);
+  });
+
 });
