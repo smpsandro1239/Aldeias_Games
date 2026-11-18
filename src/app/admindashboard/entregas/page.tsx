@@ -56,20 +56,18 @@ export default function AdminEntregasPage() {
    const {
      data: entregas = [],
      isLoading: entregasLoading,
+     isError: entregasError,
      refetch: refetchEntregas,
    } = useQuery<EntregaSaldo[]>({
      queryKey: ["admin-entregas-saldo", user?.id],
      enabled: isAuthenticated && Boolean(user),
      queryFn: async () => {
-       try {
-         const res = await fetch("/api/admin/entregas-saldo");
-         if (!res.ok) throw new Error("Não foi possível carregar as entregas");
-         const data = await res.json();
-         return data.data || [];
-       } catch (error) {
-         console.error("Erro ao buscar entregas:", error);
-         return [];
+       const res = await fetch("/api/admin/entregas-saldo");
+       if (!res.ok) {
+         throw new Error("Não foi possível carregar as entregas");
        }
+       const data = await res.json();
+       return data.data || [];
      },
    });
 
@@ -212,7 +210,12 @@ export default function AdminEntregasPage() {
 
            {/* Lista de Entregas */}
            <div className="space-y-3">
-             {filteredEntregas.length === 0 ? (
+             {entregasError ? (
+               <Card className="bg-surface-container-low p-8 text-center">
+                 <p role="alert" className="text-destructive mb-3">Não foi possível carregar as entregas. Tenta novamente.</p>
+                 <Button variant="outline" onClick={() => void refetchEntregas()}>Tentar novamente</Button>
+               </Card>
+             ) : filteredEntregas.length === 0 ? (
                <Card className="bg-surface-container-low p-8 text-center">
                  <TrendingUp className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
                  <p className="text-muted-foreground">Nenhuma entrega encontrada</p>
