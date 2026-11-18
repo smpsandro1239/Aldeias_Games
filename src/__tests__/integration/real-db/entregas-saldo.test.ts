@@ -7,6 +7,7 @@ import {
 } from "../../helpers/test-db";
 import { executeWithRetry } from "@/lib/transaction-retry";
 import { processarTransicaoEntregaSaldo } from "@/lib/entrega-saldo";
+import { solicitarEntregaSaldo } from "@/lib/solicitar-entrega-saldo";
 
 describe("Real DB: integridade das entregas de saldo", () => {
   let prisma: any;
@@ -57,6 +58,78 @@ describe("Real DB: integridade das entregas de saldo", () => {
 
   afterAll(async () => {
     await teardownTestDatabase();
+  });
+
+
+  it("reserva pedidos pendentes e impede duas solicitações concorrentes sobre o mesmo saldo", async () => {
+    await prisma.pedidoCarregamento.create({
+      data: {
+        userId: vendedorId,
+        vendedorId,
+        aldeiaId,
+        valor: 100,
+        estado: "confirmado",
+      },
+    });
+
+    const solicitar = () =>
+      executeWithRetry(() =>
+        prisma.$transaction((tx: any) =>
+          solicitarEntregaSaldo(tx, {
+            vendedorId,
+            aldeiaId,
+            valor: 80,
+            actorUserId: vendedorId,
+          })
+        )
+      );
+
+    const resultados = await Promise.allSettled([solicitar(), solicitar()]);
+    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(resultados.filter((r) => r.status === "rejected")).toHaveLength(1);
+
+    const [entregas, auditorias] = await Promise.all([
+      prisma.entregaSaldo.findMany({ where: { vendedorId } }),
+      prisma.auditLog.count({ where: { userId: vendedorId, action: "entrega_saldo.solicitar" } }),
+    ]);
+    expect(entregas).toHaveLength(1);
+    expect(entregas[0].valor).toBe(80);
+    expect(entregas[0].estado).toBe("solicitado");
+    expect(auditorias).toBe(1);
+  });
+
+  it("desconta reservas pendentes e confirmadas do saldo que ainda pode ser entregue", async () => {
+    await prisma.pedidoCarregamento.create({
+      data: {
+        userId: vendedorId,
+        vendedorId,
+        aldeiaId,
+        valor: 100,
+        estado: "confirmado",
+      },
+    });
+    await prisma.entregaSaldo.create({
+      data: {
+        vendedorId,
+        adminId,
+        aldeiaId,
+        valor: 70,
+        estado: "solicitado",
+      },
+    });
+
+    await expect(
+      prisma.$transaction((tx: any) =>
+        solicitarEntregaSaldo(tx, {
+          vendedorId,
+          aldeiaId,
+          valor: 40,
+          actorUserId: vendedorId,
+        })
+      )
+    ).rejects.toThrow("SALDO_A_ENTREGAR_INSUFICIENTE");
+
+    expect(await prisma.entregaSaldo.count({ where: { vendedorId } })).toBe(1);
   });
 
   it("processa uma única transferência quando duas confirmações chegam em simultâneo", async () => {

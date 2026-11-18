@@ -285,3 +285,6 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Adicionar registo AuditLog transacional nas transições confirmar/rejeitar/concluir de entregas de saldo, com actor, aldeia, ação, estado e valor; garantir rollback da auditoria se a operação financeira falhar.
 - [x] Restringir PATCH a `aldeia_admin` e `super_admin`, validar observações e reduzir a leitura prévia da entrega aos campos necessários.
 - [ ] Validar no CI os novos testes de auditoria e as transições de entrega após o commit desta alteração; a revisão estática detetou e corrigiu desalinhamentos nos resultados de Promise.all antes da validação final.
+
+- [x] Corrigir a criação de entregas: pedidos solicitados/confirmados/concluídos passam a reservar saldo; cálculo e criação são transacionais e serializados por vendedor.
+- [ ] Validar concorrência da criação de entregas no CI (testes reais-DB adicionados).

@@ -477,3 +477,12 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 2. Corrigir o ESLint em pequenos grupos, começando por hooks e componentes com maior impacto funcional.
 3. Isolar a migração Zod 4 e avaliar as APIs utilizadas, sobretudo nas dependências de produção.
 4. Continuar auditoria de criação de pedidos de entrega e reconciliação de carteira/caixa/cofre.
+
+
+### Reserva concorrente de saldo na criação de entregas
+
+- A API antiga só subtraía entregas concluídas ao calcular o saldo disponível, permitindo ignorar pedidos pendentes/confirmados.
+- O cálculo e a criação eram operações separadas; pedidos simultâneos podiam reservar o mesmo montante.
+- Criado `src/lib/solicitar-entrega-saldo.ts`: adquire bloqueio de escrita na linha do vendedor, calcula o total de carregamentos confirmados menos entregas em estado solicitado/confirmado/concluído e cria pedido + AuditLog na mesma transação.
+- O endpoint passa a validar papel vendedor, valor numérico positivo com no máximo duas casas decimais, observações limitadas e âmbito da aldeia; aplica retry a conflitos transitórios.
+- Acrescentados testes reais-DB para duas solicitações concorrentes e para a dedução de reservas pendentes. A execução está pendente no CI do commit seguinte.
