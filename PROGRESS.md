@@ -348,3 +348,17 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Removidos os dois `@ts-nocheck` dos testes E2E alterados.
 - Ainda não há validação das alterações: os testes só serão considerados resolvidos após novo CI verde.
 - ESLint permanece com 180 erros/1309 avisos; Security Audit com 12 vulnerabilidades de produção (4 moderadas, 8 altas); deploy Vercel continua condicionado à quota diária.
+
+
+## Prompt mestre e correcção E2E — 18/11/2026
+
+- Criado `PROMPT_CONCLUSAO_AUTONOMA.md` como referência central para levar o projecto a produção com critérios verificáveis.
+- `AGENTS.md` exige agora a leitura do prompt mestre antes de cada sessão.
+- CI run `44268750503`: TypeScript, Vitest, build, preparação SQLite e seed passaram; Playwright terminou com 65 aprovados, 2 falhados e 3 ignorados.
+- Causa das duas falhas: os testes injectavam manualmente cookies com `browserContext.addCookies`, apesar de `/api/auth/login` já emitir o cookie através de `setAuthCookie()`. O fixture `request` não partilhava o armazenamento de cookies do browser.
+- Os testes foram alterados para autenticar via `page.context().request`, que partilha o cookie jar do browser, e verificar o cookie `__Host-auth-token` e os seus atributos. Aguardam nova validação CI.
+- O workflow de deployment ignora agora `e2e/**` e `playwright.config.ts`, para que alterações apenas de testes não consumam quota de deployment.
+- ESLint: 178 erros e 1309 avisos.
+- Security Audit: 12 vulnerabilidades de produção (4 moderadas, 8 altas).
+- Deploy: build de artefactos passou; publicação bloqueada pela quota diária Vercel `api-deployments-free-per-day`.
+- Próximo passo: validar o novo CI, analisar Playwright e depois reduzir erros ESLint por grupos pequenos.

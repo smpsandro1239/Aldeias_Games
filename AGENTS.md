@@ -643,3 +643,10 @@ Antes de iniciar qualquer tarefa de desenvolvimento, auditoria ou correção nes
 - Distinguir falhas de código de limites de infraestrutura, quotas, indisponibilidade de serviços e configuração externa.
 - Nunca marcar uma tarefa como concluída sem validação observável; registar explicitamente qualquer validação pendente ou bloqueio.
 - Fazer commits pequenos, descritivos e em português de Portugal; confirmar que o ref atualizado é `main`.
+
+
+## Prompt mestre de conclusão autónoma
+
+- Antes de qualquer continuação, ler integralmente `PROMPT_CONCLUSAO_AUTONOMA.md`.
+- Este prompt define a missão, prioridades, ciclos de execução, critérios verificáveis de produção e formato de relatório; complementa este guia e `ANALISE_CRITICA_PROMPT.md`, sem os substituir.
+- Revalidar sempre o baseline e os workflows: os números e bloqueios registados no prompt são históricos, não estado actual garantido.

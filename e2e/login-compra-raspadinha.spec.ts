@@ -4,24 +4,20 @@ const ADMIN_EMAIL = 'admin@aldeias.pt';
 const PASSWORD = '123456';
 
 test.describe('Login + Compra Raspadinha', () => {
-  test('login via API e compra raspadinha com saldo', async ({ page, request }) => {
+  test('login via API e compra raspadinha com saldo', async ({ page }) => {
     // 1. Login via API
-    const loginRes = await request.post('/api/auth/login', {
+    const loginRes = await page.context().request.post('/api/auth/login', {
       data: { email: ADMIN_EMAIL, password: PASSWORD },
     });
     expect(loginRes.ok()).toBeTruthy();
     const loginData = await loginRes.json();
     expect(loginData.token).toBeTruthy();
 
-    await page.context().addCookies([{
-      name: '__Host-auth-token',
-      value: loginData.token,
-      url: 'http://localhost:3000',
-      path: '/',
-      secure: true,
-      httpOnly: true,
-      sameSite: 'Strict',
-    }]);
+    const authCookie = (await page.context().cookies()).find(cookie => cookie.name === '__Host-auth-token');
+    expect(authCookie).toBeTruthy();
+    expect(authCookie?.httpOnly).toBe(true);
+    expect(authCookie?.secure).toBe(true);
+    expect(authCookie?.path).toBe('/');
     // Populate localStorage so user info is available client-side
     await page.goto('/', { timeout: 30000 });
     await page.evaluate(({ token, user }) => {

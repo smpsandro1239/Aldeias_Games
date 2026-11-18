@@ -5,23 +5,19 @@ const ADMIN_EMAIL = 'admin@aldeias.pt';
 const PASSWORD = '123456';
 
 test.describe('Cofre / Cashbox Flow', () => {
-  test('vendedor deposita cashbox no cofre e admin confirma', async ({ page, request }) => {
+  test('vendedor deposita cashbox no cofre e admin confirma', async ({ page }) => {
     // ── Step 1: Login as vendedor ──────────────────────────────
-    let res = await request.post('/api/auth/login', {
+    let res = await page.context().request.post('/api/auth/login', {
       data: { email: VENDEDOR_EMAIL, password: PASSWORD },
     });
     expect(res.ok()).toBeTruthy();
     let loginData = await res.json();
 
-    await page.context().addCookies([{
-      name: '__Host-auth-token',
-      value: loginData.token,
-      url: 'http://localhost:3000',
-      path: '/',
-      secure: true,
-      httpOnly: true,
-      sameSite: 'Strict',
-    }]);
+    const sellerAuthCookie = (await page.context().cookies()).find(cookie => cookie.name === '__Host-auth-token');
+    expect(sellerAuthCookie).toBeTruthy();
+    expect(sellerAuthCookie?.httpOnly).toBe(true);
+    expect(sellerAuthCookie?.secure).toBe(true);
+    expect(sellerAuthCookie?.path).toBe('/');
     await page.goto('/', { timeout: 30000 });
     await page.evaluate(({ token, user }) => {
       localStorage.setItem('token', token);
@@ -62,21 +58,17 @@ test.describe('Cofre / Cashbox Flow', () => {
     await page.evaluate(() => localStorage.clear());
     await page.context().clearCookies();
 
-    res = await request.post('/api/auth/login', {
+    res = await page.context().request.post('/api/auth/login', {
       data: { email: ADMIN_EMAIL, password: PASSWORD },
     });
     expect(res.ok()).toBeTruthy();
     loginData = await res.json();
 
-    await page.context().addCookies([{
-      name: '__Host-auth-token',
-      value: loginData.token,
-      url: 'http://localhost:3000',
-      path: '/',
-      secure: true,
-      httpOnly: true,
-      sameSite: 'Strict',
-    }]);
+    const adminAuthCookie = (await page.context().cookies()).find(cookie => cookie.name === '__Host-auth-token');
+    expect(adminAuthCookie).toBeTruthy();
+    expect(adminAuthCookie?.httpOnly).toBe(true);
+    expect(adminAuthCookie?.secure).toBe(true);
+    expect(adminAuthCookie?.path).toBe('/');
     await page.goto('/', { timeout: 30000 });
     await page.evaluate(({ token, user }) => {
       localStorage.setItem('token', token);

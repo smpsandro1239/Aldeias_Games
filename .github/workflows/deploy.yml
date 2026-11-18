@@ -11,6 +11,8 @@ on:
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
+      - 'e2e/**'
+      - 'playwright.config.ts'
   workflow_dispatch:
 
 jobs:

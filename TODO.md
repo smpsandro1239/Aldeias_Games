@@ -178,3 +178,17 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Validar os dois testes no próximo Playwright e confirmar que o pagamento é debitado e o depósito é confirmado sem contornar validações de saldo, permissões ou estado.
 - [ ] Revalidar lint, typecheck, Vitest e build; a última medição continua a indicar 180 erros ESLint/1309 avisos e 12 advisories de produção (4 moderados, 8 altos).
 - [ ] Deploy Vercel continua sem nova tentativa até a quota diária estar disponível.
+
+
+## Prompt mestre e correcção de autenticação E2E — 18/11/2026
+
+- [x] Criado `PROMPT_CONCLUSAO_AUTONOMA.md` com protocolo de arranque, regras de segurança, prioridades P0/P1/P2, ciclos de execução, critérios de aceitação para produção e formato de relatório.
+- [x] Adicionado ao `AGENTS.md` o requisito de leitura do prompt mestre antes de cada continuação.
+- [x] CI run `44268750503`: typecheck, Vitest, build, preparação SQLite e seed passaram; Playwright: 65 passaram, 2 falharam, 3 ignorados.
+- [x] Causa das duas falhas E2E identificada: fixture `request` isolado + injecção manual via `addCookies`; a rota de login já emite cookie httpOnly de produção.
+- [x] Testes alterados para usar `page.context().request` e verificar explicitamente o cookie `__Host-auth-token`; validação CI ainda pendente.
+- [x] Workflow de deployment passa a ignorar alterações exclusivas em `e2e/**` e `playwright.config.ts`, evitando deployments de produção por alterações apenas de testes.
+- [ ] Validar novamente os dois fluxos E2E sem contornar autenticação, saldo, permissões ou estados financeiros.
+- [ ] Resolver os 178 erros ESLint e 1309 avisos por grupos pequenos, sem desactivar regras.
+- [ ] Resolver as 12 vulnerabilidades de produção (4 moderadas, 8 altas), incluindo migrações compatíveis de dependências.
+- [ ] Repetir deployment apenas quando a quota Vercel estiver disponível e os gates de CI/segurança estiverem aprovados.
