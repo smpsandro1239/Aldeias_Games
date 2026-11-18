@@ -56,16 +56,8 @@ export async function POST(request: NextRequest) {
       cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/pagamento/cancelado`,
     });
 
-    // Se há uma participação associada, atualizar referência
-    if (metadata?.participacaoId) {
-      await prisma.participacao.update({
-        where: { id: metadata.participacaoId },
-        data: {
-          referenciaPagamento: session.id,
-          estadoPagamento: 'processando',
-        },
-      });
-    }
+    // A participação é criada/associada pelo fluxo de domínio; este endpoint
+    // não aceita IDs arbitrários de participação enviados em metadata.
 
     return NextResponse.json({
       success: true,
