@@ -563,3 +563,14 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Carteira: a entrega de saldo do vendedor verifica saldo antes da transacção e debita sem guarda SQL; ajustes manuais notificam depois do commit sem best-effort; carregamentos com vendedor aceitam IDs do body sem validação suficiente de pertença à aldeia.
 - Estas conclusões são auditoria estática de código. Nenhuma destas correcções financeiras foi aplicada nesta fase; implementar com serviços de domínio e testes real-DB antes de alterar os fluxos.
 - Estado de validação dos commits recentes: o CI de `00ef913` foi confirmado verde no job principal (67 E2E aprovados, 3 ignorados), mas ainda não foi possível obter pelo conector a lista de runs push associada aos novos commits. Não declarar os novos testes/alterações ESLint validados até consultar o CI correspondente.
+
+
+## Pagamentos Stripe/MB WAY — consultas sem efeitos financeiros (18/11/2026)
+
+- Commits directos na `main`: `7fb2c12` e `706f8e7` removem mutações dos GET Stripe/MB WAY; `cb3c343` classifica o tipo Stripe no servidor; `ee59a5b` acrescenta testes; `a324505` corrige unidade do montante na página de sucesso; `242f82e`, `239b5e4` e `576b7b5` reforçam classificação e removem associação por ID arbitrário; `998581a` testa metadados forjados.
+- GET Stripe agora é read-only e só divulga a sessão quando `session.metadata.userId` corresponde ao utilizador autenticado.
+- GET MB WAY confirma ownership da participação/carregamento e devolve o estado do fornecedor sem actualizar `Participacao` ou saldos. A confirmação financeira permanece no webhook assinado.
+- POST Stripe deriva `tipo` no servidor a partir do `jogoId` ou do tipo de carregamento; os metadados do cliente são filtrados e não são propagados dados pessoais/IDs arbitrários de participação.
+- Página `/pagamento/sucesso` passa a apresentar o montante em euros sem divisão dupla.
+- Novo teste `src/__tests__/unit/payment-status-readonly.test.ts`: cobre os dois GET, ownership Stripe, classificação e filtragem de metadados no POST Stripe. Execução ainda pendente; não assumir aprovação.
+- Limitações ainda abertas: MB WAY continua a iniciar pagamento antes de criar participação em alguns hooks, pelo que falta ligar a participação à referência externa; o webhook Stripe ainda precisa de validar preço oficial/quantidade e estado pago. Não marcar os fluxos de pagamento como concluídos.
