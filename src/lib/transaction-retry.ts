@@ -14,6 +14,11 @@ export async function executeWithRetry<T>(
     } catch (error) {
       lastError = error as Error;
       const msg = lastError.message || '';
+      const normalizedMessage = msg.toLowerCase();
+      const errorCode =
+        typeof error === 'object' && error !== null && 'code' in error
+          ? String((error as { code?: unknown }).code)
+          : '';
       const isRetryable =
         msg.includes('Stock insuficiente') ||
         msg.includes('operacao concorrente') ||
@@ -22,7 +27,11 @@ export async function executeWithRetry<T>(
         msg.includes('could not execute') ||
         msg.includes('database is locked') ||
         msg.includes('SQLITE_BUSY') ||
-        msg.includes('P2034') ||
+        errorCode === 'P2034' ||
+        normalizedMessage.includes('deadlock') ||
+        normalizedMessage.includes('write conflict') ||
+        normalizedMessage.includes('database is locked') ||
+        normalizedMessage.includes('sqlite_busy') ||
         msg.includes('CONFLICT') || msg.includes('Números ocupados');
       if (!isRetryable || attempt === MAX_RETRIES - 1) {
         throw lastError;
