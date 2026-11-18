@@ -113,3 +113,11 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Cada alteração limita-se a `let` → `const`, sem alterar valores ou fluxos.
 - [ ] Validar a redução dos erros `prefer-const` no CI dos commits `66a70ff` a `039a6f9`; não foi possível executar ESLint localmente neste ambiente.
 - [ ] Permanecem erros de lint não tratados: `@ts-nocheck` em testes/configuração/seeds, `@ts-ignore` em imports Prisma e rotas, `require()` em scripts/testes/rotas, além de duas regras Next.js e uma interface vazia.
+
+
+## Quarta ronda ESLint — correções prefer-const — 18/11/2026
+
+- [x] Corrigidas declarações não reatribuídas em `scripts/migrate-apostas-poio.ts`, `scripts/replace-design-tokens-extended.js`, `scripts/replace-design-tokens.js`, `src/__tests__/integration/game-lifecycle.test.ts`, `src/__tests__/integration/real-db/membros-gestao.test.ts`, `src/components/qr-code-generator.tsx` e `src/features/admin/hooks/use-admin-crud-handlers.tsx`.
+- [x] As alterações limitam-se a `let` → `const`, sem alterar os valores ou fluxos.
+- [ ] Validar a redução dos erros `prefer-const` no CI; não foi possível executar ESLint localmente neste ambiente.
+- [ ] Permanecem erros de lint relacionados com `@ts-nocheck`, `@ts-ignore`, `require()`, regras Next.js e uma interface vazia.
