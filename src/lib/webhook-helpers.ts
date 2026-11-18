@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/db";
 
 /**
- * Claims a webhook event for processing. Returns true if this is the first time
- * we see this event (should process), false if already seen (skip).
+ * Claims a webhook event for processing. Returns true for a new event or
+ * when atomically reclaiming a previously failed event. Completed or currently
+ * processing events return false.
  *
- * Uses a unique constraint on (provider, eventId) for atomic deduplication.
+ * Uses the unique (provider, eventId) constraint and a conditional update to
+ * prevent concurrent retries from claiming the same failed event.
  */
 export async function claimWebhookEvent(
   provider: string,
