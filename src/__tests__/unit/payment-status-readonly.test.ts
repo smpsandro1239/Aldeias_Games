@@ -177,4 +177,36 @@ describe('Payment status endpoints are read-only', () => {
     expect(response.status).toBe(404);
     expect(mocks.checkPaymentStatus).not.toHaveBeenCalled();
   });
+
+  it('MB WAY GET rejects a reference shared by a participation and a top-up', async () => {
+    mocks.participacaoFindFirst.mockResolvedValue({
+      id: 'participacao-1',
+      userId: 'user-1',
+      estadoPagamento: 'processando',
+    });
+    mocks.transacaoFindFirst.mockResolvedValue({ userId: 'user-1' });
+
+    const response = await getMbwayPayment(request(
+      'https://example.test/api/pagamentos/mbway?transactionId=mb-ambiguous'
+    ));
+
+    expect(response.status).toBe(404);
+    expect(mocks.checkPaymentStatus).not.toHaveBeenCalled();
+  });
+
+  it('MB WAY GET rejects a reference split across two different owners', async () => {
+    mocks.participacaoFindFirst.mockResolvedValue({
+      id: 'participacao-1',
+      userId: 'user-1',
+      estadoPagamento: 'processando',
+    });
+    mocks.transacaoFindFirst.mockResolvedValue({ userId: 'user-2' });
+
+    const response = await getMbwayPayment(request(
+      'https://example.test/api/pagamentos/mbway?transactionId=mb-split-owner'
+    ));
+
+    expect(response.status).toBe(404);
+    expect(mocks.checkPaymentStatus).not.toHaveBeenCalled();
+  });
 });
