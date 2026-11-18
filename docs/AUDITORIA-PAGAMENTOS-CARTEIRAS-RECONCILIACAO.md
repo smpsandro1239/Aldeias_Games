@@ -172,3 +172,11 @@ As alterações de consultas read-only, classificação Stripe, retry de webhook
 - No commit `3d71a310b2a18cc83be836f1df73a28b07911555`, o webhook MB WAY deixou de procurar referências em `dadosParticipacao` (JSON livre) e passou a exigir exclusivamente `referenciaPagamento`.
 - Esta alteração reduz o risco de colisão/associação acidental, mas não resolve a criação tardia da participação. O P0 permanece aberto: os hooks continuam a iniciar o pagamento antes de criar a participação e não fornecem uma referência interna ao endpoint MB WAY.
 - Sem execução local ou CI confirmado para este commit, a alteração está corrigida por leitura, mas por validar.
+
+
+### Actualização — carregamentos MB WAY com referência dedicada (18/11/2026)
+
+- Commit `84f67d2e2ab1d972a5a9da517530b06c7d4ad665`: `processCarregamento` deixou de procurar a referência externa em `dadosAdicionais` das 50 transacções mais recentes.
+- O processamento exige agora `Transacao.referencia = transactionId`, tal como a validação do montante. A associação por JSON livre foi removida.
+- Não houve alteração ao schema. A alteração está por validar por falta de execução local/CI confirmada.
+- Risco P0 ainda aberto: a transacção de carregamento é criada após a chamada ao fornecedor e a participação é criada pelos hooks após a iniciação MB WAY. É necessário modelar a intenção prévia e a janela de callback antecipado antes de considerar o fluxo completo.
