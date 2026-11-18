@@ -141,3 +141,13 @@ Criar relatório read-only que apresente divergências por aldeia, utilizador, v
 - Cada movimento tem referência, actor, estado, timestamp e registo de auditoria atómico.
 - Testes concorrentes demonstram que os saldos nunca ficam negativos e que cada evento gera no máximo um lançamento.
 - Reconciliação detecta divergências sem alterar automaticamente dados financeiros.
+
+
+## Actualização de implementação — 18/11/2026
+
+- **Corrigido, por validar:** `GET /api/pagamentos/stripe` já não altera estado financeiro e verifica `metadata.userId` contra a sessão autenticada.
+- **Corrigido, por validar:** `GET /api/pagamentos/mbway` já não altera participações; mantém a validação de ownership antes de consultar o fornecedor.
+- **Corrigido, por validar:** `POST /api/pagamentos/stripe` deriva `metadata.tipo` no servidor, filtra metadados para campos operacionais e deixou de actualizar participações por ID arbitrário enviado pelo cliente.
+- **Corrigido, por validar:** página de sucesso apresenta o valor em euros conforme contrato da API.
+- Testes adicionados em `src/__tests__/unit/payment-status-readonly.test.ts`; aguardam CI.
+- Permanecem P0: intenção MB WAY persistida e associada ao `transactionId`, preço oficial e quantidade Stripe validados no servidor, `payment_status`/moeda no webhook e idempotência financeira por sessão/transacção.
