@@ -31,7 +31,18 @@ export async function claimWebhookEvent(
       "code" in error &&
       (error as { code: string }).code === "P2002"
     ) {
-      return false;
+      // Um evento concluído ou já em processamento continua a ser duplicado.
+      // Um evento failed pode ser reclamado por compare-and-swap para permitir
+      // retry após falhas transitórias sem permitir dois workers em simultâneo.
+      const retried = await prisma.webhookEvent.updateMany({
+        where: { provider, eventId, status: "failed" },
+        data: {
+          status: "processing",
+          ...(tipo ? { tipo } : {}),
+          ...(metadata ? { metadata: metadata as any } : {}),
+        },
+      });
+      return retried.count === 1;
     }
     throw error;
   }
