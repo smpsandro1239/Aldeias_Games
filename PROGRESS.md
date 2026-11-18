@@ -259,3 +259,12 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 2. Verificar CI do commit `61844dc` antes de efectuar mais alterações de código.
 3. Continuar a redução de erros ESLint por grupos, começando por imports `require` e declarações `prefer-const` com contexto suficiente; tratar `@ts-nocheck` e `@ts-ignore` caso a caso.
 4. Planear a atualização de dependências vulneráveis, sem `npm audit fix --force` nem migração cega para Zod 4.
+
+
+## Quarta ronda ESLint — correções prefer-const — 18/11/2026
+
+- Aplicadas sete correções sintáticas `let` → `const` em `scripts/migrate-apostas-poio.ts`, `scripts/replace-design-tokens-extended.js`, `scripts/replace-design-tokens.js`, `src/__tests__/integration/game-lifecycle.test.ts`, `src/__tests__/integration/real-db/membros-gestao.test.ts`, `src/components/qr-code-generator.tsx` e `src/features/admin/hooks/use-admin-crud-handlers.tsx`.
+- Commits sequenciais na `main`: `66a70ff`, `c434225`, `cf10f50`, `a278c84`, `3ec3f24`, `d62421a`, `039a6f9`.
+- As alterações apenas tornam constantes bindings que o ESLint identificou como não reatribuídos.
+- Validação pendente: os workflows iniciados pelos pushes ainda têm de confirmar a redução de erros; não foram executados testes locais neste ambiente.
+- Restantes grupos identificados no relatório anterior: `@ts-nocheck`/`@ts-ignore`, imports `require()` em scripts/testes/rotas, duas regras Next.js e interface vazia em `src/hooks/use-eventos.ts`.
