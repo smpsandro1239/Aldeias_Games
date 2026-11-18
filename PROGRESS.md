@@ -604,3 +604,13 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - O fluxo de criação de participação continua por corrigir: os hooks observados iniciam MB WAY antes de criar a participação e não enviam `participacaoId`. Não foi criada uma intenção de pagamento nem alterado o schema nesta alteração.
 - Validação: não foi possível executar npm, TypeScript, Vitest ou Playwright através do ambiente disponível. A alteração fica **por validar** até CI fornecer evidência.
 - Próxima tarefa P0: desenhar e implementar a associação transaccional intenção → transactionId → participação, considerando os vários tipos de jogo, preço/quantidade, stock e callbacks antecipados.
+
+
+## Continuação — referência dedicada para carregamentos MB WAY (18/11/2026)
+
+- Commit de código: `84f67d2e2ab1d972a5a9da517530b06c7d4ad665`.
+- `src/app/api/mbway/webhook/route.ts`: `processCarregamento` deixou de pesquisar as últimas 50 transacções e comparar `dadosAdicionais.transactionId`. Agora exige `tipo = carregamento_saldo` e correspondência exacta em `referencia`.
+- A validação do montante e o processamento usam agora a mesma chave interna de associação. Isto evita que um callback passe a validação por uma referência dedicada e seja depois associado por uma segunda via mais permissiva.
+- Não foi introduzida alteração ao schema Prisma.
+- Validação: sem execução local de npm/Vitest/TypeScript/Playwright neste ambiente. O commit fica por validar até existir CI executado.
+- P0 permanece: persistir a intenção/participação antes da chamada ao fornecedor e tratar a janela entre a resposta do fornecedor, a gravação da referência e o webhook antecipado.
