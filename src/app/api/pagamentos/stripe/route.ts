@@ -92,21 +92,9 @@ export async function GET(request: NextRequest) {
     const { getCheckoutSession } = await import('@/lib/stripe');
     const session = await getCheckoutSession(sessionId);
 
-    // Atualizar participação se pagamento concluído
-    if (session.payment_status === 'paid') {
-      const participacao = await prisma.participacao.findFirst({
-        where: { referenciaPagamento: sessionId },
-      });
-
-      if (participacao && participacao.estadoPagamento !== 'concluido') {
-        await prisma.participacao.update({
-          where: { id: participacao.id },
-          data: {
-            estadoPagamento: 'concluido',
-            dataPagamento: new Date(),
-          },
-        });
-      }
+    // Consulta read-only: o webhook assinado processa participação, stock e cashback.
+    if (session.metadata?.userId !== user.id) {
+      return NextResponse.json({ error: 'Transação não encontrada' }, { status: 404 });
     }
 
     return NextResponse.json({
