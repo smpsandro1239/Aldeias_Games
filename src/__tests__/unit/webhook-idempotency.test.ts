@@ -65,6 +65,7 @@ describe("Webhook Idempotency - WebhookEvent", () => {
       };
       uniqueError.code = "P2002";
       mockPrisma.webhookEvent.create.mockRejectedValue(uniqueError);
+      mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
 
       const result = await claimWebhookEvent("stripe", "evt_duplicate");
 
@@ -260,6 +261,7 @@ describe("Webhook Idempotency - WebhookEvent", () => {
       };
       uniqueError.code = "P2002";
       mockPrisma.webhookEvent.create.mockRejectedValueOnce(uniqueError);
+      mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
 
       const second = await claimWebhookEvent("stripe", "evt_dup");
       expect(second).toBe(false);
