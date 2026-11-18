@@ -237,3 +237,25 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Run `44255820651` (commit `234c1ad`): ESLint passou de 214 para 207 erros; os erros `prefer-const` em `eventos/[id]`, `jogos`, `participacoes/[id]/prova` e `push/vapid-keys` desapareceram do relatório. O hook `useAccessibility` também deixou de apresentar violações React Hooks.
 - No commit `963ccfc534cc687f341c4fe5c200dba7abef5fa1`, foram convertidas mais seis declarações `let` assinaladas pelo ESLint como não reatribuídas: `where` (admin entregas-saldo, comissões, RGPD e vendedor entrega-saldo), `html` (export relatório) e `updateData` (setup-status).
 - Estas alterações são sintáticas e não alteram os valores nem a lógica das consultas/updates. A validação CI do commit `963ccfc` está pendente.
+
+
+## Terceira ronda de ESLint e validação — 18/11/2026
+
+### CI observado no commit `36d02a5`
+
+- Run CI `44256083812`: job `lint` terminou com falha, mas a contagem baixou de 207 para **201 erros** (avisos mantiveram-se em 1309).
+- Job `ci`: Prisma Client, TypeScript, Vitest, build Next.js, preparação da base SQLite e seed determinístico passaram. Playwright estava ainda em execução na última consulta.
+- Run Security Audit `44256083954`: falhou com 12 vulnerabilidades de produção (4 moderadas, 8 altas). `glob`/`minimatch` e `picomatch` indicam correção não-major; Zod requer atualização breaking para 4.6.7 segundo o audit.
+
+### Alteração aplicada
+
+- Commit `61844dc86d9d04d9d9068e81685d477e2c871a9e`: em `src/lib/aldeia-progress.ts`, substituído o `require('@/lib/db')` executado dentro da função por import estático de `prisma` no topo do módulo; removido o `@ts-ignore` redundante sobre a importação Prisma.
+- A lógica de progressão, cálculo de experiência, prémios e auditoria não foi alterada.
+- Validação do commit `61844dc` pendente; não foram executados testes locais neste ambiente.
+
+### Próximas ações
+
+1. Aguardar o resultado do Playwright `44256083812` e registar as falhas funcionais concretas.
+2. Verificar CI do commit `61844dc` antes de efectuar mais alterações de código.
+3. Continuar a redução de erros ESLint por grupos, começando por imports `require` e declarações `prefer-const` com contexto suficiente; tratar `@ts-nocheck` e `@ts-ignore` caso a caso.
+4. Planear a atualização de dependências vulneráveis, sem `npm audit fix --force` nem migração cega para Zod 4.
