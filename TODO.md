@@ -88,3 +88,9 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Corrigido `src/proxy.ts` no commit `f656a3c`: `/api/verificar-publico` passa a estar explicitamente na lista de rotas públicas e recebe rate limit de 20 pedidos/minuto por IP.
 - [ ] Validar no CI que a rota pública funciona sem sessão, que a limitação responde HTTP 429 após exceder o limite e que o build continua a passar.
 - [ ] Rever a confiança no identificador IP do proxy e o comportamento de rate limiting quando a base de dados está indisponível.
+
+
+## Segunda ronda de limpeza ESLint — 18/11/2026
+
+- [x] No commit `963ccfc`, convertidas para `const` declarações assinaladas pelo ESLint como não reatribuídas em seis rotas API: entregas-saldo admin, comissões, exportação de relatório, RGPD, setup-status e entrega-saldo vendedor.
+- [ ] Validar no CI a redução adicional de seis erros `prefer-const`, sem alterações à lógica funcional.
