@@ -331,3 +331,16 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] P1 — Carregamentos: validar vendedorId e aldeiaId no servidor e assegurar isolamento multi-tenant.
 - [ ] P1 — Reconciliação: construir relatório read-only que compare User.saldo/Transacao, VendedorCashbox.saldo/VendedorCashboxTransaction e Vault.saldo/VaultTransaction, com referência aos pagamentos externos.
 - [ ] Criado docs/AUDITORIA-PAGAMENTOS-CARTEIRAS-RECONCILIACAO.md com evidências, impactos, sequência de implementação e critérios de aceitação. Os riscos estão documentados, não corrigidos nem validados ainda.
+
+
+## Pagamentos — consulta read-only e classificação Stripe (18/11/2026)
+
+- [x] GET `/api/pagamentos/stripe` deixou de alterar participações; valida que a Checkout Session pertence ao utilizador autenticado.
+- [x] GET `/api/pagamentos/mbway` deixou de alterar `estadoPagamento`; consulta apenas referências pertencentes ao utilizador autenticado.
+- [x] POST Stripe deriva `metadata.tipo` no servidor: `jogoId` implica `participacao`; carregamento só é aceite com `tipo=carregamento_saldo` e sem `jogoId`.
+- [x] Stripe envia apenas metadados operacionais permitidos (`userId`, `tipo`, `jogoId`, `eventoId`, `numeros`); removeu-se a associação insegura por `participacaoId` arbitrário do body.
+- [x] Corrigida a página de sucesso: a API já devolve o montante em euros, pelo que a UI deixou de dividir novamente por 100.
+- [x] Criados testes unitários para classificação Stripe, filtragem de metadados, ownership da sessão e consultas read-only Stripe/MB WAY.
+- [ ] Validar o novo conjunto no CI (typecheck, Vitest, build, Playwright e lint); alterações ainda não marcadas como validadas.
+- [ ] Próxima tarefa: associação persistente MB WAY participação↔transactionId; rever a ordem do fluxo e garantir cancelamento/libertação de stock em caso de falha do fornecedor.
+- [ ] Stripe: validar preço oficial do jogo, quantidade, moeda e payment_status no webhook; reforçar idempotência por Checkout Session.
