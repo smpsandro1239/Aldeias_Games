@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   getFullUserFromRequest: vi.fn(),
   getCheckoutSession: vi.fn(),
+  createCheckoutSession: vi.fn(),
   checkPaymentStatus: vi.fn(),
   participacaoFindFirst: vi.fn(),
   participacaoUpdate: vi.fn(),
@@ -17,7 +18,7 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/stripe', () => ({
   getCheckoutSession: mocks.getCheckoutSession,
-  createCheckoutSession: vi.fn(),
+  createCheckoutSession: mocks.createCheckoutSession,
   createPaymentIntent: vi.fn(),
 }));
 
@@ -41,11 +42,17 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-import { GET as getStripePayment } from '@/app/api/pagamentos/stripe/route';
+import { POST as postStripePayment, GET as getStripePayment } from '@/app/api/pagamentos/stripe/route';
 import { GET as getMbwayPayment } from '@/app/api/pagamentos/mbway/route';
 
 function request(url: string) {
   return { url } as import('next/server').NextRequest;
+}
+
+function postRequest(body: unknown) {
+  return {
+    json: async () => body,
+  } as import('next/server').NextRequest;
 }
 
 describe('Payment status endpoints are read-only', () => {
@@ -55,6 +62,45 @@ describe('Payment status endpoints are read-only', () => {
       id: 'user-1',
       role: 'user',
     });
+  });
+
+  it('Stripe POST derives the participation type on the server and filters client metadata', async () => {
+    mocks.createCheckoutSession.mockResolvedValue({
+      id: 'cs_new',
+      url: 'https://checkout.stripe.test/cs_new',
+    });
+
+    const response = await postStripePayment(postRequest({
+      valor: 10,
+      descricao: 'Participação',
+      metadata: {
+        jogoId: 'jogo-1',
+        participante: 'Nome privado',
+        tipo: 'carregamento_saldo',
+      },
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.sessionId).toBe('cs_new');
+    expect(mocks.createCheckoutSession).toHaveBeenCalledWith(expect.objectContaining({
+      metadata: {
+        userId: 'user-1',
+        tipo: 'participacao',
+        jogoId: 'jogo-1',
+      },
+    }));
+  });
+
+  it('Stripe POST rejects ambiguous metadata instead of creating an unprocessable checkout', async () => {
+    const response = await postStripePayment(postRequest({
+      valor: 10,
+      descricao: 'Pagamento sem finalidade',
+      metadata: { participante: 'Nome privado' },
+    }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('Stripe GET reports a paid session without changing participation state', async () => {
