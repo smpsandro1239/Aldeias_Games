@@ -4,8 +4,8 @@ import { webcrypto } from 'crypto';
 
 // Gerar ou recuperar chaves VAPID
 const getVapidKeys = () => {
-  let publicKey = process.env.VAPID_PUBLIC_KEY;
-  let privateKey = process.env.VAPID_PRIVATE_KEY;
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
 
   // Se as chaves não existirem no ambiente, gerar novas
   if (!publicKey || !privateKey) {

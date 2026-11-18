@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
     const incluirEliminados = url.searchParams.get('incluirEliminados') === 'true';
 
     // Jogos eliminados (soft-delete) nunca aparecem em listas públicas/gerais
-    let where: Record<string, unknown> = incluirEliminados ? {} : { eliminado: false };
+    const where: Record<string, unknown> = incluirEliminados ? {} : { eliminado: false };
 
     if (eventoId) {
       where.eventoId = eventoId;

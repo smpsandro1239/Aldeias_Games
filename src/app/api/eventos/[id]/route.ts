@@ -24,7 +24,7 @@ function calculateNextRecurrenceDate(
     throw new Error('Horário inválido');
   }
 
-  let nextDate = new Date(now);
+  const nextDate = new Date(now);
 
   if (frequency === 'semanal') {
     // Próxima ocorrência da semana

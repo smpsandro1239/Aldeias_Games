@@ -43,7 +43,7 @@ export async function GET(
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
-    let hash = participacao.hashRaspe || participacao.hashParticipacao;
+    const hash = participacao.hashRaspe || participacao.hashParticipacao;
     let verificavel = false;
     let resultado: string | null = null;
     let numerosSelecionados: number[] | number[][] | null = null;
