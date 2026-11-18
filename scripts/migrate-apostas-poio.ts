@@ -33,7 +33,7 @@ async function main() {
   if (DRY_RUN) console.log('DRY RUN — nada será gravado.');
 
   let criadas = 0;
-  let jogosAtualizados = new Map<string, { participacoes: number; angariado: number }>();
+  const jogosAtualizados = new Map<string, { participacoes: number; angariado: number }>();
 
   for (const aposta of poio) {
     let numeros: number[] = [];
