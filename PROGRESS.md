@@ -148,3 +148,37 @@
 - [ ] Auditoria de produção mantém 12 vulnerabilidades (4 moderadas, 8 altas) no run observado.
 - [ ] Deploy Vercel continua bloqueado pela quota diária gratuita (mais de 100 deployments em 24h), apesar do build concluído.
 
+
+
+## Reavaliação da CI após correção JWT — 18/11/2026
+
+### Estado observado em GitHub Actions
+
+- Branch analisada: main; último commit observado antes desta atualização: 90b3d94dc2021ca70aa3dcb4f3172a5ac3d7be65.
+- Run CI: https://github.com/smpsandro1239/Aldeias_Games/actions/runs/44186738714 — falhou nos jobs lint e ci.
+- O job de lint mantém 214 erros e 1309 avisos. Erros confirmados incluem @typescript-eslint/ban-ts-comment em src/lib/rbac/checkPermission.ts, src/lib/rbac/resolvePermissions.ts, src/lib/sms.ts, src/lib/stripe.ts e src/scripts/check-test-users.ts; o script tem ainda @ts-nocheck. Não foram desativadas regras.
+- Playwright: 64 passaram, 3 falharam e 3 foram ignorados. A melhoria face ao run anterior (55/8/7) confirma que o segredo JWT corrigido removeu a falha generalizada de autenticação, mas não estabilizou todos os fluxos.
+
+### Falhas E2E restantes — diagnóstico inicial
+
+1. e2e/cofre-cashbox-flow.spec.ts: falha no fluxo de depósito de cashbox e confirmação pelo administrador. É necessário determinar se o depósito foi criado, se existe saldo físico suficiente e se o seed oferece um registo pendente determinístico.
+2. e2e/login-compra-raspadinha.spec.ts: o botão Saldo Aldeias está visível mas desativado. Não se deve contornar o estado disabled; investigar o saldo do utilizador seed, preço do jogo e estado da participação/carteira.
+3. e2e/verificacao-publica.spec.ts: o teste encontra o badge Válida, mas falha na expectativa textual /verificada com sucesso/i. A página src/app/verificar/page.tsx apresenta a mensagem fornecida pela API em result.mensagem; falta comparar a mensagem real com o contrato do teste antes de alterar a asserção.
+
+### Auditoria de dependências e deployment
+
+- Run Security Audit: https://github.com/smpsandro1239/Aldeias_Games/actions/runs/44186738753 — falhou com 12 vulnerabilidades (4 moderadas, 8 altas). O log identifica picomatch com ReDoS e zod <4.6.6 com risco de esgotamento de memória; também identifica glob e minimatch moderados. A recomendação automática para Zod é major (v4.6.7), pelo que exige análise de compatibilidade.
+- Run Deploy: https://github.com/smpsandro1239/Aldeias_Games/actions/runs/44186739242 — build Next.js/Vercel concluído; deploy recusado por limite api-deployments-free-per-day (mais de 100 deployments em 24h). Bloqueio externo de quota, não falha do build.
+
+### Estado desta continuação
+
+- [x] Releitura de ANALISE_CRITICA_PROMPT.md, AGENTS.md, TODO.md e PROGRESS.md antes de continuar.
+- [x] Confirmadas permissões de escrita na repository e branch default main.
+- [x] Consultados os runs de CI, Security Audit e Deploy e respetivos logs.
+- [x] Atualizado TODO.md com as três falhas E2E, ESLint, advisories e bloqueio Vercel observados.
+- [ ] Corrigir os fluxos E2E por causa raiz e executar nova suite Playwright.
+- [ ] Reduzir os erros ESLint por grupos, preservando verificações de tipos.
+- [ ] Remediar advisories com atualizações compatíveis e testes completos.
+- [ ] Executar novamente todos os checks e atualizar este ficheiro com os resultados do novo commit.
+
+Nota de rigor: nesta continuação foram feitas inspeções e atualização documental. Não foi alterada lógica da aplicação nem se declara qualquer das três falhas E2E resolvida. O último build de produção observado foi concluído, mas não foi publicado devido à quota Vercel.
