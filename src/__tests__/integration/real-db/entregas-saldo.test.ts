@@ -76,6 +76,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
           processarTransicaoEntregaSaldo(tx, {
             entregaId: entrega.id,
             acao: "confirmar",
+            actorUserId: adminId,
           })
         )
       );
@@ -84,7 +85,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
     expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(1);
     expect(resultados.filter((r) => r.status === "rejected")).toHaveLength(1);
 
-    const [entregaFinal, vendedor, admin, movimentos] = await Promise.all([
+    const [entregaFinal, vendedor, admin, movimentos, auditorias] = await Promise.all([
       prisma.entregaSaldo.findUnique({ where: { id: entrega.id } }),
       prisma.user.findUnique({ where: { id: vendedorId } }),
       prisma.user.findUnique({ where: { id: adminId } }),
@@ -93,6 +94,8 @@ describe("Real DB: integridade das entregas de saldo", () => {
           dadosAdicionais: { path: "$.entregaId", equals: entrega.id },
         },
       }),
+      prisma.auditLog.count({ where: { resource: "entrega_saldo", resourceId: entrega.id } }),
+      prisma.auditLog.count({ where: { resource: "entrega_saldo", resourceId: entrega.id, action: "entrega_saldo.confirmar" } }),
     ]);
 
     expect(entregaFinal.estado).toBe("confirmado");
@@ -100,6 +103,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
     expect(admin.saldo).toBe(40);
     expect(movimentos).toHaveLength(2);
     expect(movimentos.reduce((total: number, movimento: any) => total + movimento.valor, 0)).toBe(0);
+    expect(auditorias).toBe(1);
   });
 
   it("faz rollback do claim quando o vendedor não tem saldo suficiente", async () => {
@@ -128,11 +132,12 @@ describe("Real DB: integridade das entregas de saldo", () => {
         processarTransicaoEntregaSaldo(tx, {
           entregaId: entrega.id,
           acao: "confirmar",
+          actorUserId: adminId,
         })
       )
     ).rejects.toThrow("SALDO_INSUFICIENTE_VENDEDOR");
 
-    const [entregaFinal, vendedor, admin, movimentos] = await Promise.all([
+    const [entregaFinal, vendedor, admin, movimentos, auditorias] = await Promise.all([
       prisma.entregaSaldo.findUnique({ where: { id: entrega.id } }),
       prisma.user.findUnique({ where: { id: vendedorSemSaldo.id } }),
       prisma.user.findUnique({ where: { id: adminId } }),
@@ -147,6 +152,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
     expect(vendedor.saldo).toBe(0);
     expect(admin.saldo).toBe(40);
     expect(movimentos).toHaveLength(0);
+    expect(auditorias).toBe(0);
   });
 
   it("rejeita uma entrega apenas uma vez e não cria movimentos financeiros", async () => {
@@ -173,6 +179,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
         processarTransicaoEntregaSaldo(tx, {
           entregaId: entrega.id,
           acao: "rejeitar",
+          actorUserId: adminId,
         })
       )
     ).rejects.toThrow("ENTREGA_JA_PROCESSADA");
@@ -182,6 +189,7 @@ describe("Real DB: integridade das entregas de saldo", () => {
     });
     expect(final.estado).toBe("cancelado");
     expect(final.observacoes).toBe("Pedido inválido");
+    expect(await prisma.auditLog.count({ where: { resource: "entrega_saldo", resourceId: entrega.id, action: "entrega_saldo.rejeitar" } })).toBe(1);
     expect(
       await prisma.transacao.count({
         where: {

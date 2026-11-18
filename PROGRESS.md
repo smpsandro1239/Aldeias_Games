@@ -452,3 +452,28 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Adicionado teste real-DB `src/__tests__/integration/real-db/entregas-saldo.test.ts`: duas confirmações simultâneas (exactamente uma deve vencer), rollback por saldo insuficiente e rejeição repetida sem movimentos financeiros.
 - Commits de implementação: `b0d24d1`, `76c9292`, `0b66635`, `0fa2098`, `bc9b59a`, `3988145`, `5a591a7`, `b6e69a6`, `9e42fac`.
 - Validação ainda pendente: não existe execução npm/Prisma local neste ambiente; o endpoint de estado consultado apenas expõe checks Vercel, que estão a falhar por quota de deployments. É necessário confirmar o workflow CI do último commit para avaliar typecheck, Vitest, ESLint e build.
+
+
+## Continuação — auditoria de entregas de saldo e CI (18/11/2026)
+
+### Estado real do CI do commit `66c5ade98ef3a0f8be604a8b6c098303b83b8619`
+
+- O workflow `CI — Lint, Typecheck & Tests` terminou com falha global.
+- O job `ci` passou: geração Prisma, TypeScript, Vitest, build Next.js, preparação/seed SQLite e Playwright E2E.
+- O job `lint` falhou com 136 erros e 1312 avisos. As regras React Hooks/Compiler apontam sobretudo `setState` síncrono em efeitos, referências antes da declaração, funções impuras durante render e memoização não preservada. São problemas de código a corrigir gradualmente; não se deve desligar as regras.
+- O workflow `Security Audit` falhou em `npm audit --omit=dev --audit-level=high`: 4 vulnerabilidades altas (Zod abaixo de 4.6.6, incluindo dependência transitiva via `@vercel/blob`/`@vercel/oidc`). As vulnerabilidades de `glob`/`minimatch` são moderadas e têm correção não-major indicada pelo npm. Não aplicar `--force` sem avaliar a migração Zod 4.
+- Vercel continua a recusar deployments por `build-rate-limit`; esta falha é quota externa, não resultado de compilação.
+
+### Alterações desta continuação
+
+- A revisão do PATCH de entregas revelou ausência de auditoria persistente na operação financeira. A transição agora cria `AuditLog` dentro da mesma transação que altera o estado, debita/credita saldos e cria os movimentos financeiros.
+- A auditoria regista actor, aldeia, ação, recurso, IP, User-Agent limitado a 500 caracteres e metadados de estado/valor. Se a operação falhar, o AuditLog também sofre rollback.
+- PATCH passa a aceitar apenas administradores de aldeia e super administradores, valida `entregaId`, ação e observações, e lê apenas `id`/`aldeiaId` na verificação prévia do âmbito.
+- Os testes reais da BD foram ampliados para verificar auditoria única na confirmação, rollback da auditoria em saldo insuficiente e registo da rejeição. Estes testes ainda aguardam execução no CI pós-commit.
+
+### Próximas ações
+
+1. Confirmar CI pós-commit e corrigir eventuais erros dos novos testes.
+2. Corrigir o ESLint em pequenos grupos, começando por hooks e componentes com maior impacto funcional.
+3. Isolar a migração Zod 4 e avaliar as APIs utilizadas, sobretudo nas dependências de produção.
+4. Continuar auditoria de criação de pedidos de entrega e reconciliação de carteira/caixa/cofre.

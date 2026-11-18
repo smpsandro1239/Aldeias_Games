@@ -72,24 +72,33 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Apenas admins podem confirmar/rejeitar
-    const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
+    // Apenas administradores da aldeia ou super administradores podem gerir entregas.
+    if (user.role !== 'aldeia_admin' && user.role !== 'super_admin') {
+      return NextResponse.json({ error: 'Acesso reservado a administradores' }, { status: 403 });
+    }
+
+    const denied = await requirePermission(
+      user.id,
+      'MANAGE_ALDEIA',
+      user.role === 'aldeia_admin' ? user.aldeiaId : undefined
+    );
     if (denied) return denied;
 
     const body = await request.json();
     const { entregaId, acao, observacoes } = body; // acao: 'confirmar' | 'rejeitar' | 'concluir'
 
-    if (!entregaId || !acao) {
+    if (typeof entregaId !== 'string' || !entregaId.trim() || !['confirmar', 'rejeitar', 'concluir'].includes(acao)) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
     }
 
-    // Buscar entrega
+    if (observacoes !== undefined && observacoes !== null && (typeof observacoes !== 'string' || observacoes.length > 1000)) {
+      return NextResponse.json({ error: 'Observações inválidas (máximo 1000 caracteres)' }, { status: 400 });
+    }
+
+    // Ler apenas o campo necessário para validar o âmbito da aldeia.
     const entrega = await prisma.entregaSaldo.findUnique({
       where: { id: entregaId },
-      include: {
-        vendedor: { select: { id: true, nome: true, email: true, telefone: true } },
-        admin: { select: { id: true, nome: true, email: true } }
-      }
+      select: { id: true, aldeiaId: true },
     });
 
     if (!entrega) {
@@ -101,17 +110,16 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado para esta aldeia' }, { status: 403 });
     }
 
-    if (!['confirmar', 'rejeitar', 'concluir'].includes(acao)) {
-      return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
-    }
-
     try {
       const entregaAtualizada = await executeWithRetry(() =>
         prisma.$transaction((tx) =>
           processarTransicaoEntregaSaldo(tx, {
             entregaId,
             acao: acao as EntregaSaldoAction,
-            observacoes,
+            observacoes: typeof observacoes === 'string' ? observacoes.trim() : observacoes,
+            actorUserId: user.id,
+            ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || undefined,
+            userAgent: request.headers.get('user-agent') || undefined,
           })
         )
       );

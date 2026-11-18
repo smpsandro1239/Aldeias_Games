@@ -274,3 +274,14 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Adicionado retry limitado para conflitos/deadlocks Prisma e SQLite (`P2034`, `SQLITE_BUSY`, database locked).
 - [x] Criado `src/__tests__/integration/real-db/entregas-saldo.test.ts` com testes para concorrência, rollback por saldo insuficiente e rejeição repetida.
 - [ ] Validar typecheck, lint, Vitest e build no CI do commit final; não marcar a correcção como validada até o teste real-DB passar.
+
+
+## Continuação — integridade das entregas e CI (18/11/2026)
+
+- [x] Consultado o CI real do commit `66c5ade`: TypeScript, Vitest, build e Playwright passaram; ESLint falhou com 136 erros e 1312 avisos.
+- [x] Confirmada a causa do ESLint: regras React Hooks/Compiler (actualizações de estado síncronas em efeitos, referências antes da declaração, chamadas impuras durante render e memoização não preservada), distribuídas por páginas e componentes existentes. Não desactivar regras globalmente.
+- [ ] Corrigir os erros ESLint por módulos, preservando o comportamento dos fluxos.
+- [ ] Remediar as 4 vulnerabilidades altas de produção identificadas no CI; o Zod requer migração major para v4 e validação de compatibilidade.
+- [x] Adicionar registo AuditLog transacional nas transições confirmar/rejeitar/concluir de entregas de saldo, com actor, aldeia, ação, estado e valor; garantir rollback da auditoria se a operação financeira falhar.
+- [x] Restringir PATCH a `aldeia_admin` e `super_admin`, validar observações e reduzir a leitura prévia da entrega aos campos necessários.
+- [ ] Validar no CI os novos testes de auditoria e as transições de entrega após o commit desta alteração.
