@@ -144,3 +144,13 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [x] Security Audit: cancelar auditorias obsoletas da mesma branch.
 - [x] Deploy: serializar deployments sem cancelar um deployment que já esteja a executar; ignorar alterações exclusivamente Markdown/documentação.
 - [ ] Validar sintaxe e comportamento dos workflows no GitHub Actions após o push.
+
+
+## Continuação — correção de regressão TypeScript e CI — 18/11/2026
+
+- [x] Reavaliado o commit `fdc9d6f7b9f401ee90e33bab10a6dc24177e37c0` e consultados os workflows CI, Security Audit e Deploy.
+- [x] Identificada regressão em `src/lib/aldeia-progress.ts`: `Aldeia.moedaInterna` é `Float` no schema Prisma, mas o código usava `Prisma.Decimal` e `.toNumber()`. Remover a conversão incompatível e somar valores numéricos (`number`), preservando a regra de recompensa.
+- [ ] Validar no CI o typecheck e os testes após a correção; não foram executados testes locais.
+- [ ] O ESLint no run `44257802393` apresenta 180 erros e 1309 avisos (face a 201 erros na medição anterior). Permanecem `ban-ts-comment`, `@ts-nocheck` e outros erros; continuar por contexto.
+- [ ] Security Audit `44257802349` continua a falhar; o audit completo reporta 29 vulnerabilidades (4 moderadas, 25 altas), sem remediação automática segura confirmada.
+- [ ] Deploy `44257802457` falhou; consultar o log completo antes de classificar a causa. A quota Vercel anterior não deve ser assumida como causa deste run sem evidência.

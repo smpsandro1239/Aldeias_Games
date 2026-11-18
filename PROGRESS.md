@@ -294,3 +294,24 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Deploy Vercel passa a serializar execuções por branch sem cancelar um deployment em curso (`cancel-in-progress: false`); pushes compostos apenas por Markdown e documentação deixam de provocar deploys.
 - Objetivo: reduzir acumulação de workflows provocada por commits frequentes na `main`, mantendo a execução final representativa do estado mais recente.
 - Validação dos workflows pendente após o push; os runs já enfileirados antes desta alteração não são automaticamente garantidos como cancelados.
+
+
+
+
+## Continuação — correção de regressão TypeScript e CI — 18/11/2026
+
+- [x] Reavaliado o commit `fdc9d6f7b9f401ee90e33bab10a6dc24177e37c0` e consultados os workflows CI, Security Audit e Deploy.
+- [x] Identificada regressão em `src/lib/aldeia-progress.ts`: `Aldeia.moedaInterna` é `Float` no schema Prisma, mas o código usava `Prisma.Decimal` e `.toNumber()`. Remover a conversão incompatível e somar valores numéricos (`number`), preservando a regra de recompensa.
+- [ ] Validar no CI o typecheck e os testes após a correção; não foram executados testes locais.
+- [ ] O ESLint no run `44257802393` apresenta 180 erros e 1309 avisos (face a 201 erros na medição anterior). Permanecem `ban-ts-comment`, `@ts-nocheck` e outros erros; continuar por contexto.
+- [ ] Security Audit `44257802349` continua a falhar; o audit completo reporta 29 vulnerabilidades (4 moderadas, 25 altas), sem remediação automática segura confirmada.
+- [ ] Deploy `44257802457` falhou; consultar o log completo antes de classificar a causa. A quota Vercel anterior não deve ser assumida como causa deste run sem evidência.
+
+### Evidência CI dos commits `60751bc` e `fdc9d6f`
+
+- Run CI `44257802393`: falhou no job `ci` durante `npm run typecheck`; erro em `src/lib/aldeia-progress.ts:78` por incompatibilidade entre `Decimal` e `Float`, e chamada `.toNumber()` sobre `number`. O Vitest/build não ficaram validados neste run porque o job parou no typecheck.
+- Run ESLint `44257802393`: 180 erros e 1309 avisos. Entre os erros observados: `@ts-ignore` em `src/lib/sms.ts` e `src/lib/stripe.ts`, `@ts-nocheck` em `src/scripts/check-test-users.ts`, além de ocorrências noutros módulos.
+- Run CI `44257650903` reproduziu a mesma falha TypeScript; a alteração de imports em `aldeia-progress.ts` é a causa imediata e foi corrigida na ronda seguinte.
+- Run Security Audit `44257802349`: falhou; instalação reportou 29 vulnerabilidades (4 moderadas, 25 altas). A auditoria de produção deve ser lida no log específico para identificar os advisories ainda activos.
+- Run Deploy `44257802457`: terminou com falha. A causa será confirmada pelo log do job; não classificar automaticamente como quota Vercel.
+- Não foram executados testes locais. A validação da correção depende de um novo CI.

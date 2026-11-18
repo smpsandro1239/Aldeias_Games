@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 
 /**
@@ -75,7 +74,7 @@ export async function addExperienceToAldeia(
       experiencia: novaExperiencia,
       nivel: newLevel,
       pontos: aldeia.pontos + pontosParaAdicionar,
-      moedaInterna: new Prisma.Decimal(aldeia.moedaInterna.toNumber() + moedaParaAdicionar)
+      moedaInterna: aldeia.moedaInterna + moedaParaAdicionar
     },
     select: {
       id: true,
