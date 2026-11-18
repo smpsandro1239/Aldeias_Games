@@ -14,6 +14,56 @@ export interface FocusTrapOptions {
   onEscape?: () => void;
 }
 
+export function useFocusTrap(options: FocusTrapOptions) {
+  const containerRef = useRef<HTMLElement>(null);
+  const { enabled, onEscape } = options;
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!enabled || !container) return;
+
+    const focusableSelectors = [
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'a[href]',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(', ');
+    const getFocusableElements = () =>
+      Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors));
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && onEscape) {
+        onEscape();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = getFocusableElements();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    container.addEventListener("keydown", handleKeyDown);
+    const focusable = getFocusableElements();
+    focusable[0]?.focus();
+
+    return () => container.removeEventListener("keydown", handleKeyDown);
+  }, [enabled, onEscape]);
+
+  return containerRef;
+}
+
 export function useAccessibility() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [prefersHighContrast, setPrefersHighContrast] = useState(false);
@@ -119,65 +169,6 @@ export function useAccessibility() {
     "aria-describedby": description ? "dialog-description" : undefined,
   }), []);
 
-  // Trap focus within an element
-  const useFocusTrap = useCallback((options: FocusTrapOptions) => {
-    const containerRef = useRef<HTMLElement>(null);
-
-    useEffect(() => {
-      if (!options.enabled || !containerRef.current) return;
-
-      const container = containerRef.current;
-      const focusableSelectors = [
-        'button:not([disabled])',
-        'input:not([disabled])',
-        'select:not([disabled])',
-        'textarea:not([disabled])',
-        'a[href]',
-        '[tabindex]:not([tabindex="-1"])',
-      ].join(', ');
-
-      const getFocusableElements = () => {
-        return Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors));
-      };
-
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape" && options.onEscape) {
-          options.onEscape();
-          return;
-        }
-
-        if (e.key !== "Tab") return;
-
-        const focusable = getFocusableElements();
-        if (focusable.length === 0) return;
-
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      };
-
-      container.addEventListener("keydown", handleKeyDown);
-      
-      // Focus first element
-      const focusable = getFocusableElements();
-      if (focusable.length > 0) {
-        focusable[0].focus();
-      }
-
-      return () => {
-        container.removeEventListener("keydown", handleKeyDown);
-      };
-    }, [options]);
-
-    return containerRef;
-  }, []);
 
   return {
     // Preferences
