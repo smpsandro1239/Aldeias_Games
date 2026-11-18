@@ -100,14 +100,14 @@ export async function PUT(
           data: [
             {
               userId: levantamento.criadoPorId,
-              tipo: 'levantamento_confirmado',
+              tipo: 'levantamento_confirmado' as const,
               titulo: 'Levantamento aprovado',
               mensagem: `O teu levantamento de ${levantamento.valor.toFixed(2)}€ foi aprovado por ${user.nome}.`,
               lida: false,
             },
             ...vendedores.map((vendedor) => ({
               userId: vendedor.id,
-              tipo: 'levantamento_confirmado',
+              tipo: 'levantamento_confirmado' as const,
               titulo: 'Levantamento do cofre',
               mensagem: `Foi realizado um levantamento de ${levantamento.valor.toFixed(2)}€ do cofre da aldeia por ${user.nome}. Motivo: ${levantamento.descricao || 'Não especificado'}.`,
               lida: false,
