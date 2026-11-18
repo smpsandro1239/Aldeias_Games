@@ -173,11 +173,11 @@ async function processCarregamento(transactionId: string) {
 }
 
 async function processParticipacao(transactionId: string) {
-  const participacaoPorReferencia = await prisma.participacao.findFirst({
+  // A referência externa só pode identificar uma participação através do
+  // campo dedicado. Procurar o transactionId em JSON livre permite colisões
+  // e associações acidentais a dados controlados pelo cliente.
+  const participacao = await prisma.participacao.findFirst({
     where: { referenciaPagamento: transactionId },
-  });
-  const participacao = participacaoPorReferencia ?? await prisma.participacao.findFirst({
-    where: { dadosParticipacao: { contains: transactionId } },
   });
 
   if (!participacao) throw new Error("PARTICIPACAO_MBWAY_NAO_ENCONTRADA");
