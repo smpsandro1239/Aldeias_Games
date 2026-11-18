@@ -1,4 +1,3 @@
-// @ts-nocheck - Playwright test runner (types resolved at runtime)
 import { test, expect } from '@playwright/test';
 
 const ADMIN_EMAIL = 'admin@aldeias.pt';
@@ -14,19 +13,21 @@ test.describe('Login + Compra Raspadinha', () => {
     const loginData = await loginRes.json();
     expect(loginData.token).toBeTruthy();
 
-    await page.context().addCookies([
-      {
-        name: 'auth-token',
-        value: loginData.token,
-        domain: 'localhost',
-        path: '/',
-      },
-    ]);
+    await page.context().addCookies([{
+      name: '__Host-auth-token',
+      value: loginData.token,
+      url: 'http://localhost:3000',
+      path: '/',
+      secure: true,
+      httpOnly: true,
+      sameSite: 'Strict',
+    }]);
     // Populate localStorage so user info is available client-side
     await page.goto('/', { timeout: 30000 });
-    await page.evaluate((token) => {
+    await page.evaluate(({ token, user }) => {
       localStorage.setItem('token', token);
-    }, loginData.token);
+      localStorage.setItem('user', JSON.stringify(user));
+    }, { token: loginData.token, user: loginData.user });
 
     // 2. Navigate to jogos page
     await page.goto('/jogos', { timeout: 30000 });

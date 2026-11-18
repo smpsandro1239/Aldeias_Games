@@ -336,3 +336,15 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - ESLint: 180 erros e 1309 avisos; principais grupos `ban-ts-comment` e `no-require-imports`.
 - Security Audit: `npm audit --omit=dev --audit-level=high` reportou 12 vulnerabilidades (4 moderadas, 8 altas).
 - Vercel: build dos artefactos concluído até à fase de publicação; publicação recusada pela quota diária `api-deployments-free-per-day` (>100 deployments/24h).
+
+
+## CI concluído e diagnóstico das falhas E2E — 18/11/2026
+
+- Run CI: `44264364771`, commit `75e2dd2d50d711968ad8a2071bd02c691cc21e2d`; terminou com falha no job CI devido a dois testes Playwright.
+- Resultados confirmados: typecheck passou; Vitest passou com 529 testes; build passou; preparação SQLite e seed E2E passaram; Playwright: 65 passaram, 2 falharam, 3 ignorados.
+- `e2e/cofre-cashbox-flow.spec.ts`: o log apontava timeout em `networkidle` após navegar para o dashboard do vendedor. A aplicação estava a usar o cookie errado nos testes: o servidor `next start` executa em produção e a constante `AUTH_COOKIE_NAME` usa `__Host-auth-token`, não `auth-token`.
+- `e2e/login-compra-raspadinha.spec.ts`: o método Saldo Aldeias ficava disabled porque o browser não estava autenticado com o cookie que a API da carteira reconhece; o seed atribui 1000€ ao super administrador e o jogo custa 2€. Não se alterou o saldo nem a regra de pagamento.
+- Alterações aplicadas nos dois testes: cookie de produção com atributos `Secure`, `Path=/`, sem Domain; utilizador retornado pelo login guardado no localStorage. No fluxo Cofre, esperas por separadores funcionais substituem esperas por `networkidle`.
+- Removidos os dois `@ts-nocheck` dos testes E2E alterados.
+- Ainda não há validação das alterações: os testes só serão considerados resolvidos após novo CI verde.
+- ESLint permanece com 180 erros/1309 avisos; Security Audit com 12 vulnerabilidades de produção (4 moderadas, 8 altas); deploy Vercel continua condicionado à quota diária.

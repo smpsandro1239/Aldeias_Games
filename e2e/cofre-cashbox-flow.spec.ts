@@ -1,4 +1,3 @@
-// @ts-nocheck - Playwright test runner (types resolved at runtime)
 import { test, expect } from '@playwright/test';
 
 const VENDEDOR_EMAIL = 'vendedor@gmail.com';
@@ -14,18 +13,24 @@ test.describe('Cofre / Cashbox Flow', () => {
     expect(res.ok()).toBeTruthy();
     let loginData = await res.json();
 
-    await page.context().addCookies([
-      { name: 'auth-token', value: loginData.token, domain: 'localhost', path: '/' },
-    ]);
+    await page.context().addCookies([{
+      name: '__Host-auth-token',
+      value: loginData.token,
+      url: 'http://localhost:3000',
+      path: '/',
+      secure: true,
+      httpOnly: true,
+      sameSite: 'Strict',
+    }]);
     await page.goto('/', { timeout: 30000 });
-    await page.evaluate((t) => {
-      localStorage.setItem('token', t);
-      localStorage.setItem('user', JSON.stringify({ nome: 'Joao Vendedor', email: 'vendedor@gmail.com', role: 'vendedor' }));
-    }, loginData.token);
+    await page.evaluate(({ token, user }) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+    }, { token: loginData.token, user: loginData.user });
 
     // ── Step 2: Navigate to vendedor dashboard ────────────────
     await page.goto('/vendedordashboard', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
+    await expect(page.locator('button[role="tab"]', { hasText: 'Caixa' })).toBeVisible({ timeout: 15000 });
 
     // ── Step 3: Click "Caixa" tab ──────────────────────────────
     await page.locator('button[role="tab"]', { hasText: 'Caixa' }).click();
@@ -63,18 +68,24 @@ test.describe('Cofre / Cashbox Flow', () => {
     expect(res.ok()).toBeTruthy();
     loginData = await res.json();
 
-    await page.context().addCookies([
-      { name: 'auth-token', value: loginData.token, domain: 'localhost', path: '/' },
-    ]);
+    await page.context().addCookies([{
+      name: '__Host-auth-token',
+      value: loginData.token,
+      url: 'http://localhost:3000',
+      path: '/',
+      secure: true,
+      httpOnly: true,
+      sameSite: 'Strict',
+    }]);
     await page.goto('/', { timeout: 30000 });
-    await page.evaluate((t) => {
-      localStorage.setItem('token', t);
-      localStorage.setItem('user', JSON.stringify({ nome: 'Admin', email: 'admin@aldeias.pt', role: 'super_admin' }));
-    }, loginData.token);
+    await page.evaluate(({ token, user }) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+    }, { token: loginData.token, user: loginData.user });
 
     // ── Step 9: Navigate to admin cofre page ───────────────────
     await page.goto('/admindashboard/cofre', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
+    await expect(page.locator('button[role="tab"]', { hasText: 'Pendentes' })).toBeVisible({ timeout: 15000 });
 
     // ── Step 10: Click "Pendentes" tab ─────────────────────────
     await page.locator('button[role="tab"]', { hasText: 'Pendentes' }).click();

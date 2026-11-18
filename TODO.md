@@ -165,3 +165,16 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 - [ ] Lint continua com 180 erros e 1309 avisos; não foram removidas supressões de tipos em massa.
 - [ ] Security Audit mantém 12 vulnerabilidades de produção (4 moderadas, 8 altas).
 - [ ] Deploy Vercel recusado por quota diária `api-deployments-free-per-day`; o build de artefactos chegou à fase de publicação.
+
+
+## Diagnóstico e correção dos E2E de autenticação — 18/11/2026
+
+- Run CI analisado: `44264364771`, commit `75e2dd2`. TypeScript, 529 testes Vitest e build passaram; Playwright terminou com 65 aprovados, 2 falhados e 3 ignorados.
+- Causa comum identificada nos dois testes falhados: a aplicação corre com `NODE_ENV=production` no servidor `next start` do Playwright. Em produção, `src/lib/auth.ts` define o cookie de sessão como `__Host-auth-token`; os testes estavam a injectar `auth-token`, que só é reconhecido fora de produção. Assim, os pedidos do browser não tinham sessão autenticada.
+- Consequências observadas: o dashboard do vendedor não conseguia carregar as APIs autenticadas; a carteira devolvia saldo indisponível e o método Saldo Aldeias ficava desativado, apesar de o seed atribuir saldo ao administrador.
+- Corrigidos os dois testes para injectar o cookie `__Host-auth-token` com atributos exigidos pelo prefixo (`Secure`, `Path=/`, sem Domain), e para guardar também o utilizador devolvido pelo login no `localStorage`, conforme o contrato esperado pelo frontend.
+- No fluxo do vendedor, as esperas genéricas por `networkidle` foram substituídas por esperas pelos separadores funcionais Caixa/Pendentes; a página pode manter pedidos de rede activos sem que isso signifique que a interface não esteja pronta.
+- Removidos os dois `@ts-nocheck` destes testes; a tipagem Playwright passa a ser verificada normalmente.
+- [ ] Validar os dois testes no próximo Playwright e confirmar que o pagamento é debitado e o depósito é confirmado sem contornar validações de saldo, permissões ou estado.
+- [ ] Revalidar lint, typecheck, Vitest e build; a última medição continua a indicar 180 erros ESLint/1309 avisos e 12 advisories de produção (4 moderados, 8 altos).
+- [ ] Deploy Vercel continua sem nova tentativa até a quota diária estar disponível.
