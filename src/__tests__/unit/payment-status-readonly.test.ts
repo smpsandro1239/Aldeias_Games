@@ -76,6 +76,7 @@ describe('Payment status endpoints are read-only', () => {
       metadata: {
         jogoId: 'jogo-1',
         participante: 'Nome privado',
+        participacaoId: 'participacao-de-outro-utilizador',
         tipo: 'carregamento_saldo',
       },
     }));
@@ -83,6 +84,7 @@ describe('Payment status endpoints are read-only', () => {
 
     expect(response.status).toBe(200);
     expect(body.data.sessionId).toBe('cs_new');
+    expect(mocks.participacaoUpdate).not.toHaveBeenCalled();
     expect(mocks.createCheckoutSession).toHaveBeenCalledWith(expect.objectContaining({
       metadata: {
         userId: 'user-1',
