@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-4">
@@ -7,12 +9,12 @@ export default function NotFound() {
         <p className="text-muted-foreground">
           A página que procura não existe ou foi movida.
         </p>
-        <a
+        <Link
           href="/"
           className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 transition-opacity"
         >
           Voltar ao início
-        </a>
+        </Link>
       </div>
     </div>
   );
