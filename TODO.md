@@ -288,3 +288,12 @@ Uma tarefa só passa a concluída depois de executar os testes relevantes e veri
 
 - [x] Corrigir a criação de entregas: pedidos solicitados/confirmados/concluídos passam a reservar saldo; cálculo e criação são transacionais e serializados por vendedor.
 - [ ] Validar concorrência da criação de entregas no CI (testes reais-DB adicionados com vendedores isolados para evitar interferência entre cenários).
+
+
+## Cofre — concorrência de depósitos (18/11/2026)
+
+- [x] Serializar criação de pedidos de depósito por caixa de vendedor e reservar logicamente os pedidos pendentes ao calcular o saldo disponível.
+- [x] Confirmar depósitos com claim condicional do pedido e débito da caixa protegido por `saldo >= valor` na mesma transação do crédito no cofre, movimentos e auditoria.
+- [x] Mover auditoria de criação/confirmação/rejeição para dentro da transação financeira.
+- [x] Tratar notificações pós-transação como melhor esforço para não devolver erro ambíguo depois de uma operação financeira já confirmada.
+- [ ] Validar testes de concorrência no CI e rever possíveis diferenças entre SQLite e PostgreSQL.

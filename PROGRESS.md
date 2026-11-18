@@ -486,3 +486,26 @@ A falha do deploy é de quota externa; o build não falhou. A falha do Vitest fo
 - Criado `src/lib/solicitar-entrega-saldo.ts`: adquire bloqueio de escrita na linha do vendedor, calcula o total de carregamentos confirmados menos entregas em estado solicitado/confirmado/concluído e cria pedido + AuditLog na mesma transação.
 - O endpoint passa a validar papel vendedor, valor numérico positivo com no máximo duas casas decimais, observações limitadas e âmbito da aldeia; aplica retry a conflitos transitórios.
 - Acrescentados testes reais-DB para duas solicitações concorrentes e para a dedução de reservas pendentes, cada cenário com vendedor isolado para evitar interferência de dados. A execução está pendente no CI do commit seguinte.
+
+
+## Cofre — concorrência e rastreabilidade de depósitos (18/11/2026)
+
+### Problemas encontrados
+
+- `POST /api/cofre/pedido-deposito` verificava o saldo da caixa antes da transação e não considerava outros pedidos pendentes. Dois pedidos simultâneos podiam reservar o mesmo dinheiro.
+- `PUT /api/cofre/pedido-deposito/[id]` lia o saldo da caixa e fazia o débito com decremento sem condição SQL `saldo >= valor`. Confirmações de pedidos diferentes podiam concorrer e criar saldo negativo.
+- O AuditLog destes fluxos era escrito fora da transação através de `logAudit`, helper que absorve falhas; uma operação financeira podia ficar confirmada sem o registo de auditoria correspondente.
+- Falhas de notificação após commit eram devolvidas como HTTP 500, levando o cliente a poder repetir uma operação que já tinha sido concluída.
+
+### Correções aplicadas
+
+- Criado `src/lib/cofre-deposit.ts` para centralizar criação e processamento de pedidos.
+- Na criação por vendedor, a linha da caixa é atualizada dentro da transação para serializar pedidos concorrentes; o montante disponível desconta todos os pedidos pendentes do vendedor.
+- Na confirmação, o pedido é reclamado condicionalmente (`estado = pendente`) e o débito da caixa usa `updateMany` com `saldo >= valor`. Se o saldo não chegar, toda a transação reverte, incluindo estado do pedido, movimentos, crédito no cofre e auditoria.
+- Criação, confirmação e rejeição escrevem AuditLog dentro da mesma transação financeira.
+- Notificações são executadas depois do commit e falhas são registadas sem transformar uma operação já confirmada numa resposta HTTP de erro.
+- Adicionados testes reais de BD para reservas concorrentes e confirmações concorrentes de dois pedidos diferentes.
+
+### Validação
+
+- Os testes foram adicionados, mas ainda não executados no CI deste commit. O CI anterior `5ba8154` passou TypeScript, Vitest, build e Playwright; ESLint e Security Audit continuam a falhar. Vercel completou o build mas bloqueou a publicação por quota diária.

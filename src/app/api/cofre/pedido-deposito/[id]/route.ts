@@ -4,8 +4,8 @@ import { prisma } from '@/lib/db';
 import { getFullUserFromRequest } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac/checkPermission';
 import { executeWithRetry } from '@/lib/transaction-retry';
-import { logAudit } from '@/lib/audit';
 import { aldeiaScopeDenied } from '@/lib/rbac/aldeia-scope';
+import { processarPedidoDepositoCofre } from '@/lib/cofre-deposit';
 
 export async function PUT(
   request: NextRequest,
@@ -17,19 +17,35 @@ export async function PUT(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // RBAC: confirmar/rejeitar depósito é exclusivo de quem gere a aldeia
     const denied = await requirePermission(user.id, 'MANAGE_ALDEIA');
     if (denied) return denied;
 
     const { id } = await params;
+    if (!id?.trim()) {
+      return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
+    }
+
     const body = await request.json();
-    const { acao, observacoes } = body;
+    const { acao, observacoes } = body ?? {};
+    if (!['confirmar', 'rejeitar'].includes(acao)) {
+      return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
+    }
+    if (observacoes !== undefined && observacoes !== null &&
+      (typeof observacoes !== 'string' || observacoes.length > 500)) {
+      return NextResponse.json({ error: 'Observações inválidas (máximo 500 caracteres)' }, { status: 400 });
+    }
 
     const pedido = await prisma.pedidoDepositoCofre.findUnique({
       where: { id },
-      include: {
-        vendedor: { select: { id: true, nome: true, email: true, telefone: true } }
-      }
+      select: {
+        id: true,
+        vendedorId: true,
+        aldeiaId: true,
+        valor: true,
+        estado: true,
+        descricao: true,
+        vendedor: { select: { nome: true } },
+      },
     });
 
     if (!pedido) {
@@ -40,145 +56,67 @@ export async function PUT(
     if (scopeDenied) return scopeDenied;
 
     if (pedido.estado !== 'pendente') {
-      return NextResponse.json({ error: 'Pedido já foi processado' }, { status: 400 });
+      return NextResponse.json({ error: 'Pedido já foi processado' }, { status: 409 });
     }
 
-    if (acao === 'confirmar') {
-      await executeWithRetry(() => prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const updated = await tx.pedidoDepositoCofre.updateMany({
-          where: { id, estado: 'pendente' },
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip') || undefined;
+    const userAgent = request.headers.get('user-agent') || undefined;
+
+    const resultado = await executeWithRetry(() =>
+      prisma.$transaction((tx: Prisma.TransactionClient) =>
+        processarPedidoDepositoCofre(tx, {
+          pedidoId: id,
+          acao,
+          observacoes: typeof observacoes === 'string' ? observacoes.trim() : undefined,
+          actorUserId: user.id,
+          aldeiaId: pedido.aldeiaId,
+          ip,
+          userAgent,
+        })
+      )
+    );
+
+    try {
+      if (acao === 'confirmar') {
+        await prisma.notificacao.create({
           data: {
-            estado: 'confirmado',
-            confirmadoPorId: user.id,
-            confirmadoAt: new Date(),
-            observacoes: observacoes || null,
-          }
+            userId: pedido.vendedorId,
+            tipo: 'deposito_confirmado',
+            titulo: 'Depósito confirmado',
+            mensagem: `O teu depósito de ${pedido.valor}€ foi confirmado por ${user.nome}`,
+            lida: false,
+          },
         });
-
-        if (updated.count === 0) {
-          throw new Error('DEPOSITO_JA_PROCESSADO');
-        }
-
-        const cashbox = await tx.vendedorCashbox.findUnique({
-          where: { userId: pedido.vendedorId }
-        });
-
-        if (!cashbox || cashbox.saldo < pedido.valor) {
-          throw new Error('Saldo insuficiente na caixa do vendedor');
-        }
-
-        await tx.vendedorCashbox.update({
-          where: { userId: pedido.vendedorId },
-          data: { saldo: { decrement: pedido.valor } }
-        });
-
-        await tx.vendedorCashboxTransaction.create({
+      } else {
+        await prisma.notificacao.create({
           data: {
-            cashboxId: cashbox.id,
-            tipo: 'DEPOSITADO_NO_COFRE',
-            valor: pedido.valor,
-            descricao: `Depósito no cofre: ${pedido.descricao || `${pedido.valor}€`}`,
-            referencia: pedido.id,
-            criadoPorId: user.id,
-          }
+            userId: pedido.vendedorId,
+            tipo: 'deposito_rejeitado',
+            titulo: 'Depósito rejeitado',
+            mensagem: `O teu depósito de ${pedido.valor}€ foi rejeitado${observacoes ? `: ${observacoes}` : ''}`,
+            lida: false,
+          },
         });
-
-        const vault = await tx.vault.upsert({
-          where: { aldeiaId: pedido.aldeiaId },
-          create: { aldeiaId: pedido.aldeiaId, saldo: pedido.valor },
-          update: { saldo: { increment: pedido.valor } }
-        });
-
-        await tx.vaultTransaction.create({
-          data: {
-            vaultId: vault.id,
-            tipo: 'deposito',
-            valor: pedido.valor,
-            descricao: `Depósito de ${pedido.vendedor.nome}: ${pedido.descricao || `${pedido.valor}€`}`,
-            referencia: pedido.id,
-            estado: 'confirmado',
-            criadoPorId: pedido.vendedorId,
-            aprovadoPorId: user.id,
-            dataAprovacao: new Date(),
-          }
-        });
-      }));
-
-      // Notify seller
-      await prisma.notificacao.create({
-        data: {
-          userId: pedido.vendedorId,
-          tipo: 'deposito_confirmado',
-          titulo: 'Depósito confirmado',
-          mensagem: `O teu depósito de ${pedido.valor}€ foi confirmado por ${user.nome}`,
-          lida: false,
-        },
-      });
-
-      // Log audit
-      const ipConfirm = request.headers.get('x-forwarded-for') || undefined;
-      const uaConfirm = request.headers.get('user-agent') || undefined;
-      logAudit({
-        userId: user.id,
-        aldeiaId: pedido.aldeiaId,
-        action: 'deposito.confirmado',
-        resource: 'pedido-deposito',
-        resourceId: pedido.id,
-        metadata: { valor: pedido.valor, vendedorId: pedido.vendedorId, vendedorNome: pedido.vendedor.nome },
-        ip: ipConfirm,
-        userAgent: uaConfirm,
-      });
-
-      return NextResponse.json({ success: true, message: 'Depósito confirmado' });
+      }
+    } catch (notificationError) {
+      console.error('Falha ao notificar vendedor sobre depósito:', notificationError);
     }
 
-    if (acao === 'rejeitar') {
-      await prisma.pedidoDepositoCofre.update({
-        where: { id },
-        data: {
-          estado: 'rejeitado',
-          rejeitadoPorId: user.id,
-          motivoRejeicao: observacoes || 'Rejeitado',
-        }
-      });
-
-      // Notify seller
-      await prisma.notificacao.create({
-        data: {
-          userId: pedido.vendedorId,
-          tipo: 'deposito_rejeitado',
-          titulo: 'Depósito rejeitado',
-          mensagem: `O teu depósito de ${pedido.valor}€ foi rejeitado${observacoes ? `: ${observacoes}` : ''}`,
-          lida: false,
-        },
-      });
-
-      // Log audit
-      const ipReject = request.headers.get('x-forwarded-for') || undefined;
-      const uaReject = request.headers.get('user-agent') || undefined;
-      logAudit({
-        userId: user.id,
-        aldeiaId: pedido.aldeiaId,
-        action: 'deposito.rejeitado',
-        resource: 'pedido-deposito',
-        resourceId: pedido.id,
-        metadata: { valor: pedido.valor, vendedorId: pedido.vendedorId, motivo: observacoes || null },
-        ip: ipReject,
-        userAgent: uaReject,
-      });
-
-      return NextResponse.json({ success: true, message: 'Depósito rejeitado' });
-    }
-
-    return NextResponse.json({ error: 'Ação inválida' }, { status: 400 });
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    console.error('Error processing deposit request:', error);
-    if (error.message === 'DEPOSITO_JA_PROCESSADO') {
-      return NextResponse.json({ error: 'Pedido já foi processado' }, { status: 400 });
-    }
     return NextResponse.json({
-      error: error.message || 'Erro interno'
-    }, { status: 500 });
+      success: true,
+      message: acao === 'confirmar' ? 'Depósito confirmado' : 'Depósito rejeitado',
+      data: resultado,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message === 'DEPOSITO_JA_PROCESSADO') {
+      return NextResponse.json({ error: 'Pedido já foi processado' }, { status: 409 });
+    }
+    if (message === 'SALDO_INSUFICIENTE_CAIXA') {
+      return NextResponse.json({ error: 'Saldo insuficiente na caixa do vendedor' }, { status: 400 });
+    }
+    console.error('Erro ao processar pedido de depósito:', error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
